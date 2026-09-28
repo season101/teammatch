@@ -1,5 +1,5 @@
 # Local dev stack: web on :3000, api on :8000, plus postgres, redis, and seaweedfs.
-name: teammatch
+name: teammatch-local
 
 services:
   db:
