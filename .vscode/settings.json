@@ -1,0 +1,14 @@
+{
+  "editor.formatOnSave": true,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "[typescript][typescriptreact][javascript][json][css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "python.defaultInterpreterPath": "backend/.venv/bin/python",
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.ruff_cache": true
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "charliermarsh.ruff",
+    "ms-python.python",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "editorconfig.editorconfig",
+    "ms-azuretools.vscode-containers",
+    "github.vscode-github-actions",
+    "bierner.markdown-mermaid"
+  ]
+}

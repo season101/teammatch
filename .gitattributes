@@ -1,0 +1,8 @@
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary
+*.mm linguist-language=XML
+backend/schema.yml linguist-generated=true
+packages/api-client/src/schema.d.ts linguist-generated=true

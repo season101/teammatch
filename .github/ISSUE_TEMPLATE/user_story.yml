@@ -1,0 +1,36 @@
+name: User story
+description: A feature from the backlog
+title: "[F?-??] "
+labels: ["type: story"]
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: Story
+      placeholder: As a ... I want ... so that ...
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - Given ..., when ..., then ...
+    validations:
+      required: true
+  - type: dropdown
+    id: epic
+    attributes:
+      label: Epic
+      options: ["F1 Accounts", "F2 Projects", "F3 Swipe", "F4 Match and chat", "Platform"]
+    validations:
+      required: true
+  - type: input
+    id: estimate
+    attributes:
+      label: Estimate (hours)
+  - type: input
+    id: rules
+    attributes:
+      label: Business rules
+      placeholder: BR-03, BR-07
