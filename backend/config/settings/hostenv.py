@@ -4,9 +4,10 @@ from urllib.parse import quote
 
 import environ
 
-# Build connection settings from the repo-root .env so local runs need no extra config.
-# On the host this points at the published compose ports; the api container sets
-# POSTGRES_HOST/POSTGRES_PORT and the URLs itself. Nothing here overrides a set value.
+# Build DATABASE_URL etc. from the Postgres vars so the password never has to be
+# URL-encoded by hand. On the host this reads the repo-root .env and points at the
+# published compose ports; containers set POSTGRES_HOST/PORT and the URLs themselves.
+# Nothing here overrides a value that is already set.
 environ.Env.read_env(Path(__file__).resolve().parents[3] / ".env")
 
 _pg_user = quote(os.environ.get("POSTGRES_USER", "teammatch"), safe="")

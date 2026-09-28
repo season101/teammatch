@@ -1,0 +1,190 @@
+# Production stack for teammatch.sijancodes.com behind the sitashma-infra Traefik.
+#
+# Standalone:  docker compose -f deploy/teammatch.prod.yml --env-file deploy/.env up -d
+# Via infra:   add apps/teammatch/deploy/teammatch.prod.yml to the infra root include: list
+#
+# Self-contained: own db, redis, and storage on the private teammatch network.
+# Only web and api join t3_proxy. Nothing publishes a port.
+# Secrets have no defaults, so compose refuses to start without deploy/.env.
+
+x-app: &app
+  restart: unless-stopped
+  profiles: ["apps", "all"]
+  networks:
+    - teammatch
+
+x-api-env: &api-env
+  DJANGO_SETTINGS_MODULE: config.settings.prod
+  DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set in deploy/.env}
+  DJANGO_ALLOWED_HOSTS: ${TEAMMATCH_HOST:-teammatch.sijancodes.com},teammatch-api,localhost,127.0.0.1
+  DJANGO_CSRF_TRUSTED_ORIGINS: https://${TEAMMATCH_HOST:-teammatch.sijancodes.com}
+  APP_VERSION: ${TEAMMATCH_VERSION:?set in deploy/.env}
+  POSTGRES_DB: ${POSTGRES_DB:-teammatch}
+  POSTGRES_USER: ${POSTGRES_USER:-teammatch}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in deploy/.env}
+  POSTGRES_HOST: teammatch-db
+  POSTGRES_PORT: "5432"
+  REDIS_URL: redis://teammatch-redis:6379/0
+  S3_ENDPOINT_URL: http://teammatch-storage:8333
+  S3_BUCKET: ${S3_BUCKET:-teammatch-media}
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:?set in deploy/.env}
+  S3_SECRET_KEY: ${S3_SECRET_KEY:?set in deploy/.env}
+  EMAIL_URL: ${EMAIL_URL:-consolemail://}
+  DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-TeamMatch <no-reply@sijancodes.com>}
+  TZ: ${TZ:-America/Chicago}
+
+services:
+  teammatch-db:
+    <<: *app
+    image: postgres:17.11-alpine
+    container_name: teammatch-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-teammatch}
+      POSTGRES_USER: ${POSTGRES_USER:-teammatch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in deploy/.env}
+      TZ: ${TZ:-America/Chicago}
+    volumes:
+      - teammatch_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  teammatch-redis:
+    <<: *app
+    image: redis:8.8-alpine
+    container_name: teammatch-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - teammatch_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  teammatch-storage:
+    <<: *app
+    image: chrislusf/seaweedfs:4.47
+    container_name: teammatch-storage
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:?set in deploy/.env}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?set in deploy/.env}
+    # write the S3 identity from env so no keys live in the repo
+    entrypoint:
+      - sh
+      - -c
+      - |
+        printf '{"identities":[{"name":"app","credentials":[{"accessKey":"%s","secretKey":"%s"}],"actions":["Admin","Read","Write","List","Tagging"]}]}' "$$S3_ACCESS_KEY" "$$S3_SECRET_KEY" > /tmp/s3.json
+        exec weed server -dir=/data -s3 -s3.port=8333 -s3.config=/tmp/s3.json -master.volumeSizeLimitMB=256 -volume.max=0
+    volumes:
+      - teammatch_s3data:/data
+    healthcheck:
+      # 127.0.0.1, not localhost: localhost resolves to ::1 here and weed listens on IPv4
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9333/cluster/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  teammatch-storage-init:
+    <<: *app
+    image: chrislusf/seaweedfs:4.47
+    container_name: teammatch-storage-init
+    restart: "no"
+    environment:
+      S3_BUCKET: ${S3_BUCKET:-teammatch-media}
+    entrypoint: ["sh", "-c", "echo \"s3.bucket.create -name $$S3_BUCKET\" | weed shell -master=teammatch-storage:9333"]
+    depends_on:
+      teammatch-storage:
+        condition: service_healthy
+
+  teammatch-migrate:
+    <<: *app
+    image: ghcr.io/season101/teammatch-api:${TEAMMATCH_VERSION:?set in deploy/.env}
+    container_name: teammatch-migrate
+    restart: "no"
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    environment: *api-env
+    depends_on:
+      teammatch-db:
+        condition: service_healthy
+
+  teammatch-api:
+    <<: *app
+    image: ghcr.io/season101/teammatch-api:${TEAMMATCH_VERSION:?set in deploy/.env}
+    container_name: teammatch-api
+    environment: *api-env
+    networks:
+      - teammatch
+      - t3_proxy
+    depends_on:
+      teammatch-db:
+        condition: service_healthy
+      teammatch-redis:
+        condition: service_healthy
+      teammatch-storage:
+        condition: service_healthy
+      teammatch-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=t3_proxy
+      # API paths on the shared host win over the web catch-all
+      - traefik.http.routers.teammatch-api.rule=Host(`${TEAMMATCH_HOST:-teammatch.sijancodes.com}`) && (PathPrefix(`/api`) || PathPrefix(`/ws`) || PathPrefix(`/admin`) || PathPrefix(`/static`) || PathPrefix(`/_allauth`))
+      - traefik.http.routers.teammatch-api.priority=100
+      - traefik.http.routers.teammatch-api.entrypoints=websecure
+      - traefik.http.routers.teammatch-api.tls=true
+      - traefik.http.routers.teammatch-api.tls.certresolver=letsencrypt
+      - traefik.http.routers.teammatch-api.service=teammatch-api
+      - traefik.http.services.teammatch-api.loadbalancer.server.port=8000
+
+  teammatch-web:
+    <<: *app
+    image: ghcr.io/season101/teammatch-web:${TEAMMATCH_VERSION:?set in deploy/.env}
+    container_name: teammatch-web
+    environment:
+      TZ: ${TZ:-America/Chicago}
+    networks:
+      - teammatch
+      - t3_proxy
+    depends_on:
+      teammatch-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=t3_proxy
+      - traefik.http.routers.teammatch-web.rule=Host(`${TEAMMATCH_HOST:-teammatch.sijancodes.com}`)
+      - traefik.http.routers.teammatch-web.priority=1
+      - traefik.http.routers.teammatch-web.entrypoints=websecure
+      - traefik.http.routers.teammatch-web.tls=true
+      - traefik.http.routers.teammatch-web.tls.certresolver=letsencrypt
+      - traefik.http.routers.teammatch-web.service=teammatch-web
+      - traefik.http.services.teammatch-web.loadbalancer.server.port=3000
+
+volumes:
+  teammatch_pgdata:
+    name: teammatch_pgdata
+  teammatch_redisdata:
+    name: teammatch_redisdata
+  teammatch_s3data:
+    name: teammatch_s3data
+
+networks:
+  teammatch:
+    name: teammatch
+    driver: bridge
+  t3_proxy:
+    external: true

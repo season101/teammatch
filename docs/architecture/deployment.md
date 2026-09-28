@@ -21,9 +21,9 @@ flowchart TB
         subgraph priv ["network teammatch - private"]
             web["teammatch-web<br/>Next.js :3000"]
             api["teammatch-api<br/>Django ASGI :8000"]
-            storage["teammatch-storage<br/>S3 :9000"]
+            storage["teammatch-storage<br/>S3 :8333"]
             db[("teammatch-db<br/>Postgres 17")]
-            redis[("teammatch-redis<br/>Redis 7")]
+            redis[("teammatch-redis<br/>Redis 8")]
             migrate["teammatch-migrate<br/>one-shot"]
             minit["teammatch-storage-init<br/>one-shot"]
         end
@@ -86,49 +86,47 @@ Routing details:
 | Aspect | Local (`compose.local.yml`) | Prod (`deploy/teammatch.prod.yml`) |
 |---|---|---|
 | Images | built from source, bind-mounted code | `ghcr.io/season101/teammatch-api` and `-web` at a version tag |
-| api server | `uvicorn --reload` | `uvicorn` with workers, no reload |
+| api server | `uvicorn --reload` | `uvicorn --workers 2`, no reload |
 | web server | `next dev` | `node server.js` (standalone build) |
 | Entry | `localhost:3000`, Next rewrites `/api`, `/_allauth`, `/ws` to api | Traefik routers on one host |
-| Ports | 3000, 8000, 9000/9001 published to localhost | none published |
-| Files host | none needed (SeaweedFS console on `localhost:9001` for debugging) | none in MVP, SeaweedFS internal-only; `teammatch-files.sijancodes.com` is future |
+| Ports | 3000, 8000, 5432, 6379, 8333 published to localhost | none published |
+| Files host | none needed (SeaweedFS S3 on `localhost:8333` for debugging) | none in MVP, SeaweedFS internal-only; `teammatch-files.sijancodes.com` is future |
 | TLS | none | Traefik + Let's Encrypt wildcard |
 | Settings | `config.settings.local`, `DEBUG=1` | `config.settings.prod`, `DEBUG=0`, secure cookies, HSTS |
 | Email | console backend | SMTP |
-| Secrets | `.env` from `.env.example`, dev defaults ok | `deploy/.env`, no defaults for secrets |
+| Secrets | `.env` from `.env.example`, dev defaults ok | `deploy/.env` (template in [deploy/README.md](../../deploy/README.md)), no defaults for secrets |
 | Networks | one default network | `t3_proxy` (external) + `teammatch` |
 | Profiles | none | `apps`, `all` |
 
 ## Environment variables
 
-Names only; see `.env.example` and `deploy/.env.prod.example` for comments.
+Names only; see `.env.example` and [deploy/README.md](../../deploy/README.md). Variables marked *later* aren't read yet.
 
 | Variable | Used by | Notes |
 |---|---|---|
 | `DJANGO_SETTINGS_MODULE` | api | `config.settings.prod` in prod |
 | `DJANGO_SECRET_KEY` | api | required |
-| `DJANGO_ALLOWED_HOSTS` | api | |
-| `DJANGO_CSRF_TRUSTED_ORIGINS` | api | |
+| `DJANGO_ALLOWED_HOSTS` | api | set by the compose file from `TEAMMATCH_HOST` |
+| `DJANGO_CSRF_TRUSTED_ORIGINS` | api | set by the compose file from `TEAMMATCH_HOST` |
 | `DJANGO_DEBUG` | api | |
-| `PUBLIC_BASE_URL` | api, web | |
-| `DATABASE_URL` | api, migrate | built from the Postgres vars |
+| `TEAMMATCH_HOST` | compose | public host for routers and allowed hosts |
+| `PUBLIC_BASE_URL` | api, web | *later* |
+| `DATABASE_URL` | api, migrate | optional; built from the Postgres vars plus `POSTGRES_HOST`/`POSTGRES_PORT` when unset |
 | `POSTGRES_DB` | db | |
 | `POSTGRES_USER` | db | |
 | `POSTGRES_PASSWORD` | db | required |
 | `REDIS_URL` | api | |
-| `ALLOWED_EMAIL_DOMAINS` | api | comma separated |
-| `GOOGLE_CLIENT_ID` | api | |
-| `GOOGLE_CLIENT_SECRET` | api | required in prod |
-| `EMAIL_URL` | api | SMTP connection |
+| `ALLOWED_EMAIL_DOMAINS` | api | comma separated, *later* (F1-06) |
+| `GOOGLE_CLIENT_ID` | api | *later* (F1-05) |
+| `GOOGLE_CLIENT_SECRET` | api | required in prod, *later* (F1-05) |
+| `EMAIL_URL` | api | `smtp+tls://...`, or `consolemail://` to log emails |
 | `DEFAULT_FROM_EMAIL` | api | |
-| `AWS_S3_ENDPOINT_URL` | api | internal, `http://teammatch-storage:8333` |
-| `AWS_S3_PUBLIC_ENDPOINT_URL` | api | future only, host used when signing URLs for the files host |
-| `AWS_STORAGE_BUCKET_NAME` | api, storage-init | |
-| `AWS_ACCESS_KEY_ID` | api, storage-init | app user, not root |
-| `AWS_SECRET_ACCESS_KEY` | api, storage-init | required |
-| `S3_ACCESS_KEY` | storage, api | |
+| `S3_ENDPOINT_URL` | api | internal, `http://teammatch-storage:8333` (set by the compose file) |
+| `S3_BUCKET` | api, storage-init | |
+| `S3_ACCESS_KEY` | storage, api | required |
 | `S3_SECRET_KEY` | storage, api | required |
-| `API_INTERNAL_URL` | web | `http://teammatch-api:8000` for server-side fetch |
-| `NEXT_PUBLIC_WS_PATH` | web | `/ws` |
+| `API_INTERNAL_URL` | web | build arg, `http://teammatch-api:8000`, baked into the Next rewrites |
+| `NEXT_PUBLIC_WS_PATH` | web | `/ws`, *later* |
 | `TEAMMATCH_VERSION` | compose | image tag to run |
 | `TZ` | all | |
 
@@ -139,8 +137,8 @@ Names only; see `.env.example` and `deploy/.env.prod.example` for comments.
 | `GET /healthz` | process is up, no dependencies | compose healthcheck for api |
 | `GET /readyz` | db query + redis ping, returns 503 if either fails | deploy verification, manual checks |
 
-These paths are not in the api router prefixes, so they are only reached inside the stack (compose healthcheck or `docker compose exec teammatch-api curl -fsS localhost:8000/readyz`). Public traffic to `/healthz` lands on `web`.
+These paths are not in the api router prefixes, so they are only reached inside the stack (compose healthcheck, or `docker exec teammatch-api python -c "import urllib.request as u; print(u.urlopen('http://127.0.0.1:8000/readyz').read())"`; the image has no curl). Public traffic to `/healthz` lands on `web`.
 
-Other healthchecks: `pg_isready` for db, `redis-cli ping` for redis, `mc ready local` for SeaweedFS, `wget /` for web. `web` waits for `api` healthy, `api` waits for `db`, `redis`, `storage` healthy and `migrate` completed.
+Other healthchecks: `pg_isready` for db, `redis-cli ping` for redis, `wget 127.0.0.1:9333/cluster/status` for SeaweedFS, `wget /` for web. `web` waits for `api` healthy, `api` waits for `db`, `redis`, `storage` healthy and `migrate` completed.
 
 Deploy steps are in [cicd.md](cicd.md#manual-deploy).

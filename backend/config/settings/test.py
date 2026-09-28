@@ -1,7 +1,5 @@
 import os
 
-from . import hostenv  # noqa: F401
-
 os.environ.setdefault("DJANGO_SECRET_KEY", "test-only")
 
 from .base import *  # noqa: E402, F403
