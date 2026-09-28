@@ -36,7 +36,7 @@ frontend/             Next.js web app, feature folders under src/features/
 packages/api-client/  TypeScript client generated from backend/schema.yml
 deploy/               production compose for the server
 docs/                 product, planning, architecture, deliverables
-compose.local.yml     local Postgres, Redis, and SeaweedFS
+compose.local.yml     local stack: web, api, Postgres, Redis, SeaweedFS
 Makefile              shortcuts for everything below
 ```
 
@@ -46,14 +46,18 @@ You need Docker with Compose v2, Python 3.11+ with [uv](https://docs.astral.sh/u
 
 ```bash
 make setup   # copy .env.example to .env (then change the passwords)
-make up      # start postgres, redis, storage
+make up      # build and start web, api, postgres, redis, storage
 make ps      # everything should say healthy
 ```
+
+Open http://localhost:3000. The homepage shows a live status card for the API, database, and Redis.
 
 Local services:
 
 | Service | Port | Notes |
 |---|---|---|
+| Web | 3000 | Next.js dev server, hot reload. Proxies `/api`, `/_allauth`, `/ws` to the api |
+| API | 8000 | Django under uvicorn with `--reload`. Runs migrations on start. `/api/docs/` has Swagger |
 | Postgres | 5432 | db, user, and password come from `.env` |
 | Redis | 6379 | channel layer for chat |
 | SeaweedFS S3 | 8333 | the bucket gets created on first `make up` |
@@ -64,11 +68,17 @@ Other commands:
 make logs s=db   # follow logs for one service
 make down        # stop the stack
 make reset       # stop and wipe local data
-make check       # lint, typecheck, tests, build (same as CI)
+make build       # rebuild api/web after adding a dependency
+make schema      # regenerate backend/schema.yml and packages/api-client
+make check       # lint, typecheck, tests, build (same as CI; needs db and redis up)
 make help        # list everything
 ```
 
-Ports can be changed in `.env` (`POSTGRES_PORT`, `REDIS_PORT`, `S3_PORT`) if something else on your machine is already using them.
+Ports can be changed in `.env` (`WEB_PORT`, `API_PORT`, `POSTGRES_PORT`, `REDIS_PORT`, `S3_PORT`) if something else on your machine is already using them.
+
+You can also run either side on the host while the rest stays in Docker: `cd backend && uv run uvicorn config.asgi:application --reload` reads the repo `.env` and talks to the compose ports, and `cd frontend && pnpm dev` proxies to `localhost:8000`. Stop the matching container first (`docker compose -f compose.local.yml stop api`).
+
+Health checks: `/healthz` (process is up, no dependencies), `/readyz` (db + redis, 503 if either is down), and `/api/v1/health/` (same report as `/readyz`, always 200, used by the homepage).
 
 ## Ground rules
 
@@ -92,6 +102,7 @@ Ports can be changed in `.env` (`POSTGRES_PORT`, `REDIS_PORT`, `S3_PORT`) if som
 - Routes: API under `/api/v1/`, auth under `/_allauth/`, WebSockets under `/ws/`.
 - Default permission is `IsAuthenticated`. Object checks go in the view or a permission class, not the serializer.
 - `/healthz` touches nothing. `/readyz` checks the db and redis.
+- Settings for host runs come from the repo-root `.env` (see `config/settings/hostenv.py`), so there's no second env file.
 
 ### Frontend conventions
 

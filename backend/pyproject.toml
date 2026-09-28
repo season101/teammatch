@@ -1,0 +1,37 @@
+[project]
+name = "teammatch-api"
+version = "0.1.0"
+description = "TeamMatch API"
+requires-python = ">=3.12"
+dependencies = [
+    "channels>=4.3.2",
+    "channels-redis>=4.3.0",
+    "django>=5.2,<5.3",
+    "django-allauth[socialaccount]>=65.19.4",
+    "django-environ>=0.14.0",
+    "django-storages[s3]>=1.14.6",
+    "djangorestframework>=3.18.1",
+    "drf-spectacular>=0.30.0",
+    "psycopg[binary]>=3.3.6",
+    "redis>=8.1.0",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-django>=4.14.0",
+    "ruff>=0.16.9",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["**/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["tests.py", "test_*.py"]

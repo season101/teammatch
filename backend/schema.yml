@@ -1,0 +1,74 @@
+openapi: 3.0.3
+info:
+  title: TeamMatch API
+  version: 1.0.0
+  description: Role-based team formation for CSC 5323.
+paths:
+  /api/v1/health/:
+    get:
+      operationId: health_retrieve
+      tags:
+      - health
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+          description: ''
+components:
+  schemas:
+    Check:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        latency_ms:
+          type: number
+          format: double
+        error:
+          type: string
+          nullable: true
+      required:
+      - error
+      - latency_ms
+      - ok
+    Checks:
+      type: object
+      properties:
+        database:
+          $ref: '#/components/schemas/Check'
+        redis:
+          $ref: '#/components/schemas/Check'
+      required:
+      - database
+      - redis
+    Health:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        version:
+          type: string
+        checks:
+          $ref: '#/components/schemas/Checks'
+      required:
+      - checks
+      - status
+      - version
+    StatusEnum:
+      enum:
+      - ok
+      - degraded
+      type: string
+      description: |-
+        * `ok` - ok
+        * `degraded` - degraded
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

@@ -1,0 +1,13 @@
+# web image build context (repo root)
+.git
+.env
+.env.*
+!.env.example
+**/node_modules
+**/.next
+**/.venv
+docs
+backend
+deploy
+**/CLAUDE.md
+**/AGENTS.md
