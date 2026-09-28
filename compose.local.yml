@@ -1,5 +1,5 @@
-# Local dev stack. api and web get added here once backend/ and frontend/ exist.
-name: teammatch
+# Local dev stack: web on :3000, api on :8000, plus postgres, redis, and seaweedfs.
+name: teammatch-local
 
 services:
   db:
@@ -48,7 +48,7 @@ services:
     volumes:
       - s3data:/data
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:9333/cluster/status"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9333/cluster/status"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -62,6 +62,68 @@ services:
       S3_BUCKET: ${S3_BUCKET:-teammatch-media}
     entrypoint: ["sh", "-c", "echo \"s3.bucket.create -name $$S3_BUCKET\" | weed shell -master=storage:9333"]
     restart: "no"
+
+  api:
+    build:
+      context: backend
+      target: dev
+    restart: unless-stopped
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT_URL: http://storage:8333
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET:-teammatch-media}
+    command: sh -c "python manage.py migrate --noinput && exec uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --reload"
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: dev
+    restart: unless-stopped
+    environment:
+      API_INTERNAL_URL: http://api:8000
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    volumes:
+      - ./frontend:/repo/frontend
+      - ./packages:/repo/packages
+      # keep the image's node_modules and build cache, not the host's
+      - /repo/frontend/node_modules
+      - /repo/frontend/.next
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
 
 volumes:
   pgdata:
