@@ -101,13 +101,13 @@ jobs:
       - uses: docker/setup-buildx-action@v4
       - name: build api image
         if: needs.detect.outputs.backend == 'true'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: backend
           push: false
       - name: build web image
         if: needs.detect.outputs.frontend == 'true'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: frontend/Dockerfile
