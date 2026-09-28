@@ -14,7 +14,8 @@ CMD ["pnpm", "dev", "--hostname", "0.0.0.0"]
 
 FROM deps AS build
 ENV NEXT_TELEMETRY_DISABLED=1
-ARG API_INTERNAL_URL=http://api:8000
+# baked into the rewrites at build time; prod service name
+ARG API_INTERNAL_URL=http://teammatch-api:8000
 ENV API_INTERNAL_URL=$API_INTERNAL_URL
 COPY packages /repo/packages
 COPY frontend /repo/frontend

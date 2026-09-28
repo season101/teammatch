@@ -70,6 +70,7 @@ Each story is written so it can be pasted into a GitHub issue (User Story templa
 | PL-02 | CI pipeline | Lead | S0 | 5 | Must |
 | PL-03 | Project board and issue templates | Lead | S0 | 3 | Must |
 | PL-04 | OpenAPI schema and generated client | Lead | S0 | 4 | Must |
+| PL-15 | Production compose for sitashma-infra | Lead | S0 | 3 | Must |
 
 Load per member: 8 h stories + 2 h team tax = 10 h every sprint.
 
@@ -482,6 +483,14 @@ As a developer, I want the API contract generated and committed so that frontend
 - Given the schema or client is stale, then CI fails.
 
 Sprint S0 | 4 h | Must | Lead, before S1, outside the 30 h budget
+
+### PL-15 Production compose for sitashma-infra
+As a team, we want a production compose file for sitashma-infra so that the first deploy (PL-05) is just "set the env, pull, up".
+- Given `deploy/teammatch.prod.yml` and a `deploy/.env`, when I run it standalone or through the infra `include:`, then db, redis, storage, migrate, api, and web come up healthy with no published ports.
+- Given Traefik on `t3_proxy`, then `/api`, `/ws`, `/admin`, `/static`, `/_allauth` route to the api and everything else to web.
+- Given a missing secret, then compose refuses to start.
+
+Sprint S0 | 3 h | Must | Lead, before S1, outside the 30 h budget
 
 ---
 

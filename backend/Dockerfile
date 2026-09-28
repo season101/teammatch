@@ -18,7 +18,8 @@ ENV UV_COMPILE_BYTECODE=1 DJANGO_SETTINGS_MODULE=config.settings.prod
 COPY pyproject.toml uv.lock .python-version ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY . .
+RUN DJANGO_SECRET_KEY=build-only python manage.py collectstatic --noinput
 RUN useradd --system --uid 10001 app
 USER app
 EXPOSE 8000
-CMD ["uvicorn", "config.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+CMD ["uvicorn", "config.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--proxy-headers", "--forwarded-allow-ips", "*"]

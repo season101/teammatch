@@ -86,7 +86,7 @@ Deploys follow the sitashma-infra convention and are done by hand after a releas
    ```
 4. Verify:
    - `docker compose ps` shows `teammatch-*` healthy and `teammatch-migrate` exited 0.
-   - `docker compose exec teammatch-api curl -fsS localhost:8000/readyz` returns 200.
+   - `docker exec teammatch-api python -c "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/readyz')"` exits 0 (200).
    - `https://teammatch.sijancodes.com` loads, login works, `/api/v1/me/` returns 200 when logged in.
    - Chat page connects (WS 101 in browser devtools).
 5. Rollback: set `TEAMMATCH_VERSION` to the previous tag and repeat step 3. Migrations must stay backward compatible for one release so this works.
