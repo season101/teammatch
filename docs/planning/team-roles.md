@@ -1,6 +1,6 @@
 # TeamMatch - Team Roles and Task Split
 
-The work is split into four slots, one per epic. **Each member picks their own slot.** Nobody is assigned a slot by someone else. Once everyone has picked, put your name in the table below and set yourself as Owner on your epic's issues.
+The work is split into four slots, one per epic. Each member owns one slot (picked 10/1, names in the table below). Set yourself as Owner on your epic's issues.
 
 Each slot owns one feature end to end (backend models and API, frontend screens, tests) so everyone has their own commits in every sprint, which matters since implementation is graded per student.
 
@@ -10,10 +10,10 @@ Everyone works 10 h per sprint: 8 h of stories in their slot + 2 h team tax (1 h
 
 | Slot | Name | Epic | Owns | Sprint 1 (8 h) | Sprint 2 (8 h) | Sprint 3 (8 h) |
 |---|---|---|---|---|---|---|
-| A | _(pick)_ | F1 Accounts & Profiles | Sign up/in, Google, domain allowlist, profile, skills, retire + term reset, avatar, admin | F1-01 (2), F1-02 (2), F1-03 (2), F1-04 (2) | F1-05 (3), F1-06 (2), F1-08 (3) | F1-07 (4), PL-07 (2), buffer (2) |
-| B | _(pick)_ | F2 Projects & Roles | Projects, roles, browse, detail, edit/close, delete role, PWA, search, responsive | F2-01 (3), F2-02 (3), F2-03 (2) | F2-04 (2), F2-05 (3), F2-06 (2), buffer (1) | F2-08 (3), F2-07 (3), F2-10 (2) |
-| C | _(pick)_ | F3 Swipe Feed & Applications | Role card, feed, apply, swipe deck, pass, my applications, ranking, controls, undo | F3-08 (2), F3-01 (3), F3-02 (3) | F3-03 (4), F3-05 (1), F3-06 (3) | F3-04 (3), F3-09 (1), F3-10 (2), buffer (2) |
-| D | _(pick)_ | F4 Review, Match & Team Chat | Applicants, like/pass, team model, review queue, fill + lock, auto-withdraw, chat | F4-01 (3), F4-02 (2), F4-03 (3) | F4-04 (3), F4-05 (3), F4-07 (2) | F4-08 (6), F4-09 (2) |
+| A | Weibo Zhang | F1 Accounts & Profiles | Sign up/in, Google, domain allowlist, profile, skills, retire + term reset, avatar, admin | F1-01 (2), F1-02 (2), F1-03 (2), F1-04 (2) | F1-05 (3), F1-06 (2), F1-08 (3) | F1-07 (4), PL-07 (2), buffer (2) |
+| B | Shree Krishna Shrestha | F2 Projects & Roles | Projects, roles, browse, detail, edit/close, delete role, PWA, search, responsive | F2-01 (3), F2-02 (3), F2-03 (2) | F2-04 (2), F2-05 (3), F2-06 (2), buffer (1) | F2-08 (3), F2-07 (3), F2-10 (2) |
+| C | Pavan Kumar Yadav Kolusu | F3 Swipe Feed & Applications | Role card, feed, apply, swipe deck, pass, my applications, ranking, controls, undo | F3-08 (2), F3-01 (3), F3-02 (3) | F3-03 (4), F3-05 (1), F3-06 (3) | F3-04 (3), F3-09 (1), F3-10 (2), buffer (2) |
+| D | Sijan Malla | F4 Review, Match & Team Chat | Applicants, like/pass, team model, review queue, fill + lock, auto-withdraw, chat | F4-01 (3), F4-02 (2), F4-03 (3) | F4-04 (3), F4-05 (3), F4-07 (2) | F4-08 (6), F4-09 (2) |
 
 ## Rotating chores
 
