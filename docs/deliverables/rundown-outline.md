@@ -1,17 +1,17 @@
 # Run-down PDF - Outline
 
-Outline for the run-down document due 9/29. Fill the placeholders, then export to PDF.
+Outline for the run-down document due 10/1. Fill the placeholders, then export to PDF.
 
 ## 1. Title block
-- **Team name:** _(team name)_
+- **Team name:** Dogs
 - **Project name:** TeamMatch
 - **Course:** CSC 5323 Advanced Software Engineering, Louisiana Tech, Fall 2026
 - **Members:**
-  - _(Member name)_ - Slot A, F1 Accounts & Profiles
-  - _(Member name)_ - Slot B, F2 Projects & Roles
-  - _(Member name)_ - Slot C, F3 Swipe Feed & Applications
-  - _(Member name)_ - Slot D, F4 Review, Match & Team Chat
-- **GitHub repo:** _(https://github.com/...)_
+  - Weibo Zhang - Slot A, F1 Accounts & Profiles
+  - Shree Krishna Shrestha - Slot B, F2 Projects & Roles
+  - Pavan Kumar Yadav Kolusu - Slot C, F3 Swipe Feed & Applications
+  - Sijan Malla - Slot D, F4 Review, Match & Team Chat
+- **GitHub repo:** https://github.com/season101/teammatch
 - **Scrum board / Sprint Planning spreadsheet:** _(link)_
 
 ## 2. Narrative (one paragraph)

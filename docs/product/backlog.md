@@ -81,7 +81,7 @@ Load per member: 8 h stories + 2 h team tax = 10 h every sprint.
 
 ---
 
-## F1 Accounts & Profiles (Member A)
+## F1 Accounts & Profiles (Member A, Weibo Zhang)
 
 ### F1-01 Sign up with email and password
 As a student, I want to sign up with my school email and a password so that I can use TeamMatch.
@@ -162,7 +162,7 @@ Future | 5 h | Won't this term
 
 ---
 
-## F2 Projects & Roles (Member B)
+## F2 Projects & Roles (Member B, Shree Krishna Shrestha)
 
 ### F2-01 Create a project
 As an owner, I want to create a project with a title and pitch so that I can recruit a team.
@@ -242,7 +242,7 @@ Future | 6 h | Won't this term. In the MVP, accessibility basics are part of the
 
 ---
 
-## F3 Swipe Feed & Applications (Member C)
+## F3 Swipe Feed & Applications (Member C, Pavan Kumar Yadav Kolusu)
 
 ### F3-08 Role card component
 As a candidate, I want each role shown as a clear card so that I can decide quickly.
@@ -321,7 +321,7 @@ Future | 6 h | Won't this term
 
 ---
 
-## F4 Review, Match & Team Chat (Member D)
+## F4 Review, Match & Team Chat (Member D, Sijan Malla)
 
 ### F4-01 See applicants per role
 As an owner, I want to see who applied to each role so that I can pick my team.

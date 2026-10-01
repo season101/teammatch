@@ -34,10 +34,10 @@ Per member per sprint:
 
 | Member | Sprint 1 | Sprint 2 | Sprint 3 | Total |
 |---|---|---|---|---|
-| A (F1) | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 30 |
-| B (F2) | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 30 |
-| C (F3) | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 30 |
-| D (F4) | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 30 |
+| A (F1, Weibo Zhang) | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 30 |
+| B (F2, Shree Krishna Shrestha) | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 30 |
+| C (F3, Pavan Kumar Yadav Kolusu) | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 30 |
+| D (F4, Sijan Malla) | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 30 |
 | **Team** | **40** | **40** | **40** | **120** |
 
 (stories + code review + chore)
@@ -104,10 +104,10 @@ By 10/6: everyone has run `make up`, and Sprint 1 stories are split into tasks, 
 
 | Member | Stories (8 h) | Review | Chore (pick one) | Total |
 |---|---|---|---|---|
-| A (F1) | F1-01 Email sign up (2), F1-02 Sign in/out (2), F1-03 Profile (2), F1-04 Skills (2) | 1 | 1 | 10 |
-| B (F2) | F2-01 Create project (3), F2-02 Roles with skills + publish (3), F2-03 List projects (2) | 1 | 1 | 10 |
-| C (F3) | F3-08 Role card (2), F3-01 Role feed (3), F3-02 Apply with note (3) | 1 | 1 | 10 |
-| D (F4) | F4-01 Applicants per role (3), F4-02 Like/pass (2), F4-03 Team model + lock rule (3) | 1 | 1 | 10 |
+| A (F1, Weibo Zhang) | F1-01 Email sign up (2), F1-02 Sign in/out (2), F1-03 Profile (2), F1-04 Skills (2) | 1 | 1 | 10 |
+| B (F2, Shree Krishna Shrestha) | F2-01 Create project (3), F2-02 Roles with skills + publish (3), F2-03 List projects (2) | 1 | 1 | 10 |
+| C (F3, Pavan Kumar Yadav Kolusu) | F3-08 Role card (2), F3-01 Role feed (3), F3-02 Apply with note (3) | 1 | 1 | 10 |
+| D (F4, Sijan Malla) | F4-01 Applicants per role (3), F4-02 Like/pass (2), F4-03 Team model + lock rule (3) | 1 | 1 | 10 |
 
 S1 chores (one each): PL-05 First production deploy, PL-10 Seed data script, PL-11 Burn chart + sprint report, PL-12 Wiki/docs page for the sprint's features.
 
@@ -117,10 +117,10 @@ S1 chores (one each): PL-05 First production deploy, PL-10 Seed data script, PL-
 
 | Member | Stories (8 h) | Review | Chore (pick one) | Total |
 |---|---|---|---|---|
-| A (F1) | F1-05 Google sign-in (3), F1-06 Domain allowlist (2), F1-08 Retired users blocked + term reset command (3) | 1 | 1 | 10 |
-| B (F2) | F2-04 Project detail (2), F2-05 Edit/close project (3), F2-06 Delete unfillable role (2), buffer (1) | 1 | 1 | 10 |
-| C (F3) | F3-03 Swipe deck (4), F3-05 Pass (1), F3-06 My applications + withdraw (3) | 1 | 1 | 10 |
-| D (F4) | F4-04 Review queue UI (3), F4-05 Mutual like fills role + team lock (3), F4-07 Auto-withdraw + call retire (2) | 1 | 1 | 10 |
+| A (F1, Weibo Zhang) | F1-05 Google sign-in (3), F1-06 Domain allowlist (2), F1-08 Retired users blocked + term reset command (3) | 1 | 1 | 10 |
+| B (F2, Shree Krishna Shrestha) | F2-04 Project detail (2), F2-05 Edit/close project (3), F2-06 Delete unfillable role (2), buffer (1) | 1 | 1 | 10 |
+| C (F3, Pavan Kumar Yadav Kolusu) | F3-03 Swipe deck (4), F3-05 Pass (1), F3-06 My applications + withdraw (3) | 1 | 1 | 10 |
+| D (F4, Sijan Malla) | F4-04 Review queue UI (3), F4-05 Mutual like fills role + team lock (3), F4-07 Auto-withdraw + call retire (2) | 1 | 1 | 10 |
 
 S2 chores (one each): PL-06 Cut release tag + deploy, PL-11 Burn chart + sprint report, PL-13 API docs refresh, PL-14 Playwright setup + smoke test.
 
@@ -130,10 +130,10 @@ S2 chores (one each): PL-06 Cut release tag + deploy, PL-11 Burn chart + sprint 
 
 | Member | Stories (8 h) | Review | Chore (pick one) | Total |
 |---|---|---|---|---|
-| A (F1) | F1-07 Avatar upload through the API (4), PL-07 Admin moderation (2), polish/bug buffer (2) | 1 | 1 | 10 |
-| B (F2) | F2-08 Installable PWA (3), F2-07 Search + skill filter (3), F2-10 Responsive pass (2) | 1 | 1 | 10 |
-| C (F3) | F3-04 Skill-overlap ranking (3), F3-09 Button/keyboard controls (1), F3-10 Undo last swipe (2), buffer (2) | 1 | 1 | 10 |
-| D (F4) | F4-08 Team chat over WebSocket (6), F4-09 Chat history + reconnect (2) | 1 | 1 | 10 |
+| A (F1, Weibo Zhang) | F1-07 Avatar upload through the API (4), PL-07 Admin moderation (2), polish/bug buffer (2) | 1 | 1 | 10 |
+| B (F2, Shree Krishna Shrestha) | F2-08 Installable PWA (3), F2-07 Search + skill filter (3), F2-10 Responsive pass (2) | 1 | 1 | 10 |
+| C (F3, Pavan Kumar Yadav Kolusu) | F3-04 Skill-overlap ranking (3), F3-09 Button/keyboard controls (1), F3-10 Undo last swipe (2), buffer (2) | 1 | 1 | 10 |
+| D (F4, Sijan Malla) | F4-08 Team chat over WebSocket (6), F4-09 Chat history + reconnect (2) | 1 | 1 | 10 |
 
 S3 chores (one each): PL-06 Final release + deploy, PL-11 Burn chart + sprint report, PL-08 Golden-path e2e test (extends PL-14), PL-09 Final README + docs.
 

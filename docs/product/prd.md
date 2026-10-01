@@ -53,10 +53,10 @@ A user can be both an owner and a candidate in the same term, but not on their o
 
 | Epic | Feature | Summary | Owner slot |
 |---|---|---|---|
-| F1 | Accounts & Profiles | Email/password and Google sign-in, email domain allowlist, profile with bio, major, skills, avatar (uploaded through the API), retire and term reset | Member A |
-| F2 | Projects & Roles | Create/edit/close a project, define roles with required skills, delete an unfillable role, browse and search, installable PWA, responsive pass | Member B |
-| F3 | Swipe Feed & Applications | Role card deck ranked by skill overlap, swipe to apply or pass, undo last swipe, my applications, withdraw | Member C |
-| F4 | Review, Match & Team Chat | Review queue per role, like/pass applicants, fill role on mutual like, auto team-lock, auto-withdraw and retire, real-time team chat | Member D |
+| F1 | Accounts & Profiles | Email/password and Google sign-in, email domain allowlist, profile with bio, major, skills, avatar (uploaded through the API), retire and term reset | Member A (Weibo Zhang) |
+| F2 | Projects & Roles | Create/edit/close a project, define roles with required skills, delete an unfillable role, browse and search, installable PWA, responsive pass | Member B (Shree Krishna Shrestha) |
+| F3 | Swipe Feed & Applications | Role card deck ranked by skill overlap, swipe to apply or pass, undo last swipe, my applications, withdraw | Member C (Pavan Kumar Yadav Kolusu) |
+| F4 | Review, Match & Team Chat | Review queue per role, like/pass applicants, fill role on mutual like, auto team-lock, auto-withdraw and retire, real-time team chat | Member D (Sijan Malla) |
 | Platform | Platform & DevOps | Repo scaffold, CI, contract (OpenAPI) by the lead before S1; deploys, releases, seed data, e2e test, docs as rotating 1 h chores; admin moderation (Member A) | Lead / rotating |
 
 Capacity: 4 members x 10 h per sprint x 3 sprints = 120 h. Each member does 8 h of stories + 1 h code review + 1 h rotating chore per sprint.

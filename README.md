@@ -121,14 +121,14 @@ Health checks: `/healthz` (process is up, no dependencies), `/readyz` (db + redi
 
 ### Epics and slots
 
-| Slot | Epic | Covers |
-|---|---|---|
-| A | F1 Accounts & Profiles | sign-up/in, Google, domain allowlist, profile, skills, avatar, retire + term reset, admin |
-| B | F2 Projects & Roles | create/edit/close projects, roles, browse and search, PWA, responsive pass |
-| C | F3 Swipe Feed & Applications | role card deck, ranking, apply/pass, undo, my applications |
-| D | F4 Review, Match & Team Chat | review queue, like/pass, fill + team lock, auto-withdraw, real-time chat |
+| Slot | Epic | Owner | Covers |
+|---|---|---|---|
+| A | F1 Accounts & Profiles | Weibo Zhang | sign-up/in, Google, domain allowlist, profile, skills, avatar, retire + term reset, admin |
+| B | F2 Projects & Roles | Shree Krishna Shrestha | create/edit/close projects, roles, browse and search, PWA, responsive pass |
+| C | F3 Swipe Feed & Applications | Pavan Kumar Yadav Kolusu | role card deck, ranking, apply/pass, undo, my applications |
+| D | F4 Review, Match & Team Chat | Sijan Malla | review queue, like/pass, fill + team lock, auto-withdraw, real-time chat |
 
-Everyone picks their own slot. Each sprint is 8 h of stories + 1 h of code review + 1 h of a rotating chore. Details are in [team-roles.md](docs/planning/team-roles.md).
+Each sprint is 8 h of stories + 1 h of code review + 1 h of a rotating chore. Details are in [team-roles.md](docs/planning/team-roles.md).
 
 ### Sprints
 
