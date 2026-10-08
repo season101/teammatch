@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { HealthStatus } from "@/features/health/health-status";
 
 const steps = [
@@ -21,6 +23,14 @@ export default function Home() {
           skills. Owners like or pass per role, and the team forms itself when every role is
           filled. Then team chat opens.
         </p>
+        <div>
+          <Link
+            href="/signup"
+            className="inline-flex rounded-lg bg-indigo-600 px-5 py-2.5 font-medium text-white hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            Sign up
+          </Link>
+        </div>
       </header>
 
       <section aria-labelledby="how-heading">
