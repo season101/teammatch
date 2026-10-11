@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["projects_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -35,7 +51,7 @@ export interface components {
             redis: components["schemas"]["Check"];
         };
         Health: {
-            status: components["schemas"]["StatusEnum"];
+            status: components["schemas"]["HealthStatusEnum"];
             version: string;
             checks: components["schemas"]["Checks"];
         };
@@ -44,7 +60,29 @@ export interface components {
          *     * `degraded` - degraded
          * @enum {string}
          */
-        StatusEnum: "ok" | "degraded";
+        HealthStatusEnum: "ok" | "degraded";
+        Project: {
+            readonly id: number;
+            title: string;
+            pitch: string;
+            readonly status: components["schemas"]["ProjectStatusEnum"];
+            readonly term: number;
+            readonly owner: number;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        ProjectRequest: {
+            title: string;
+            pitch: string;
+        };
+        /**
+         * @description * `draft` - Draft
+         *     * `open` - Open
+         *     * `locked` - Locked
+         *     * `archived` - Archived
+         * @enum {string}
+         */
+        ProjectStatusEnum: "draft" | "open" | "locked" | "archived";
     };
     responses: never;
     parameters: never;
@@ -69,6 +107,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Health"];
+                };
+            };
+        };
+    };
+    projects_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ProjectRequest"];
+                "multipart/form-data": components["schemas"]["ProjectRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
                 };
             };
         };
