@@ -10,6 +10,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("_allauth/", include("allauth.headless.urls")),
     path("api/v1/", include("apps.core.urls")),
+    path("api/v1/", include("apps.matching.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="docs"),
 ]
