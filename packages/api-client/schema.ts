@@ -20,6 +20,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/profile/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET or PATCH the signed-in user's own profile. */
+        get: operations["me_profile_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description GET or PATCH the signed-in user's own profile. */
+        patch: operations["me_profile_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/profiles/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Someone's public profile. Editing it is owner-only (403 otherwise). */
+        get: operations["profiles_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Someone's public profile. Editing it is owner-only (403 otherwise). */
+        patch: operations["profiles_partial_update"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -38,6 +74,30 @@ export interface components {
             status: components["schemas"]["StatusEnum"];
             version: string;
             checks: components["schemas"]["Checks"];
+        };
+        MyProfile: {
+            readonly id: number;
+            display_name?: string;
+            bio?: string;
+            major?: string;
+            /** Format: email */
+            readonly email: string;
+        };
+        PatchedMyProfileRequest: {
+            display_name?: string;
+            bio?: string;
+            major?: string;
+        };
+        PatchedProfileRequest: {
+            display_name?: string;
+            bio?: string;
+            major?: string;
+        };
+        Profile: {
+            readonly id: number;
+            display_name?: string;
+            bio?: string;
+            major?: string;
         };
         /**
          * @description * `ok` - ok
@@ -69,6 +129,98 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Health"];
+                };
+            };
+        };
+    };
+    me_profile_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyProfile"];
+                };
+            };
+        };
+    };
+    me_profile_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedMyProfileRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedMyProfileRequest"];
+                "multipart/form-data": components["schemas"]["PatchedMyProfileRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyProfile"];
+                };
+            };
+        };
+    };
+    profiles_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Profile"];
+                };
+            };
+        };
+    };
+    profiles_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedProfileRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedProfileRequest"];
+                "multipart/form-data": components["schemas"]["PatchedProfileRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Profile"];
                 };
             };
         };
