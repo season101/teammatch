@@ -257,7 +257,10 @@ export interface operations {
     };
     skills_list: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Filter by name, ignoring case. */
+                q?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
