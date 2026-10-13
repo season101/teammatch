@@ -1,3 +1,4 @@
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 
@@ -27,6 +28,9 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
     http_method_names = ["get", "patch"]
 
 
+@extend_schema(
+    parameters=[OpenApiParameter("q", str, description="Filter by name, ignoring case.")]
+)
 class SkillListView(generics.ListAPIView):
     """The skill list for pickers. ?q= filters by name. Small list, so no paging."""
 

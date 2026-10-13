@@ -60,6 +60,15 @@ def test_unknown_skill_is_rejected(client, sam):
     assert "skill_ids" in response.json()
 
 
+def test_too_many_skills_is_rejected(client, sam):
+    ids = list(Skill.objects.values_list("id", flat=True)[:21])
+    response = client.patch(
+        "/api/v1/me/profile/", {"skill_ids": ids}, content_type="application/json"
+    )
+    assert response.status_code == 400
+    assert "skill_ids" in response.json()
+
+
 def test_public_profile_shows_skills(client, sam):
     alex = User.objects.create_user("alex@latech.edu", "a-long-password")
     profile = Profile.objects.create(user=alex)

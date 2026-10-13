@@ -116,6 +116,12 @@ paths:
       operationId: skills_list
       description: The skill list for pickers. ?q= filters by name. Small list, so
         no paging.
+      parameters:
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Filter by name, ignoring case.
       tags:
       - skills
       security:
@@ -213,8 +219,9 @@ components:
           type: array
           items:
             type: integer
-            writeOnly: true
+            minimum: 1
           writeOnly: true
+          maxItems: 20
     PatchedProfileRequest:
       type: object
       properties:
@@ -231,8 +238,9 @@ components:
           type: array
           items:
             type: integer
-            writeOnly: true
+            minimum: 1
           writeOnly: true
+          maxItems: 20
     Profile:
       type: object
       properties:
