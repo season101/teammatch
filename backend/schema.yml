@@ -19,6 +19,98 @@ paths:
               schema:
                 $ref: '#/components/schemas/Health'
           description: ''
+  /api/v1/me/profile/:
+    get:
+      operationId: me_profile_retrieve
+      description: GET or PATCH the signed-in user's own profile.
+      tags:
+      - me
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyProfile'
+          description: ''
+    patch:
+      operationId: me_profile_partial_update
+      description: GET or PATCH the signed-in user's own profile.
+      tags:
+      - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMyProfileRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMyProfileRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMyProfileRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyProfile'
+          description: ''
+  /api/v1/profiles/{id}/:
+    get:
+      operationId: profiles_retrieve
+      description: Someone's public profile. Editing it is owner-only (403 otherwise).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - profiles
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+          description: ''
+    patch:
+      operationId: profiles_partial_update
+      description: Someone's public profile. Editing it is owner-only (403 otherwise).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - profiles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProfileRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProfileRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProfileRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+          description: ''
   /api/v1/projects/:
     post:
       operationId: projects_create
@@ -93,6 +185,69 @@ components:
       description: |-
         * `ok` - ok
         * `degraded` - degraded
+    MyProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        display_name:
+          type: string
+          maxLength: 80
+        bio:
+          type: string
+          maxLength: 500
+        major:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          readOnly: true
+      required:
+      - email
+      - id
+    PatchedMyProfileRequest:
+      type: object
+      properties:
+        display_name:
+          type: string
+          maxLength: 80
+        bio:
+          type: string
+          maxLength: 500
+        major:
+          type: string
+          maxLength: 100
+    PatchedProfileRequest:
+      type: object
+      properties:
+        display_name:
+          type: string
+          maxLength: 80
+        bio:
+          type: string
+          maxLength: 500
+        major:
+          type: string
+          maxLength: 100
+    Profile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        display_name:
+          type: string
+          maxLength: 80
+        bio:
+          type: string
+          maxLength: 500
+        major:
+          type: string
+          maxLength: 100
+      required:
+      - id
     Project:
       type: object
       properties:
