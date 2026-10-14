@@ -72,6 +72,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/skills/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The skill list for pickers. ?q= filters by name. Small list, so no paging. */
+        get: operations["skills_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -102,6 +119,7 @@ export interface components {
             display_name?: string;
             bio?: string;
             major?: string;
+            readonly skills: components["schemas"]["Skill"][];
             /** Format: email */
             readonly email: string;
         };
@@ -109,17 +127,20 @@ export interface components {
             display_name?: string;
             bio?: string;
             major?: string;
+            skill_ids?: number[];
         };
         PatchedProfileRequest: {
             display_name?: string;
             bio?: string;
             major?: string;
+            skill_ids?: number[];
         };
         Profile: {
             readonly id: number;
             display_name?: string;
             bio?: string;
             major?: string;
+            readonly skills: components["schemas"]["Skill"][];
         };
         Project: {
             readonly id: number;
@@ -143,6 +164,15 @@ export interface components {
          * @enum {string}
          */
         ProjectStatusEnum: "draft" | "open" | "locked" | "archived";
+        Skill: {
+            readonly id: number;
+            name: string;
+            slug: string;
+        };
+        SkillRequest: {
+            name: string;
+            slug: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -284,6 +314,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Project"];
+                };
+            };
+        };
+    };
+    skills_list: {
+        parameters: {
+            query?: {
+                /** @description Filter by name, ignoring case. */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Skill"][];
                 };
             };
         };
