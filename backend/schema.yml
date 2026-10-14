@@ -111,6 +111,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/Profile'
           description: ''
+  /api/v1/projects/:
+    post:
+      operationId: projects_create
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
   /api/v1/skills/:
     get:
       operationId: skills_list
@@ -166,7 +192,7 @@ components:
       type: object
       properties:
         status:
-          $ref: '#/components/schemas/StatusEnum'
+          $ref: '#/components/schemas/HealthStatusEnum'
         version:
           type: string
         checks:
@@ -175,6 +201,14 @@ components:
       - checks
       - status
       - version
+    HealthStatusEnum:
+      enum:
+      - ok
+      - degraded
+      type: string
+      description: |-
+        * `ok` - ok
+        * `degraded` - degraded
     MyProfile:
       type: object
       properties:
@@ -264,6 +298,66 @@ components:
       required:
       - id
       - skills
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        pitch:
+          type: string
+          maxLength: 2000
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ProjectStatusEnum'
+          readOnly: true
+        term:
+          type: integer
+          readOnly: true
+        owner:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - owner
+      - pitch
+      - status
+      - term
+      - title
+    ProjectRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+        pitch:
+          type: string
+          minLength: 1
+          maxLength: 2000
+      required:
+      - pitch
+      - title
+    ProjectStatusEnum:
+      enum:
+      - draft
+      - open
+      - locked
+      - archived
+      type: string
+      description: |-
+        * `draft` - Draft
+        * `open` - Open
+        * `locked` - Locked
+        * `archived` - Archived
     Skill:
       type: object
       properties:
@@ -296,14 +390,6 @@ components:
       required:
       - name
       - slug
-    StatusEnum:
-      enum:
-      - ok
-      - degraded
-      type: string
-      description: |-
-        * `ok` - ok
-        * `degraded` - degraded
   securitySchemes:
     cookieAuth:
       type: apiKey
