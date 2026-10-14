@@ -100,10 +100,12 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_UNIQUE_EMAIL = True
 HEADLESS_ONLY = True
 HEADLESS_CLIENTS = ("browser", "app")
+# Absolute: behind the Next rewrite Django sees the API's Host, so relative links hit the API.
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
 HEADLESS_FRONTEND_URLS = {
-    "account_confirm_email": "/verify-email/{key}",
-    "account_reset_password_from_key": "/reset-password/{key}",
-    "account_signup": "/signup",
+    "account_confirm_email": f"{FRONTEND_URL}/verify-email/{{key}}",
+    "account_reset_password_from_key": f"{FRONTEND_URL}/reset-password/{{key}}",
+    "account_signup": f"{FRONTEND_URL}/signup",
 }
 
 REST_FRAMEWORK = {

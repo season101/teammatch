@@ -14,8 +14,9 @@ export function VerifyEmail({ verificationKey }: { verificationKey: string }) {
   async function verify() {
     setStatus("sending");
     try {
+      // Next passes the route param still percent-encoded (":" arrives as "%3A")
       const result = await allauthPost("/auth/email/verify", {
-        key: verificationKey,
+        key: decodeURIComponent(verificationKey),
       });
       // 200 = verified and signed in; 401 = verified, but this browser still needs to sign in
       setStatus(
