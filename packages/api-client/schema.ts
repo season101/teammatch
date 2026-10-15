@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/feed/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["feed_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health/": {
         parameters: {
             query?: never;
@@ -103,6 +119,19 @@ export interface components {
             database: components["schemas"]["Check"];
             redis: components["schemas"]["Check"];
         };
+        FeedProject: {
+            readonly id: number;
+            title: string;
+            pitch: string;
+        };
+        FeedRole: {
+            readonly id: number;
+            title: string;
+            description?: string;
+            readonly project: components["schemas"]["FeedProject"];
+            /** Format: date-time */
+            readonly created_at: string;
+        };
         Health: {
             status: components["schemas"]["HealthStatusEnum"];
             version: string;
@@ -122,6 +151,19 @@ export interface components {
             readonly skills: components["schemas"]["Skill"][];
             /** Format: email */
             readonly email: string;
+        };
+        PaginatedFeedRoleList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["FeedRole"][];
         };
         PatchedMyProfileRequest: {
             display_name?: string;
@@ -182,6 +224,30 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    feed_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedFeedRoleList"];
+                };
+            };
+        };
+    };
     health_retrieve: {
         parameters: {
             query?: never;

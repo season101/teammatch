@@ -4,6 +4,33 @@ info:
   version: 1.0.0
   description: Role-based team formation for CSC 5323.
 paths:
+  /api/v1/feed/:
+    get:
+      operationId: feed_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - feed
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFeedRoleList'
+          description: ''
   /api/v1/health/:
     get:
       operationId: health_retrieve
@@ -188,6 +215,47 @@ components:
       required:
       - database
       - redis
+    FeedProject:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        pitch:
+          type: string
+          maxLength: 2000
+      required:
+      - id
+      - pitch
+      - title
+    FeedRole:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        project:
+          allOf:
+          - $ref: '#/components/schemas/FeedProject'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - project
+      - title
     Health:
       type: object
       properties:
@@ -237,6 +305,25 @@ components:
       - email
       - id
       - skills
+    PaginatedFeedRoleList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedRole'
     PatchedMyProfileRequest:
       type: object
       properties:
