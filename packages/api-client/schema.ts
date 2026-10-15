@@ -4,6 +4,40 @@
  */
 
 export interface paths {
+    "/api/v1/applications/{id}/like/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Like or pass a pending applicant on my role. Not pending: 409. */
+        post: operations["applications_like_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}/pass/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Like or pass a pending applicant on my role. Not pending: 409. */
+        post: operations["applications_pass_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/feed/": {
         parameters: {
             query?: never;
@@ -270,6 +304,48 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    applications_like_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleApplication"];
+                };
+            };
+        };
+    };
+    applications_pass_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleApplication"];
+                };
+            };
+        };
+    };
     feed_list: {
         parameters: {
             query?: {

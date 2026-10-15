@@ -4,6 +4,48 @@ info:
   version: 1.0.0
   description: Role-based team formation for CSC 5323.
 paths:
+  /api/v1/applications/{id}/like/:
+    post:
+      operationId: applications_like_create
+      description: 'Like or pass a pending applicant on my role. Not pending: 409.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - matching
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleApplication'
+          description: ''
+  /api/v1/applications/{id}/pass/:
+    post:
+      operationId: applications_pass_create
+      description: 'Like or pass a pending applicant on my role. Not pending: 409.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - matching
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleApplication'
+          description: ''
   /api/v1/feed/:
     get:
       operationId: feed_list

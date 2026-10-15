@@ -82,3 +82,60 @@ def test_someone_elses_role_returns_403(role):
 
 def test_requires_sign_in(role):
     assert APIClient().get(url(role)).status_code in (401, 403)
+
+
+# F4-02: like or pass an applicant
+
+
+def decide(user, application, action):
+    return as_user(user).post(f"/api/v1/applications/{application.id}/{action}/")
+
+
+@pytest.mark.parametrize(
+    ("action", "status"), [("like", ApplicationStatus.LIKED), ("pass", ApplicationStatus.PASSED)]
+)
+def test_owner_decides_a_pending_application(owner, role, action, status):
+    application = apply(role, "sam@latech.edu")
+
+    response = decide(owner, application, action)
+
+    assert response.status_code == 200
+    assert response.json()["status"] == status
+    application.refresh_from_db()
+    assert application.status == status
+
+
+@pytest.mark.parametrize("action", ["like", "pass"])
+@pytest.mark.parametrize(
+    "status", [ApplicationStatus.LIKED, ApplicationStatus.PASSED, ApplicationStatus.WITHDRAWN]
+)
+def test_deciding_a_non_pending_application_is_rejected(owner, role, action, status):
+    application = apply(role, "sam@latech.edu", status=status)
+
+    response = decide(owner, application, action)
+
+    assert response.status_code == 409
+    application.refresh_from_db()
+    assert application.status == status
+
+
+@pytest.mark.parametrize("action", ["like", "pass"])
+def test_only_the_project_owner_can_decide(role, action):
+    application = apply(role, "sam@latech.edu")
+
+    # the applicant can't decide their own application either
+    assert decide(application.applicant, application, action).status_code == 403
+    application.refresh_from_db()
+    assert application.status == ApplicationStatus.PENDING
+
+
+def test_deciding_an_unknown_application_returns_404(owner):
+    assert as_user(owner).post("/api/v1/applications/999999/like/").status_code == 404
+
+
+def test_deciding_requires_sign_in(role):
+    application = apply(role, "sam@latech.edu")
+    assert APIClient().post(f"/api/v1/applications/{application.id}/like/").status_code in (
+        401,
+        403,
+    )
