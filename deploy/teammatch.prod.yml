@@ -18,6 +18,7 @@ x-api-env: &api-env
   DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set in deploy/.env}
   DJANGO_ALLOWED_HOSTS: ${TEAMMATCH_HOST:-teammatch.sijancodes.com},teammatch-api,localhost,127.0.0.1
   DJANGO_CSRF_TRUSTED_ORIGINS: https://${TEAMMATCH_HOST:-teammatch.sijancodes.com}
+  FRONTEND_URL: https://${TEAMMATCH_HOST:-teammatch.sijancodes.com}
   APP_VERSION: ${TEAMMATCH_VERSION:?set in deploy/.env}
   POSTGRES_DB: ${POSTGRES_DB:-teammatch}
   POSTGRES_USER: ${POSTGRES_USER:-teammatch}
