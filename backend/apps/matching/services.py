@@ -2,6 +2,8 @@ from django.utils import timezone
 
 from apps.projects.models import ProjectStatus, Role, RoleStatus
 
+from .models import ApplicationStatus
+
 
 def feed_roles(user, today=None):
     """Open roles in the current term the user can still act on.
@@ -21,4 +23,13 @@ def feed_roles(user, today=None):
         .exclude(applications__applicant=user)
         .exclude(dismissals__user=user)
         .select_related("project")
+    )
+
+
+def pending_applications(role):
+    """The review queue for one role (F4-01)."""
+    return (
+        role.applications.filter(status=ApplicationStatus.PENDING)
+        .select_related("applicant__profile")
+        .prefetch_related("applicant__profile__skills")
     )

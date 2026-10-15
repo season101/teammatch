@@ -20,12 +20,15 @@ def test_me_profile_needs_sign_in(client):
     assert client.get("/api/v1/me/profile/").status_code in (401, 403)
 
 
-def test_me_profile_is_created_on_first_visit(client, sam):
+def test_new_user_has_a_profile_without_visiting_it(sam):
+    assert Profile.objects.filter(user=sam).exists()
+
+
+def test_me_profile_shows_my_email(client, sam):
     client.force_login(sam)
     response = client.get("/api/v1/me/profile/")
     assert response.status_code == 200
     assert response.json()["email"] == "sam@latech.edu"
-    assert Profile.objects.filter(user=sam).exists()
 
 
 def test_edit_my_profile(client, sam):
@@ -54,7 +57,8 @@ def test_bio_over_500_chars_is_rejected(client, sam):
 
 
 def test_public_profile_hides_email(client, sam, alex):
-    profile = Profile.objects.create(user=sam, display_name="Sam", major="CS")
+    Profile.objects.filter(user=sam).update(display_name="Sam", major="CS")
+    profile = sam.profile
     client.force_login(alex)
     response = client.get(f"/api/v1/profiles/{profile.id}/")
     assert response.status_code == 200
@@ -65,7 +69,8 @@ def test_public_profile_hides_email(client, sam, alex):
 
 
 def test_cannot_edit_someone_elses_profile(client, sam, alex):
-    profile = Profile.objects.create(user=sam, display_name="Sam")
+    Profile.objects.filter(user=sam).update(display_name="Sam")
+    profile = sam.profile
     client.force_login(alex)
     response = client.patch(
         f"/api/v1/profiles/{profile.id}/",

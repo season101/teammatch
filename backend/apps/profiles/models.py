@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 from django.db.models.functions import Lower
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 from apps.core.models import TimeStampedModel
 
@@ -33,3 +35,10 @@ class Profile(TimeStampedModel):
 
     def __str__(self):
         return self.display_name or self.user.email
+
+
+# post_save, not allauth's user_signed_up, so admin and createsuperuser users get one too (UC-02).
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_profile(sender, instance, created, raw=False, **kwargs):
+    if created and not raw:
+        Profile.objects.create(user=instance)

@@ -2,7 +2,7 @@ import pytest
 from django.db import IntegrityError
 
 from apps.accounts.models import User
-from apps.profiles.models import Profile, Skill
+from apps.profiles.models import Skill
 
 pytestmark = pytest.mark.django_db
 
@@ -43,7 +43,7 @@ def test_add_skills_to_my_profile(client, sam):
 
 
 def test_remove_a_skill(client, sam):
-    profile = Profile.objects.create(user=sam)
+    profile = sam.profile
     profile.skills.set([skill("Django"), skill("React")])
     response = client.patch(
         "/api/v1/me/profile/", {"skill_ids": [skill("React").id]}, content_type="application/json"
@@ -71,7 +71,7 @@ def test_too_many_skills_is_rejected(client, sam):
 
 def test_public_profile_shows_skills(client, sam):
     alex = User.objects.create_user("alex@latech.edu", "a-long-password")
-    profile = Profile.objects.create(user=alex)
+    profile = alex.profile
     profile.skills.set([skill("Python")])
     response = client.get(f"/api/v1/profiles/{profile.id}/")
     assert [s["name"] for s in response.json()["skills"]] == ["Python"]
