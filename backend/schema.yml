@@ -46,6 +46,148 @@ paths:
               schema:
                 $ref: '#/components/schemas/Health'
           description: ''
+  /api/v1/me/profile/:
+    get:
+      operationId: me_profile_retrieve
+      description: GET or PATCH the signed-in user's own profile.
+      tags:
+      - me
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyProfile'
+          description: ''
+    patch:
+      operationId: me_profile_partial_update
+      description: GET or PATCH the signed-in user's own profile.
+      tags:
+      - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMyProfileRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMyProfileRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMyProfileRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyProfile'
+          description: ''
+  /api/v1/profiles/{id}/:
+    get:
+      operationId: profiles_retrieve
+      description: Someone's public profile. Editing it is owner-only (403 otherwise).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - profiles
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+          description: ''
+    patch:
+      operationId: profiles_partial_update
+      description: Someone's public profile. Editing it is owner-only (403 otherwise).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - profiles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProfileRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProfileRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProfileRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+          description: ''
+  /api/v1/projects/:
+    post:
+      operationId: projects_create
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+  /api/v1/skills/:
+    get:
+      operationId: skills_list
+      description: The skill list for pickers. ?q= filters by name. Small list, so
+        no paging.
+      parameters:
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Filter by name, ignoring case.
+      tags:
+      - skills
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Skill'
+          description: ''
 components:
   schemas:
     Check:
@@ -118,7 +260,7 @@ components:
       type: object
       properties:
         status:
-          $ref: '#/components/schemas/StatusEnum'
+          $ref: '#/components/schemas/HealthStatusEnum'
         version:
           type: string
         checks:
@@ -127,6 +269,42 @@ components:
       - checks
       - status
       - version
+    HealthStatusEnum:
+      enum:
+      - ok
+      - degraded
+      type: string
+      description: |-
+        * `ok` - ok
+        * `degraded` - degraded
+    MyProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        display_name:
+          type: string
+          maxLength: 80
+        bio:
+          type: string
+          maxLength: 500
+        major:
+          type: string
+          maxLength: 100
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/Skill'
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+      required:
+      - email
+      - id
+      - skills
     PaginatedFeedRoleList:
       type: object
       required:
@@ -146,14 +324,159 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FeedRole'
-    StatusEnum:
+    PatchedMyProfileRequest:
+      type: object
+      properties:
+        display_name:
+          type: string
+          maxLength: 80
+        bio:
+          type: string
+          maxLength: 500
+        major:
+          type: string
+          maxLength: 100
+        skill_ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          writeOnly: true
+          maxItems: 20
+    PatchedProfileRequest:
+      type: object
+      properties:
+        display_name:
+          type: string
+          maxLength: 80
+        bio:
+          type: string
+          maxLength: 500
+        major:
+          type: string
+          maxLength: 100
+        skill_ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          writeOnly: true
+          maxItems: 20
+    Profile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        display_name:
+          type: string
+          maxLength: 80
+        bio:
+          type: string
+          maxLength: 500
+        major:
+          type: string
+          maxLength: 100
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/Skill'
+          readOnly: true
+      required:
+      - id
+      - skills
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        pitch:
+          type: string
+          maxLength: 2000
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ProjectStatusEnum'
+          readOnly: true
+        term:
+          type: integer
+          readOnly: true
+        owner:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - owner
+      - pitch
+      - status
+      - term
+      - title
+    ProjectRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+        pitch:
+          type: string
+          minLength: 1
+          maxLength: 2000
+      required:
+      - pitch
+      - title
+    ProjectStatusEnum:
       enum:
-      - ok
-      - degraded
+      - draft
+      - open
+      - locked
+      - archived
       type: string
       description: |-
-        * `ok` - ok
-        * `degraded` - degraded
+        * `draft` - Draft
+        * `open` - Open
+        * `locked` - Locked
+        * `archived` - Archived
+    Skill:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+        slug:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+      required:
+      - id
+      - name
+      - slug
+    SkillRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+      required:
+      - name
+      - slug
   securitySchemes:
     cookieAuth:
       type: apiKey

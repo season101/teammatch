@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/feed/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["feed_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health/": {
         parameters: {
             query?: never;
@@ -12,6 +28,75 @@ export interface paths {
             cookie?: never;
         };
         get: operations["health_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/profile/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET or PATCH the signed-in user's own profile. */
+        get: operations["me_profile_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description GET or PATCH the signed-in user's own profile. */
+        patch: operations["me_profile_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/profiles/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Someone's public profile. Editing it is owner-only (403 otherwise). */
+        get: operations["profiles_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Someone's public profile. Editing it is owner-only (403 otherwise). */
+        patch: operations["profiles_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/projects/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["projects_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/skills/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The skill list for pickers. ?q= filters by name. Small list, so no paging. */
+        get: operations["skills_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -34,8 +119,21 @@ export interface components {
             database: components["schemas"]["Check"];
             redis: components["schemas"]["Check"];
         };
+        FeedProject: {
+            readonly id: number;
+            title: string;
+            pitch: string;
+        };
+        FeedRole: {
+            readonly id: number;
+            title: string;
+            description?: string;
+            readonly project: components["schemas"]["FeedProject"];
+            /** Format: date-time */
+            readonly created_at: string;
+        };
         Health: {
-            status: components["schemas"]["StatusEnum"];
+            status: components["schemas"]["HealthStatusEnum"];
             version: string;
             checks: components["schemas"]["Checks"];
         };
@@ -44,7 +142,79 @@ export interface components {
          *     * `degraded` - degraded
          * @enum {string}
          */
-        StatusEnum: "ok" | "degraded";
+        HealthStatusEnum: "ok" | "degraded";
+        MyProfile: {
+            readonly id: number;
+            display_name?: string;
+            bio?: string;
+            major?: string;
+            readonly skills: components["schemas"]["Skill"][];
+            /** Format: email */
+            readonly email: string;
+        };
+        PaginatedFeedRoleList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["FeedRole"][];
+        };
+        PatchedMyProfileRequest: {
+            display_name?: string;
+            bio?: string;
+            major?: string;
+            skill_ids?: number[];
+        };
+        PatchedProfileRequest: {
+            display_name?: string;
+            bio?: string;
+            major?: string;
+            skill_ids?: number[];
+        };
+        Profile: {
+            readonly id: number;
+            display_name?: string;
+            bio?: string;
+            major?: string;
+            readonly skills: components["schemas"]["Skill"][];
+        };
+        Project: {
+            readonly id: number;
+            title: string;
+            pitch: string;
+            readonly status: components["schemas"]["ProjectStatusEnum"];
+            readonly term: number;
+            readonly owner: number;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        ProjectRequest: {
+            title: string;
+            pitch: string;
+        };
+        /**
+         * @description * `draft` - Draft
+         *     * `open` - Open
+         *     * `locked` - Locked
+         *     * `archived` - Archived
+         * @enum {string}
+         */
+        ProjectStatusEnum: "draft" | "open" | "locked" | "archived";
+        Skill: {
+            readonly id: number;
+            name: string;
+            slug: string;
+        };
+        SkillRequest: {
+            name: string;
+            slug: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -54,6 +224,30 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    feed_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedFeedRoleList"];
+                };
+            };
+        };
+    };
     health_retrieve: {
         parameters: {
             query?: never;
@@ -69,6 +263,145 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Health"];
+                };
+            };
+        };
+    };
+    me_profile_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyProfile"];
+                };
+            };
+        };
+    };
+    me_profile_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedMyProfileRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedMyProfileRequest"];
+                "multipart/form-data": components["schemas"]["PatchedMyProfileRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyProfile"];
+                };
+            };
+        };
+    };
+    profiles_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Profile"];
+                };
+            };
+        };
+    };
+    profiles_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedProfileRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedProfileRequest"];
+                "multipart/form-data": components["schemas"]["PatchedProfileRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Profile"];
+                };
+            };
+        };
+    };
+    projects_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ProjectRequest"];
+                "multipart/form-data": components["schemas"]["ProjectRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+        };
+    };
+    skills_list: {
+        parameters: {
+            query?: {
+                /** @description Filter by name, ignoring case. */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Skill"][];
                 };
             };
         };
