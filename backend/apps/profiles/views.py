@@ -14,7 +14,7 @@ class MyProfileView(generics.RetrieveUpdateAPIView):
     http_method_names = ["get", "patch"]
 
     def get_object(self):
-        # Created on first visit, so every user has a profile.
+        # Made when the user is created (#83); get_or_create is only a safety net.
         profile, _ = Profile.objects.get_or_create(user=self.request.user)
         return profile
 
