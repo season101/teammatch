@@ -88,6 +88,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/roles/{id}/applications/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Pending applicants for one of my roles. Not my project: 403. */
+        get: operations["roles_applications_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/skills/": {
         parameters: {
             query?: never;
@@ -165,6 +182,19 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["FeedRole"][];
         };
+        PaginatedRoleApplicationList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["RoleApplication"][];
+        };
         PatchedMyProfileRequest: {
             display_name?: string;
             bio?: string;
@@ -206,6 +236,22 @@ export interface components {
          * @enum {string}
          */
         ProjectStatusEnum: "draft" | "open" | "locked" | "archived";
+        RoleApplication: {
+            readonly id: number;
+            readonly applicant: components["schemas"]["Profile"];
+            note?: string;
+            status?: components["schemas"]["RoleApplicationStatusEnum"];
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /**
+         * @description * `pending` - Pending
+         *     * `liked` - Liked
+         *     * `passed` - Passed
+         *     * `withdrawn` - Withdrawn
+         * @enum {string}
+         */
+        RoleApplicationStatusEnum: "pending" | "liked" | "passed" | "withdrawn";
         Skill: {
             readonly id: number;
             name: string;
@@ -380,6 +426,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Project"];
+                };
+            };
+        };
+    };
+    roles_applications_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedRoleApplicationList"];
                 };
             };
         };

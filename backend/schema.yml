@@ -164,6 +164,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/Project'
           description: ''
+  /api/v1/roles/{id}/applications/:
+    get:
+      operationId: roles_applications_list
+      description: 'Pending applicants for one of my roles. Not my project: 403.'
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - matching
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRoleApplicationList'
+          description: ''
   /api/v1/skills/:
     get:
       operationId: skills_list
@@ -324,6 +357,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FeedRole'
+    PaginatedRoleApplicationList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoleApplication'
     PatchedMyProfileRequest:
       type: object
       properties:
@@ -445,6 +497,41 @@ components:
         * `open` - Open
         * `locked` - Locked
         * `archived` - Archived
+    RoleApplication:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        applicant:
+          allOf:
+          - $ref: '#/components/schemas/Profile'
+          readOnly: true
+        note:
+          type: string
+          maxLength: 300
+        status:
+          $ref: '#/components/schemas/RoleApplicationStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - applicant
+      - created_at
+      - id
+    RoleApplicationStatusEnum:
+      enum:
+      - pending
+      - liked
+      - passed
+      - withdrawn
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `liked` - Liked
+        * `passed` - Passed
+        * `withdrawn` - Withdrawn
     Skill:
       type: object
       properties:
