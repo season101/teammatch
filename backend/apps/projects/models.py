@@ -59,7 +59,11 @@ class Role(TimeStampedModel):
         blank=True,
         related_name="filled_roles",
     )
-    # required_skills (M2M to Skill) is added once the Skill model lands (F1-04 / F2-02).
+    required_skills = models.ManyToManyField(
+        "profiles.Skill",
+        blank=True,
+        related_name="roles",
+    )
 
     class Meta:
         ordering = ["-created_at"]
