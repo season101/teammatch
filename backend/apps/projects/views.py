@@ -5,9 +5,11 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.pagination import DefaultCursorPagination
+
 from . import services
 from .models import Project, Role
-from .serializers import ProjectSerializer, RoleSerializer
+from .serializers import ProjectListSerializer, ProjectSerializer, RoleSerializer
 
 
 def owned_project(request, pk):
@@ -18,8 +20,19 @@ def owned_project(request, pk):
     return project
 
 
-class ProjectCreateView(generics.CreateAPIView):
-    serializer_class = ProjectSerializer
+@extend_schema(tags=["projects"])
+class ProjectListCreateView(generics.ListCreateAPIView):
+    """GET: open projects in the current term, newest first. POST: create a draft."""
+
+    pagination_class = DefaultCursorPagination
+
+    def get_queryset(self):
+        return services.open_projects()
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return ProjectSerializer
+        return ProjectListSerializer
 
 
 @extend_schema(tags=["projects"])

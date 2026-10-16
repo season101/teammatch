@@ -113,8 +113,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** @description GET: open projects in the current term, newest first. POST: create a draft. */
+        get: operations["projects_list"];
         put?: never;
+        /** @description GET: open projects in the current term, newest first. POST: create a draft. */
         post: operations["projects_create"];
         delete?: never;
         options?: never;
@@ -267,6 +269,19 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["FeedRole"][];
         };
+        PaginatedProjectListList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["ProjectList"][];
+        };
         PaginatedRoleApplicationList: {
             /**
              * Format: uri
@@ -311,6 +326,16 @@ export interface components {
             readonly status: components["schemas"]["ProjectStatusEnum"];
             readonly term: number;
             readonly owner: number;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        ProjectList: {
+            readonly id: number;
+            title: string;
+            readonly pitch_preview: string;
+            owner: number;
+            readonly owner_name: string;
+            readonly open_role_count: number;
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -554,6 +579,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Profile"];
+                };
+            };
+        };
+    };
+    projects_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedProjectListList"];
                 };
             };
         };
