@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { RequireSignIn } from "@/features/accounts/require-sign-in";
-import { ProjectsList } from "@/features/projects/projects-list";
+import { SignedInProjects } from "@/features/projects/projects-list";
 
 export const metadata: Metadata = { title: "Projects · TeamMatch" };
 
@@ -22,7 +21,7 @@ export default function ProjectsPage() {
           New project
         </Link>
       </header>
-      <RequireSignIn>{() => <ProjectsList />}</RequireSignIn>
+      <SignedInProjects />
     </main>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { RequireSignIn } from "@/features/accounts/require-sign-in";
 import { useOpenProjects } from "./queries";
 
 const noticeClass =
@@ -72,4 +73,9 @@ export function ProjectsList() {
       )}
     </div>
   );
+}
+
+// The page itself is a server component, so the sign-in wrapper lives here.
+export function SignedInProjects() {
+  return <RequireSignIn>{() => <ProjectsList />}</RequireSignIn>;
 }
