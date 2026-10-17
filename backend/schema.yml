@@ -318,6 +318,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/Role'
           description: ''
+  /api/v1/projects/mine/:
+    get:
+      operationId: projects_mine_list
+      description: Projects I own, with their roles.
+      tags:
+      - projects
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MyProject'
+          description: ''
   /api/v1/roles/{id}/:
     patch:
       operationId: roles_partial_update
@@ -580,6 +597,45 @@ components:
       - email
       - id
       - skills
+    MyProject:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        status:
+          $ref: '#/components/schemas/ProjectStatusEnum'
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/MyRole'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - roles
+      - title
+    MyRole:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        status:
+          $ref: '#/components/schemas/RoleStatusEnum'
+      required:
+      - id
+      - title
     PaginatedFeedRoleList:
       type: object
       required:

@@ -56,3 +56,17 @@ class ProjectListSerializer(serializers.ModelSerializer):
 
     def get_pitch_preview(self, project) -> str:
         return Truncator(project.pitch).chars(200)
+
+
+class MyRoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Role
+        fields = ["id", "title", "status"]
+
+
+class MyProjectSerializer(serializers.ModelSerializer):
+    roles = MyRoleSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Project
+        fields = ["id", "title", "status", "roles", "created_at"]
