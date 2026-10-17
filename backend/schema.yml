@@ -4,6 +4,33 @@ info:
   version: 1.0.0
   description: Role-based team formation for CSC 5323.
 paths:
+  /api/v1/applications/:
+    post:
+      operationId: applications_create
+      description: 'Apply to an open role with an optional note. My own project: 403.'
+      tags:
+      - matching
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApplyRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApplyRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Apply'
+          description: ''
   /api/v1/applications/{id}/like/:
     post:
       operationId: applications_like_create
@@ -382,6 +409,52 @@ paths:
           description: ''
 components:
   schemas:
+    ApplicationStatusEnum:
+      enum:
+      - pending
+      - liked
+      - passed
+      - withdrawn
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `liked` - Liked
+        * `passed` - Passed
+        * `withdrawn` - Withdrawn
+    Apply:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        role:
+          type: integer
+        note:
+          type: string
+          maxLength: 300
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ApplicationStatusEnum'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - role
+      - status
+    ApplyRequest:
+      type: object
+      properties:
+        role:
+          type: integer
+        note:
+          type: string
+          maxLength: 300
+      required:
+      - role
     Check:
       type: object
       properties:
@@ -769,7 +842,7 @@ components:
           type: string
           maxLength: 300
         status:
-          $ref: '#/components/schemas/RoleApplicationStatusEnum'
+          $ref: '#/components/schemas/ApplicationStatusEnum'
         created_at:
           type: string
           format: date-time
@@ -778,18 +851,6 @@ components:
       - applicant
       - created_at
       - id
-    RoleApplicationStatusEnum:
-      enum:
-      - pending
-      - liked
-      - passed
-      - withdrawn
-      type: string
-      description: |-
-        * `pending` - Pending
-        * `liked` - Liked
-        * `passed` - Passed
-        * `withdrawn` - Withdrawn
     RoleRequest:
       type: object
       properties:

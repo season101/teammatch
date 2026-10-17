@@ -5,6 +5,7 @@ from .models import ApplicationStatus
 
 urlpatterns = [
     path("feed/", views.FeedView.as_view(), name="feed"),
+    path("applications/", views.ApplyView.as_view(), name="application-create"),
     path(
         "roles/<int:pk>/applications/",
         views.RoleApplicationsView.as_view(),
