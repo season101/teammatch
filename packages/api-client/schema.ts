@@ -264,12 +264,14 @@ export interface components {
             readonly id: number;
             title: string;
             pitch: string;
+            readonly owner_name: string;
         };
         FeedRole: {
             readonly id: number;
             title: string;
             description?: string;
             readonly project: components["schemas"]["FeedProject"];
+            readonly required_skills: components["schemas"]["Skill"][];
             /** Format: date-time */
             readonly created_at: string;
         };

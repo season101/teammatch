@@ -492,8 +492,12 @@ components:
         pitch:
           type: string
           maxLength: 2000
+        owner_name:
+          type: string
+          readOnly: true
       required:
       - id
+      - owner_name
       - pitch
       - title
     FeedRole:
@@ -512,6 +516,11 @@ components:
           allOf:
           - $ref: '#/components/schemas/FeedProject'
           readOnly: true
+        required_skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/Skill'
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -520,6 +529,7 @@ components:
       - created_at
       - id
       - project
+      - required_skills
       - title
     Health:
       type: object

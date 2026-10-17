@@ -24,7 +24,8 @@ def feed_roles(user, today=None):
         .exclude(project__owner=user)
         .exclude(applications__applicant=user)
         .exclude(dismissals__user=user)
-        .select_related("project")
+        .select_related("project__owner__profile")
+        .prefetch_related("required_skills")
     )
 
 
