@@ -1,10 +1,11 @@
-import { useMutation } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import type { components } from "@teammatch/api-client";
 import { api } from "@/lib/api";
 
 export type Project = components["schemas"]["Project"];
 export type ProjectInput = components["schemas"]["ProjectRequest"];
 export type FieldErrors = Partial<Record<keyof ProjectInput, string>>;
+export type ProjectListItem = components["schemas"]["ProjectList"];
 
 export class CreateProjectError extends Error {
   status: number;
@@ -35,7 +36,8 @@ function readErrors(body: unknown): { message: string; fields: FieldErrors } {
   const fields: FieldErrors = {};
   for (const key of ["title", "pitch"] as const) {
     const value = source[key];
-    if (Array.isArray(value) && value.length > 0) fields[key] = String(value[0]);
+    if (Array.isArray(value) && value.length > 0)
+      fields[key] = String(value[0]);
   }
 
   let message = "";
@@ -55,5 +57,29 @@ export function useCreateProject() {
       const { message, fields } = readErrors(error);
       throw new CreateProjectError(response.status, message, fields);
     },
+  });
+}
+
+// The API gives back a full "next" URL, and we only need its cursor.
+function cursorFrom(next: string | null | undefined): string | undefined {
+  if (!next) return undefined;
+  return (
+    new URL(next, "http://localhost").searchParams.get("cursor") ?? undefined
+  );
+}
+
+export function useOpenProjects() {
+  return useInfiniteQuery({
+    queryKey: ["projects", "open"],
+    initialPageParam: undefined as string | undefined,
+    queryFn: async ({ pageParam }) => {
+      const { data, response } = await api.GET("/api/v1/projects/", {
+        params: { query: { cursor: pageParam } },
+      });
+      if (!data)
+        throw new Error(`Could not load projects (${response.status})`);
+      return data;
+    },
+    getNextPageParam: (lastPage) => cursorFrom(lastPage.next),
   });
 }
