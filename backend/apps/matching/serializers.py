@@ -27,3 +27,10 @@ class RoleApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Application
         fields = ["id", "applicant", "note", "status", "created_at"]
+
+
+class ApplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Application
+        fields = ["id", "role", "note", "status", "created_at"]
+        read_only_fields = ["status"]

@@ -79,3 +79,32 @@ def try_lock(project):
     project.status = ProjectStatus.LOCKED
     project.save(update_fields=["status", "updated_at"])
     return team
+
+
+class RoleNotOpen(APIException):
+    status_code = 409
+    default_detail = "This role is no longer open."
+    default_code = "role_not_open"
+
+
+class AlreadyApplied(APIException):
+    status_code = 409
+    default_detail = "You already applied to this role."
+    default_code = "already_applied"
+
+
+@transaction.atomic
+def apply(role, user, note=""):
+    """A candidate applies to an open role (F3-02).
+
+    Locking the role row makes the filled check and the one-per-role check (BR-02)
+    race-free. Only the role is locked, so this can't deadlock with a like.
+    """
+    role = Role.objects.select_related("project").select_for_update(of=("self",)).get(pk=role.pk)
+    if role.status == RoleStatus.FILLED:
+        raise RoleNotOpen("This role was just filled.")
+    if role.project.status != ProjectStatus.OPEN:
+        raise RoleNotOpen()
+    if role.applications.filter(applicant=user).exists():
+        raise AlreadyApplied()
+    return Application.objects.create(role=role, applicant=user, note=note)

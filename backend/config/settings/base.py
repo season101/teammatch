@@ -123,6 +123,8 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "SCHEMA_PATH_PREFIX": "/api/v1",
     "COMPONENT_SPLIT_REQUEST": True,
+    # shared choices need a fixed name, or spectacular falls back to a hashed one
+    "ENUM_NAME_OVERRIDES": {"ApplicationStatusEnum": "apps.matching.models.ApplicationStatus"},
 }
 
 STORAGES = {

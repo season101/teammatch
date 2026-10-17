@@ -10,7 +10,7 @@ from apps.projects.models import Role
 
 from . import services
 from .models import Application
-from .serializers import FeedRoleSerializer, RoleApplicationSerializer
+from .serializers import ApplySerializer, FeedRoleSerializer, RoleApplicationSerializer
 
 
 @extend_schema(tags=["feed"])
@@ -48,3 +48,18 @@ class ApplicationDecisionView(APIView):
             raise PermissionDenied()
         application = services.decide(application, self.decision)
         return Response(RoleApplicationSerializer(application).data)
+
+
+@extend_schema(tags=["matching"])
+class ApplyView(generics.CreateAPIView):
+    """Apply to an open role with an optional note. My own project: 403."""
+
+    serializer_class = ApplySerializer
+
+    def perform_create(self, serializer):
+        role = serializer.validated_data["role"]
+        if role.project.owner_id == self.request.user.id:
+            raise PermissionDenied()
+        serializer.instance = services.apply(
+            role, self.request.user, serializer.validated_data.get("note", "")
+        )
