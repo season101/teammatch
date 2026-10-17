@@ -2,9 +2,9 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 
-from apps.projects.models import ProjectStatus, Role, RoleStatus
+from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 
-from .models import Application, ApplicationStatus
+from .models import Application, ApplicationStatus, Membership, Team
 
 
 def feed_roles(user, today=None):
@@ -55,3 +55,27 @@ def decide(application, status):
     application.status = status
     application.save(update_fields=["status", "updated_at"])
     return application
+
+
+@transaction.atomic
+def try_lock(project):
+    """Lock the project into a team once all its roles are filled (BR-06, F4-03).
+
+    Returns the team, or None while the project can't lock. Safe to call twice:
+    the project row lock serialises callers and Team.project is unique.
+    """
+    project = Project.objects.select_for_update().get(pk=project.pk)
+    team = Team.objects.filter(project=project).first()
+    if team or project.status != ProjectStatus.OPEN:
+        return team
+    roles = list(project.roles.all())
+    if not roles or any(role.status != RoleStatus.FILLED for role in roles):
+        return None
+    team = Team.objects.create(project=project)
+    Membership.objects.bulk_create(
+        [Membership(team=team, user_id=project.owner_id)]
+        + [Membership(team=team, user_id=role.filled_by_id, role=role) for role in roles]
+    )
+    project.status = ProjectStatus.LOCKED
+    project.save(update_fields=["status", "updated_at"])
+    return team

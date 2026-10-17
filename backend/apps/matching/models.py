@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models
 
 from apps.core.models import TimeStampedModel
-from apps.projects.models import Role
+from apps.projects.models import Project, Role
 
 
 class ApplicationStatus(models.TextChoices):
@@ -62,3 +62,36 @@ class RoleDismissal(TimeStampedModel):
 
     def __str__(self):
         return f"{self.user} passed {self.role}"
+
+
+# Formed once every role is filled (BR-06). created_at is when the team formed.
+class Team(TimeStampedModel):
+    project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name="team")
+
+    def __str__(self):
+        return f"Team for {self.project}"
+
+
+# One seat per filled role, plus the owner's seat (role is null).
+class Membership(TimeStampedModel):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="memberships")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="memberships",
+    )
+    role = models.OneToOneField(
+        Role, on_delete=models.CASCADE, null=True, blank=True, related_name="membership"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["team"],
+                condition=models.Q(role__isnull=True),
+                name="membership_one_owner_seat",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.user} in {self.team}"
