@@ -2,11 +2,14 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.core.pagination import DefaultCursorPagination
 from apps.projects.models import Role
 
 from . import services
+from .models import Application
 from .serializers import FeedRoleSerializer, RoleApplicationSerializer
 
 
@@ -31,3 +34,17 @@ class RoleApplicationsView(generics.ListAPIView):
         if role.project.owner_id != self.request.user.id:
             raise PermissionDenied()
         return services.pending_applications(role)
+
+
+@extend_schema(tags=["matching"], request=None, responses=RoleApplicationSerializer)
+class ApplicationDecisionView(APIView):
+    """Like or pass a pending applicant on my role. Not pending: 409."""
+
+    decision = None  # set per URL
+
+    def post(self, request, pk):
+        application = get_object_or_404(Application.objects.select_related("role__project"), pk=pk)
+        if application.role.project.owner_id != request.user.id:
+            raise PermissionDenied()
+        application = services.decide(application, self.decision)
+        return Response(RoleApplicationSerializer(application).data)

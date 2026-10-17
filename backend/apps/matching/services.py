@@ -1,8 +1,10 @@
+from django.db import transaction
 from django.utils import timezone
+from rest_framework.exceptions import APIException
 
 from apps.projects.models import ProjectStatus, Role, RoleStatus
 
-from .models import ApplicationStatus
+from .models import Application, ApplicationStatus
 
 
 def feed_roles(user, today=None):
@@ -33,3 +35,23 @@ def pending_applications(role):
         .select_related("applicant__profile")
         .prefetch_related("applicant__profile__skills")
     )
+
+
+class ApplicationNotPending(APIException):
+    status_code = 409
+    default_detail = "This application is no longer pending."
+    default_code = "application_not_pending"
+
+
+@transaction.atomic
+def decide(application, status):
+    """The owner likes or passes a pending application (F4-02).
+
+    The row lock stops two clicks from both deciding. Filling the role is F4-05.
+    """
+    application = Application.objects.select_for_update().get(pk=application.pk)
+    if application.status != ApplicationStatus.PENDING:
+        raise ApplicationNotPending()
+    application.status = status
+    application.save(update_fields=["status", "updated_at"])
+    return application
