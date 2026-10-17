@@ -27,6 +27,12 @@ export default function ProfilePage() {
               >
                 Browse open roles
               </Link>
+              <Link
+                href="/applicants"
+                className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+              >
+                Review applicants
+              </Link>
               <SignOutButton />
             </div>
           </>

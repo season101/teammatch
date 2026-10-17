@@ -9,7 +9,12 @@ from apps.core.pagination import DefaultCursorPagination
 
 from . import services
 from .models import Project, Role
-from .serializers import ProjectListSerializer, ProjectSerializer, RoleSerializer
+from .serializers import (
+    MyProjectSerializer,
+    ProjectListSerializer,
+    ProjectSerializer,
+    RoleSerializer,
+)
 
 
 def owned_project(request, pk):
@@ -73,3 +78,14 @@ class ProjectPublishView(APIView):
     def post(self, request, pk):
         project = services.publish_project(owned_project(request, pk))
         return Response(ProjectSerializer(project).data)
+
+
+@extend_schema(tags=["projects"])
+class MyProjectsView(generics.ListAPIView):
+    """Projects I own, with their roles."""
+
+    # shortcut: not paginated, since an owner has a few projects per term; page it if that grows
+    serializer_class = MyProjectSerializer
+
+    def get_queryset(self):
+        return services.my_projects(self.request.user)

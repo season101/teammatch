@@ -175,6 +175,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/mine/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Projects I own, with their roles. */
+        get: operations["projects_mine_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/roles/{id}/": {
         parameters: {
             query?: never;
@@ -294,6 +311,19 @@ export interface components {
             readonly skills: components["schemas"]["Skill"][];
             /** Format: email */
             readonly email: string;
+        };
+        MyProject: {
+            readonly id: number;
+            title: string;
+            status?: components["schemas"]["ProjectStatusEnum"];
+            readonly roles: components["schemas"]["MyRole"][];
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        MyRole: {
+            readonly id: number;
+            title: string;
+            status?: components["schemas"]["RoleStatusEnum"];
         };
         PaginatedFeedRoleList: {
             /**
@@ -732,6 +762,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Role"];
+                };
+            };
+        };
+    };
+    projects_mine_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyProject"][];
                 };
             };
         };

@@ -85,3 +85,8 @@ def open_projects(today=None):
         .select_related("owner__profile")
         .annotate(open_role_count=Count("roles", filter=Q(roles__status=RoleStatus.OPEN)))
     )
+
+
+def my_projects(user):
+    """Projects I own, newest first, with their roles (F4-01 review page)."""
+    return Project.objects.filter(owner=user).prefetch_related("roles")
