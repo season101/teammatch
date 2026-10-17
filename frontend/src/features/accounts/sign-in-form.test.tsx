@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
+import { getSessionUser } from "./allauth";
 import { safeNext, SignInForm } from "./sign-in-form";
 
 const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
@@ -20,10 +21,11 @@ function mockFetch(status: number, body: unknown = {}) {
   return fetchMock;
 }
 
-function renderForm(next?: string) {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
+function newClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false } } });
+}
+
+function renderForm(next?: string, client = newClient()) {
   render(
     <QueryClientProvider client={client}>
       <SignInForm next={next} />
@@ -43,7 +45,7 @@ function fillAndSubmit(email: string, password: string) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  replace.mockClear();
+  replace.mockReset();
 });
 
 test("signs in with the right email and password and goes to the profile", async () => {
@@ -58,6 +60,45 @@ test("signs in with the right email and password and goes to the profile", async
     email: "sam@latech.edu",
     password: "a-long-password",
   });
+});
+
+test("refreshes a cached signed-out session before going back", async () => {
+  // A protected page cached "signed out" and sent the user here (bug found in the Sprint 1 demo).
+  document.cookie = "csrftoken=test-token";
+  let signedIn = false;
+  const reply = (status: number, body: unknown) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+  vi.stubGlobal(
+    "fetch",
+    vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url.endsWith("/auth/login")) {
+        signedIn = true;
+        return reply(200, { status: 200 });
+      }
+      if (url.endsWith("/auth/session"))
+        return signedIn
+          ? reply(200, { status: 200, data: { user: { id: 1 } } })
+          : reply(401, { status: 401 });
+      return reply(404, {});
+    }),
+  );
+  const client = newClient();
+  await client.prefetchQuery({ queryKey: ["session"], queryFn: getSessionUser });
+  expect(client.getQueryData(["session"])).toBeNull();
+  let sessionAtRedirect: unknown;
+  replace.mockImplementation(() => {
+    sessionAtRedirect = client.getQueryData(["session"]);
+  });
+
+  renderForm("/profile", client);
+  fillAndSubmit("sam@latech.edu", "a-long-password");
+
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/profile"));
+  expect(sessionAtRedirect).toEqual({ id: 1 });
 });
 
 test("goes back to the page that asked for sign-in", async () => {
