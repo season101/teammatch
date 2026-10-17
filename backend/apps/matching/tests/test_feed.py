@@ -8,6 +8,7 @@ from rest_framework.test import APIClient
 
 from apps.core.models import Term
 from apps.matching.models import Application, ApplicationStatus, RoleDismissal
+from apps.profiles.models import Skill
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 
 pytestmark = pytest.mark.django_db
@@ -61,19 +62,42 @@ def test_feed_requires_sign_in():
     assert APIClient().get(FEED_URL).status_code == 403
 
 
-def test_feed_lists_open_roles_with_project(api, project):
+def test_feed_lists_open_roles_with_project(api, project, owner):
+    owner.profile.display_name = "Olive Owner"
+    owner.profile.save()
+    django = Skill.objects.create(name="Test Django", slug="test-django")
     role = make_role(project, description="Django + DRF")
+    role.required_skills.add(django)
+
     response = api.get(FEED_URL)
+
     assert response.status_code == 200
+    # the owner's display name only, never their email
     assert response.json()["results"] == [
         {
             "id": role.id,
             "title": "Backend dev",
             "description": "Django + DRF",
-            "project": {"id": project.id, "title": "TeamMatch", "pitch": "Find a team"},
+            "project": {
+                "id": project.id,
+                "title": "TeamMatch",
+                "pitch": "Find a team",
+                "owner_name": "Olive Owner",
+            },
+            "required_skills": [{"id": django.id, "name": "Test Django", "slug": "test-django"}],
             "created_at": mock.ANY,
         }
     ]
+
+
+def test_feed_query_count_does_not_grow_with_roles(api, project, django_assert_max_num_queries):
+    skill = Skill.objects.create(name="Test Django", slug="test-django")
+    for i in range(5):
+        make_role(project, title=f"Role {i}").required_skills.add(skill)
+
+    # session user, roles page, required skills
+    with django_assert_max_num_queries(4):
+        assert len(feed_ids(api)) == 5
 
 
 def test_feed_excludes_my_own_projects(project, owner):
