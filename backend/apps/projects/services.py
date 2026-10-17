@@ -1,3 +1,4 @@
+from django.db.models import Count, Q
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 
@@ -70,3 +71,17 @@ def publish_project(project):
     project.status = ProjectStatus.OPEN
     project.save()
     return project
+
+
+def open_projects(today=None):
+    """Open projects in the current term, with how many roles are still open (F2-03)."""
+    today = today or timezone.localdate()
+    return (
+        Project.objects.filter(
+            status=ProjectStatus.OPEN,
+            term__start_date__lte=today,
+            term__end_date__gte=today,
+        )
+        .select_related("owner__profile")
+        .annotate(open_role_count=Count("roles", filter=Q(roles__status=RoleStatus.OPEN)))
+    )

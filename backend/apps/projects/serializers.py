@@ -1,3 +1,4 @@
+from django.utils.text import Truncator
 from rest_framework import serializers
 
 from apps.profiles.models import Skill
@@ -33,3 +34,25 @@ class RoleSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "project", "status", "created_at"]
+
+
+class ProjectListSerializer(serializers.ModelSerializer):
+    # Public info only: the owner's display name, never their email.
+    owner_name = serializers.CharField(source="owner.profile.display_name", read_only=True)
+    pitch_preview = serializers.SerializerMethodField()
+    open_role_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Project
+        fields = [
+            "id",
+            "title",
+            "pitch_preview",
+            "owner",
+            "owner_name",
+            "open_role_count",
+            "created_at",
+        ]
+
+    def get_pitch_preview(self, project) -> str:
+        return Truncator(project.pitch).chars(200)
