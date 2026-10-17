@@ -206,6 +206,93 @@ paths:
               schema:
                 $ref: '#/components/schemas/Project'
           description: ''
+  /api/v1/projects/{id}/publish/:
+    post:
+      operationId: projects_publish_create
+      description: Open my draft project for applications. Blocked when it has no
+        roles.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - projects
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+  /api/v1/projects/{id}/roles/:
+    post:
+      operationId: projects_roles_create
+      description: Add a role (with required skills) to one of my draft or open projects.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+  /api/v1/roles/{id}/:
+    patch:
+      operationId: roles_partial_update
+      description: Edit one of my open roles, including its required skills.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
   /api/v1/roles/{id}/applications/:
     get:
       operationId: roles_applications_list
@@ -456,6 +543,20 @@ components:
             minimum: 1
           writeOnly: true
           maxItems: 20
+    PatchedRoleRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        required_skills:
+          type: array
+          items:
+            type: integer
     Profile:
       type: object
       properties:
@@ -539,6 +640,40 @@ components:
         * `open` - Open
         * `locked` - Locked
         * `archived` - Archived
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        project:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        status:
+          allOf:
+          - $ref: '#/components/schemas/RoleStatusEnum'
+          readOnly: true
+        required_skills:
+          type: array
+          items:
+            type: integer
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - project
+      - required_skills
+      - status
+      - title
     RoleApplication:
       type: object
       properties:
@@ -574,6 +709,31 @@ components:
         * `liked` - Liked
         * `passed` - Passed
         * `withdrawn` - Withdrawn
+    RoleRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        required_skills:
+          type: array
+          items:
+            type: integer
+      required:
+      - required_skills
+      - title
+    RoleStatusEnum:
+      enum:
+      - open
+      - filled
+      type: string
+      description: |-
+        * `open` - Open
+        * `filled` - Filled
     Skill:
       type: object
       properties:

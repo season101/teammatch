@@ -3,13 +3,37 @@ from rest_framework.exceptions import APIException
 
 from apps.core.models import Term
 
-from .models import Project
+from .models import Project, ProjectStatus, RoleStatus
 
 
 class NoActiveTerm(APIException):
     status_code = 409
     default_detail = "There is no active term, so projects cannot be created yet."
     default_code = "no_active_term"
+
+
+class ProjectLocked(APIException):
+    status_code = 409
+    default_detail = "This project is locked or archived, so its roles cannot change."
+    default_code = "project_locked"
+
+
+class RoleNotOpen(APIException):
+    status_code = 409
+    default_detail = "Only an open role can be edited."
+    default_code = "role_not_open"
+
+
+class ProjectNotDraft(APIException):
+    status_code = 409
+    default_detail = "Only a draft project can be published."
+    default_code = "project_not_draft"
+
+
+class ProjectNeedsRoles(APIException):
+    status_code = 409
+    default_detail = "Add at least one role before publishing."
+    default_code = "project_needs_roles"
 
 
 def get_active_term(today=None):
@@ -23,3 +47,26 @@ def create_project(*, owner, title, pitch):
     if term is None:
         raise NoActiveTerm()
     return Project.objects.create(owner=owner, term=term, title=title, pitch=pitch)
+
+
+def ensure_roles_editable(project):
+    """Roles can be added to a draft or open project only."""
+    if project.status not in (ProjectStatus.DRAFT, ProjectStatus.OPEN):
+        raise ProjectLocked()
+
+
+def ensure_role_editable(role):
+    ensure_roles_editable(role.project)
+    if role.status != RoleStatus.OPEN:
+        raise RoleNotOpen()
+
+
+def publish_project(project):
+    """Draft to open. A project with no roles cannot be opened (BR-06)."""
+    if project.status != ProjectStatus.DRAFT:
+        raise ProjectNotDraft()
+    if not project.roles.exists():
+        raise ProjectNeedsRoles()
+    project.status = ProjectStatus.OPEN
+    project.save()
+    return project

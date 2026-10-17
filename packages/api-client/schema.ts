@@ -122,6 +122,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{id}/publish/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Open my draft project for applications. Blocked when it has no roles. */
+        post: operations["projects_publish_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{id}/roles/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Add a role (with required skills) to one of my draft or open projects. */
+        post: operations["projects_roles_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/roles/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Edit one of my open roles, including its required skills. */
+        patch: operations["roles_partial_update"];
+        trace?: never;
+    };
     "/api/v1/roles/{id}/applications/": {
         parameters: {
             query?: never;
@@ -241,6 +292,11 @@ export interface components {
             major?: string;
             skill_ids?: number[];
         };
+        PatchedRoleRequest: {
+            title?: string;
+            description?: string;
+            required_skills?: number[];
+        };
         Profile: {
             readonly id: number;
             display_name?: string;
@@ -270,6 +326,16 @@ export interface components {
          * @enum {string}
          */
         ProjectStatusEnum: "draft" | "open" | "locked" | "archived";
+        Role: {
+            readonly id: number;
+            readonly project: number;
+            title: string;
+            description?: string;
+            readonly status: components["schemas"]["RoleStatusEnum"];
+            required_skills: number[];
+            /** Format: date-time */
+            readonly created_at: string;
+        };
         RoleApplication: {
             readonly id: number;
             readonly applicant: components["schemas"]["Profile"];
@@ -286,6 +352,17 @@ export interface components {
          * @enum {string}
          */
         RoleApplicationStatusEnum: "pending" | "liked" | "passed" | "withdrawn";
+        RoleRequest: {
+            title: string;
+            description?: string;
+            required_skills: number[];
+        };
+        /**
+         * @description * `open` - Open
+         *     * `filled` - Filled
+         * @enum {string}
+         */
+        RoleStatusEnum: "open" | "filled";
         Skill: {
             readonly id: number;
             name: string;
@@ -502,6 +579,81 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Project"];
+                };
+            };
+        };
+    };
+    projects_publish_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+        };
+    };
+    projects_roles_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["RoleRequest"];
+                "multipart/form-data": components["schemas"]["RoleRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Role"];
+                };
+            };
+        };
+    };
+    roles_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedRoleRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedRoleRequest"];
+                "multipart/form-data": components["schemas"]["PatchedRoleRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Role"];
                 };
             };
         };
