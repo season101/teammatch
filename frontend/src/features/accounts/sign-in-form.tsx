@@ -29,7 +29,12 @@ export function SignInForm({ next }: { next?: string }) {
       const result = await allauthPost("/auth/login", { email, password });
       // 409 means this browser is already signed in, which is fine too
       if (result.status === 200 || result.status === 409) {
-        await queryClient.invalidateQueries({ queryKey: ["session"] });
+        // "all": nothing on this page watches the session, and a stale "signed out"
+        // would send the next page straight back here.
+        await queryClient.invalidateQueries({
+          queryKey: ["session"],
+          refetchType: "all",
+        });
         router.replace(safeNext(next));
         return;
       }
