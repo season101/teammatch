@@ -1,10 +1,10 @@
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 
 from apps.core.models import Term
 
-from .models import Project, ProjectStatus, RoleStatus
+from .models import Project, ProjectStatus, Role, RoleStatus
 
 
 class NoActiveTerm(APIException):
@@ -90,3 +90,15 @@ def open_projects(today=None):
 def my_projects(user):
     """Projects I own, newest first, with their roles (F4-01 review page)."""
     return Project.objects.filter(owner=user).prefetch_related("roles")
+
+
+def visible_projects(user):
+    """Projects this user may open: their own, and anyone's open or locked ones (F2-02)."""
+    roles = Role.objects.order_by("created_at").prefetch_related("required_skills")
+    return (
+        Project.objects.filter(
+            Q(owner=user) | Q(status__in=[ProjectStatus.OPEN, ProjectStatus.LOCKED])
+        )
+        .select_related("owner__profile")
+        .prefetch_related(Prefetch("roles", queryset=roles))
+    )

@@ -11,6 +11,7 @@ from . import services
 from .models import Project, Role
 from .serializers import (
     MyProjectSerializer,
+    ProjectDetailSerializer,
     ProjectListSerializer,
     ProjectSerializer,
     RoleSerializer,
@@ -89,3 +90,16 @@ class MyProjectsView(generics.ListAPIView):
 
     def get_queryset(self):
         return services.my_projects(self.request.user)
+
+
+@extend_schema(tags=["projects"])
+class ProjectDetailView(generics.RetrieveAPIView):
+    """One project with its roles and their required skills.
+
+    Owners see their own drafts. Everyone else sees open and locked projects only (404 otherwise).
+    """
+
+    serializer_class = ProjectDetailSerializer
+
+    def get_queryset(self):
+        return services.visible_projects(self.request.user)

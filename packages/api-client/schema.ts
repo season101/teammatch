@@ -141,6 +141,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description One project with its roles and their required skills.
+         *
+         *     Owners see their own drafts. Everyone else sees open and locked projects only (404 otherwise).
+         */
+        get: operations["projects_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{id}/publish/": {
         parameters: {
             query?: never;
@@ -395,6 +416,17 @@ export interface components {
             readonly status: components["schemas"]["ProjectStatusEnum"];
             readonly term: number;
             readonly owner: number;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        ProjectDetail: {
+            readonly id: number;
+            title: string;
+            pitch: string;
+            status?: components["schemas"]["ProjectStatusEnum"];
+            owner: number;
+            readonly owner_name: string;
+            readonly roles: components["schemas"]["Role"][];
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -714,6 +746,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Project"];
+                };
+            };
+        };
+    };
+    projects_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectDetail"];
                 };
             };
         };
