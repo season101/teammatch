@@ -2,18 +2,22 @@
 
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
 import { SignOutButton } from "@/features/accounts/sign-out-button";
+import { ProfileForm } from "@/features/profiles/profile-form";
 
-// Sign-in only. The profile form (F1-03) and skill picker (F1-04) go here next.
 export default function ProfilePage() {
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-col gap-4 px-4 py-12">
+    <main className="mx-auto flex w-full max-w-xl flex-col gap-6 px-4 py-12">
       <RequireSignIn>
         {(user) => (
           <>
-            <h1 className="text-2xl font-bold">My profile</h1>
-            <p>
-              Signed in as <strong>{user.email}</strong>
-            </p>
+            <header className="flex flex-col gap-1">
+              <h1 className="text-2xl font-bold">My profile</h1>
+              <p className="text-zinc-600 dark:text-zinc-400">
+                Signed in as <strong>{user.email}</strong>. Only you see your
+                email.
+              </p>
+            </header>
+            <ProfileForm />
             <div>
               <SignOutButton />
             </div>
