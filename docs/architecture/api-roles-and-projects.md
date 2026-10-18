@@ -1,6 +1,3 @@
-
-
-Api roles and projects · MD
 # Roles, project detail and publish (F2-02)
  
 These endpoints let a project owner add roles to a draft project, edit them, and publish the project so it shows up in the open-projects list.
@@ -89,5 +86,3 @@ You can also use Swagger at http://localhost:8000/api/docs/.
 - Tests: `backend/apps/projects/tests/test_roles.py` and `test_project_detail.py`
 - Project page: `frontend/src/app/projects/[id]/page.tsx`
 - Role editor: `frontend/src/features/projects/project-editor.tsx` and `role-form.tsx`
- 
-Claude finished the response
