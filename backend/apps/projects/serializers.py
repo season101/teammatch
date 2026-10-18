@@ -70,3 +70,13 @@ class MyProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ["id", "title", "status", "roles", "created_at"]
+
+
+class ProjectDetailSerializer(serializers.ModelSerializer):
+    # Public info only: the owner's display name, never their email.
+    owner_name = serializers.CharField(source="owner.profile.display_name", read_only=True)
+    roles = RoleSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Project
+        fields = ["id", "title", "pitch", "status", "owner", "owner_name", "roles", "created_at"]

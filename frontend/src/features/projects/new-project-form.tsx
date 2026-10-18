@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useCreateProject, type FieldErrors } from "./queries";
 
@@ -23,7 +24,10 @@ export function NewProjectForm() {
   const signedOut = failure?.status === 401 || failure?.status === 403;
   const errors: FieldErrors = { ...failure?.fields, ...clientErrors };
   const unexpected =
-    failure && !noTerm && !signedOut && Object.keys(failure.fields).length === 0;
+    failure &&
+    !noTerm &&
+    !signedOut &&
+    Object.keys(failure.fields).length === 0;
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,8 +47,15 @@ export function NewProjectForm() {
       >
         <h2 className="text-lg font-semibold">Project created</h2>
         <p className="mt-1 text-sm">
-          &ldquo;{create.data.title}&rdquo; was saved as a draft. Add roles next, then publish it.
+          &ldquo;{create.data.title}&rdquo; was saved as a draft. Add roles
+          next, then publish it.
         </p>
+        <Link
+          href={`/projects/${create.data.id}`}
+          className="mt-4 mr-3 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          Add roles
+        </Link>
         <button
           type="button"
           className="mt-4 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
@@ -64,8 +75,8 @@ export function NewProjectForm() {
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
       {noTerm && (
         <p role="alert" className={noticeClass}>
-          There is no active term yet, so projects can&apos;t be created. Ask an admin to add the
-          current term.
+          There is no active term yet, so projects can&apos;t be created. Ask an
+          admin to add the current term.
         </p>
       )}
       {signedOut && (

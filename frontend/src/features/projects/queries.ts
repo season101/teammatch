@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import type { components } from "@teammatch/api-client";
 import { api } from "@/lib/api";
 
@@ -6,6 +11,8 @@ export type Project = components["schemas"]["Project"];
 export type ProjectInput = components["schemas"]["ProjectRequest"];
 export type FieldErrors = Partial<Record<keyof ProjectInput, string>>;
 export type ProjectListItem = components["schemas"]["ProjectList"];
+export type ProjectDetail = components["schemas"]["ProjectDetail"];
+export type RoleInput = components["schemas"]["RoleRequest"];
 
 export class CreateProjectError extends Error {
   status: number;
@@ -81,5 +88,103 @@ export function useOpenProjects() {
       return data;
     },
     getNextPageParam: (lastPage) => cursorFrom(lastPage.next),
+  });
+}
+
+export class ApiError extends Error {
+  status: number;
+  fields: Record<string, string>;
+
+  constructor(
+    status: number,
+    message: string,
+    fields: Record<string, string> = {},
+  ) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.fields = fields;
+  }
+}
+
+// Django REST Framework's default bodies: { detail: "..." } or { field: ["..."] }.
+function apiError(status: number, body: unknown): ApiError {
+  const record = (body ?? {}) as Record<string, unknown>;
+  const fields: Record<string, string> = {};
+  for (const [key, value] of Object.entries(record)) {
+    if (Array.isArray(value) && typeof value[0] === "string")
+      fields[key] = value[0];
+  }
+  const message = typeof record.detail === "string" ? record.detail : "";
+  return new ApiError(status, message, fields);
+}
+
+export function useProject(projectId: number) {
+  return useQuery<ProjectDetail, ApiError>({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      const { data, response } = await api.GET("/api/v1/projects/{id}/", {
+        params: { path: { id: projectId } },
+      });
+      if (!data)
+        throw new ApiError(response.status, "Could not load the project.");
+      return data;
+    },
+  });
+}
+
+export function useAddRole(projectId: number) {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, ApiError, RoleInput>({
+    mutationFn: async (input) => {
+      const { data, error, response } = await api.POST(
+        "/api/v1/projects/{id}/roles/",
+        {
+          params: { path: { id: projectId } },
+          body: input,
+          headers: { "X-CSRFToken": csrfToken() },
+        },
+      );
+      if (!data) throw apiError(response.status, error);
+      return data;
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] }),
+  });
+}
+
+export function useUpdateRole(projectId: number) {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, ApiError, { roleId: number; input: RoleInput }>({
+    mutationFn: async ({ roleId, input }) => {
+      const { data, error, response } = await api.PATCH("/api/v1/roles/{id}/", {
+        params: { path: { id: roleId } },
+        body: input,
+        headers: { "X-CSRFToken": csrfToken() },
+      });
+      if (!data) throw apiError(response.status, error);
+      return data;
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] }),
+  });
+}
+
+export function usePublishProject(projectId: number) {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, ApiError, void>({
+    mutationFn: async () => {
+      const { data, error, response } = await api.POST(
+        "/api/v1/projects/{id}/publish/",
+        {
+          params: { path: { id: projectId } },
+          headers: { "X-CSRFToken": csrfToken() },
+        },
+      );
+      if (!data) throw apiError(response.status, error);
+      return data;
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] }),
   });
 }

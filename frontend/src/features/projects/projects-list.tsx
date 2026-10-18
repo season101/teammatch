@@ -49,7 +49,14 @@ export function ProjectsList() {
             key={project.id}
             className="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800"
           >
-            <h2 className="text-lg font-semibold">{project.title}</h2>
+            <h2 className="text-lg font-semibold">
+              <Link
+                href={`/projects/${project.id}`}
+                className="hover:underline"
+              >
+                {project.title}
+              </Link>
+            </h2>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
               by {project.owner_name || "an unnamed owner"} ·{" "}
               {project.open_role_count} open{" "}

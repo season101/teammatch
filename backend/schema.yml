@@ -263,6 +263,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Project'
           description: ''
+  /api/v1/projects/{id}/:
+    get:
+      operationId: projects_retrieve
+      description: |-
+        One project with its roles and their required skills.
+
+        Owners see their own drafts. Everyone else sees open and locked projects only (404 otherwise).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - projects
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectDetail'
+          description: ''
   /api/v1/projects/{id}/publish/:
     post:
       operationId: projects_publish_create
@@ -801,6 +825,42 @@ components:
       - pitch
       - status
       - term
+      - title
+    ProjectDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        pitch:
+          type: string
+          maxLength: 2000
+        status:
+          $ref: '#/components/schemas/ProjectStatusEnum'
+        owner:
+          type: integer
+        owner_name:
+          type: string
+          readOnly: true
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - owner
+      - owner_name
+      - pitch
+      - roles
       - title
     ProjectList:
       type: object
