@@ -107,10 +107,10 @@ test("adds a role with a title, description and skills", async () => {
   });
   renderEditor();
   fireEvent.click(await screen.findByRole("button", { name: "Add a role" }));
-  fireEvent.change(screen.getByLabelText("Title"), {
+  fireEvent.change(screen.getByLabelText("Role title"), {
     target: { value: "Backend dev" },
   });
-  fireEvent.change(screen.getByLabelText("Description"), {
+  fireEvent.change(screen.getByLabelText("Role description"), {
     target: { value: "APIs" },
   });
   fireEvent.click(screen.getByRole("button", { name: "+ Django" }));

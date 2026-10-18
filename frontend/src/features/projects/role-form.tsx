@@ -77,11 +77,12 @@ export function RoleForm({
 
       <div>
         <label htmlFor={`${id}-title`} className="font-medium">
-          Title
+          Role title
         </label>
         <input
           id={`${id}-title`}
           value={title}
+          placeholder="e.g. Backend developer"
           maxLength={TITLE_MAX}
           disabled={pending}
           className={inputClass}
@@ -99,7 +100,7 @@ export function RoleForm({
 
       <div>
         <label htmlFor={`${id}-description`} className="font-medium">
-          Description
+          Role description
         </label>
         <textarea
           id={`${id}-description`}
