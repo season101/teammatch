@@ -10,7 +10,7 @@ Topology and routing: [docs/architecture/deployment.md](../docs/architecture/dep
 |---|---|---|
 | `teammatch-web` | `ghcr.io/season101/teammatch-web` | Next.js standalone, catch-all router (priority 1) |
 | `teammatch-api` | `ghcr.io/season101/teammatch-api` | uvicorn, 2 workers. Router for `/api`, `/ws`, `/admin`, `/static`, `/_allauth` (priority 100) |
-| `teammatch-migrate` | api image | one-shot `migrate`, api waits for it |
+| `teammatch-migrate` | api image | one-shot `migrate`, then `bootstrap` (terms and `SEED_*` accounts); api waits for it |
 | `teammatch-db` | `postgres:17.11-alpine` | volume `teammatch_pgdata` |
 | `teammatch-redis` | `redis:8.8-alpine` | AOF on, volume `teammatch_redisdata` |
 | `teammatch-storage` | `chrislusf/seaweedfs` | S3 on :8333, internal only, volume `teammatch_s3data` |
@@ -39,9 +39,23 @@ S3_SECRET_KEY=change-me
 
 EMAIL_URL=consolemail://         # smtp+tls://user:pass@host:587 once email is set up
 DEFAULT_FROM_EMAIL=TeamMatch <verification@teammatch.sijancodes.com>
+
+# optional demo accounts, created verified on every deploy (leave a pair empty to skip it)
+SEED_ADMIN_EMAIL=admin@latech.edu    # superuser, can sign in at /admin
+SEED_ADMIN_PASSWORD=change-me
+SEED_OWNER_EMAIL=olive.owner@latech.edu
+SEED_OWNER_PASSWORD=change-me
+SEED_CANDIDATE_EMAIL=sam.student@latech.edu
+SEED_CANDIDATE_PASSWORD=change-me
 ```
 
 `DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, and `TEAMMATCH_VERSION` have no defaults, so compose refuses to start without them.
+
+After `migrate`, `teammatch-migrate` runs `python manage.py bootstrap`, so this happens on every deploy:
+- It adds the terms listed in `backend/apps/core/management/commands/bootstrap.py`, starting with Fall 2026. A term that already exists keeps the dates an admin set.
+- It creates the `SEED_*` accounts, or updates them if they exist, and marks their email verified. The password always becomes the `.env` value, so to change one, edit `.env` and recreate `teammatch-migrate`.
+
+Only the `teammatch-migrate` container gets the `SEED_*` values.
 
 ## Run
 

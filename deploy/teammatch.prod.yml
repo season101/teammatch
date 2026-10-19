@@ -105,8 +105,16 @@ services:
     image: ghcr.io/season101/teammatch-api:${TEAMMATCH_VERSION:?set in deploy/.env}
     container_name: teammatch-migrate
     restart: "no"
-    command: ["python", "manage.py", "migrate", "--noinput"]
-    environment: *api-env
+    # bootstrap adds the known terms and the SEED_* accounts; only this one-shot sees the passwords
+    command: ["sh", "-c", "python manage.py migrate --noinput && python manage.py bootstrap"]
+    environment:
+      <<: *api-env
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+      SEED_OWNER_EMAIL: ${SEED_OWNER_EMAIL:-}
+      SEED_OWNER_PASSWORD: ${SEED_OWNER_PASSWORD:-}
+      SEED_CANDIDATE_EMAIL: ${SEED_CANDIDATE_EMAIL:-}
+      SEED_CANDIDATE_PASSWORD: ${SEED_CANDIDATE_PASSWORD:-}
     depends_on:
       teammatch-db:
         condition: service_healthy
