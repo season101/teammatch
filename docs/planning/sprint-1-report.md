@@ -75,7 +75,7 @@ Moved to Sprint 2 as planned: a like filling the role and locking the team (F4-0
 
 What went well:
 - All 13 stories merged with tests, and the full flow works in the browser.
-- One epic per person kept work parallel. Pavan's two stories were merged the day he left.
+- One epic per person kept work parallel. Pavan's two stories were merged the day Pavan left.
 - The OpenAPI schema and generated client kept the front end and back end in step.
 - Review and browser testing caught real bugs: four sign-up bugs, and the sign-in redirect.
 
