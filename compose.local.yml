@@ -80,7 +80,13 @@ services:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY}
       S3_SECRET_KEY: ${S3_SECRET_KEY}
       S3_BUCKET: ${S3_BUCKET:-teammatch-media}
-    command: sh -c "python manage.py migrate --noinput && exec uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --reload"
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+      SEED_OWNER_EMAIL: ${SEED_OWNER_EMAIL:-}
+      SEED_OWNER_PASSWORD: ${SEED_OWNER_PASSWORD:-}
+      SEED_CANDIDATE_EMAIL: ${SEED_CANDIDATE_EMAIL:-}
+      SEED_CANDIDATE_PASSWORD: ${SEED_CANDIDATE_PASSWORD:-}
+    command: sh -c "python manage.py migrate --noinput && python manage.py bootstrap && exec uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --reload"
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
