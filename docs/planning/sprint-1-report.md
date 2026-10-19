@@ -9,7 +9,7 @@ Sprint 1 ran Oct 6–20, 2026. This report reflects Oct 18; the sprint closes Oc
 | | |
 |---|---|
 | Stories | 13 of 13 done (32 of 32 h) |
-| Chores | 1 of 4 done; seed data is partly done |
+| Chores | 2 of 4 done; seed data is partly done |
 | Pull requests | 25 merged by the team (Dependabot excluded) |
 | Tests | 119 backend, 53 frontend; CI green on `main` |
 | Production | v1.0.0 deployed Oct 18, then v1.0.1 the same night |
@@ -36,7 +36,7 @@ Values for the spreadsheet:
 | Oct 15 | 23 | 12.9 |
 | Oct 16 | 4 | 10.3 |
 | Oct 17 | 4 | 7.7 |
-| Oct 18 | 3 | 5.1 |
+| Oct 18 | 2 | 5.1 |
 | Oct 19 | | 2.6 |
 | Oct 20 | | 0.0 |
 
@@ -58,6 +58,7 @@ Values for the spreadsheet:
 | F4-02 Like or pass an applicant | Sijan | 2 | Oct 16 | #95, screen #99 |
 | F4-03 Team model and lock rule | Sijan | 3 | Oct 16 | #96 |
 | PL-05 First production deploy | Sijan | 1 | Oct 18 | #102, #103 |
+| PL-12 Wiki/docs page | Sijan | 1 | Oct 18 | #104 |
 
 Supporting work: model setup (#76), static files under uvicorn (#78), a profile created at sign-up (#83, in #87), verification email from TeamMatch through Resend (#102), and a deploy runbook (#102). Also a `bootstrap` step that adds the term and demo accounts after `migrate` (#103).
 
@@ -67,7 +68,6 @@ Supporting work: model setup (#76), static files under uvicorn (#78), a profile 
 |---|---|
 | PL-10 Seed data script (#45) | Term and demo accounts done in #103. Demo projects, including one that's a like away from locking, are still to do. |
 | PL-11 Burn chart and report (#46) | This report. The chart still needs to go into the graded spreadsheet. |
-| PL-12 Wiki/docs page (#49) | [Sprint 1 features](../product/sprint-1-features.md) |
 
 Moved to Sprint 2 as planned: a like filling the role and locking the team (F4-05), the swipe deck (F3-03), and the review queue (F4-04). Ranking by skill match (F3-04) is Sprint 3.
 
