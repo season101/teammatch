@@ -55,7 +55,7 @@ ASGI_APPLICATION = "config.asgi.application"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],  # our allauth email overrides win over allauth's own
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -98,6 +98,11 @@ ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*"]
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_UNIQUE_EMAIL = True
+# The default prefix is "[<request host>] ", which reads "[api:8000]" behind the Next rewrite.
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "TeamMatch: "
+DEFAULT_FROM_EMAIL = env(
+    "DEFAULT_FROM_EMAIL", default="TeamMatch <verification@teammatch.sijancodes.com>"
+)
 HEADLESS_ONLY = True
 HEADLESS_CLIENTS = ("browser", "app")
 # Absolute: behind the Next rewrite Django sees the API's Host, so relative links hit the API.

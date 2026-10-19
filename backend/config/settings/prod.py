@@ -16,4 +16,3 @@ STORAGES["staticfiles"] = {"BACKEND": "whitenoise.storage.CompressedManifestStat
 
 # EMAIL_URL like smtp+tls://user:pass@host:587 sets EMAIL_BACKEND, EMAIL_HOST, etc.
 globals().update(env.email_url("EMAIL_URL", default="consolemail://"))
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="TeamMatch <no-reply@sijancodes.com>")
