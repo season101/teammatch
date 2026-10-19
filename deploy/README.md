@@ -137,3 +137,14 @@ Restore the backup only if data is damaged:
 ```bash
 docker exec -i teammatch-db sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists' < ~/backups/<file>.dump
 ```
+
+## Sample data for demos
+
+`seed_demo` adds five sample projects with open roles. They belong to sample accounts at `example.com`, which can't sign in. With `--candidate`, it also fills that account's profile with sample skills if the profile is still empty, so the feed shows skill matches. Running it again only adds what's missing.
+
+```bash
+docker exec teammatch-api python manage.py seed_demo --candidate <demo candidate email>
+docker exec teammatch-api python manage.py seed_demo --remove   # delete the sample projects and accounts
+```
+
+Locally, run `make seed`, and `make seed args=--remove` to take the data out again.

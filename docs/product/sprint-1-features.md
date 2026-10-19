@@ -57,11 +57,10 @@ The team model and the lock rule are in the backend and tested. A team locks whe
 
 ## Try it locally
 
-Start the stack with `make up` and open http://localhost:3000. On a fresh database, `bootstrap` adds the Fall 2026 term after `migrate`. Set the `SEED_*` lines in your `.env` (see `deploy/README.md`) to get demo accounts that are already verified. Locally, verification emails are printed in the API log (`docker compose logs api`).
+Start the stack with `make up` and open http://localhost:3000. On a fresh database, `bootstrap` adds the Fall 2026 term after `migrate`. Set the `SEED_*` lines in your `.env` (see `deploy/README.md`) to get demo accounts that are already verified. Run `make seed` to add five sample projects with open roles. Locally, verification emails are printed in the API log (`docker compose logs api`).
 
 ## Not in Sprint 1
 
 - A like filling the role and locking the team (F4-05, Sprint 2)
 - The swipe deck (F3-03, Sprint 2)
 - Ranking roles by skill match (F3-04, Sprint 3)
-- Demo projects in the seed data (#45)
