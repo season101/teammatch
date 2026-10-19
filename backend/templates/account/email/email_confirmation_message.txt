@@ -1,0 +1,10 @@
+{% extends "account/email/base_message.txt" %}
+
+{% block content %}{% autoescape off %}Someone, hopefully you, signed up for TeamMatch with this email address.
+
+{% if code %}Your verification code is below. Enter it in the browser window you signed up in.
+
+{{ code }}{% else %}To verify your email, open this link:
+{{ activate_url }}{% endif %}
+
+If you didn't sign up, you can ignore this email.{% endautoescape %}{% endblock content %}

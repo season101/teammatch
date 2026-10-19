@@ -38,7 +38,7 @@ S3_ACCESS_KEY=teammatch
 S3_SECRET_KEY=change-me
 
 EMAIL_URL=consolemail://         # smtp+tls://user:pass@host:587 once email is set up
-DEFAULT_FROM_EMAIL=TeamMatch <no-reply@sijancodes.com>
+DEFAULT_FROM_EMAIL=TeamMatch <verification@teammatch.sijancodes.com>
 ```
 
 `DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, and `TEAMMATCH_VERSION` have no defaults, so compose refuses to start without them.

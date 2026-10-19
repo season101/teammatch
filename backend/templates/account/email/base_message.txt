@@ -1,0 +1,6 @@
+{% autoescape off %}Hello from TeamMatch!
+
+{% block content %}{% endblock content %}
+
+The TeamMatch team
+{% endautoescape %}
