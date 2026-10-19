@@ -62,3 +62,64 @@ curl -fsS https://teammatch.sijancodes.com/api/v1/health/
 ```
 
 `/healthz` and `/readyz` are only reachable inside the stack. Publicly those paths land on web and return 404.
+
+## Upgrade to a new version
+
+The example ships 1.0.0. Before you start, check that every PR for the release is merged and CI is green on `main`.
+
+1. Tag the release on your laptop. The release workflow pushes `ghcr.io/season101/teammatch-api:1.0.0` and `teammatch-web:1.0.0`.
+
+   ```bash
+   git switch main && git pull
+   git tag -a v1.0.0 -m "v1.0.0"
+   git push origin v1.0.0
+   gh run watch "$(gh run list --workflow release.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+   ```
+
+2. Back up the database on the server (`ssh -A sitashma`; `-A` lets git there reach GitHub).
+
+   ```bash
+   docker exec teammatch-db sh -c 'pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"' > ~/backups/teammatch-$(date +%F)-before-1.0.0.dump
+   ls -lh ~/backups/
+   ```
+
+3. Move the compose file and the image tag to the release. Only the `apps/teammatch` submodule moves. Don't pull or push the infra repo, because it pins the other apps too.
+
+   ```bash
+   cd ~/sitashma-infra/apps/teammatch
+   git fetch --tags && git checkout v1.0.0
+   sed -i 's/^TEAMMATCH_VERSION=.*/TEAMMATCH_VERSION=1.0.0/' deploy/.env
+   ```
+
+4. Pull the images and restart only the app services. `teammatch-migrate` runs first and the API waits for it. The database, Redis and storage keep running.
+
+   ```bash
+   cd ~/sitashma-infra
+   docker compose --profile apps pull teammatch-migrate teammatch-api teammatch-web
+   docker compose --profile apps up -d teammatch-migrate teammatch-api teammatch-web
+   ```
+
+5. Run the checks in [Verify](#verify). The health response should show the new `version`, and `docker logs teammatch-migrate` should end without errors. Then sign up on the live site with a real inbox, open the link in the email, and sign in.
+
+## Roll back
+
+Roll back if any of these happen:
+- `teammatch-migrate` exits non-zero.
+- The API isn't healthy within 2 minutes.
+- The health check isn't `ok`.
+- Sign-up or email verification fails.
+
+If the release's migrations only add tables or columns (true for 1.0.0), the previous version runs fine on the new schema:
+
+```bash
+cd ~/sitashma-infra/apps/teammatch
+git checkout v0.1.0
+sed -i 's/^TEAMMATCH_VERSION=.*/TEAMMATCH_VERSION=0.1.0/' deploy/.env
+cd ~/sitashma-infra && docker compose --profile apps up -d teammatch-api teammatch-web
+```
+
+Restore the backup only if data is damaged:
+
+```bash
+docker exec -i teammatch-db sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists' < ~/backups/<file>.dump
+```
