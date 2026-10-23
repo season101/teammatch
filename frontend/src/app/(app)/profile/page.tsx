@@ -3,7 +3,6 @@
 import Link from "next/link";
 
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
-import { SignOutButton } from "@/features/accounts/sign-out-button";
 import { ProfileForm } from "@/features/profiles/profile-form";
 
 export default function ProfilePage() {
@@ -39,7 +38,6 @@ export default function ProfilePage() {
               >
                 Settings
               </Link>
-              <SignOutButton />
             </div>
           </>
         )}

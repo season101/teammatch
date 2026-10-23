@@ -84,7 +84,8 @@ export default function SettingsPage() {
               </label>
             </section>
 
-            <div>
+            {/* Desktop signs out from the sidebar; phones and tablets have no sidebar. */}
+            <div className="lg:hidden">
               <SignOutButton />
             </div>
           </>
