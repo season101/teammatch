@@ -162,7 +162,10 @@ function SidebarMode({ pathname, owned }: { pathname: string; owned: MyProject[]
     return (
       <div className="flex flex-col gap-2 p-4">
         <h2 className="px-3 text-lg font-bold">Settings</h2>
-        <Link href="/settings" aria-current="page" className={`${rowLink} font-semibold`}>
+        <Link href="/settings#appearance" className={`${rowLink} font-semibold`}>
+          Appearance
+        </Link>
+        <Link href="/settings#keyboard" className={`${rowLink} font-semibold`}>
           Keyboard shortcuts
         </Link>
         <div className="px-3 pt-2">

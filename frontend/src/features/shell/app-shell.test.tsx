@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { afterEach, vi } from "vitest";
 import SettingsPage from "@/app/(app)/settings/page";
 import { AppShell } from "./app-shell";
+import { applySavedTheme } from "./theme-script";
 
 const nav = vi.hoisted(() => ({ pathname: "/feed" }));
 vi.mock("next/navigation", () => ({
@@ -31,7 +32,10 @@ function renderShell(
   );
 }
 
-afterEach(() => localStorage.clear());
+afterEach(() => {
+  localStorage.clear();
+  delete document.documentElement.dataset.theme;
+});
 
 test("bottom bar on phones, top bar on tablets, sidebar on desktop", () => {
   renderShell("/feed");
@@ -129,4 +133,25 @@ test("Settings → Keyboard shortcuts turns the legend off and on", () => {
 
   fireEvent.click(toggle);
   expect(screen.getByRole("complementary", { name: "Keyboard shortcuts" })).toBeInTheDocument();
+});
+
+test("Settings → Theme switches the theme and remembers it", () => {
+  renderShell("/settings", { children: <SettingsPage /> });
+  const root = document.documentElement;
+
+  expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
+  fireEvent.click(screen.getByRole("radio", { name: "Light" }));
+  expect(screen.getByRole("radio", { name: "Light" })).toBeChecked();
+  expect(root.dataset.theme).toBe("light");
+  expect(localStorage.getItem("teammatch:theme")).toBe("light");
+
+  fireEvent.click(screen.getByRole("radio", { name: "System" }));
+  expect(root).not.toHaveAttribute("data-theme");
+  expect(localStorage.getItem("teammatch:theme")).toBeNull();
+});
+
+test("the saved theme applies before the first paint", () => {
+  localStorage.setItem("teammatch:theme", "dark");
+  applySavedTheme();
+  expect(document.documentElement.dataset.theme).toBe("dark");
 });

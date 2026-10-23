@@ -1,37 +1,8 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 
-// Settings → Keyboard shortcuts. A per-browser preference, on unless turned off.
-const KEY = "teammatch:keyboard-shortcuts";
-
-function read() {
-  try {
-    return localStorage.getItem(KEY) !== "off";
-  } catch {
-    return true;
-  }
-}
-
-function subscribe(onChange: () => void) {
-  window.addEventListener("storage", onChange);
-  return () => window.removeEventListener("storage", onChange);
-}
-
-// The deck (F3-03) and review queue (F4-04) check this before handling a key.
-export function useShortcutsEnabled() {
-  return useSyncExternalStore(subscribe, read, () => true);
-}
-
-export function setShortcutsEnabled(on: boolean) {
-  try {
-    localStorage.setItem(KEY, on ? "on" : "off");
-  } catch {
-    // shortcut: with storage blocked the choice can't be saved and stays on; move it to the profile API if that matters.
-  }
-  // "storage" only fires in other tabs, so tell this one too.
-  window.dispatchEvent(new StorageEvent("storage", { key: KEY }));
-}
+import { useShortcutsEnabled } from "./preferences";
 
 export type LegendKey = [key: string, action: string];
 
