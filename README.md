@@ -35,7 +35,7 @@ backend/              Django API (HTTP + WebSockets), one app per epic under app
 frontend/             Next.js web app, feature folders under src/features/
 packages/api-client/  TypeScript client generated from backend/schema.yml
 deploy/               production compose for the server
-docs/                 product, planning, architecture, deliverables
+docs/                 product, planning, architecture, design, deliverables
 compose.local.yml     local stack: web, api, Postgres, Redis, SeaweedFS
 Makefile              shortcuts for everything below
 ```
@@ -154,6 +154,7 @@ Each sprint is 8 h of stories + 1 h of code review + 1 h of a rotating chore. De
 | [flows.md](docs/architecture/flows.md) | sequence diagrams for the main flows |
 | [cicd.md](docs/architecture/cicd.md) / [deployment.md](docs/architecture/deployment.md) | CI, releases, production setup |
 | [adr/](docs/architecture/adr/) | architecture decisions |
+| [design/](docs/design/README.md) | design system: principles, tokens, components, patterns, wireframes. Read before any UI work |
 | [github-setup.md](docs/github-setup.md) | one-time repo setup for the owner |
 
 The [wiki](https://github.com/season101/teammatch/wiki) mirrors these docs and updates on every merge to `main`. Edit the files here, not the wiki pages: the next sync overwrites wiki edits. A new doc under `docs/` also needs a line in `PAGES` in [build_wiki.py](.github/scripts/build_wiki.py).
