@@ -18,6 +18,9 @@ REPO_URL = "https://github.com/season101/teammatch"
 
 # Sidebar sections in order: (heading, [(source, wiki page name)]). Every .md under docs/ needs a line.
 PAGES = [
+    ("Reference", [
+        ("docs/glossary.md", "Glossary"),
+    ]),
     ("Product", [
         ("docs/product/prd.md", "Product-Requirements"),
         ("docs/product/use-cases.md", "Use-Cases"),

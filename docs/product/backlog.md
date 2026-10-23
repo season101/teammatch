@@ -281,7 +281,7 @@ Future | 6 h | Won't this term. In the MVP, accessibility basics are part of the
 
 ---
 
-## F3 Swipe Feed & Applications (Member C, Pavan Kumar Yadav Kolusu)
+## F3 Swipe Feed & Applications (Member C, Sijan Malla; Pavan Kumar Yadav Kolusu until Oct 16)
 
 ### F3-08 Role card component
 As a candidate, I want each role shown as a clear card so that I can decide quickly.

@@ -2,6 +2,8 @@
 
 The work is split into four slots, one per epic. Each member owns one slot (picked 10/1, names in the table below). Set yourself as Owner on your epic's issues.
 
+**Since Oct 16, 2026 the team is three people.** Pavan Kumar Yadav Kolusu left, and Sijan Malla covers slot C (F3) as well as slot D (F4). Slots stay as the unit of planning; C and D just have the same owner.
+
 Each slot owns one feature end to end (backend models and API, frontend screens, tests) so everyone has their own commits in every sprint, which matters since implementation is graded per student.
 
 Everyone works 10 h per sprint: 8 h of stories in their slot + 2 h team tax (1 h code reviews for teammates, 1 h one rotating chore). The repo scaffold (PL-01 to PL-04) is done by the team lead before S1 and is outside this budget. Full capacity math is in [sprint-plan.md](sprint-plan.md#capacity).
@@ -11,13 +13,13 @@ Everyone works 10 h per sprint: 8 h of stories in their slot + 2 h team tax (1 h
 | Slot | Name | Epic | Owns | Sprint 1 (8 h) | Sprint 2 (8 h) | Sprint 3 (8 h) |
 |---|---|---|---|---|---|---|
 | A | Weibo Zhang | F1 Accounts & Profiles | Sign up/in, Google, domain allowlist, profile, skills, retire + term reset, avatar, admin | F1-01 (2), F1-02 (2), F1-03 (2), F1-04 (2) | F1-05 (3), F1-06 (2), F1-08 (3) | F1-07 (4), PL-07 (2), buffer (2) |
-| B | Shree Krishna Shrestha | F2 Projects & Roles | Projects, roles, browse, detail, edit/close, delete role, PWA, search, responsive | F2-01 (3), F2-02 (3), F2-03 (2) | F2-04 (2), F2-05 (3), F2-06 (2), buffer (1) | F2-08 (3), F2-07 (3), F2-10 (2) |
-| C | Pavan Kumar Yadav Kolusu | F3 Swipe Feed & Applications | Role card, feed, apply, swipe deck, pass, my applications, ranking, controls, undo | F3-08 (2), F3-01 (3), F3-02 (3) | F3-03 (4), F3-05 (1), F3-06 (3) | F3-04 (3), F3-09 (1), F3-10 (2), buffer (2) |
-| D | Sijan Malla | F4 Review, Match & Team Chat | Applicants, like/pass, team model, review queue, fill + lock, auto-withdraw, chat | F4-01 (3), F4-02 (2), F4-03 (3) | F4-04 (3), F4-05 (3), F4-07 (2) | F4-08 (6), F4-09 (2) |
+| B | Shree Krishna Shrestha | F2 Projects & Roles | Projects, roles, browse, detail, edit/close, delete role, PWA, search, responsive | F2-01 (3), F2-02 (3), F2-03 (2) | F2-04 (2), F2-05 (3), F2-06 (2), F2-11 (1) | F2-08 (3), F2-07 (3), F2-10 (2) |
+| C | Sijan Malla (Pavan Kumar Yadav Kolusu until Oct 16) | F3 Swipe Feed & Applications | Role card, feed, apply, swipe deck, pass, my applications, ranking, controls, undo | F3-08 (2), F3-01 (3), F3-02 (3) | F3-03 (4), F3-05 (1), F3-06 (3) | F3-04 (3), F3-09 (1), F3-10 (2), buffer (2) |
+| D | Sijan Malla | F4 Review, Match & Team Chat | Applicants, like/pass, team model, review queue, fill + lock, auto-withdraw, chat | F4-01 (3), F4-02 (2), F4-03 (3) | F4-04 (3), F4-05 (3), F4-07 (2), PL-16 (3) | F4-08 (6), F4-09 (2) |
 
 ## Rotating chores
 
-Each member picks one chore per sprint at sprint planning (1 h). Try not to take the same kind of chore twice in a row. Slot: rotating.
+Each member picks one chore per sprint at sprint planning (1 h). Try not to take the same kind of chore twice in a row. Slot: rotating. With three members, each sprint lists one more chore than there are people; the extra one is assigned at sprint planning.
 
 | Sprint | Chores (one per member) |
 |---|---|
@@ -62,8 +64,8 @@ R = does the work, A = accountable (final call), C = consulted, I = kept informe
 | F4 stories | C | C | C | R/A |
 | Business rules (BR-xx) | C | C | C | R/A |
 | OpenAPI contract changes | R for own endpoints, reviewed by the consumer slot | same | same | same |
-| Code review | Reviews B | Reviews C | Reviews D | Reviews A |
+| Code review | Reviews C | Reviews D | Reviews A and B | (same person as C) |
 | Board + spreadsheet up to date | Own tasks | Own tasks | Own tasks | Own tasks |
 | Rotating chores (deploy, release, seed, e2e, docs, burn chart) | R when picked | R when picked | R when picked | R when picked |
 
-Each member spends 1 h per sprint on code review. The review rotation is a default; any member can review any PR. Every PR still names its reviewer. Scrum master and note-taking rotate each sprint (S1: A, S2: B, S3: C, final build: D).
+Each member spends 1 h per sprint on code review. The review rotation is a default; any member can review any PR. Every PR still names its reviewer. Since C and D share an owner, no one reviews their own slot: Weibo (A) reviews C, Shree (B) reviews D, and Sijan reviews A and B. Scrum master and note-taking rotate each sprint (S1: A, S2: B, S3: C, final build: D); C and D are both Sijan.
