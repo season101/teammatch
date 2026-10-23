@@ -84,5 +84,5 @@ You can also use Swagger at http://localhost:8000/api/docs/.
 - Business rules: `ensure_roles_editable`, `ensure_role_editable`, `publish_project` and `visible_projects` in `backend/apps/projects/services.py`
 - Views and URLs: `backend/apps/projects/views.py` and `urls.py`
 - Tests: `backend/apps/projects/tests/test_roles.py` and `test_project_detail.py`
-- Project page: `frontend/src/app/projects/[id]/page.tsx`
+- Project page: `frontend/src/app/(app)/projects/[id]/page.tsx`
 - Role editor: `frontend/src/features/projects/project-editor.tsx` and `role-form.tsx`
