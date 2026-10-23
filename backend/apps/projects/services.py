@@ -37,6 +37,12 @@ class ProjectNeedsRoles(APIException):
     default_code = "project_needs_roles"
 
 
+class OpenProjectExists(APIException):
+    status_code = 409
+    default_detail = "You already have an open project. Close it or wait until it locks."
+    default_code = "open_project_exists"
+
+
 def get_active_term(today=None):
     """The term whose dates include today, or None."""
     today = today or timezone.localdate()
@@ -68,6 +74,13 @@ def publish_project(project):
         raise ProjectNotDraft()
     if not project.roles.exists():
         raise ProjectNeedsRoles()
+    already_open = (
+        Project.objects.filter(owner=project.owner, term=project.term, status=ProjectStatus.OPEN)
+        .exclude(pk=project.pk)
+        .exists()
+    )
+    if already_open:
+        raise OpenProjectExists()
     project.status = ProjectStatus.OPEN
     project.save()
     return project
