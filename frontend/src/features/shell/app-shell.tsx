@@ -236,7 +236,12 @@ function SidebarMode({ pathname, owned }: { pathname: string; owned: MyProject[]
           {
             id: "applications",
             label: "Applications",
-            panel: <p className="px-3 text-sm text-muted">Roles you apply to show up here.</p>,
+            // F3-06 (#31) replaces this with the user's applications and their status chips.
+            panel: (
+              <p className="px-3 text-sm text-muted">
+                A list of the roles you&apos;ve applied to is coming soon.
+              </p>
+            ),
           },
           {
             id: "teams",
