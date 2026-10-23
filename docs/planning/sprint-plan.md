@@ -32,6 +32,8 @@ Per member per sprint:
 | Rotating chore | 1 | 3 | 4 | 12 |
 | **Total** | **10** | **30** | **40** | **120** |
 
+Original plan (four people, set 10/1):
+
 | Member | Sprint 1 | Sprint 2 | Sprint 3 | Total |
 |---|---|---|---|---|
 | A (F1, Weibo Zhang) | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 30 |
@@ -41,6 +43,22 @@ Per member per sprint:
 | **Team** | **40** | **40** | **40** | **120** |
 
 (stories + code review + chore)
+
+### Revised after Oct 16: a team of three
+
+Pavan Kumar Yadav Kolusu left on Oct 16, 2026, and Sijan Malla took over slot C (F3) on top of slot D (F4). The slots and stories stay the same; slot C's hours now land on Sijan.
+
+| Member | Sprint 1 (actual) | Sprint 2 (plan) | Sprint 3 (plan) | Total |
+|---|---|---|---|---|
+| A (F1, Weibo Zhang) | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 30 |
+| B (F2, Shree Krishna Shrestha) | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 8 + 1 + 1 = 10 | 30 |
+| Pavan Kumar Yadav Kolusu (C until Oct 16) | 3 (F3-01) | - | - | 3 |
+| Sijan Malla (C from Oct 16, and D) | 13 + 2 chores = 15, plus review | 19 + 1 + 1 = 21 | 16 + 1 + 1 = 18 | 54 |
+
+- **Sprint 1:** Sijan finished F3-02 and F3-08 from slot C alongside slot D's 8 h, and did two chores (PL-05, PL-12).
+- **Sprint 2:** Sijan's 19 h of stories are slot C (8), slot D (8) and PL-16 App shell (3). That's over the 10 h plan, kept by choice on Oct 22. Record it in the Sprint 2 report.
+- **Chores:** each sprint lists four chores for three people. The fourth is assigned at sprint planning, adding 1 h for whoever takes it.
+- **Reviews:** no one reviews their own slot. Weibo reviews C, Shree reviews D, Sijan reviews A and B ([team-roles.md](team-roles.md#responsibility-raci-style)).
 
 - **Sprint 0 is outside this budget.** It covers the 9/29 course deliverables and repo setup.
 - **The repo scaffold is provided before S1 by the team lead** (PL-01 to PL-04): allauth auth wiring, Channels configured, CI, compose, generated API client, and empty Django apps. Feature estimates assume this plumbing already exists.
@@ -106,10 +124,10 @@ By 10/6: everyone has run `make up`, and Sprint 1 stories are split into tasks, 
 |---|---|---|---|---|
 | A (F1, Weibo Zhang) | F1-01 Email sign up (2), F1-02 Sign in/out (2), F1-03 Profile (2), F1-04 Skills (2) | 1 | 1 | 10 |
 | B (F2, Shree Krishna Shrestha) | F2-01 Create project (3), F2-02 Roles with skills + publish (3), F2-03 List projects (2) | 1 | 1 | 10 |
-| C (F3, Pavan Kumar Yadav Kolusu) | F3-08 Role card (2), F3-01 Role feed (3), F3-02 Apply with note (3) | 1 | 1 | 10 |
+| C (F3, Pavan Kumar Yadav Kolusu until Oct 16, then Sijan Malla) | F3-08 Role card (2, done by Sijan), F3-01 Role feed (3), F3-02 Apply with note (3, done by Sijan) | 1 | 1 | 10 |
 | D (F4, Sijan Malla) | F4-01 Applicants per role (3), F4-02 Like/pass (2), F4-03 Team model + lock rule (3) | 1 | 1 | 10 |
 
-S1 chores (one each): PL-05 First production deploy, PL-10 Seed data script, PL-11 Burn chart + sprint report, PL-12 Wiki/docs page for the sprint's features.
+S1 chores (one each; Sijan did PL-05 and PL-12): PL-05 First production deploy, PL-10 Seed data script, PL-11 Burn chart + sprint report, PL-12 Wiki/docs page for the sprint's features.
 
 ## Sprint 2 (10/22 - 11/3) - the real product
 
@@ -118,11 +136,13 @@ S1 chores (one each): PL-05 First production deploy, PL-10 Seed data script, PL-
 | Member | Stories (8 h) | Review | Chore (pick one) | Total |
 |---|---|---|---|---|
 | A (F1, Weibo Zhang) | F1-05 Google sign-in (3), F1-06 Domain allowlist (2), F1-08 Retired users blocked + term reset command (3) | 1 | 1 | 10 |
-| B (F2, Shree Krishna Shrestha) | F2-04 Project detail (2), F2-05 Edit/close project (3), F2-06 Delete unfillable role (2), buffer (1) | 1 | 1 | 10 |
-| C (F3, Pavan Kumar Yadav Kolusu) | F3-03 Swipe deck (4), F3-05 Pass (1), F3-06 My applications + withdraw (3) | 1 | 1 | 10 |
-| D (F4, Sijan Malla) | F4-04 Review queue UI (3), F4-05 Mutual like fills role + team lock (3), F4-07 Auto-withdraw + call retire (2) | 1 | 1 | 10 |
+| B (F2, Shree Krishna Shrestha) | F2-04 Project detail (2), F2-05 Edit/close project (3), F2-06 Delete unfillable role (2), F2-11 One open project per owner (1) | 1 | 1 | 10 |
+| C (F3, Sijan Malla) | F3-03 Swipe deck (4), F3-05 Pass (1), F3-06 My applications + withdraw (3) | on D's row | on D's row | 8 |
+| D (F4, Sijan Malla) | F4-04 Review queue UI (3), F4-05 Mutual like fills role + team lock (3), F4-07 Auto-withdraw + call retire (2), PL-16 App shell + navigation (3) | 1 | 1 | 13 |
 
-S2 chores (one each): PL-06 Cut release tag + deploy, PL-11 Burn chart + sprint report, PL-13 API docs refresh, PL-14 Playwright setup + smoke test.
+Sijan's Sprint 2 total is 21 h (rows C and D). Build PL-16 first; F3-03 and F4-04 sit inside it.
+
+S2 chores (one per member; the fourth is assigned at planning): PL-06 Cut release tag + deploy, PL-11 Burn chart + sprint report, PL-13 API docs refresh, PL-14 Playwright setup + smoke test.
 
 ## Sprint 3 (11/5 - 11/17) - chat and polish
 
@@ -132,10 +152,12 @@ S2 chores (one each): PL-06 Cut release tag + deploy, PL-11 Burn chart + sprint 
 |---|---|---|---|---|
 | A (F1, Weibo Zhang) | F1-07 Avatar upload through the API (4), PL-07 Admin moderation (2), polish/bug buffer (2) | 1 | 1 | 10 |
 | B (F2, Shree Krishna Shrestha) | F2-08 Installable PWA (3), F2-07 Search + skill filter (3), F2-10 Responsive pass (2) | 1 | 1 | 10 |
-| C (F3, Pavan Kumar Yadav Kolusu) | F3-04 Skill-overlap ranking (3), F3-09 Button/keyboard controls (1), F3-10 Undo last swipe (2), buffer (2) | 1 | 1 | 10 |
+| C (F3, Sijan Malla) | F3-04 Skill-overlap ranking (3), F3-09 Button/keyboard controls (1), F3-10 Undo last pass (2), buffer (2) | on D's row | on D's row | 8 |
 | D (F4, Sijan Malla) | F4-08 Team chat over WebSocket (6), F4-09 Chat history + reconnect (2) | 1 | 1 | 10 |
 
-S3 chores (one each): PL-06 Final release + deploy, PL-11 Burn chart + sprint report, PL-08 Golden-path e2e test (extends PL-14), PL-09 Final README + docs.
+Sijan's Sprint 3 total is 18 h (rows C and D).
+
+S3 chores (one per member; the fourth is assigned at planning): PL-06 Final release + deploy, PL-11 Burn chart + sprint report, PL-08 Golden-path e2e test (extends PL-14), PL-09 Final README + docs.
 
 Bug fixes from the demo run and final build prep on 11/18-11/19 come out of the S3 buffers.
 

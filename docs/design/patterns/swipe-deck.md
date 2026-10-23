@@ -35,7 +35,7 @@ The opacity is the drag distance ÷ the commit distance. Stamps are decorative (
 
 ## Apply with a note
 - Opens a bottom sheet on phone, a modal on desktop, or the right panel at 1440px and up.
-- One textarea: "Add a note for the owner", 280 characters max, with a counter.
+- One textarea: "Add a note for the owner", 300 characters max, with a counter.
 - CTA "Send application"; ghost "Apply without a note".
 
 ## Keyboard legend

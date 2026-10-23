@@ -125,7 +125,7 @@ Health checks: `/healthz` (process is up, no dependencies), `/readyz` (db + redi
 |---|---|---|---|
 | A | F1 Accounts & Profiles | Weibo Zhang | sign-up/in, Google, domain allowlist, profile, skills, avatar, retire + term reset, admin |
 | B | F2 Projects & Roles | Shree Krishna Shrestha | create/edit/close projects, roles, browse and search, PWA, responsive pass |
-| C | F3 Swipe Feed & Applications | Pavan Kumar Yadav Kolusu | role card deck, ranking, apply/pass, undo, my applications |
+| C | F3 Swipe Feed & Applications | Sijan Malla (Pavan Kumar Yadav Kolusu until Oct 16) | role card deck, ranking, apply/pass, undo, my applications |
 | D | F4 Review, Match & Team Chat | Sijan Malla | review queue, like/pass, fill + team lock, auto-withdraw, real-time chat |
 
 Each sprint is 8 h of stories + 1 h of code review + 1 h of a rotating chore. Details are in [team-roles.md](docs/planning/team-roles.md).
@@ -144,6 +144,7 @@ Each sprint is 8 h of stories + 1 h of code review + 1 h of a rotating chore. De
 
 | Doc | What's in it |
 |---|---|
+| [glossary.md](docs/glossary.md) | short forms and IDs: F1-xx, PL-xx, BUF-xx, BR-xx, UC-xx, DD-xx, S1–S3, slots |
 | [prd.md](docs/product/prd.md) | problem, scope, business rules |
 | [backlog.md](docs/product/backlog.md) | stories with acceptance criteria (F1-xx..F4-xx, PL-xx) |
 | [use-cases.md](docs/product/use-cases.md) | use cases mapped to epics and stories |

@@ -35,7 +35,7 @@ Each story is written so it can be pasted into a GitHub issue (User Story templa
 | F2-04 | Project detail page | B | S2 | 2 | Should |
 | F2-05 | Edit and close a project | B | S2 | 3 | Must |
 | F2-06 | Delete an unfillable role | B | S2 | 2 | Must |
-| BUF-B2 | Buffer | B | S2 | 1 | - |
+| F2-11 | One open project per owner | B | S2 | 1 | Must |
 | F2-08 | Installable PWA | B | S3 | 3 | Must |
 | F2-07 | Search by keyword and filter by skill | B | S3 | 3 | Should |
 | F2-10 | Responsive pass | B | S3 | 2 | Should |
@@ -64,6 +64,7 @@ Each story is written so it can be pasted into a GitHub issue (User Story templa
 | PL-06 | Cut release tag and deploy | rotating | S2, S3 | 1 each | Must |
 | PL-13 | API docs refresh | rotating | S2 | 1 | Should |
 | PL-14 | Playwright setup and smoke test | rotating | S2 | 1 | Should |
+| PL-16 | App shell and navigation | D | S2 | 3 | Must |
 | PL-08 | Golden-path end-to-end test | rotating | S3 | 1 | Must |
 | PL-09 | Final README and docs | rotating | S3 | 1 | Must |
 | PL-01 | Repo scaffold and local stack | Lead | S0 | 8 | Must |
@@ -89,6 +90,8 @@ As a student, I want to sign up with my school email and a password so that I ca
 - Given the email is already registered, when I submit, then I see "account exists, sign in instead".
 - Given I click a valid verification link, then my account is verified and I am signed in.
 
+Design: [forms](../design/patterns/forms.md), screens [03](../design/screens/img/03-sign-up.png) and [04](../design/screens/img/04-verify-email.png)
+
 Sprint S1 | 2 h | Must | UC-01
 
 ### F1-02 Sign in and sign out
@@ -96,6 +99,8 @@ As a user, I want to sign in and out so that my account stays mine on shared dev
 - Given a verified account, when I enter the right email and password, then I am signed in with a session cookie.
 - Given wrong credentials, when I submit, then I see a generic error.
 - Given I am signed in, when I click sign out, then my session ends and protected pages redirect to sign-in.
+
+Design: [forms](../design/patterns/forms.md), [confirmations](../design/patterns/confirmations.md), screens [02](../design/screens/img/02-sign-in.png) and [25](../design/screens/img/25-settings.png)
 
 Sprint S1 | 2 h | Must | UC-01
 
@@ -105,6 +110,8 @@ As a user, I want a profile with my name, bio, and major so that owners know who
 - Given another user views my profile, then they see name, bio, major, and skills but not my email.
 - Given I try to edit someone else's profile through the API, then I get 403.
 
+Design: [forms](../design/patterns/forms.md), [profile strength](../design/components/profile-strength.md), screens [06](../design/screens/img/06-profile-setup.png) and [24](../design/screens/img/24-profile.png)
+
 Sprint S1 | 2 h | Must | UC-04
 
 ### F1-04 Add skills to my profile
@@ -113,6 +120,8 @@ As a candidate, I want to pick my skills from a list so that I see roles that fi
 - Given I remove a skill, then it is no longer on my profile.
 - Given I try to add a skill not in the list, then it is rejected.
 
+Design: [skill picker](../design/patterns/forms.md#skill-picker), [chip](../design/components/chip.md), screen [06](../design/screens/img/06-profile-setup.png)
+
 Sprint S1 | 2 h | Must | UC-04
 
 ### F1-05 Sign in with Google
@@ -120,6 +129,8 @@ As a student, I want to sign in with my Google school account so that I don't ne
 - Given I click "Continue with Google" and consent, when Google returns an allowed email, then I am signed in, and a new account is created if I didn't have one.
 - Given an existing email/password account with the same verified email, then the Google login links to it instead of making a duplicate.
 - Given I cancel at Google, then I return to sign-in with a short message.
+
+Design: [forms](../design/patterns/forms.md#onboarding-order), screen [02](../design/screens/img/02-sign-in.png)
 
 Sprint S2 | 3 h | Must | UC-02
 
@@ -142,6 +153,8 @@ Sprint S2 | 3 h | Must | UC-11
 As a user, I want to upload a profile picture so that people recognize me.
 - Given I pick a JPEG/PNG/WebP under 2 MB, when I upload, then the file is sent to the API as multipart, saved to SeaweedFS through django-storages, and my profile shows the new avatar.
 - Given a non-image or a file over 2 MB, then the API rejects it with `invalid_avatar` and my old avatar stays.
+
+Design: [forms](../design/patterns/forms.md), screen [24](../design/screens/img/24-profile.png)
 
 Sprint S3 | 4 h | Should | UC-04
 
@@ -170,6 +183,8 @@ As an owner, I want to create a project with a title and pitch so that I can rec
 - Given missing fields, then I see validation errors.
 - Given there is no active term, then project creation is disabled with a message.
 
+Design: [project creation](../design/patterns/forms.md#project-creation), screen [16](../design/screens/img/16-create-or-edit-a-project.png)
+
 Sprint S1 | 3 h | Must | UC-05
 
 ### F2-02 Add roles with required skills and publish
@@ -179,6 +194,8 @@ As an owner, I want to add roles with required skills so that the right people f
 - Given a project with no roles, when I publish, then it is blocked (BR-06).
 - Given I am not the owner, then add/edit role returns 403.
 
+Design: [project creation](../design/patterns/forms.md#project-creation), screens [15](../design/screens/img/15-my-projects.png) and [16](../design/screens/img/16-create-or-edit-a-project.png)
+
 Sprint S1 | 3 h | Must | UC-05
 
 ### F2-03 List open projects
@@ -186,12 +203,16 @@ As a candidate, I want to see open projects in this term so that I know what's o
 - Given open projects exist, when I open "Projects", then I see title, owner, pitch preview, and open role count, newest first, paginated 20 per page.
 - Given draft, locked, or archived projects, then they are not listed.
 
+Design: [navigation](../design/patterns/navigation.md), screen [13](../design/screens/img/13-browse-and-search-projects.png)
+
 Sprint S1 | 2 h | Must | UC-06
 
 ### F2-04 Project detail page
 As a candidate, I want to see a project's full pitch and roles so that I can decide where I fit.
 - Given an open project, when I open it, then I see pitch, owner profile link, and each role with its skills and status.
 - Given a locked project, then it shows "Team formed" and member names, no apply buttons.
+
+Design: [team strip](../design/components/team-strip.md), screen [14](../design/screens/img/14-project-detail.png)
 
 Sprint S2 | 2 h | Should | UC-06
 
@@ -201,6 +222,8 @@ As an owner, I want to edit or close my project so that it stays accurate.
 - Given I close the project, then it is `archived`, its roles leave all feeds, and pending applications are set to `withdrawn`.
 - Given a locked project, then editing is blocked (BR-13).
 
+Design: [confirmations](../design/patterns/confirmations.md), screen [16](../design/screens/img/16-create-or-edit-a-project.png)
+
 Sprint S2 | 3 h | Must
 
 ### F2-06 Delete an unfillable role
@@ -209,7 +232,19 @@ As an owner, I want to delete a role nobody fits so that my team can still form.
 - Given the remaining roles are all filled, then the team-lock check (F4-03 service) re-runs and the project locks (BR-07).
 - Given a filled role, then delete is not allowed.
 
+Design: [confirmations](../design/patterns/confirmations.md), screen [20](../design/screens/img/20-delete-unfillable-role-confirmation.png)
+
 Sprint S2 | 2 h | Must | UC-13
+
+### F2-11 One open project per owner
+As an owner, I want to be held to one open project at a time so that my teams don't compete for the same people.
+- Given I already have another `open` project this term, when I publish, then it is rejected with 409 and "You already have an open project. Close it or wait until it locks." (BR-14).
+- Given I close my open project, or it locks, then I can publish another one.
+- Given I have an open project, then "New project" in Projects → Mine is disabled with that reason shown under it.
+
+Design: [navigation rules](../design/patterns/navigation.md#rules), [project creation](../design/patterns/forms.md#project-creation), screen [15](../design/screens/img/15-my-projects.png)
+
+Sprint S2 | 1 h | Must | UC-05
 
 ### F2-08 Installable PWA
 As a student on my phone, I want to install TeamMatch to my home screen so that it feels like an app.
@@ -224,12 +259,16 @@ As a candidate, I want to search projects by keyword and skill so that I find re
 - Given a skill, then results include projects with at least one open role requiring it.
 - Given no results, then I see an empty state with "clear filters".
 
+Design: screen [13](../design/screens/img/13-browse-and-search-projects.png)
+
 Sprint S3 | 3 h | Should | UC-06
 
 ### F2-10 Responsive pass
 As a phone user, I want every screen to fit my screen so that I can use the app on the go.
 - Given widths from 360 px to 1440 px, then no screen scrolls sideways.
 - Given a phone, then tap targets are at least 44 px.
+
+Design: [layout](../design/foundations/layout.md), [navigation](../design/patterns/navigation.md), [accessibility](../design/foundations/accessibility.md)
 
 Sprint S3 | 2 h | Should
 
@@ -242,12 +281,14 @@ Future | 6 h | Won't this term. In the MVP, accessibility basics are part of the
 
 ---
 
-## F3 Swipe Feed & Applications (Member C, Pavan Kumar Yadav Kolusu)
+## F3 Swipe Feed & Applications (Member C, Sijan Malla; Pavan Kumar Yadav Kolusu until Oct 16)
 
 ### F3-08 Role card component
 As a candidate, I want each role shown as a clear card so that I can decide quickly.
 - Given a role, then the card shows role title, project title, owner, required skills (my matching skills highlighted), and a short pitch.
 - Given a long pitch, then it is truncated with "more".
+
+Design: [role card](../design/components/role-card.md), screens [08](../design/screens/img/08-discover-deck.png) and [09](../design/screens/img/09-role-details-expanded.png)
 
 Sprint S1 | 2 h | Must
 
@@ -255,6 +296,8 @@ Sprint S1 | 2 h | Must
 As a candidate, I want a feed of open roles so that I can find ones to apply to.
 - Given open roles in the current term, then I see roles I have not applied to or passed, excluding my own projects (BR-04).
 - Given many roles, then the API pages results (20 per page).
+
+Design: [role card](../design/components/role-card.md), screen [08](../design/screens/img/08-discover-deck.png)
 
 Sprint S1 | 3 h | Must | UC-07
 
@@ -265,6 +308,8 @@ As a candidate, I want to apply to a role with an optional note so that the owne
 - Given I own the project, then the API returns 403 (BR-04).
 - Given the role was filled meanwhile, then I see "this role was just filled".
 
+Design: [apply with a note](../design/patterns/swipe-deck.md#apply-with-a-note), screen [10](../design/screens/img/10-apply-with-a-note.png)
+
 Sprint S1 | 3 h | Must | UC-07
 
 ### F3-03 Swipe deck
@@ -273,12 +318,16 @@ As a candidate, I want to swipe right to apply and left to pass so that browsing
 - Given I drag a card past the threshold right, then it applies (with optional note); left, then it passes.
 - Given the deck is empty, then I see "you're all caught up".
 
+Design: [swipe deck](../design/patterns/swipe-deck.md), screens [07](../design/screens/img/07-first-deck-coach-marks.png) and [08](../design/screens/img/08-discover-deck.png)
+
 Sprint S2 | 4 h | Must | UC-07, UC-08
 
 ### F3-05 Pass on a role
 As a candidate, I want to pass on a role so that it stops showing up.
 - Given a role card, when I pass, then a `RoleDismissal` is saved and the role no longer appears in my deck (BR-10).
 - Given I pass, then the owner is not notified.
+
+Design: [swipe deck](../design/patterns/swipe-deck.md), screen [08](../design/screens/img/08-discover-deck.png)
 
 Sprint S2 | 1 h | Must | UC-08
 
@@ -287,6 +336,8 @@ As a candidate, I want to see and withdraw my applications so that I stay in con
 - Given I open "My applications", then I see each application with role, project, and status (pending, liked, passed, withdrawn).
 - Given a pending application, when I withdraw and confirm, then its status is `withdrawn` and it leaves the owner's queue.
 - Given a liked application, then there is no withdraw button and the API rejects it (BR-11).
+
+Design: [status chips](../design/patterns/feedback-states.md#application-status-chips), [confirmations](../design/patterns/confirmations.md), screen [11](../design/screens/img/11-my-applications.png)
 
 Sprint S2 | 3 h | Must | UC-09
 
@@ -302,13 +353,17 @@ As a user who can't or doesn't want to drag, I want buttons and arrow keys for a
 - Given the deck, then Apply and Pass buttons are visible below the card.
 - Given keyboard focus on the deck, then right arrow applies and left arrow passes.
 
+Design: [keyboard legend](../design/patterns/swipe-deck.md#keyboard-legend), [action button](../design/components/action-button.md)
+
 Sprint S3 | 1 h | Should
 
-### F3-10 Undo last swipe
-As a candidate, I want to undo my last swipe so that a mis-swipe isn't permanent.
-- Given I passed on a role in this session, when I tap "Undo", then the dismissal is removed and the card comes back.
-- Given I applied to a role in this session and the application is still pending, when I tap "Undo", then the application is withdrawn and the card comes back.
-- Given the last application is no longer pending, then undo is not offered.
+### F3-10 Undo last pass
+As a candidate, I want to undo my last pass so that a mis-swipe isn't permanent.
+- Given my last decision in this session was a pass, when I tap "Undo" or press Z, then the dismissal is removed and the card comes back on top.
+- Given my last decision was an apply, then Undo is disabled; I withdraw from My applications instead, because re-applying is blocked (BR-02).
+- Given I undo, then only that one pass comes back (no multi-step undo).
+
+Design: [undo](../design/patterns/swipe-deck.md#undo), [action button](../design/components/action-button.md)
 
 Sprint S3 | 2 h | Should | UC-07, UC-08
 
@@ -352,6 +407,8 @@ As an owner, I want a review queue per role that shows one applicant at a time s
 - Given I like or pass, then the next applicant shows.
 - Given no pending applicants, then I see an empty state.
 
+Design: [review queue](../design/patterns/review-queue.md), [applicant card](../design/components/applicant-card.md), screen [17](../design/screens/img/17-review-queue.png)
+
 Sprint S2 | 3 h | Must | UC-10
 
 ### F4-05 Mutual like fills the role and locks the team when all roles are filled
@@ -360,6 +417,9 @@ As an owner, I want liking an applicant to fill the role, and my team to form on
 - Given that was the last open role, then the project becomes `locked` and a `Team` is created in the same transaction (BR-06).
 - Given some roles are still open, then the project stays `open`.
 - Given the applicant was retired by another team a moment earlier, then the like fails with a clear message.
+- Given a team locks, then each member's `Membership.seen_at` is empty, and the next time they open the app they see "It's a Team!" once; opening it calls `POST /api/v1/teams/{id}/seen/`, which sets `seen_at`.
+
+Design: [It's a Team!](../design/patterns/feedback-states.md#its-a-team), screens [18](../design/screens/img/18-role-filled-toast.png) and [19](../design/screens/img/19-it-s-a-team-celebration.png)
 
 Sprint S2 | 3 h | Must | UC-10, UC-11
 
@@ -379,6 +439,8 @@ As a team member, I want real-time chat with my team so that we can get started 
 - Given I am a member of a locked team, when I open the team page, then a WebSocket connects to `/ws/teams/<id>/`.
 - Given I send a message (1 to 2000 chars), then it is saved and appears for all connected members within 1 second.
 - Given I am not a member, then the connection is refused (BR-12).
+
+Design: screens [21](../design/screens/img/21-teams-list.png), [22](../design/screens/img/22-team-chat.png) and [23](../design/screens/img/23-team-page.png)
 
 Sprint S3 | 6 h | Must | UC-12
 
@@ -438,6 +500,18 @@ As a team, we want Playwright wired into CI so that later e2e tests are cheap to
 - Given the local stack, then one Playwright smoke test signs in and loads the feed, and runs in CI.
 
 Sprint S2 | 1 h | Should | Slot: rotating
+
+### PL-16 App shell and navigation
+As a student, I want the same navigation on every screen, sized for my device, so that I can move between my deck, projects, teams and profile.
+- Given a phone under 640 px, then a bottom tab bar shows Discover, Projects, Review (owners only), Teams and Me, with the active tab marked.
+- Given 640 to 1023 px, then a top bar shows the same tabs as text.
+- Given 1024 px and up, then a 320 px sidebar shows the avatar header and the Discover, Projects and Settings modes with their tabs (Applications | Teams, Browse | Mine), and the stage shows the selected content.
+- Given the deck or the review queue is on the stage, then the keyboard legend shows that screen's keys with a Hide pill, and Settings → Keyboard shortcuts turns the keys and legend off.
+- Given keyboard only, then every tab and mode button is reachable with a visible focus ring, and tabs move with the arrow keys.
+
+Design: [navigation](../design/patterns/navigation.md), [layout](../design/foundations/layout.md), [keyboard legend](../design/patterns/swipe-deck.md#keyboard-legend), screens [08](../design/screens/img/08-discover-deck.png), [15](../design/screens/img/15-my-projects.png) and [25](../design/screens/img/25-settings.png)
+
+Sprint S2 | 3 h | Must | Build before F3-03 and F4-04, which sit inside it. Adds 3 h to slot D in Sprint 2.
 
 ### PL-08 Golden-path end-to-end test
 As a team, we want an automated test of the full flow so that we know the demo works.

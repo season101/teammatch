@@ -55,7 +55,7 @@ A user can be both an owner and a candidate in the same term, but not on their o
 |---|---|---|---|
 | F1 | Accounts & Profiles | Email/password and Google sign-in, email domain allowlist, profile with bio, major, skills, avatar (uploaded through the API), retire and term reset | Member A (Weibo Zhang) |
 | F2 | Projects & Roles | Create/edit/close a project, define roles with required skills, delete an unfillable role, browse and search, installable PWA, responsive pass | Member B (Shree Krishna Shrestha) |
-| F3 | Swipe Feed & Applications | Role card deck ranked by skill overlap, swipe to apply or pass, undo last swipe, my applications, withdraw | Member C (Pavan Kumar Yadav Kolusu) |
+| F3 | Swipe Feed & Applications | Role card deck ranked by skill overlap, swipe to apply or pass, undo last pass, my applications, withdraw | Member C (Sijan Malla; Pavan Kumar Yadav Kolusu until Oct 16) |
 | F4 | Review, Match & Team Chat | Review queue per role, like/pass applicants, fill role on mutual like, auto team-lock, auto-withdraw and retire, real-time team chat | Member D (Sijan Malla) |
 | Platform | Platform & DevOps | Repo scaffold, CI, contract (OpenAPI) by the lead before S1; deploys, releases, seed data, e2e test, docs as rotating 1 h chores; admin moderation (Member A) | Lead / rotating |
 
@@ -82,6 +82,7 @@ These are enforced in the backend and each one has a test.
 | BR-11 | A candidate can withdraw a pending application. Liked (filled) applications cannot be withdrawn by the candidate. |
 | BR-12 | A chat room exists only for a locked team. Only team members (owner + filled roles) can read or post. |
 | BR-13 | Locked projects are read-only except for archiving by the owner or admin. |
+| BR-14 | An owner can have only one `open` project per term. Publishing a second is rejected until the first is closed or locks. |
 
 ## 8. Data model (summary)
 
@@ -180,7 +181,7 @@ mindmap
       Skill overlap ranking
       Pass a role
       My applications and withdraw
-      Undo last swipe
+      Undo last pass
     F4 Review Match and Chat
       Applicants per role
       Like or pass applicant

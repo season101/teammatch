@@ -35,7 +35,7 @@ On desktop the left column holds the fields and the right column the avatar and 
 - Popular skills for the term show first.
 
 ## Project creation
-1. **Title and pitch.** The pitch is 280 characters, with a counter.
+1. **Title and pitch.** Title up to 100 characters, pitch up to 2,000, each with a counter.
 2. **Roles:**
    - Each role has a title, a description and required skills.
    - At least one role is needed before the project can open.
