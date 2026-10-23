@@ -67,6 +67,36 @@ const spacing = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16];
 
 const themes = ["system", "dark", "light"] as const;
 
+const actions = [
+  ["undo", "Z"],
+  ["pass", "←"],
+  ["details", "↑"],
+  ["apply", "→"],
+] as const;
+
+// Approved project covers (brief §3). Content, not tokens.
+const covers = [
+  ["#C2275B", "raspberry"],
+  ["#0B5E57", "pine"],
+  ["#2058C9", "cobalt"],
+  ["#3E2BB8", "indigo"],
+  ["#7A2E58", "plum"],
+  ["#9A3412", "rust"],
+];
+
+// Gradients run from the cover colour to a darker shade, never lighter.
+function coverGradient(hex: string) {
+  return `linear-gradient(160deg, ${hex}, color-mix(in oklab, ${hex}, black 35%))`;
+}
+
+// Example profile (decision D1): major, skills, bio and avatar.
+const profileSections: [string, number, boolean][] = [
+  ["Major", 20, true],
+  ["Skills", 40, true],
+  ["Bio", 20, false],
+  ["Avatar", 20, false],
+];
+
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-4 border-t border-border pt-8">
@@ -92,7 +122,7 @@ export default function DesignSystemPage() {
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-4 py-12 sm:px-6">
         <header className="flex flex-col gap-6">
           <p className="font-mono text-sm text-muted">
-            Design system · Direction A “Lineup”
+            TeamMatch design system
           </p>
           <h1 className="font-display text-hero font-black">
             Find your <em>team</em>.
@@ -256,13 +286,21 @@ export default function DesignSystemPage() {
         </Section>
 
         <Section title="Chip">
+          <p className="text-sm text-muted">Inside a card (6px radius)</p>
           <div className="flex flex-wrap items-center gap-2">
-            <Chip>SQL</Chip>
             <Chip variant="matched">Python</Chip>
-            <Chip variant="selected">Hackathon-ready</Chip>
+            <Chip variant="matched">React</Chip>
+            <Chip>SQL</Chip>
+          </div>
+          <p className="text-sm text-muted">In a picker (pill)</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Chip variant="selected" pill>
+              Data &amp; ML
+            </Chip>
             {skills.map((skill) => (
               <Chip
                 key={skill}
+                pill
                 onRemove={() => setSkills(skills.filter((s) => s !== skill))}
               >
                 {skill}
@@ -273,7 +311,7 @@ export default function DesignSystemPage() {
 
         <Section title="Action bar">
           <div className="flex items-center gap-4">
-            {(["undo", "pass", "details", "apply"] as const).map((kind) => (
+            {actions.map(([kind]) => (
               <ActionButton
                 key={kind}
                 kind={kind}
@@ -281,25 +319,84 @@ export default function DesignSystemPage() {
               />
             ))}
           </div>
+          <ul className="flex flex-wrap gap-4 text-sm text-muted">
+            {actions.map(([kind, key]) => (
+              <li key={kind} className="flex items-center gap-2">
+                <kbd className="grid h-7 min-w-7 place-items-center rounded-chip border border-border bg-surface-2 px-1.5 text-text">
+                  {key}
+                </kbd>
+                {kind}
+              </li>
+            ))}
+          </ul>
           <p className="font-mono text-sm text-muted">
             Last pressed: {lastAction}
           </p>
         </Section>
 
-        <Section title="Team strip and match">
-          <div className="flex max-w-sm flex-col gap-4">
-            <TeamStrip
-              segments={["filled", "filled", "current", "open", "open"]}
-            />
-            <TeamStrip segments={["filled", "filled", "filled", "filled"]} />
-            <MatchBadge percent={86} />
+        <Section title="Cover, team strip and match">
+          <p className="text-sm text-muted">
+            The team strip only sits on a project cover. Covers are content,
+            the same in both themes.
+          </p>
+          <div
+            className="flex aspect-[380/280] max-w-sm flex-col justify-between rounded-card p-4 text-white"
+            style={{ background: coverGradient("#0B5E57") }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <TeamStrip
+                  segments={["filled", "filled", "current", "open", "open"]}
+                />
+              </div>
+              <MatchBadge percent={86} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-white/85">
+                Campus Eats
+              </p>
+              <p className="font-display text-3xl font-extrabold">
+                Frontend dev
+              </p>
+            </div>
           </div>
+          <ul className="flex flex-wrap gap-3">
+            {covers.map(([hex, name]) => (
+              <li key={hex} className="flex flex-col gap-1">
+                <div
+                  className="flex h-16 w-28 items-start rounded-row p-2"
+                  style={{ background: coverGradient(hex) }}
+                >
+                  <div className="w-full">
+                    <TeamStrip segments={["filled", "current", "open"]} />
+                  </div>
+                </div>
+                <p className="font-mono text-xs text-muted">
+                  {name} {hex}
+                </p>
+              </li>
+            ))}
+          </ul>
         </Section>
 
         <Section title="Profile strength">
-          <div className="flex max-w-sm flex-col gap-6">
-            <ProfileStrength value={19} />
-            <ProfileStrength value={62} label="Edit info" />
+          <div className="flex max-w-sm flex-col gap-4">
+            <ProfileStrength
+              value={profileSections
+                .filter(([, , done]) => done)
+                .reduce((sum, [, weight]) => sum + weight, 0)}
+            />
+            <ul className="flex flex-col gap-1 text-sm">
+              {profileSections.map(([name, weight, done]) => (
+                <li key={name} className="flex justify-between">
+                  <span className={done ? "text-text" : "text-muted"}>
+                    {done ? "✓ " : ""}
+                    {name}
+                  </span>
+                  <span className="font-mono text-muted">+{weight}%</span>
+                </li>
+              ))}
+            </ul>
             <ProfileStrength value={100} />
           </div>
         </Section>

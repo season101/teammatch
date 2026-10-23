@@ -18,10 +18,10 @@ export function ProfileStrength({
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={percent}
-        className="h-2 overflow-hidden rounded-pill bg-surface-2"
+        className="h-1.5 overflow-hidden rounded-pill bg-surface-2"
       >
         <div
-          className="h-full rounded-pill bg-primary transition-[width] duration-slow ease-standard"
+          className="h-full rounded-pill bg-apply-text transition-[width] duration-slow ease-standard"
           style={{ width: `${percent}%` }}
         />
       </div>

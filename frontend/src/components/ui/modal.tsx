@@ -5,7 +5,7 @@ import { Button } from "./button";
 
 type Props = {
   open: boolean;
-  // Called however the modal closes: Esc, the escape link, or `open` turning false.
+  // Called when the dialog closes: on Esc, or when `open` turns false.
   onClose: () => void;
   title: string;
   children?: ReactNode;
@@ -16,8 +16,9 @@ type Props = {
   onEscape?: () => void;
 };
 
-// A gate: one CTA plus a text-link escape. The native modal <dialog> makes the
-// rest of the page inert (the focus trap), closes on Esc and returns focus.
+// A gate: one CTA (the safe choice) plus a danger text button as the escape.
+// The native modal <dialog> makes the rest of the page inert (the focus trap),
+// closes on Esc and returns focus.
 export function Modal({
   open,
   onClose,
@@ -58,13 +59,9 @@ export function Modal({
         <Button ref={ctaRef} onClick={onCta} className="w-full">
           {ctaLabel}
         </Button>
-        <button
-          type="button"
-          onClick={onEscape}
-          className="min-h-11 px-3 text-sm font-semibold text-muted underline underline-offset-4 hover:text-text"
-        >
+        <Button variant="danger" onClick={onEscape}>
           {escapeLabel}
-        </button>
+        </Button>
       </div>
     </dialog>
   );

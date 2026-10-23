@@ -1,8 +1,9 @@
+// Only ever drawn on a project cover, so open and current are white.
 const styles = {
   filled: "bg-apply",
-  open: "border border-muted",
+  open: "border border-white/55",
   // The role on this card.
-  current: "bg-primary motion-safe:animate-pulse",
+  current: "bg-white motion-safe:animate-pulse",
 };
 
 export type Segment = keyof typeof styles;

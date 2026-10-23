@@ -4,8 +4,9 @@ const variants = {
   // White pill on dark, ink pill on light. Violet is never a button fill.
   cta: "bg-cta text-on-cta hover:opacity-90",
   secondary: "border border-border bg-surface-2 text-text hover:bg-surface",
-  ghost: "text-text hover:bg-surface-2",
-  danger: "bg-danger text-on-danger hover:opacity-90",
+  ghost: "text-text underline-offset-4 hover:underline",
+  // Text only: destructive actions sit behind a gate whose CTA is the safe choice.
+  danger: "text-danger hover:bg-surface-2",
 };
 
 const sizes = {
