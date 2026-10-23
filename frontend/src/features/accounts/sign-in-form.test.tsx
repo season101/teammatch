@@ -48,12 +48,12 @@ afterEach(() => {
   replace.mockReset();
 });
 
-test("signs in with the right email and password and goes to the profile", async () => {
+test("signs in with the right email and password and goes to Discover", async () => {
   const fetchMock = mockFetch(200, { status: 200, data: { user: { id: 1 } } });
   renderForm();
   fillAndSubmit("sam@latech.edu", "a-long-password");
 
-  await waitFor(() => expect(replace).toHaveBeenCalledWith("/profile"));
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/feed"));
   const [url, init] = fetchMock.mock.calls[0];
   expect(url).toBe("/_allauth/browser/v1/auth/login");
   expect(JSON.parse(init?.body as string)).toEqual({
@@ -138,8 +138,8 @@ test("asks unverified users to check their email", async () => {
 });
 
 test("never redirects to another website", () => {
-  expect(safeNext("//evil.example")).toBe("/profile");
-  expect(safeNext("https://evil.example")).toBe("/profile");
-  expect(safeNext(undefined)).toBe("/profile");
+  expect(safeNext("//evil.example")).toBe("/feed");
+  expect(safeNext("https://evil.example")).toBe("/feed");
+  expect(safeNext(undefined)).toBe("/feed");
   expect(safeNext("/projects")).toBe("/projects");
 });
