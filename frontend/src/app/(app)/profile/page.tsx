@@ -33,6 +33,12 @@ export default function ProfilePage() {
               >
                 Review applicants
               </Link>
+              <Link
+                href="/settings"
+                className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+              >
+                Settings
+              </Link>
               <SignOutButton />
             </div>
           </>

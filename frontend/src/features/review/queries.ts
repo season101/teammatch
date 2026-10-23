@@ -16,9 +16,11 @@ export class DecideError extends Error {
   }
 }
 
-export function useMyProjects() {
+// enabled: false skips the request, e.g. for a signed-out visitor in the app shell.
+export function useMyProjects(enabled = true) {
   return useQuery({
     queryKey: ["my-projects"],
+    enabled,
     queryFn: async () => {
       const { data, response } = await api.GET("/api/v1/projects/mine/");
       if (!data) throw new Error(`Could not load your projects (${response.status}).`);
