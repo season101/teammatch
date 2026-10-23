@@ -157,6 +157,8 @@ Each sprint is 8 h of stories + 1 h of code review + 1 h of a rotating chore. De
 | [design/](docs/design/README.md) | design system: principles, tokens, components, patterns, wireframes. Read before any UI work |
 | [github-setup.md](docs/github-setup.md) | one-time repo setup for the owner |
 
+The [wiki](https://github.com/season101/teammatch/wiki) mirrors these docs and updates on every merge to `main`. Edit the files here, not the wiki pages: the next sync overwrites wiki edits. A new doc under `docs/` also needs a line in `PAGES` in [build_wiki.py](.github/scripts/build_wiki.py).
+
 ## Deploy
 
 Production runs at `teammatch.sijancodes.com` from the compose file in [deploy/](deploy/). CI builds images to GHCR on a release tag, and we deploy by hand on the server. Steps are in [deployment.md](docs/architecture/deployment.md).
