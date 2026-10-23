@@ -163,4 +163,9 @@ test("the avatar goes to Discover, and Profile sits under Settings", () => {
   expect(screen.getByRole("link", { name: "You, go to Discover" })).toHaveAttribute("href", "/feed");
   expect(within(modes).getByRole("link", { name: "Settings" })).toHaveAttribute("aria-current", "page");
   expect(screen.getByRole("link", { name: "Profile" })).toHaveAttribute("aria-current", "page");
+
+  // Phones and tablets have no sidebar, so Me opens Settings, which links to Profile.
+  const [, bottomBar] = screen.getAllByRole("navigation", { name: "Main" });
+  expect(within(bottomBar).getByRole("link", { name: "Me" })).toHaveAttribute("href", "/settings");
+  expect(within(bottomBar).getByRole("link", { name: "Me" })).toHaveAttribute("aria-current", "page");
 });

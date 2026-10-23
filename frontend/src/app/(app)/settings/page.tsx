@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
 import { SignOutButton } from "@/features/accounts/sign-out-button";
 import {
@@ -84,10 +86,19 @@ export default function SettingsPage() {
               </label>
             </section>
 
-            {/* Desktop signs out from the sidebar; phones and tablets have no sidebar. */}
-            <div className="lg:hidden">
-              <SignOutButton />
-            </div>
+            {/* Desktop has Profile and Sign out in the sidebar; phones and tablets have no sidebar. */}
+            <section aria-labelledby="account-heading" className="flex flex-col gap-2 lg:hidden">
+              <h2 id="account-heading" className={sectionHeading}>
+                Account
+              </h2>
+              <Link href="/profile" className={`${card} flex items-center justify-between font-semibold`}>
+                Profile
+                <span aria-hidden="true">›</span>
+              </Link>
+              <div>
+                <SignOutButton />
+              </div>
+            </section>
           </>
         )}
       </RequireSignIn>

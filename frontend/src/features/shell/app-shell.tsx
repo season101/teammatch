@@ -28,7 +28,7 @@ const TABS: (NavItem & { ownerOnly?: boolean })[] = [
   { href: "/projects", label: "Projects", icon: FolderIcon, paths: ["/projects"] },
   { href: "/applicants", label: "Review", icon: ReviewIcon, paths: ["/applicants"], ownerOnly: true },
   { href: "/teams", label: "Teams", icon: TeamIcon, paths: ["/teams"] },
-  { href: "/profile", label: "Me", icon: PersonIcon, paths: ["/profile", "/settings"] },
+  { href: "/settings", label: "Me", icon: PersonIcon, paths: ["/settings", "/profile"] },
 ];
 
 // Desktop sidebar modes. Each one switches what the sidebar lists, and the stage follows.
