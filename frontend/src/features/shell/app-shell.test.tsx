@@ -155,3 +155,12 @@ test("the saved theme applies before the first paint", () => {
   applySavedTheme();
   expect(document.documentElement.dataset.theme).toBe("dark");
 });
+
+test("the avatar goes to Discover, and Profile sits under Settings", () => {
+  renderShell("/profile");
+  const modes = screen.getByRole("navigation", { name: "Modes" });
+
+  expect(screen.getByRole("link", { name: "You, go to Discover" })).toHaveAttribute("href", "/feed");
+  expect(within(modes).getByRole("link", { name: "Settings" })).toHaveAttribute("aria-current", "page");
+  expect(screen.getByRole("link", { name: "Profile" })).toHaveAttribute("aria-current", "page");
+});

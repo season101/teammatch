@@ -35,7 +35,7 @@ const TABS: (NavItem & { ownerOnly?: boolean })[] = [
 const MODES: NavItem[] = [
   { href: "/feed", label: "Discover", icon: DeckIcon, paths: ["/feed", "/teams"] },
   { href: "/projects", label: "Projects", icon: FolderIcon, paths: ["/projects", "/applicants"] },
-  { href: "/settings", label: "Settings", icon: SettingsIcon, paths: ["/settings"] },
+  { href: "/settings", label: "Settings", icon: SettingsIcon, paths: ["/settings", "/profile"] },
 ];
 
 const LEGENDS: Record<string, typeof DECK_KEYS> = {
@@ -92,7 +92,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="hidden border-r border-border bg-surface lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-80 lg:shrink-0 lg:flex-col lg:overflow-y-auto">
         <div className="flex items-center justify-between gap-2 bg-primary-strong px-4 py-3 text-on-primary">
           <Link
-            href="/profile"
+            href="/feed"
+            aria-label="You, go to Discover"
             className="flex min-h-11 items-center gap-2 rounded-pill pr-2 font-semibold focus-visible:outline-on-primary"
           >
             <span
@@ -158,10 +159,17 @@ const rowLink = "flex min-h-11 items-center justify-between gap-2 rounded-row px
 
 // What the sidebar lists in each mode. Rows for applications and teams arrive with F3-06 and F4-08.
 function SidebarMode({ pathname, owned }: { pathname: string; owned: MyProject[] }) {
-  if (isIn(pathname, ["/settings"])) {
+  if (isIn(pathname, ["/settings", "/profile"])) {
     return (
       <div className="flex flex-col gap-2 p-4">
         <h2 className="px-3 text-lg font-bold">Settings</h2>
+        <Link
+          href="/profile"
+          aria-current={pathname === "/profile" ? "page" : undefined}
+          className={`${rowLink} font-semibold aria-[current=page]:bg-surface-2`}
+        >
+          Profile
+        </Link>
         <Link href="/settings#appearance" className={`${rowLink} font-semibold`}>
           Appearance
         </Link>
