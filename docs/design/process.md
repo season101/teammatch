@@ -53,6 +53,7 @@ For the reviewer of a UI pull request. If something fails, comment with the doc 
    - Update `tokens.json` and `globals.css` in the same commit.
    - Add or update the component doc and the `/design-system` page.
    - Add a line to [decisions.md](decisions.md) with the date and why.
+   - A new doc file needs a line in `.github/scripts/build_wiki.py`. These docs are mirrored to the GitHub wiki on every merge to `main`, and the `wiki` check fails on any doc it doesn't know.
 
 **Versioning.** The system is versioned in this folder's README ("v1.0"):
 - Bump the minor version for additions, like a new component or token.
