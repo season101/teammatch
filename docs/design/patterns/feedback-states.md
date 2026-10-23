@@ -22,11 +22,11 @@ How every screen handles loading, empty, error and success, plus the landing spl
 See [toast.md](../components/toast.md). Use them for results that don't change the screen, like "Photo updated" or "Backend Developer filled".
 
 ## Splash
-The landing page (`/`) opens with the TeamMatch logo, large, on the dark stage. It's a brand moment that lasts about 1 second and never holds content back.
+The landing page (`/`) opens with the TeamMatch logo, large, on the dark stage. It's a brand moment that lasts about 1.4 seconds and never holds content back.
 - **When:** the first time `/` is the page that loads in a browser tab. A reload, a later visit in the same tab or a client-side navigation back to `/` skips it. A new tab plays it again (it's tracked in `sessionStorage`).
 - **Never gates content:** the page is already painted underneath. The splash covers it, then lifts away. Nothing waits for data.
 - **Look:** always dark, whatever the theme. The three logo seats in `spark` and the wordmark in Fraunces `text-hero` with the `spark` gradient.
-- **Motion:** the seats fill one by one, `stagger` apart, from `fast` on. At `splash-hold` (700ms) the stage lifts upward in `slow`. Only transform and visibility animate, so nothing shifts.
+- **Motion:** the seats fill one by one, `stagger` apart, from `fast` on. At `splash-hold` (1100ms) the stage lifts upward in `slow`. Only transform and visibility animate, so nothing shifts.
 - **Skipped entirely** with reduced motion, without JavaScript, or when storage is blocked. Content shows straight away.
 - **Accessibility:** the splash is `aria-hidden` and doesn't take clicks, so screen readers and keyboard focus start on the page.
 - **Code:** `frontend/src/features/landing/splash.tsx`. An inline script in the root layout decides before the first paint, so a return visit never flashes it.

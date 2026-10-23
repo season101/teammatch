@@ -39,7 +39,7 @@
 /* Splash timing (docs/design/patterns/feedback-states.md#splash); same in both themes. */
 :root {
   --stagger: 80ms;
-  --splash-hold: 700ms;
+  --splash-hold: 1100ms;
 }
 
 /* Keep in step with the media block below. */

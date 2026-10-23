@@ -15,11 +15,17 @@ export function playSplash() {
     }
     sessionStorage.setItem("tm-splash", "1");
     root.dataset.splash = "play";
-    // Stops a replay on client-side navigation back to /, and frees the page
-    // even if the animation never runs. The animation itself ends at ~1 s.
-    setTimeout(() => {
+    // "done" stops a replay on client-side navigation back to /. It's set when
+    // the lift ends (~1.4 s); the timer frees the page if the animation never
+    // runs. It starts at the first frame, not here, so a slow first paint
+    // can't cut the splash short.
+    const done = () => {
       root.dataset.splash = "done";
-    }, 1500);
+    };
+    addEventListener("animationend", (event) => {
+      if (event.animationName === "splash-lift") done();
+    });
+    requestAnimationFrame(() => setTimeout(done, 2000));
   } catch {
     // Storage is blocked: skip the splash.
   }

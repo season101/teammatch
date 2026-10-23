@@ -29,12 +29,30 @@ test("plays on the first visit to / and not again this session", () => {
   expect(root.dataset.splash).toBeUndefined();
 });
 
-test("is marked done after 1.5 s so it can't replay or get stuck", () => {
+test("is marked done when the lift ends", () => {
+  playSplash();
+
+  const otherEnd = Object.assign(new Event("animationend", { bubbles: true }), {
+    animationName: "seat-fill",
+  });
+  root.dispatchEvent(otherEnd);
+  expect(root.dataset.splash).toBe("play");
+
+  const liftEnd = Object.assign(new Event("animationend", { bubbles: true }), {
+    animationName: "splash-lift",
+  });
+  root.dispatchEvent(liftEnd);
+  expect(root.dataset.splash).toBe("done");
+});
+
+test("is marked done 2 s after the first frame if the animation never runs", () => {
   vi.useFakeTimers();
   playSplash();
 
-  vi.advanceTimersByTime(1500);
+  vi.advanceTimersByTime(1900);
+  expect(root.dataset.splash).toBe("play");
 
+  vi.advanceTimersByTime(200);
   expect(root.dataset.splash).toBe("done");
 });
 
