@@ -78,7 +78,7 @@ Ports can be changed in `.env` (`WEB_PORT`, `API_PORT`, `POSTGRES_PORT`, `REDIS_
 
 You can also run either side on the host while the rest stays in Docker: `cd backend && uv run uvicorn config.asgi:application --reload` reads the repo `.env` and talks to the compose ports, and `cd frontend && pnpm dev` proxies to `localhost:8000`. Stop the matching container first (`docker compose -f compose.local.yml stop api`).
 
-Health checks: `/healthz` (process is up, no dependencies), `/readyz` (db + redis, 503 if either is down), and `/api/v1/health/` (same report as `/readyz`, always 200, used by the homepage).
+Health checks: `/healthz` (process is up, no dependencies), `/readyz` (db + redis, 503 if either is down), and `/api/v1/health/` (same report as `/readyz`, always 200, shown on the `/status` page).
 
 ## Ground rules
 

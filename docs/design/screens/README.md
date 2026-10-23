@@ -9,7 +9,7 @@ Wireframes for every screen at phone (375px) and desktop (1440px), with their ke
 ## Public
 | # | Screen | Wireframe | Pattern |
 |---|---|---|---|
-| 1 | Landing | [01-landing.png](img/01-landing.png) | |
+| 1 | Landing | [01-landing.png](img/01-landing.png) | [feedback states](../patterns/feedback-states.md#splash) (splash) |
 | 2 | Sign in | [02-sign-in.png](img/02-sign-in.png) | [forms](../patterns/forms.md) |
 | 3 | Sign up | [03-sign-up.png](img/03-sign-up.png) | [forms](../patterns/forms.md) |
 | 4 | Verify email | [04-verify-email.png](img/04-verify-email.png) | [forms](../patterns/forms.md) |

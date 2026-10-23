@@ -32,3 +32,4 @@ Why the system is the way it is. Add a row when a decision changes how something
 | DD-26 | Oct 22, 2026 | The application note is 300 characters, replacing the 280 in DD-16 | The backend and F3-02 already allow 300 |
 | DD-27 | Oct 22, 2026 | "It's a Team!" seen-state is stored on the server: `Membership.seen_at`, set by `POST /api/v1/teams/{id}/seen/` | Shows exactly once per member, on any device |
 | DD-28 | Oct 22, 2026 | One open project per owner is enforced by the API as BR-14, not only in the UI | A UI-only rule can be bypassed by calling the API directly |
+| DD-29 | Oct 22, 2026 | The landing page opens with a splash: about 1.7 seconds, once per tab session, CSS only, always dark. It's skipped with reduced motion or without JavaScript. | A brand moment that never delays content: the page is painted underneath and the splash only covers it |
