@@ -52,7 +52,7 @@ A successful add returns `201 Created` with the role. A successful edit returns 
  
 ## Publish
  
-`POST /api/v1/projects/{id}/publish/` has no body. It moves a `draft` project to `open`. A project with no roles cannot be published (business rule BR-06).
+`POST /api/v1/projects/{id}/publish/` has no body. It moves a `draft` project to `open`. A project with no roles cannot be published (business rule BR-06). An owner can have only one open project per term, so publishing a second one is rejected (business rule BR-14).
  
 ## Errors
  
@@ -65,6 +65,7 @@ A successful add returns `201 Created` with the role. A successful edit returns 
 | 409 | role is not open | `role_not_open` | `{ "detail": "Only an open role can be edited." }` |
 | 409 | publishing a project that is not a draft | `project_not_draft` | `{ "detail": "Only a draft project can be published." }` |
 | 409 | publishing a project with no roles | `project_needs_roles` | `{ "detail": "Add at least one role before publishing." }` |
+| 409 | publishing while you already have an open project | `open_project_exists` | `{ "detail": "You already have an open project. Close it or wait until it locks." }` |
  
 The owner check runs before the body is validated, so a non-owner gets `403` rather than a `400`.
  

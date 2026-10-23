@@ -189,3 +189,68 @@ def test_an_open_project_cannot_be_published_again(owner, project, role):
     project.save()
     response = client_for(owner).post(publish_url(project))
     assert response.status_code == 409
+
+    # one open project per owner (BR-14)
+
+
+def second_draft(owner, term, skill):
+    """A second draft project with a role, ready to publish."""
+    draft = Project.objects.create(owner=owner, term=term, title="Second idea", pitch="Another")
+    draft_role = Role.objects.create(project=draft, title="Designer")
+    draft_role.required_skills.add(skill)
+    return draft
+
+
+def test_cannot_publish_a_second_project_while_one_is_open(owner, term, project, role, skill):
+    project.status = ProjectStatus.OPEN
+    project.save()
+    draft = second_draft(owner, term, skill)
+
+    response = client_for(owner).post(publish_url(draft))
+
+    assert response.status_code == 409
+    assert response.data["detail"].code == "open_project_exists"
+    draft.refresh_from_db()
+    assert draft.status == ProjectStatus.DRAFT
+
+
+def test_can_publish_another_once_the_first_is_archived(owner, term, project, role, skill):
+    project.status = ProjectStatus.ARCHIVED
+    project.save()
+    draft = second_draft(owner, term, skill)
+
+    response = client_for(owner).post(publish_url(draft))
+
+    assert response.status_code == 200
+    draft.refresh_from_db()
+    assert draft.status == ProjectStatus.OPEN
+
+
+def test_can_publish_another_once_the_first_is_locked(owner, term, project, role, skill):
+    project.status = ProjectStatus.LOCKED
+    project.save()
+    draft = second_draft(owner, term, skill)
+
+    response = client_for(owner).post(publish_url(draft))
+
+    assert response.status_code == 200
+
+
+def test_another_owners_open_project_does_not_block_me(owner, other, term, project, role, skill):
+    other_project = Project.objects.create(
+        owner=other, term=term, title="Theirs", pitch="Open", status=ProjectStatus.OPEN
+    )
+    assert other_project.status == ProjectStatus.OPEN
+    project_to_publish = project  # owner's draft, with a role from the fixture
+
+    response = client_for(owner).post(publish_url(project_to_publish))
+
+    assert response.status_code == 200
+
+
+def test_drafts_do_not_count_as_open(owner, term, project, role, skill):
+    second_draft(owner, term, skill)  # a draft sitting next to mine
+
+    response = client_for(owner).post(publish_url(project))
+
+    assert response.status_code == 200
