@@ -45,11 +45,11 @@ test("is marked done when the lift ends", () => {
   expect(root.dataset.splash).toBe("done");
 });
 
-test("is marked done 2 s after the first frame if the animation never runs", () => {
+test("is marked done 3 s after the first frame if the animation never runs", () => {
   vi.useFakeTimers();
   playSplash();
 
-  vi.advanceTimersByTime(1900);
+  vi.advanceTimersByTime(2900);
   expect(root.dataset.splash).toBe("play");
 
   vi.advanceTimersByTime(200);

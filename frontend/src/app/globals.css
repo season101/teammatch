@@ -40,6 +40,9 @@
 :root {
   --stagger: 80ms;
   --splash-hold: 1100ms;
+  --splash-lift: 600ms;
+  /* Starts gently, unlike ease-standard's quick start, so the lift reads as one smooth roll. */
+  --ease-splash: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 /* Keep in step with the media block below. */
@@ -194,7 +197,7 @@
 /*
  * Landing splash. Hidden unless the inline script in layout.tsx sets
  * data-splash="play" (first visit to / this tab session, motion allowed).
- * The seats fill one by one, then the stage lifts away at --splash-hold.
+ * The seats fill one by one, then the stage rolls up at --splash-hold.
  */
 @layer components {
   .splash {
@@ -202,8 +205,8 @@
   }
   :root[data-splash="play"] .splash {
     display: grid;
-    animation: splash-lift var(--transition-duration-slow) var(--ease-standard)
-      var(--splash-hold) forwards;
+    animation: splash-lift var(--splash-lift) var(--ease-splash) var(--splash-hold)
+      forwards;
   }
   :root[data-splash="play"] .splash .seat {
     transform-origin: bottom;

@@ -32,6 +32,8 @@ Rows, panels and inputs have no shadow.
 | `slow` | 320ms | `duration-slow` |
 | `stagger` | 80ms | `var(--stagger)` (items entering in sequence) |
 | `splash-hold` | 1100ms | `var(--splash-hold)` (landing splash only) |
+| `splash-lift` | 600ms | `var(--splash-lift)` (landing splash only) |
+| `splash` easing | `cubic-bezier(.65, 0, .35, 1)` | `var(--ease-splash)` (landing splash only) |
 | `standard` easing | `cubic-bezier(.2, .8, .2, 1)` | `ease-standard` |
 
 | Moment | Motion |
@@ -44,7 +46,7 @@ Rows, panels and inputs have no shadow.
 | Change card page | Content swaps instantly; the page-tab underline slides in `fast` |
 | Modal | Fades and rises 12px in `slow`; the scrim fades in |
 | Toast | Rises in from the top on phone and top right on desktop, in `slow`. Stays 4 seconds and pauses on hover. |
-| Landing splash | The logo seats fill `stagger` apart, then the dark stage lifts away at `splash-hold` in `slow`. About 1.4 seconds, once per tab. See [feedback-states.md](../patterns/feedback-states.md#splash). |
+| Landing splash | The logo seats fill `stagger` apart, then the dark stage rolls up at `splash-hold` over `splash-lift` with `splash` easing. About 1.7 seconds, once per tab. See [feedback-states.md](../patterns/feedback-states.md#splash). |
 | It's a Team! | Avatars slide into a row 80ms apart, the title scales in, and confetti runs for 1.2 seconds |
 
 ### Reduced motion
