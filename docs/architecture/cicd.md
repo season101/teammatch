@@ -65,6 +65,10 @@ On push of a tag matching `v*`:
 
 The repo is public, so the images are public and the host can pull without logging in.
 
+## Wiki (`.github/workflows/wiki.yml`)
+
+Runs when `docs/`, `README.md`, `deploy/README.md` or `packages/api-client/README.md` change. `.github/scripts/build_wiki.py` turns each doc into a wiki page, rewrites links between docs to point at wiki pages, and builds the sidebar. It fails when a link is broken or when a doc under `docs/` has no line in its `PAGES` list. On a PR the job only builds. On push to `main` it replaces the wiki's contents and pushes them with `GITHUB_TOKEN` (`permissions: contents: write`). Run it by hand from the Actions tab to undo edits someone made in the wiki itself.
+
 ## Manual deploy
 
 Deploys follow the sitashma-infra convention and are done by hand after a release.
