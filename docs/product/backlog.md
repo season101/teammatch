@@ -64,6 +64,7 @@ Each story is written so it can be pasted into a GitHub issue (User Story templa
 | PL-06 | Cut release tag and deploy | rotating | S2, S3 | 1 each | Must |
 | PL-13 | API docs refresh | rotating | S2 | 1 | Should |
 | PL-14 | Playwright setup and smoke test | rotating | S2 | 1 | Should |
+| PL-16 | App shell and navigation | D | S2 | 3 | Must |
 | PL-08 | Golden-path end-to-end test | rotating | S3 | 1 | Must |
 | PL-09 | Final README and docs | rotating | S3 | 1 | Must |
 | PL-01 | Repo scaffold and local stack | Lead | S0 | 8 | Must |
@@ -499,6 +500,18 @@ As a team, we want Playwright wired into CI so that later e2e tests are cheap to
 - Given the local stack, then one Playwright smoke test signs in and loads the feed, and runs in CI.
 
 Sprint S2 | 1 h | Should | Slot: rotating
+
+### PL-16 App shell and navigation
+As a student, I want the same navigation on every screen, sized for my device, so that I can move between my deck, projects, teams and profile.
+- Given a phone under 640 px, then a bottom tab bar shows Discover, Projects, Review (owners only), Teams and Me, with the active tab marked.
+- Given 640 to 1023 px, then a top bar shows the same tabs as text.
+- Given 1024 px and up, then a 320 px sidebar shows the avatar header and the Discover, Projects and Settings modes with their tabs (Applications | Teams, Browse | Mine), and the stage shows the selected content.
+- Given the deck or the review queue is on the stage, then the keyboard legend shows that screen's keys with a Hide pill, and Settings → Keyboard shortcuts turns the keys and legend off.
+- Given keyboard only, then every tab and mode button is reachable with a visible focus ring, and tabs move with the arrow keys.
+
+Design: [navigation](../design/patterns/navigation.md), [layout](../design/foundations/layout.md), [keyboard legend](../design/patterns/swipe-deck.md#keyboard-legend), screens [08](../design/screens/img/08-discover-deck.png), [15](../design/screens/img/15-my-projects.png) and [25](../design/screens/img/25-settings.png)
+
+Sprint S2 | 3 h | Must | Build before F3-03 and F4-04, which sit inside it. Adds 3 h to slot D in Sprint 2.
 
 ### PL-08 Golden-path end-to-end test
 As a team, we want an automated test of the full flow so that we know the demo works.
