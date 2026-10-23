@@ -15,6 +15,14 @@ const sizes = {
   lg: "min-h-13 px-7 text-lg",
 };
 
+// Links that look like buttons use this; button.md says navigation is a link.
+export function buttonClasses(
+  variant: keyof typeof variants = "cta",
+  size: keyof typeof sizes = "md",
+) {
+  return `inline-flex items-center justify-center gap-2 rounded-pill font-semibold transition duration-fast ease-standard disabled:cursor-not-allowed disabled:opacity-50 motion-safe:active:scale-[0.98] ${variants[variant]} ${sizes[size]}`;
+}
+
 type Props = ComponentProps<"button"> & {
   variant?: keyof typeof variants;
   size?: keyof typeof sizes;
@@ -30,7 +38,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center gap-2 rounded-pill font-semibold transition duration-fast ease-standard disabled:cursor-not-allowed disabled:opacity-50 motion-safe:active:scale-[0.98] ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`${buttonClasses(variant, size)} ${className}`}
       {...props}
     />
   );

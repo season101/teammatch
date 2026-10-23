@@ -30,6 +30,8 @@ Rows, panels and inputs have no shadow.
 | `fast` | 120ms | `duration-fast` |
 | `base` | 200ms | `duration-base` |
 | `slow` | 320ms | `duration-slow` |
+| `stagger` | 80ms | `var(--stagger)` (items entering in sequence) |
+| `splash-hold` | 700ms | `var(--splash-hold)` (landing splash only) |
 | `standard` easing | `cubic-bezier(.2, .8, .2, 1)` | `ease-standard` |
 
 | Moment | Motion |
@@ -42,12 +44,14 @@ Rows, panels and inputs have no shadow.
 | Change card page | Content swaps instantly; the page-tab underline slides in `fast` |
 | Modal | Fades and rises 12px in `slow`; the scrim fades in |
 | Toast | Rises in from the top on phone and top right on desktop, in `slow`. Stays 4 seconds and pauses on hover. |
+| Landing splash | The logo seats fill `stagger` apart, then the dark stage lifts away at `splash-hold` in `slow`. About 1 second, once per tab. See [feedback-states.md](../patterns/feedback-states.md#splash). |
 | It's a Team! | Avatars slide into a row 80ms apart, the title scales in, and confetti runs for 1.2 seconds |
 
 ### Reduced motion
 When `prefers-reduced-motion: reduce` is set (`motion-safe:` and `motion-reduce:` in Tailwind):
 - No tilt, fly-off, scaling or confetti. Use a 200ms cross-fade instead.
 - The It's a Team! screen shows the finished lineup without the slide-in.
+- The landing splash doesn't show at all.
 - Nothing important may depend on seeing an animation.
 
 ## Focus

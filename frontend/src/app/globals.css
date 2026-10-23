@@ -36,6 +36,12 @@
   --card-shadow: 0 18px 40px -12px rgb(0 0 0 / 0.6);
 }
 
+/* Splash timing (docs/design/patterns/feedback-states.md#splash); same in both themes. */
+:root {
+  --stagger: 80ms;
+  --splash-hold: 700ms;
+}
+
 /* Keep in step with the media block below. */
 [data-theme="light"] {
   color-scheme: light;
@@ -116,6 +122,14 @@
 @theme {
   --background-image-spark: linear-gradient(135deg, #7c5cff 0%, #ff4fd8 100%);
 
+  /* Project covers: content, not theme, so the same in both themes. */
+  --color-cover-raspberry: #c2275b;
+  --color-cover-pine: #0b5e57;
+  --color-cover-cobalt: #2058c9;
+  --color-cover-indigo: #3e2bb8;
+  --color-cover-plum: #7a2e58;
+  --color-cover-rust: #9a3412;
+
   --shadow-modal: 0 24px 64px rgb(0 0 0 / 0.7);
 
   /* Wide layout (right panel) starts at 1440px; sm 640 and lg 1024 are Tailwind's defaults. */
@@ -174,5 +188,38 @@
   :focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
+  }
+}
+
+/*
+ * Landing splash. Hidden unless the inline script in layout.tsx sets
+ * data-splash="play" (first visit to / this tab session, motion allowed).
+ * The seats fill one by one, then the stage lifts away at --splash-hold.
+ */
+@layer components {
+  .splash {
+    display: none;
+  }
+  :root[data-splash="play"] .splash {
+    display: grid;
+    animation: splash-lift var(--transition-duration-slow) var(--ease-standard)
+      var(--splash-hold) forwards;
+  }
+  :root[data-splash="play"] .splash .seat {
+    transform-origin: bottom;
+    animation: seat-fill var(--transition-duration-fast) var(--ease-standard)
+      calc(var(--transition-duration-fast) + var(--i) * var(--stagger)) backwards;
+  }
+}
+
+@keyframes splash-lift {
+  to {
+    translate: 0 -100%;
+    visibility: hidden;
+  }
+}
+@keyframes seat-fill {
+  from {
+    scale: 1 0;
   }
 }
