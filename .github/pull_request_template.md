@@ -15,6 +15,7 @@ Closes #
 - [ ] Tests added or updated
 - [ ] API changed? `backend/schema.yml` and `packages/api-client` regenerated
 - [ ] Docs or wiki updated if behavior changed
-- [ ] Screenshots below for UI changes
+- [ ] UI changes follow `docs/design/` (dark and light, 375 px, keyboard only)
+- [ ] Screenshots below for UI changes (phone and desktop)
 
 Reviewer: @
