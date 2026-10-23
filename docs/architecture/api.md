@@ -128,8 +128,9 @@ Login, signup, logout, password and Google live under allauth (below).
 | GET | `/api/v1/roles/{id}/applications/?status=pending` | owner | review queue for a role |
 | POST | `/api/v1/applications/{id}/like/` | owner | like, fills role, may lock team |
 | POST | `/api/v1/applications/{id}/pass/` | owner | pass |
-| GET | `/api/v1/teams/mine/` | user | my team this term, if any |
+| GET | `/api/v1/teams/mine/` | user | my team this term, if any, with my `seen_at` |
 | GET | `/api/v1/teams/{id}/` | member | team detail with members and roles |
+| POST | `/api/v1/teams/{id}/seen/` | member | mark the "It's a Team!" screen as seen (sets my `seen_at`) |
 
 ### chat
 

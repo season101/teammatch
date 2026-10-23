@@ -28,7 +28,7 @@ For an owner's like that fills one role: a toast, "Backend Developer filled. 2 r
 Shown when the last role fills and the project locks.
 - **Who sees it:**
   - The owner sees it straight away, from the like that locked the team.
-  - Each member sees it the next time they open TeamMatch, once per team. Live notifications are out of scope for now.
+  - Each member sees it the next time they open TeamMatch, once per team. `Membership.seen_at` tracks this on the server, so it shows once across devices. Live notifications are out of scope for now.
 - **Layout:** full screen on the `spark` gradient.
   - The members' avatars slide into a row with their role names.
   - The title "It's a *Team!*" in Fraunces 44–64px.

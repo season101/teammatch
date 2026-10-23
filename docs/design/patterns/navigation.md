@@ -36,5 +36,5 @@ A top bar with the logo and the same five tabs as phone, as text. Content is one
 
 ## Rules
 - **Back on phone** is a chevron at top left. On desktop, switching modes never loses what you were doing on the stage.
-- **One owner project:** an owner can have one open project at a time. While it's open, "New project" in Projects → Mine is disabled with the reason under it.
+- **One owner project:** an owner can have one open project at a time (BR-14). While it's open, "New project" in Projects → Mine is disabled with the reason under it.
 - **Benched users** still see every tab. The deck shows the benched state instead of cards ([feedback-states.md](feedback-states.md)).

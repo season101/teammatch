@@ -29,3 +29,6 @@ Why the system is the way it is. Add a row when a decision changes how something
 | DD-23 | Oct 22, 2026 | "It's a Team!" shows to the owner right away and to each member on their next visit, once per team | There are no live notifications in the MVP |
 | DD-24 | Oct 22, 2026 | Email verification links last 3 days | The auth library's default; the expired-link screen says so and offers a new link |
 | DD-25 | Oct 22, 2026 | Violet fills that carry text use `primary-strong` (`#6A47FF`) | White on the lighter dark-theme violet is 4.3:1, just under the minimum |
+| DD-26 | Oct 22, 2026 | The application note is 300 characters, replacing the 280 in DD-16 | The backend and F3-02 already allow 300 |
+| DD-27 | Oct 22, 2026 | "It's a Team!" seen-state is stored on the server: `Membership.seen_at`, set by `POST /api/v1/teams/{id}/seen/` | Shows exactly once per member, on any device |
+| DD-28 | Oct 22, 2026 | One open project per owner is enforced by the API as BR-14, not only in the UI | A UI-only rule can be bypassed by calling the API directly |

@@ -100,6 +100,7 @@ erDiagram
         bigint team_id FK
         bigint user_id FK
         bigint role_id FK "nullable, null for owner"
+        timestamptz seen_at "nullable, when the member saw the team-formed screen"
     }
     CHAT_MESSAGE {
         bigint id PK
@@ -115,6 +116,7 @@ Notes:
 - `Profile_Skill` and `Role_Skill` are plain M2M through tables (`Profile.skills`, `Role.required_skills`).
 - `Term.start` / `Term.end` are stored as `start_date` / `end_date` (`end` is a reserved word in SQL).
 - `Membership.role` is null for the project owner, who is always a member.
+- `Membership.seen_at` stays null until the member opens the "It's a Team!" screen, so it shows once per member across devices.
 - `ChatMessage` has no `updated_at`; messages are not editable in the MVP.
 
 ## State machines
