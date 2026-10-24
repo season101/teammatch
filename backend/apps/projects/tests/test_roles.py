@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.core.models import Term
+from apps.matching.models import Application, Team
 from apps.profiles.models import Skill
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 
@@ -254,3 +255,98 @@ def test_drafts_do_not_count_as_open(owner, term, project, role, skill):
     response = client_for(owner).post(publish_url(project))
 
     assert response.status_code == 200
+
+
+# delete a role (F2-06, BR-07)
+
+
+def open_role(project, title, skill):
+    new_role = Role.objects.create(project=project, title=title)
+    new_role.required_skills.add(skill)
+    return new_role
+
+
+def filled_role(project, title, user):
+    return Role.objects.create(
+        project=project, title=title, status=RoleStatus.FILLED, filled_by=user
+    )
+
+
+def test_owner_deletes_an_open_role_and_its_applications(owner, other, project, role, skill):
+    open_role(project, "Designer", skill)
+    Application.objects.create(role=role, applicant=other)
+
+    response = client_for(owner).delete(role_url(role))
+
+    assert response.status_code == 204
+    assert not Role.objects.filter(pk=role.pk).exists()
+    assert not Application.objects.filter(applicant=other).exists()
+
+
+def test_non_owner_cannot_delete_a_role(other, project, role):
+    response = client_for(other).delete(role_url(role))
+    assert response.status_code == 403
+    assert Role.objects.filter(pk=role.pk).exists()
+
+
+def test_cannot_delete_a_filled_role(owner, other, project, skill):
+    open_role(project, "Designer", skill)
+    taken = filled_role(project, "Backend", other)
+
+    response = client_for(owner).delete(role_url(taken))
+
+    assert response.status_code == 409
+    assert response.data["detail"].code == "role_not_open"
+    assert Role.objects.filter(pk=taken.pk).exists()
+
+
+def test_cannot_delete_a_role_from_a_locked_project(owner, other, project, role):
+    project.status = ProjectStatus.LOCKED
+    project.save()
+
+    response = client_for(owner).delete(role_url(role))
+
+    assert response.status_code == 409
+    assert response.data["detail"].code == "project_locked"
+
+
+def test_an_open_project_keeps_its_last_role(owner, project, role):
+    project.status = ProjectStatus.OPEN
+    project.save()
+
+    response = client_for(owner).delete(role_url(role))
+
+    assert response.status_code == 409
+    assert response.data["detail"].code == "project_needs_roles"
+    assert Role.objects.filter(pk=role.pk).exists()
+
+
+def test_a_draft_can_lose_its_only_role(owner, project, role):
+    response = client_for(owner).delete(role_url(role))
+    assert response.status_code == 204
+
+
+def test_deleting_the_last_unfilled_role_locks_the_project(owner, other, project, role):
+    filled_role(project, "Backend", other)
+    project.status = ProjectStatus.OPEN
+    project.save()
+
+    response = client_for(owner).delete(role_url(role))
+
+    assert response.status_code == 204
+    project.refresh_from_db()
+    assert project.status == ProjectStatus.LOCKED
+    assert Team.objects.filter(project=project).exists()
+
+
+def test_deleting_a_role_while_others_are_open_does_not_lock(owner, project, role, skill):
+    open_role(project, "Designer", skill)
+    project.status = ProjectStatus.OPEN
+    project.save()
+
+    response = client_for(owner).delete(role_url(role))
+
+    assert response.status_code == 204
+    project.refresh_from_db()
+    assert project.status == ProjectStatus.OPEN
+    assert not Team.objects.filter(project=project).exists()

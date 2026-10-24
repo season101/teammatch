@@ -62,7 +62,7 @@ class RoleUpdateView(generics.UpdateAPIView):
     """Edit one of my open roles, including its required skills."""
 
     serializer_class = RoleSerializer
-    http_method_names = ["patch", "options"]
+    http_method_names = ["patch", "delete", "options"]
 
     def get_object(self):
         role = get_object_or_404(Role.objects.select_related("project"), pk=self.kwargs["pk"])
@@ -70,6 +70,12 @@ class RoleUpdateView(generics.UpdateAPIView):
             raise PermissionDenied()
         services.ensure_role_editable(role)
         return role
+
+    @extend_schema(tags=["projects"], request=None, responses={204: None})
+    def delete(self, request, *args, **kwargs):
+        """Delete one of my open roles. Locks the project if every other role is filled."""
+        services.delete_role(self.get_object())
+        return Response(status=204)
 
 
 @extend_schema(tags=["projects"], request=None, responses=ProjectSerializer)

@@ -391,6 +391,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/Role'
           description: ''
+    delete:
+      operationId: roles_destroy
+      description: Delete one of my open roles. Locks the project if every other role
+        is filled.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - projects
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/roles/{id}/applications/:
     get:
       operationId: roles_applications_list

@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, vi } from "vitest";
+import { afterEach, beforeAll, vi } from "vitest";
 import { ProjectEditor } from "./project-editor";
 
 type Reply = [unknown, number];
@@ -19,7 +19,7 @@ function mockApi(handler: (method: string, path: string) => Reply) {
           : await request.json().catch(() => undefined);
       calls.push({ method: request.method, path, body });
       const [payload, status] = handler(request.method, path);
-      return new Response(JSON.stringify(payload), {
+      return new Response(status === 204 ? null : JSON.stringify(payload), {
         status,
         headers: { "Content-Type": "application/json" },
       });
@@ -64,6 +64,17 @@ const project = (overrides: Record<string, unknown> = {}) => ({
   roles: [],
   created_at: "2026-10-17T00:00:00Z",
   ...overrides,
+});
+
+// jsdom has no modal dialog behaviour, so stand in for what browsers do.
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal = function () {
+    this.setAttribute("open", "");
+  };
+  HTMLDialogElement.prototype.close = function () {
+    this.removeAttribute("open");
+    this.dispatchEvent(new Event("close"));
+  };
 });
 
 afterEach(() => {
@@ -183,4 +194,70 @@ test("hides the editing buttons from people who don't own the project", async ()
   expect(
     screen.queryByRole("button", { name: "Publish project" }),
   ).not.toBeInTheDocument();
+});
+
+test("deletes a role after the owner confirms", async () => {
+  let roles: unknown[] = [ROLE];
+  const calls = mockApi((method, path) => {
+    if (path === "/api/v1/skills/") return [SKILLS, 200];
+    if (method === "DELETE" && path === "/api/v1/roles/3/") {
+      roles = [];
+      return [null, 204];
+    }
+    return [project({ roles }), 200];
+  });
+  renderEditor();
+  fireEvent.click(await screen.findByRole("button", { name: "Delete role" }));
+  const dialog = screen.getByRole("dialog");
+  expect(dialog).toHaveAccessibleName("Delete this role?");
+  fireEvent.click(within(dialog).getByRole("button", { name: "Delete role" }));
+
+  await vi.waitFor(() =>
+    expect(screen.queryByText("Backend dev")).not.toBeInTheDocument(),
+  );
+  expect(
+    calls.some((c) => c.method === "DELETE" && c.path === "/api/v1/roles/3/"),
+  ).toBe(true);
+});
+
+test("keeping the role sends nothing to the API", async () => {
+  const calls = mockApi((method, path) =>
+    path === "/api/v1/skills/"
+      ? [SKILLS, 200]
+      : [project({ roles: [ROLE] }), 200],
+  );
+  renderEditor();
+  fireEvent.click(await screen.findByRole("button", { name: "Delete role" }));
+  fireEvent.click(
+    within(screen.getByRole("dialog")).getByRole("button", {
+      name: "Keep role",
+    }),
+  );
+  expect(calls.some((c) => c.method === "DELETE")).toBe(false);
+  expect(screen.getByText("Backend dev")).toBeInTheDocument();
+});
+
+test("shows the server's reason when a role can't be deleted", async () => {
+  mockApi((method, path) => {
+    if (path === "/api/v1/skills/") return [SKILLS, 200];
+    if (method === "DELETE")
+      return [
+        {
+          detail:
+            "An open project needs at least one role. Close the project instead.",
+        },
+        409,
+      ];
+    return [project({ status: "open", roles: [ROLE] }), 200];
+  });
+  renderEditor();
+  fireEvent.click(await screen.findByRole("button", { name: "Delete role" }));
+  fireEvent.click(
+    within(screen.getByRole("dialog")).getByRole("button", {
+      name: "Delete role",
+    }),
+  );
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "An open project needs at least one role.",
+  );
 });
