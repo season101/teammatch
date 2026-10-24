@@ -99,13 +99,36 @@ class MyProjectsView(generics.ListAPIView):
 
 
 @extend_schema(tags=["projects"])
-class ProjectDetailView(generics.RetrieveAPIView):
-    """One project with its roles and their required skills.
-
+class ProjectDetailView(generics.RetrieveUpdateAPIView):
+    """GET: one project with its roles and their required skills.
     Owners see their own drafts. Everyone else sees open and locked projects only (404 otherwise).
+
+    PATCH: the owner edits the title or pitch of a draft or open project.
     """
 
-    serializer_class = ProjectDetailSerializer
+    http_method_names = ["get", "patch", "head", "options"]
 
     def get_queryset(self):
         return services.visible_projects(self.request.user)
+
+    def get_serializer_class(self):
+        if self.request.method == "PATCH":
+            return ProjectSerializer
+        return ProjectDetailSerializer
+
+    def get_object(self):
+        if self.request.method == "PATCH":
+            # owner check first (403), then the locked/archived rule (409)
+            project = owned_project(self.request, self.kwargs["pk"])
+            services.ensure_project_editable(project)
+            return project
+        return super().get_object()
+
+
+@extend_schema(tags=["projects"], request=None, responses=ProjectSerializer)
+class ProjectCloseView(APIView):
+    """Close my project: it is archived and its pending applications are withdrawn."""
+
+    def post(self, request, pk):
+        project = services.close_project(owned_project(request, pk))
+        return Response(ProjectSerializer(project).data)

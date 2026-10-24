@@ -12,6 +12,8 @@ All of them need a signed-in session. Unsafe methods (POST, PATCH) also need the
 | `POST /api/v1/projects/{id}/roles/` | owner | Add a role to the project |
 | `PATCH /api/v1/roles/{id}/` | owner | Edit an open role |
 | `DELETE /api/v1/roles/{id}/` | owner | Delete an open role. Its applications go with it. If every other role is filled, the project locks |
+| `PATCH /api/v1/projects/{id}/` | owner | Edit the title or pitch of a draft or open project |
+| `POST /api/v1/projects/{id}/close/` | owner | Archive a draft or open project; its pending applications become `withdrawn` |
 | `POST /api/v1/projects/{id}/publish/` | owner | Move a draft project to `open` |
 
  
@@ -55,6 +57,12 @@ A successful add returns `201 Created` with the role. A successful edit returns 
 ## Publish
  
 `POST /api/v1/projects/{id}/publish/` has no body. It moves a `draft` project to `open`. A project with no roles cannot be published (business rule BR-06). An owner can have only one open project per term, so publishing a second one is rejected (business rule BR-14).
+
+## Edit and close
+
+`PATCH /api/v1/projects/{id}/` changes `title` and `pitch` (any of them). The status cannot be changed this way. It works while the project is a draft or open (BR-13); a locked or archived project returns 409.
+
+`POST /api/v1/projects/{id}/close/` has no body. It archives a draft or open project. The project leaves the feeds, its pending applications become `withdrawn`, and the owner can publish another project (BR-14).
  
 ## Errors
  
@@ -69,6 +77,7 @@ A successful add returns `201 Created` with the role. A successful edit returns 
 | 409 | publishing a project with no roles | `project_needs_roles` | `{ "detail": "Add at least one role before publishing." }` |
 | 409 | deleting the only role of an open project | `project_needs_roles` | `{ "detail": "An open project needs at least one role. Close the project instead." }` |
 | 409 | publishing while you already have an open project | `open_project_exists` | `{ "detail": "You already have an open project. Close it or wait until it locks." }` |
+| 409 | editing or closing a locked or archived project | `project_locked` | `{ "detail": "This project is locked or archived, so it cannot be changed." }` |
  
 The owner check runs before the body is validated, so a non-owner gets `403` rather than a `400`.
  
