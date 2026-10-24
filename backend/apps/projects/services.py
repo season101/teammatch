@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.db.models import Count, Prefetch, Q
 from django.utils import timezone
 from rest_framework.exceptions import APIException
@@ -34,6 +35,12 @@ class ProjectNotDraft(APIException):
 class ProjectNeedsRoles(APIException):
     status_code = 409
     default_detail = "Add at least one role before publishing."
+    default_code = "project_needs_roles"
+
+
+class LastRole(APIException):
+    status_code = 409
+    default_detail = "An open project needs at least one role. Close the project instead."
     default_code = "project_needs_roles"
 
 
@@ -115,3 +122,22 @@ def visible_projects(user):
         .select_related("owner__profile")
         .prefetch_related(Prefetch("roles", queryset=roles))
     )
+
+
+@transaction.atomic
+def delete_role(role):
+    """Delete an open role nobody fits (F2-06, BR-07).
+
+    Its applications go with it. If every remaining role is already filled,
+    the project locks now (BR-06).
+    """
+    ensure_role_editable(role)  # 409 if the project is locked/archived or the role is filled
+    project = role.project
+    if project.status == ProjectStatus.OPEN and project.roles.count() == 1:
+        raise LastRole()  # an open project may not end up with zero roles
+    role.delete()
+
+    from apps.matching.services import try_lock  # imported here: matching imports projects
+
+    try_lock(project)
+    return project

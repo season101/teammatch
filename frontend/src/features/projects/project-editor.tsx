@@ -5,11 +5,13 @@ import { useState } from "react";
 import { useSkills } from "@/features/profiles/queries";
 import {
   useAddRole,
+  useDeleteRole,
   useProject,
   usePublishProject,
   useUpdateRole,
 } from "./queries";
 import { RoleForm } from "./role-form";
+import { Modal } from "@/components/ui/modal";
 
 const noticeClass =
   "rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100";
@@ -28,6 +30,8 @@ export function ProjectEditor({
   const addRole = useAddRole(projectId);
   const updateRole = useUpdateRole(projectId);
   const publish = usePublishProject(projectId);
+  const deleteRole = useDeleteRole(projectId);
+  const [deleting, setDeleting] = useState<number | null>(null);
   // Which form is open: a new role, the role with this id, or none.
   const [editing, setEditing] = useState<"new" | number | null>(null);
 
@@ -133,16 +137,28 @@ export function ProjectEditor({
                     ))}
                   </ul>
                   {canEdit && role.status === "open" && (
-                    <button
-                      type="button"
-                      className={`mt-4 ${buttonClass}`}
-                      onClick={() => {
-                        updateRole.reset();
-                        setEditing(role.id);
-                      }}
-                    >
-                      Edit role
-                    </button>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        className={buttonClass}
+                        onClick={() => {
+                          updateRole.reset();
+                          setEditing(role.id);
+                        }}
+                      >
+                        Edit role
+                      </button>
+                      <button
+                        type="button"
+                        className={buttonClass}
+                        onClick={() => {
+                          deleteRole.reset();
+                          setDeleting(role.id);
+                        }}
+                      >
+                        Delete role
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
@@ -175,6 +191,28 @@ export function ProjectEditor({
             </button>
           ))}
       </section>
+
+      {deleteRole.isError && (
+        <p role="alert" className={noticeClass}>
+          {deleteRole.error.message || "Could not delete the role."}
+        </p>
+      )}
+
+      <Modal
+        open={deleting !== null}
+        onClose={() => setDeleting(null)}
+        title="Delete this role?"
+        ctaLabel="Keep role"
+        onCta={() => setDeleting(null)}
+        escapeLabel="Delete role"
+        onEscape={() => {
+          if (deleting !== null)
+            deleteRole.mutate(deleting, { onSettled: () => setDeleting(null) });
+        }}
+      >
+        Applicants waiting on it won&apos;t be considered. If it was the last
+        open role, your team locks.
+      </Modal>
 
       {isOwner && data.status === "draft" && (
         <section className="flex flex-col gap-2">

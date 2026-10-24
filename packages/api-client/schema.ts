@@ -223,7 +223,8 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /** @description Delete one of my open roles. Locks the project if every other role is filled. */
+        delete: operations["roles_destroy"];
         options?: never;
         head?: never;
         /** @description Edit one of my open roles, including its required skills. */
@@ -835,6 +836,26 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MyProject"][];
                 };
+            };
+        };
+    };
+    roles_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
