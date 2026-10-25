@@ -2,7 +2,7 @@
 
 Production compose for the server (`teammatch.sijancodes.com` behind the sitashma-infra Traefik). The stack is self-contained: its own Postgres, Redis, and SeaweedFS on a private `teammatch` network. Only `teammatch-web` and `teammatch-api` join the external `t3_proxy` network, and nothing publishes a port.
 
-Topology and routing: [docs/architecture/deployment.md](../docs/architecture/deployment.md). Release and deploy steps: [docs/architecture/cicd.md](../docs/architecture/cicd.md#manual-deploy).
+Topology and routing: [docs/architecture/deployment.md](../docs/architecture/deployment.md). Release and deploy pipeline: [docs/architecture/cicd.md](../docs/architecture/cicd.md#deploy-githubworkflowsdeployyml).
 
 ## Services
 
@@ -81,7 +81,7 @@ curl -fsS https://teammatch.sijancodes.com/api/v1/health/
 
 The example ships 1.0.0. Before you start, check that every PR for the release is merged and CI is green on `main`.
 
-1. Tag the release on your laptop. The release workflow pushes `ghcr.io/season101/teammatch-api:1.0.0` and `teammatch-web:1.0.0`.
+1. Tag the release on your laptop.
 
    ```bash
    git switch main && git pull
@@ -90,22 +90,39 @@ The example ships 1.0.0. Before you start, check that every PR for the release i
    gh run watch "$(gh run list --workflow release.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
    ```
 
-2. Back up the database on the server (`ssh -A sitashma`; `-A` lets git there reach GitHub).
+2. The release workflow pushes `ghcr.io/season101/teammatch-api:1.0.0` and `teammatch-web:1.0.0`, creates the GitHub Release, then the `deploy` job waits for you. Open the run, click **Review deployments**, tick `production` and approve.
+
+3. The deploy runs on its own: backup to `~/backups`, check out `v1.0.0` in `apps/teammatch`, set `TEAMMATCH_VERSION`, pull and restart `teammatch-migrate`, `teammatch-api` and `teammatch-web`, then wait for `/api/v1/health/` to say `ok` with `"version": "1.0.0"`. If anything after the checkout fails, it rolls back to the previous version and the job goes red. The output is in the Actions log and in `~/teammatch-deploy.log` on the server.
+
+4. When the job is green, sign up on the live site with a real inbox, open the link in the email, and sign in.
+
+To redeploy a version that's already released, run the Deploy workflow on `main` and approve it the same way:
+
+```bash
+gh workflow run deploy.yml --repo season101/teammatch --ref main -f version=1.0.0
+```
+
+### Manual steps
+
+Use these only if the Deploy workflow can't reach the server. The quick way is to run the same script from your own session, `ssh sitashma '~/bin/teammatch-deploy 1.0.0'`. If that doesn't work either, do it by hand:
+
+1. Back up the database on the server (`ssh sitashma`).
 
    ```bash
    docker exec teammatch-db sh -c 'pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"' > ~/backups/teammatch-$(date +%F)-before-1.0.0.dump
    ls -lh ~/backups/
    ```
 
-3. Move the compose file and the image tag to the release. Only the `apps/teammatch` submodule moves. Don't pull or push the infra repo, because it pins the other apps too.
+2. Move the compose file and the image tag to the release. Only the `apps/teammatch` submodule moves. Don't pull or push the infra repo, because it pins the other apps too. The server has no GitHub key and rewrites `https://github.com/` to SSH, so fetch the tag over HTTPS with the global config off.
 
    ```bash
    cd ~/sitashma-infra/apps/teammatch
-   git fetch --tags && git checkout v1.0.0
+   GIT_CONFIG_GLOBAL=/dev/null git fetch https://github.com/season101/teammatch.git 'refs/tags/v1.0.0:refs/tags/v1.0.0'
+   git checkout v1.0.0
    sed -i 's/^TEAMMATCH_VERSION=.*/TEAMMATCH_VERSION=1.0.0/' deploy/.env
    ```
 
-4. Pull the images and restart only the app services. `teammatch-migrate` runs first and the API waits for it. The database, Redis and storage keep running.
+3. Pull the images and restart only the app services. `teammatch-migrate` runs first and the API waits for it. The database, Redis and storage keep running.
 
    ```bash
    cd ~/sitashma-infra
@@ -113,30 +130,90 @@ The example ships 1.0.0. Before you start, check that every PR for the release i
    docker compose --profile apps up -d teammatch-migrate teammatch-api teammatch-web
    ```
 
-5. Run the checks in [Verify](#verify). The health response should show the new `version`, and `docker logs teammatch-migrate` should end without errors. Then sign up on the live site with a real inbox, open the link in the email, and sign in.
+4. Run the checks in [Verify](#verify). The health response should show the new `version`, and `docker logs teammatch-migrate` should end without errors. Then do the sign-up check from step 4 above.
 
 ## Roll back
 
-Roll back if any of these happen:
-- `teammatch-migrate` exits non-zero.
-- The API isn't healthy within 2 minutes.
-- The health check isn't `ok`.
-- Sign-up or email verification fails.
+The deploy rolls itself back when `teammatch-migrate` fails or the health check isn't `ok` on the new version within about 2 minutes. If you find a problem later (for example sign-up or email verification fails), deploy the previous version with the Deploy workflow:
 
-If the release's migrations only add tables or columns (true for 1.0.0), the previous version runs fine on the new schema:
+```bash
+gh workflow run deploy.yml --repo season101/teammatch --ref main -f version=0.1.0
+```
+
+That works when the release's migrations only add tables or columns (true for 1.0.0), because the previous version runs fine on the new schema. By hand, the same thing is:
 
 ```bash
 cd ~/sitashma-infra/apps/teammatch
 git checkout v0.1.0
 sed -i 's/^TEAMMATCH_VERSION=.*/TEAMMATCH_VERSION=0.1.0/' deploy/.env
-cd ~/sitashma-infra && docker compose --profile apps up -d teammatch-api teammatch-web
+cd ~/sitashma-infra && docker compose --profile apps up -d teammatch-migrate teammatch-api teammatch-web
 ```
 
-Restore the backup only if data is damaged:
+Neither one touches the database. Restore the backup only if data is damaged:
 
 ```bash
 docker exec -i teammatch-db sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists' < ~/backups/<file>.dump
 ```
+
+## One-time setup
+
+Do this once so the Deploy workflow can reach the server. Run it from a checkout that has `deploy/deploy.sh`.
+
+1. Create the `production` environment with you as the required reviewer. It accepts `v*` tags (the release workflow) and `main` (redeploys by hand, since old tags don't have `deploy.yml`).
+
+   ```bash
+   id=$(gh api users/season101 --jq .id)
+   gh api -X PUT repos/season101/teammatch/environments/production --input - <<EOF
+   {"reviewers": [{"type": "User", "id": $id}],
+    "deployment_branch_policy": {"protected_branches": false, "custom_branch_policies": true}}
+   EOF
+   gh api -X POST repos/season101/teammatch/environments/production/deployment-branch-policies -f name='v*' -f type=tag
+   gh api -X POST repos/season101/teammatch/environments/production/deployment-branch-policies -f name=main -f type=branch
+   ```
+
+2. Make a deploy key in a temp folder.
+
+   ```bash
+   tmp=$(mktemp -d)
+   ssh-keygen -t ed25519 -N '' -C teammatch-deploy -f "$tmp/deploy_key"
+   ```
+
+3. Install the script on the server, then run its self-check. Copy it again whenever `deploy/deploy.sh` changes; the script prints a note after a deploy when the release has a newer copy.
+
+   ```bash
+   ssh sitashma 'mkdir -p ~/bin && cat > ~/bin/teammatch-deploy && chmod 700 ~/bin/teammatch-deploy' < deploy/deploy.sh
+   ssh sitashma '~/bin/teammatch-deploy --check'
+   ```
+
+4. Let the key run only that script. `command=` runs it no matter what the client asks for (the client's text only reaches the script as `$SSH_ORIGINAL_COMMAND`, which it checks against `X.Y.Z`), and `restrict` turns off the terminal and all forwarding.
+
+   ```bash
+   printf 'restrict,command="/home/season101/bin/teammatch-deploy" %s\n' "$(cat "$tmp/deploy_key.pub")" |
+     ssh sitashma 'cp ~/.ssh/authorized_keys ~/.ssh/authorized_keys.bak && cat >> ~/.ssh/authorized_keys'
+   ```
+
+5. Save the server's host keys and check the ed25519 fingerprint matches the one the server prints.
+
+   ```bash
+   ssh-keyscan -p 2222 ssh.sijancodes.com > "$tmp/known_hosts"
+   ssh-keygen -lf "$tmp/known_hosts"
+   ssh sitashma 'ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub'
+   ```
+
+6. Store both as `production` environment secrets. `gh` reads the values from stdin.
+
+   ```bash
+   gh secret set DEPLOY_SSH_KEY --env production --repo season101/teammatch < "$tmp/deploy_key"
+   gh secret set DEPLOY_KNOWN_HOSTS --env production --repo season101/teammatch < "$tmp/known_hosts"
+   ```
+
+7. Delete the local copy of the private key.
+
+   ```bash
+   rm -rf "$tmp"
+   ```
+
+Then test it by redeploying the version that's live (`gh workflow run deploy.yml --repo season101/teammatch --ref main -f version=1.0.4`) and approving it.
 
 ## Sample data for demos
 

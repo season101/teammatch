@@ -141,4 +141,4 @@ These paths are not in the api router prefixes, so they are only reached inside 
 
 Other healthchecks: `pg_isready` for db, `redis-cli ping` for redis, `wget 127.0.0.1:9333/cluster/status` for SeaweedFS, `wget /` for web. `web` waits for `api` healthy, `api` waits for `db`, `redis`, `storage` healthy and `migrate` completed.
 
-Deploy steps are in [cicd.md](cicd.md#manual-deploy).
+Deploys run from the release workflow, see [cicd.md](cicd.md#deploy-githubworkflowsdeployyml). The runbook and the manual fallback are in [deploy/README.md](../../deploy/README.md#upgrade-to-a-new-version).
