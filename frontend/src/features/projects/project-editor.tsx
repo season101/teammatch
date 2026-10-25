@@ -14,6 +14,8 @@ import {
 import { RoleForm } from "./role-form";
 import { Modal } from "@/components/ui/modal";
 import { ProjectDetailsForm } from "./project-details-form";
+import { Chip } from "@/components/ui/chip";
+import { TeamStrip, type Segment } from "@/components/ui/team-strip";
 
 const noticeClass =
   "rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100";
@@ -64,6 +66,10 @@ export function ProjectEditor({
     isOwner && (data.status === "draft" || data.status === "open");
   const skillName = (id: number) =>
     skills.data.find((skill) => skill.id === id)?.name ?? "Unknown skill";
+  const locked = data.status === "locked";
+  const segments: Segment[] = data.roles.map((role) =>
+    role.status === "filled" ? "filled" : "open",
+  );
 
   return (
     <div className="flex flex-col gap-8">
@@ -74,6 +80,14 @@ export function ProjectEditor({
         >
           ← All projects
         </Link>
+        {locked && (
+          <p
+            role="status"
+            className="rounded-lg border border-zinc-300 p-3 text-sm font-medium dark:border-zinc-700"
+          >
+            This team is locked. Every role is filled.
+          </p>
+        )}
         {editingDetails ? (
           <ProjectDetailsForm
             projectId={projectId}
@@ -83,7 +97,12 @@ export function ProjectEditor({
           />
         ) : (
           <>
-            <h1 className="text-3xl font-bold tracking-tight">{data.title}</h1>
+            <div className="flex flex-col gap-6 rounded-card bg-linear-to-br from-cover-indigo to-[color-mix(in_oklab,var(--color-cover-indigo)_62%,black)] p-6 text-white">
+              {segments.length > 0 && <TeamStrip segments={segments} />}
+              <h1 className="text-3xl font-bold tracking-tight">
+                {data.title}
+              </h1>
+            </div>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               {data.status} · by {data.owner_name || "an unnamed owner"}
             </p>
@@ -158,6 +177,7 @@ export function ProjectEditor({
                     {role.title}
                     <span className="ml-2 text-sm font-normal text-zinc-500 dark:text-zinc-400">
                       {role.status}
+                      {role.filled_by_name ? ` · ${role.filled_by_name}` : ""}
                     </span>
                   </h3>
                   {role.description && (
@@ -170,11 +190,8 @@ export function ProjectEditor({
                     className="mt-3 flex flex-wrap gap-2"
                   >
                     {role.required_skills.map((id) => (
-                      <li
-                        key={id}
-                        className="rounded-full bg-indigo-100 px-3 py-1 text-sm text-indigo-900 dark:bg-indigo-950 dark:text-indigo-100"
-                      >
-                        {skillName(id)}
+                      <li key={id}>
+                        <Chip>{skillName(id)}</Chip>
                       </li>
                     ))}
                   </ul>
