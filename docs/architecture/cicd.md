@@ -50,7 +50,7 @@ Branch protection requires all five jobs. `make check` runs the same checks loca
 
 Playwright e2e for the golden path runs on `main` and nightly (added in Sprint 3), not on every PR, to keep PR CI fast.
 
-Dependabot opens weekly PRs for pip (uv), npm (pnpm) and GitHub Actions.
+Dependabot opens weekly PRs for uv (`backend/`), npm (`frontend/`) and GitHub Actions.
 
 ## Release (`.github/workflows/release.yml`)
 
@@ -60,8 +60,8 @@ On push of a tag matching `v*`:
 2. Build and push:
    - `ghcr.io/season101/teammatch-api`
    - `ghcr.io/season101/teammatch-web`
-3. Tags from `docker/metadata-action`: `1.2.0` and `1.2`.
-4. The `release` job creates a GitHub Release for the tag with notes generated from the squash commits.
+3. Tags from `docker/metadata-action`: `1.2.0` and `1.2`, plus `latest` (the action adds it for every semver tag).
+4. The `release` job runs after both images are pushed. It creates a GitHub Release for the tag with notes generated from the squash commits (`permissions: contents: write` on that job only).
 
 The repo is public, so the images are public and the host can pull without logging in.
 
