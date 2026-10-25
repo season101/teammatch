@@ -43,8 +43,12 @@ export function SignInForm({ next }: { next?: string }) {
           "Please verify your email first. Check your inbox for the link.",
         );
       } else {
+        // The allowed domains are public (BR-01), so naming them gives nothing away.
+        const domainError = result.errors.find(
+          (e) => e.code === "email_domain_not_allowed",
+        );
         // Same message for a wrong email or a wrong password (F1-02).
-        setError("Email or password is incorrect.");
+        setError(domainError?.message ?? "Email or password is incorrect.");
       }
     } catch {
       setError("Can't reach the server. Try again.");
