@@ -35,13 +35,16 @@ All of them need a signed-in session. Unsafe methods (POST, PATCH) also need the
       "title": "Backend developer",
       "description": "Builds the Django API",
       "required_skills": [2, 5],
-      "status": "open"
+      "status": "open",
+      "filled_by_name": ""
     }
   ],
   "created_at": "2026-10-17T20:10:00Z"
 }
 ```
- 
+
+`filled_by_name` is the display name of the member who filled the role, and an empty string while the role is open. It is the name only, never the email.
+
 ## Add and edit a role
  
 `POST /api/v1/projects/{id}/roles/` and `PATCH /api/v1/roles/{id}/` use the same fields.
