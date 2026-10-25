@@ -87,7 +87,10 @@ test("refreshes a cached signed-out session before going back", async () => {
     }),
   );
   const client = newClient();
-  await client.prefetchQuery({ queryKey: ["session"], queryFn: getSessionUser });
+  await client.prefetchQuery({
+    queryKey: ["session"],
+    queryFn: getSessionUser,
+  });
   expect(client.getQueryData(["session"])).toBeNull();
   let sessionAtRedirect: unknown;
   replace.mockImplementation(() => {
@@ -122,6 +125,19 @@ test("shows one generic error for wrong credentials", async () => {
     await screen.findByText("Email or password is incorrect."),
   ).toBeInTheDocument();
   expect(screen.queryByText("The password is wrong.")).not.toBeInTheDocument();
+  expect(replace).not.toHaveBeenCalled();
+});
+
+test("tells users from another email domain to use their school email", async () => {
+  const message = "Use your school email. Allowed: @latech.edu.";
+  mockFetch(400, {
+    status: 400,
+    errors: [{ message, code: "email_domain_not_allowed", param: "email" }],
+  });
+  renderForm();
+  fillAndSubmit("sam@gmail.com", "a-long-password");
+
+  expect(await screen.findByText(message)).toBeInTheDocument();
   expect(replace).not.toHaveBeenCalled();
 });
 
