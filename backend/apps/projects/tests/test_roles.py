@@ -6,9 +6,12 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.core.models import Term
-from apps.matching.models import Application, Team
+from apps.matching.models import Application, ApplicationStatus, Team
+from apps.matching.services import decide
+from apps.matching.tests.test_fill_and_lock import committed, needs_postgres, race
 from apps.profiles.models import Skill
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
+from apps.projects.services import RoleNotOpen, delete_role
 
 pytestmark = pytest.mark.django_db
 
@@ -350,3 +353,18 @@ def test_deleting_a_role_while_others_are_open_does_not_lock(owner, project, rol
     project.refresh_from_db()
     assert project.status == ProjectStatus.OPEN
     assert not Team.objects.filter(project=project).exists()
+
+
+@needs_postgres
+@committed
+def test_delete_fails_if_a_like_just_filled_the_role(other, project, role, skill):
+    open_role(project, "Designer", skill)
+    project.status = ProjectStatus.OPEN
+    project.save()
+    liked = Application.objects.create(role=role, applicant=other)
+
+    outcome = race(lambda: decide(liked, ApplicationStatus.LIKED), lambda: delete_role(role))
+
+    assert isinstance(outcome, RoleNotOpen)
+    role.refresh_from_db()
+    assert (role.status, role.filled_by) == (RoleStatus.FILLED, other)

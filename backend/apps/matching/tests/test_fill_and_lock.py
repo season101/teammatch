@@ -244,10 +244,11 @@ needs_postgres = pytest.mark.skipif(
 committed = pytest.mark.django_db(transaction=True, serialized_rollback=True)
 
 
-def race(first, second):
+def race(first, second, then=lambda: None):
     """Run second() while first() sits in an open transaction, and return second's outcome.
 
-    second() must block on first's row locks until first commits.
+    second() must block on first's row locks. Once it does, then() runs in first's
+    transaction, which then commits.
     """
     holding, release = threading.Event(), threading.Event()
 
@@ -257,6 +258,7 @@ def race(first, second):
                 first()
                 holding.set()
                 release.wait(5)
+                then()
         finally:
             connection.close()
 
