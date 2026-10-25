@@ -205,3 +205,46 @@ export function useDeleteRole(projectId: number) {
     },
   });
 }
+
+export function useUpdateProject(projectId: number) {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, ApiError, { title: string; pitch: string }>({
+    mutationFn: async (input) => {
+      const { data, error, response } = await api.PATCH(
+        "/api/v1/projects/{id}/",
+        {
+          params: { path: { id: projectId } },
+          body: input,
+          headers: { "X-CSRFToken": csrfToken() },
+        },
+      );
+      if (!data) throw apiError(response.status, error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["my-projects"] });
+    },
+  });
+}
+
+export function useCloseProject(projectId: number) {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, ApiError, void>({
+    mutationFn: async () => {
+      const { data, error, response } = await api.POST(
+        "/api/v1/projects/{id}/close/",
+        {
+          params: { path: { id: projectId } },
+          headers: { "X-CSRFToken": csrfToken() },
+        },
+      );
+      if (!data) throw apiError(response.status, error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["my-projects"] });
+    },
+  });
+}
