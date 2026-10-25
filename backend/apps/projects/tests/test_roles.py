@@ -368,3 +368,18 @@ def test_delete_fails_if_a_like_just_filled_the_role(other, project, role, skill
     assert isinstance(outcome, RoleNotOpen)
     role.refresh_from_db()
     assert (role.status, role.filled_by) == (RoleStatus.FILLED, other)
+
+
+@needs_postgres
+@committed
+def test_edit_fails_if_a_like_just_filled_the_role(owner, other, role):
+    liked = Application.objects.create(role=role, applicant=other)
+
+    outcome = race(
+        lambda: decide(liked, ApplicationStatus.LIKED),
+        lambda: client_for(owner).patch(role_url(role), {"title": "New"}, format="json"),
+    )
+
+    assert outcome.status_code == 409
+    role.refresh_from_db()
+    assert (role.title, role.status, role.filled_by) == ("Backend dev", RoleStatus.FILLED, other)

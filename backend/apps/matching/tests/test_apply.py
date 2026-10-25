@@ -7,7 +7,9 @@ from rest_framework.test import APIClient
 
 from apps.core.models import Term
 from apps.matching.models import Application, ApplicationStatus
+from apps.matching.tests.test_fill_and_lock import committed, needs_postgres, race
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
+from apps.projects.services import close_project
 
 pytestmark = pytest.mark.django_db
 
@@ -112,3 +114,12 @@ def test_unknown_role_is_rejected(candidate):
 
 def test_requires_sign_in(role):
     assert APIClient().post(URL, {"role": role.id}, format="json").status_code in (401, 403)
+
+
+@needs_postgres
+@committed
+def test_apply_fails_if_the_project_was_just_closed(candidate, role):
+    outcome = race(lambda: close_project(role.project), lambda: apply(candidate, role))
+
+    assert outcome.status_code == 409
+    assert not Application.objects.exists()

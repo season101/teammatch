@@ -189,7 +189,22 @@ def test_locked_or_archived_project_cannot_be_closed(owner, project, status):
     assert response.data["detail"].code == "project_locked"
 
 
-# close racing a like (F4-05)
+# edit and close racing a like (F4-05)
+
+
+@needs_postgres
+@committed
+def test_edit_fails_if_a_like_just_locked_the_project(owner, other, project, role):
+    liked = Application.objects.create(role=role, applicant=other)
+
+    outcome = race(
+        lambda: decide(liked, ApplicationStatus.LIKED),
+        lambda: client_for(owner).patch(detail_url(project), {"title": "New"}),
+    )
+
+    assert outcome.status_code == 409
+    project.refresh_from_db()
+    assert (project.title, project.status) == ("TeamMatch", ProjectStatus.LOCKED)
 
 
 @needs_postgres

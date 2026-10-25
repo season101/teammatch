@@ -150,11 +150,13 @@ def apply(role, user, note=""):
 
     Locking the role row makes the filled check and the one-per-role check (BR-02)
     race-free. Only the role is locked, so this can't deadlock with a like.
+    The project is read after that lock in its own query: a row joined to the locked
+    role would come from before a close that held it committed (F2-05).
     """
-    role = Role.objects.select_related("project").select_for_update(of=("self",)).get(pk=role.pk)
+    role = Role.objects.select_for_update().get(pk=role.pk)
     if role.status == RoleStatus.FILLED:
         raise RoleNotOpen("This role was just filled.")
-    if role.project.status != ProjectStatus.OPEN:
+    if Project.objects.get(pk=role.project_id).status != ProjectStatus.OPEN:
         raise RoleNotOpen()
     if role.applications.filter(applicant=user).exists():
         raise AlreadyApplied()
