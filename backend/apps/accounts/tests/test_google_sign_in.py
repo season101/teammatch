@@ -129,6 +129,26 @@ def test_rejection_also_applies_to_an_already_linked_account(client):
     assert "_auth_user_id" not in client.session
 
 
+def test_google_sign_up_outside_the_allowlist_is_rejected(client, settings):
+    settings.ALLOWED_EMAIL_DOMAINS = ["latech.edu"]  # F1-06 allowlist without students
+
+    response = google_returns(client, STUDENT)
+
+    assert error_of(response) == "email_domain_not_allowed"
+    assert not get_user_model().objects.exists()
+
+
+def test_google_login_to_an_existing_account_outside_the_allowlist_is_rejected(client, settings):
+    google_returns(client, STUDENT)
+    client.logout()
+    settings.ALLOWED_EMAIL_DOMAINS = ["latech.edu"]
+
+    response = google_returns(client, STUDENT)
+
+    assert error_of(response) == "email_domain_not_allowed"
+    assert "_auth_user_id" not in client.session
+
+
 def test_config_lists_google_for_the_frontend(client):
     providers = client.get("/_allauth/browser/v1/config").json()["data"]["socialaccount"]
 

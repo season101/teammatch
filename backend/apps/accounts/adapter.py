@@ -32,3 +32,6 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
             raise ValidationError(
                 f"Use your @{hd} Google account.", code="google_account_not_allowed"
             )
+        # Social signup never calls clean_email, and a returning login never calls authenticate.
+        if not is_allowed_email(claims.get("email", "")):
+            raise domain_not_allowed_error()
