@@ -171,7 +171,7 @@ Endpoints we use (same under both prefixes):
 | POST | `auth/provider/redirect` | start Google login (browser form POST) |
 | POST | `auth/provider/token` | Google id_token login (app client) |
 
-Domain allowlist (`ALLOWED_EMAIL_DOMAINS`) is enforced in the account and social adapters for all of them.
+Domain allowlist (`ALLOWED_EMAIL_DOMAINS`) is enforced in the account and social adapters for all of them. Google sign-ins must also come from LA Tech's Google Workspace, and Google's redirect returns to `/accounts/google/login/callback/`, outside `/_allauth` ([Google Sign-In](google-sign-in.md)).
 
 ## WebSocket
 

@@ -52,6 +52,12 @@ Role, owner, candidate, apply and pass, filled, team locks, benched and match % 
 | **ASGI** | The async server interface Django runs on (uvicorn), so it can serve WebSockets |
 | **DRF** | Django REST Framework, which builds our API views and serializers |
 | **allauth** | django-allauth in headless mode: sign-up, sign-in and Google login ([ADR 0002](architecture/adr/0002-allauth-headless-auth.md)) |
+| **Identity federation** | One system vouching for who a user is, so the next doesn't keep its own password. LA Tech's CAS vouches to Google, and Google to TeamMatch ([Google Sign-In](architecture/google-sign-in.md)) |
+| **OAuth 2.0 / OIDC** | The sign-in protocols between TeamMatch and Google. OpenID Connect (OIDC) adds the ID token to OAuth 2.0 |
+| **ID token** | Google's signed statement about the user: `email`, `email_verified`, `hd` and the account ID `sub` |
+| **`hd` claim** | "Hosted domain": the Google Workspace domain an account belongs to. TeamMatch accepts only `email.latech.edu` ([ADR 0007](architecture/adr/0007-google-sign-in-trusts-la-tech-workspace.md)) |
+| **Google Workspace** | Google accounts run by an organization. LA Tech's covers students' @email.latech.edu addresses, not staff @latech.edu |
+| **CAS** | LA Tech's Central Authentication Service at `cas.latech.edu`, the login page Canvas, email and Workday share |
 | **OpenAPI** | The API contract file `backend/schema.yml`. The TypeScript client in `packages/api-client` is generated from it. |
 | **Channels** | Django Channels, the WebSocket layer, with Redis between processes |
 | **S3 (storage)** | The Amazon S3 file API. We self-host it with SeaweedFS for avatars. **Not the same as S3 the sprint.** |
