@@ -1,0 +1,52 @@
+name: Deploy
+
+# Runs after each release (called from release.yml), or by hand from the Actions
+# tab to redeploy or roll back to a version that's already released.
+# Host setup and the manual fallback: deploy/README.md.
+on:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to deploy, e.g. 1.0.4
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://teammatch.sijancodes.com
+    # one deploy at a time; a new one waits instead of cancelling the running one
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    steps:
+      - name: Deploy over SSH
+        env:
+          REQUESTED: ${{ inputs.version }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          version=${REQUESTED#v}
+          if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version should look like 1.2.3, got '$REQUESTED'"
+            exit 1
+          fi
+          umask 077
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/deploy_key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$RUNNER_TEMP/known_hosts"
+          # the key can only run teammatch-deploy on the host, so the version is all we send
+          ssh -i "$RUNNER_TEMP/deploy_key" -o IdentitiesOnly=yes \
+            -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" -o StrictHostKeyChecking=yes \
+            -o BatchMode=yes -o LogLevel=ERROR -o ConnectTimeout=30 -o ServerAliveInterval=30 \
+            -p 2222 season101@ssh.sijancodes.com "$version"
