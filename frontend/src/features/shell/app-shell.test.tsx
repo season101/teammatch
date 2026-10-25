@@ -169,3 +169,15 @@ test("the avatar goes to Discover, and Profile sits under Settings", () => {
   expect(within(bottomBar).getByRole("link", { name: "Me" })).toHaveAttribute("href", "/settings");
   expect(within(bottomBar).getByRole("link", { name: "Me" })).toHaveAttribute("aria-current", "page");
 });
+
+test("an owner with an open project can still start a draft, with a note why it can't publish", () => {
+  renderShell("/applicants");
+  expect(screen.getByRole("link", { name: "New project" })).toHaveAttribute("href", "/projects/new");
+  expect(screen.getByText(/a new one stays a draft/)).toBeInTheDocument();
+});
+
+test("no note when the owner only has drafts", () => {
+  renderShell("/applicants", { projects: [{ ...project, status: "draft" }] });
+  expect(screen.getByRole("link", { name: "New project" })).toBeInTheDocument();
+  expect(screen.queryByText(/a new one stays a draft/)).toBeNull();
+});

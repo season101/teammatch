@@ -207,6 +207,13 @@ function SidebarMode({ pathname, owned }: { pathname: string; owned: MyProject[]
                   <Link href="/projects/new" className={buttonClasses("secondary", "sm")}>
                     New project
                   </Link>
+                  {/* BR-14 blocks publishing a second open project, not drafting one. */}
+                  {owned.some((project) => project.status === "open") && (
+                    <p className="px-3 text-xs text-muted">
+                      You have an open project, so a new one stays a draft until you close it or it
+                      locks.
+                    </p>
+                  )}
                   {owned.length === 0 ? (
                     <p className="px-3 text-sm text-muted">You don&apos;t own a project yet.</p>
                   ) : (

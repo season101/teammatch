@@ -54,6 +54,7 @@ function readErrors(body: unknown): { message: string; fields: FieldErrors } {
 }
 
 export function useCreateProject() {
+  const queryClient = useQueryClient();
   return useMutation<Project, CreateProjectError, ProjectInput>({
     mutationFn: async (input) => {
       const { data, error, response } = await api.POST("/api/v1/projects/", {
@@ -64,6 +65,8 @@ export function useCreateProject() {
       const { message, fields } = readErrors(error);
       throw new CreateProjectError(response.status, message, fields);
     },
+    // The app shell's Projects → Mine list and Review tab read this.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["my-projects"] }),
   });
 }
 
@@ -184,8 +187,10 @@ export function usePublishProject(projectId: number) {
       if (!data) throw apiError(response.status, error);
       return data;
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["project", projectId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["my-projects"] });
+    },
   });
 }
 

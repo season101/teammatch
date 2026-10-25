@@ -42,7 +42,7 @@ On desktop the left column holds the fields and the right column the avatar and 
    - Roles are reordered by drag or with Space plus the arrow keys.
 3. **Review and open.**
    - A project with no roles can't be opened, and the CTA explains why.
-   - An owner with an open project already sees "New project" disabled with the reason.
+   - An owner with an open project can still start one as a draft; a note under "New project" says it can't be published until the open one is closed or locks.
 
 ## Validation
 - Validate a field when it loses focus, and everything on submit.
