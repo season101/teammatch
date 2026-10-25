@@ -141,3 +141,24 @@ def delete_role(role):
 
     try_lock(project)
     return project
+
+
+def ensure_project_editable(project):
+    """Only a draft or open project can be changed or closed (BR-13)."""
+    if project.status not in (ProjectStatus.DRAFT, ProjectStatus.OPEN):
+        raise ProjectLocked("This project is locked or archived, so it cannot be changed.")
+
+
+@transaction.atomic
+def close_project(project):
+    """Archive a project: it leaves the feeds and its pending applications are withdrawn (F2-05)."""
+    ensure_project_editable(project)
+
+    from apps.matching.models import Application, ApplicationStatus  # matching imports projects
+
+    Application.objects.filter(role__project=project, status=ApplicationStatus.PENDING).update(
+        status=ApplicationStatus.WITHDRAWN
+    )
+    project.status = ProjectStatus.ARCHIVED
+    project.save()
+    return project
