@@ -1,9 +1,6 @@
 "use client";
 
-import Link from "next/link";
-
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
-import { SignOutButton } from "@/features/accounts/sign-out-button";
 import { ProfileForm } from "@/features/profiles/profile-form";
 
 export default function ProfilePage() {
@@ -20,21 +17,6 @@ export default function ProfilePage() {
               </p>
             </header>
             <ProfileForm />
-            <div className="flex items-center gap-4">
-              <Link
-                href="/feed"
-                className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-              >
-                Browse open roles
-              </Link>
-              <Link
-                href="/applicants"
-                className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-              >
-                Review applicants
-              </Link>
-              <SignOutButton />
-            </div>
           </>
         )}
       </RequireSignIn>

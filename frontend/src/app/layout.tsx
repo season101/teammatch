@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { playSplash } from "@/features/landing/splash";
+import { applySavedTheme } from "@/features/shell/theme-script";
 import { Providers } from "./providers";
 
 const geistSans = Geist({
@@ -31,12 +32,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      // The splash script below sets data-splash before React hydrates.
+      // The scripts below set data-theme and data-splash before React hydrates.
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
     >
       <head>
-        {/* Runs before the first paint, so a return visit never flashes the splash. */}
+        {/* Run before the first paint, so neither the wrong theme nor a repeat splash flashes. */}
+        <script dangerouslySetInnerHTML={{ __html: `(${applySavedTheme})()` }} />
         <script dangerouslySetInnerHTML={{ __html: `(${playSplash})()` }} />
       </head>
       <body className="min-h-full flex flex-col">

@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { allauthPost } from "./allauth";
 
-// Only follow ?next= to a page on this site, never to another website.
+// Only follow ?next= to a page on this site, never to another website. Default: the Discover deck.
 export function safeNext(next: string | undefined) {
   return next && next.startsWith("/") && !next.startsWith("//")
     ? next
-    : "/profile";
+    : "/feed";
 }
 
 export function SignInForm({ next }: { next?: string }) {

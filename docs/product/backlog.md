@@ -240,7 +240,7 @@ Sprint S2 | 2 h | Must | UC-13
 As an owner, I want to be held to one open project at a time so that my teams don't compete for the same people.
 - Given I already have another `open` project this term, when I publish, then it is rejected with 409 and "You already have an open project. Close it or wait until it locks." (BR-14).
 - Given I close my open project, or it locks, then I can publish another one.
-- Given I have an open project, then "New project" in Projects → Mine is disabled with that reason shown under it.
+- Given I have an open project, then "New project" in Projects → Mine stays enabled, with a note under it that a new project stays a draft until the open one is closed or locks.
 
 Design: [navigation rules](../design/patterns/navigation.md#rules), [project creation](../design/patterns/forms.md#project-creation), screen [15](../design/screens/img/15-my-projects.png)
 
