@@ -149,13 +149,37 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * @description One project with its roles and their required skills.
-         *
+         * @description GET: one project with its roles and their required skills.
          *     Owners see their own drafts. Everyone else sees open and locked projects only (404 otherwise).
+         *
+         *     PATCH: the owner edits the title or pitch of a draft or open project.
          */
         get: operations["projects_retrieve"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * @description GET: one project with its roles and their required skills.
+         *     Owners see their own drafts. Everyone else sees open and locked projects only (404 otherwise).
+         *
+         *     PATCH: the owner edits the title or pitch of a draft or open project.
+         */
+        patch: operations["projects_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/projects/{id}/close/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Close my project: it is archived and its pending applications are withdrawn. */
+        post: operations["projects_close_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -223,7 +247,8 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /** @description Delete one of my open roles. Locks the project if every other role is filled. */
+        delete: operations["roles_destroy"];
         options?: never;
         head?: never;
         /** @description Edit one of my open roles, including its required skills. */
@@ -396,6 +421,10 @@ export interface components {
             bio?: string;
             major?: string;
             skill_ids?: number[];
+        };
+        PatchedProjectRequest: {
+            title?: string;
+            pitch?: string;
         };
         PatchedRoleRequest: {
             title?: string;
@@ -771,6 +800,54 @@ export interface operations {
             };
         };
     };
+    projects_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedProjectRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedProjectRequest"];
+                "multipart/form-data": components["schemas"]["PatchedProjectRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+        };
+    };
+    projects_close_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Project"];
+                };
+            };
+        };
+    };
     projects_publish_create: {
         parameters: {
             query?: never;
@@ -835,6 +912,26 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MyProject"][];
                 };
+            };
+        };
+    };
+    roles_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

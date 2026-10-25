@@ -267,9 +267,10 @@ paths:
     get:
       operationId: projects_retrieve
       description: |-
-        One project with its roles and their required skills.
-
+        GET: one project with its roles and their required skills.
         Owners see their own drafts. Everyone else sees open and locked projects only (404 otherwise).
+
+        PATCH: the owner edits the title or pitch of a draft or open project.
       parameters:
       - in: path
         name: id
@@ -286,6 +287,63 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProjectDetail'
+          description: ''
+    patch:
+      operationId: projects_partial_update
+      description: |-
+        GET: one project with its roles and their required skills.
+        Owners see their own drafts. Everyone else sees open and locked projects only (404 otherwise).
+
+        PATCH: the owner edits the title or pitch of a draft or open project.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProjectRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProjectRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProjectRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+  /api/v1/projects/{id}/close/:
+    post:
+      operationId: projects_close_create
+      description: 'Close my project: it is archived and its pending applications
+        are withdrawn.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - projects
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
           description: ''
   /api/v1/projects/{id}/publish/:
     post:
@@ -391,6 +449,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/Role'
           description: ''
+    delete:
+      operationId: roles_destroy
+      description: Delete one of my open roles. Locks the project if every other role
+        is filled.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - projects
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/roles/{id}/applications/:
     get:
       operationId: roles_applications_list
@@ -755,6 +830,17 @@ components:
             minimum: 1
           writeOnly: true
           maxItems: 20
+    PatchedProjectRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+        pitch:
+          type: string
+          minLength: 1
+          maxLength: 2000
     PatchedRoleRequest:
       type: object
       properties:

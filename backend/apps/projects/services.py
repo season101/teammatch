@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.db.models import Count, Prefetch, Q
 from django.utils import timezone
 from rest_framework.exceptions import APIException
@@ -37,6 +38,18 @@ class ProjectNeedsRoles(APIException):
     default_code = "project_needs_roles"
 
 
+class LastRole(APIException):
+    status_code = 409
+    default_detail = "An open project needs at least one role. Close the project instead."
+    default_code = "project_needs_roles"
+
+
+class OpenProjectExists(APIException):
+    status_code = 409
+    default_detail = "You already have an open project. Close it or wait until it locks."
+    default_code = "open_project_exists"
+
+
 def get_active_term(today=None):
     """The term whose dates include today, or None."""
     today = today or timezone.localdate()
@@ -68,6 +81,13 @@ def publish_project(project):
         raise ProjectNotDraft()
     if not project.roles.exists():
         raise ProjectNeedsRoles()
+    already_open = (
+        Project.objects.filter(owner=project.owner, term=project.term, status=ProjectStatus.OPEN)
+        .exclude(pk=project.pk)
+        .exists()
+    )
+    if already_open:
+        raise OpenProjectExists()
     project.status = ProjectStatus.OPEN
     project.save()
     return project
@@ -102,3 +122,43 @@ def visible_projects(user):
         .select_related("owner__profile")
         .prefetch_related(Prefetch("roles", queryset=roles))
     )
+
+
+@transaction.atomic
+def delete_role(role):
+    """Delete an open role nobody fits (F2-06, BR-07).
+
+    Its applications go with it. If every remaining role is already filled,
+    the project locks now (BR-06).
+    """
+    ensure_role_editable(role)  # 409 if the project is locked/archived or the role is filled
+    project = role.project
+    if project.status == ProjectStatus.OPEN and project.roles.count() == 1:
+        raise LastRole()  # an open project may not end up with zero roles
+    role.delete()
+
+    from apps.matching.services import try_lock  # imported here: matching imports projects
+
+    try_lock(project)
+    return project
+
+
+def ensure_project_editable(project):
+    """Only a draft or open project can be changed or closed (BR-13)."""
+    if project.status not in (ProjectStatus.DRAFT, ProjectStatus.OPEN):
+        raise ProjectLocked("This project is locked or archived, so it cannot be changed.")
+
+
+@transaction.atomic
+def close_project(project):
+    """Archive a project: it leaves the feeds and its pending applications are withdrawn (F2-05)."""
+    ensure_project_editable(project)
+
+    from apps.matching.models import Application, ApplicationStatus  # matching imports projects
+
+    Application.objects.filter(role__project=project, status=ApplicationStatus.PENDING).update(
+        status=ApplicationStatus.WITHDRAWN
+    )
+    project.status = ProjectStatus.ARCHIVED
+    project.save()
+    return project

@@ -188,3 +188,20 @@ export function usePublishProject(projectId: number) {
       queryClient.invalidateQueries({ queryKey: ["project", projectId] }),
   });
 }
+
+export function useDeleteRole(projectId: number) {
+  const queryClient = useQueryClient();
+  return useMutation<void, ApiError, number>({
+    mutationFn: async (roleId) => {
+      const { error, response } = await api.DELETE("/api/v1/roles/{id}/", {
+        params: { path: { id: roleId } },
+        headers: { "X-CSRFToken": csrfToken() },
+      });
+      if (!response.ok) throw apiError(response.status, error);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["my-projects"] });
+    },
+  });
+}
