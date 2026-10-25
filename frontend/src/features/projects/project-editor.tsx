@@ -20,7 +20,7 @@ import { TeamStrip, type Segment } from "@/components/ui/team-strip";
 const noticeClass =
   "rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100";
 const buttonClass =
-  "rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800";
+  "rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-surface-2";
 
 export function ProjectEditor({
   projectId,
@@ -43,11 +43,7 @@ export function ProjectEditor({
   const [editingDetails, setEditingDetails] = useState(false);
 
   if (project.isPending || skills.isPending) {
-    return (
-      <p role="status" className="text-sm text-zinc-500">
-        Loading project…
-      </p>
-    );
+    return <p className="text-sm text-muted">Loading project…</p>;
   }
   if (project.isError || skills.isError) {
     const notFound = project.error?.status === 404;
@@ -83,7 +79,7 @@ export function ProjectEditor({
         {locked && (
           <p
             role="status"
-            className="rounded-lg border border-zinc-300 p-3 text-sm font-medium dark:border-zinc-700"
+            className="rounded-lg border border-border p-3 text-sm font-medium"
           >
             This team is locked. Every role is filled.
           </p>
@@ -103,10 +99,10 @@ export function ProjectEditor({
                 {data.title}
               </h1>
             </div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-muted">
               {data.status} · by {data.owner_name || "an unnamed owner"}
             </p>
-            <p className="text-zinc-700 dark:text-zinc-300">{data.pitch}</p>
+            <p className="text-text">{data.pitch}</p>
             {canEdit && (
               <div className="mt-2 flex flex-wrap gap-3">
                 <button
@@ -143,7 +139,7 @@ export function ProjectEditor({
         </h2>
 
         {data.roles.length === 0 && (
-          <p className="text-zinc-600 dark:text-zinc-400">
+          <p className="text-muted">
             No roles yet.
             {isOwner ? " Add your first role, then publish the project." : ""}
           </p>
@@ -172,18 +168,16 @@ export function ProjectEditor({
                   }
                 />
               ) : (
-                <div className="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800">
+                <div className="rounded-2xl border border-border bg-surface p-5">
                   <h3 className="text-lg font-semibold">
                     {role.title}
-                    <span className="ml-2 text-sm font-normal text-zinc-500 dark:text-zinc-400">
+                    <span className="ml-2 text-sm font-normal text-muted">
                       {role.status}
                       {role.filled_by_name ? ` · ${role.filled_by_name}` : ""}
                     </span>
                   </h3>
                   {role.description && (
-                    <p className="mt-1 text-zinc-700 dark:text-zinc-300">
-                      {role.description}
-                    </p>
+                    <p className="mt-1 text-text">{role.description}</p>
                   )}
                   <ul
                     aria-label={`Skills for ${role.title}`}
