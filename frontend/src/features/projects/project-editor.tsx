@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useSkills } from "@/features/profiles/queries";
 import {
   useAddRole,
+  useCloseProject,
   useDeleteRole,
   useProject,
   usePublishProject,
@@ -12,6 +13,7 @@ import {
 } from "./queries";
 import { RoleForm } from "./role-form";
 import { Modal } from "@/components/ui/modal";
+import { ProjectDetailsForm } from "./project-details-form";
 
 const noticeClass =
   "rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100";
@@ -34,6 +36,9 @@ export function ProjectEditor({
   const [deleting, setDeleting] = useState<number | null>(null);
   // Which form is open: a new role, the role with this id, or none.
   const [editing, setEditing] = useState<"new" | number | null>(null);
+  const closeProject = useCloseProject(projectId);
+  const [closing, setClosing] = useState(false);
+  const [editingDetails, setEditingDetails] = useState(false);
 
   if (project.isPending || skills.isPending) {
     return (
@@ -69,11 +74,48 @@ export function ProjectEditor({
         >
           ← All projects
         </Link>
-        <h1 className="text-3xl font-bold tracking-tight">{data.title}</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          {data.status} · by {data.owner_name || "an unnamed owner"}
-        </p>
-        <p className="text-zinc-700 dark:text-zinc-300">{data.pitch}</p>
+        {editingDetails ? (
+          <ProjectDetailsForm
+            projectId={projectId}
+            initial={{ title: data.title, pitch: data.pitch }}
+            onDone={() => setEditingDetails(false)}
+            onCancel={() => setEditingDetails(false)}
+          />
+        ) : (
+          <>
+            <h1 className="text-3xl font-bold tracking-tight">{data.title}</h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              {data.status} · by {data.owner_name || "an unnamed owner"}
+            </p>
+            <p className="text-zinc-700 dark:text-zinc-300">{data.pitch}</p>
+            {canEdit && (
+              <div className="mt-2 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className={buttonClass}
+                  onClick={() => setEditingDetails(true)}
+                >
+                  Edit details
+                </button>
+                <button
+                  type="button"
+                  className={buttonClass}
+                  onClick={() => {
+                    closeProject.reset();
+                    setClosing(true);
+                  }}
+                >
+                  Close project
+                </button>
+              </div>
+            )}
+          </>
+        )}
+        {closeProject.isError && (
+          <p role="alert" className={noticeClass}>
+            {closeProject.error.message || "Could not close the project."}
+          </p>
+        )}
       </header>
 
       <section aria-labelledby="roles-heading" className="flex flex-col gap-4">
@@ -212,6 +254,21 @@ export function ProjectEditor({
       >
         Applicants waiting on it won&apos;t be considered. If it was the last
         open role, your team locks.
+      </Modal>
+
+      <Modal
+        open={closing}
+        onClose={() => setClosing(false)}
+        title="Close this project?"
+        ctaLabel="Keep project"
+        onCta={() => setClosing(false)}
+        escapeLabel="Close project"
+        onEscape={() =>
+          closeProject.mutate(undefined, { onSettled: () => setClosing(false) })
+        }
+      >
+        It leaves the project list, and anyone with a pending application is
+        withdrawn. You can then publish another project.
       </Modal>
 
       {isOwner && data.status === "draft" && (

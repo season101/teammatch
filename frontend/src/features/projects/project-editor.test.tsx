@@ -261,3 +261,143 @@ test("shows the server's reason when a role can't be deleted", async () => {
     "An open project needs at least one role.",
   );
 });
+
+test("edits the title and pitch of a draft project", async () => {
+  let current = project();
+  const calls = mockApi((method, path) => {
+    if (path === "/api/v1/skills/") return [SKILLS, 200];
+    if (method === "PATCH" && path === "/api/v1/projects/7/") {
+      current = project({ title: "TeamMatch v2", pitch: "Find a team fast" });
+      return [current, 200];
+    }
+    return [current, 200];
+  });
+  renderEditor();
+  fireEvent.click(await screen.findByRole("button", { name: "Edit details" }));
+  fireEvent.change(screen.getByLabelText("Title"), {
+    target: { value: "TeamMatch v2" },
+  });
+  fireEvent.change(screen.getByLabelText("Pitch"), {
+    target: { value: "Find a team fast" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+  expect(await screen.findByText("TeamMatch v2")).toBeInTheDocument();
+  expect(screen.queryByLabelText("Title")).not.toBeInTheDocument();
+  const patch = calls.find((c) => c.method === "PATCH");
+  expect(patch?.body).toEqual({
+    title: "TeamMatch v2",
+    pitch: "Find a team fast",
+  });
+});
+
+test("asks for a title and pitch without calling the API", async () => {
+  const calls = mockApi((method, path) =>
+    path === "/api/v1/skills/" ? [SKILLS, 200] : [project(), 200],
+  );
+  renderEditor();
+  fireEvent.click(await screen.findByRole("button", { name: "Edit details" }));
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: " " } });
+  fireEvent.change(screen.getByLabelText("Pitch"), { target: { value: "" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+  expect(await screen.findByText("Title is required.")).toBeInTheDocument();
+  expect(screen.getByText("Pitch is required.")).toBeInTheDocument();
+  expect(calls.some((c) => c.method === "PATCH")).toBe(false);
+});
+
+test("cancel leaves the details as they were", async () => {
+  const calls = mockApi((method, path) =>
+    path === "/api/v1/skills/" ? [SKILLS, 200] : [project(), 200],
+  );
+  renderEditor();
+  fireEvent.click(await screen.findByRole("button", { name: "Edit details" }));
+  fireEvent.change(screen.getByLabelText("Title"), {
+    target: { value: "Something else" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(screen.getByText("TeamMatch")).toBeInTheDocument();
+  expect(calls.some((c) => c.method === "PATCH")).toBe(false);
+});
+
+test("closes a project after the owner confirms", async () => {
+  let status = "open";
+  const calls = mockApi((method, path) => {
+    if (path === "/api/v1/skills/") return [SKILLS, 200];
+    if (method === "POST" && path === "/api/v1/projects/7/close/") {
+      status = "archived";
+      return [project({ status, roles: [ROLE] }), 200];
+    }
+    return [project({ status, roles: [ROLE] }), 200];
+  });
+  renderEditor();
+  fireEvent.click(await screen.findByRole("button", { name: "Close project" }));
+  const dialog = screen.getByRole("dialog");
+  expect(dialog).toHaveAccessibleName("Close this project?");
+  fireEvent.click(
+    within(dialog).getByRole("button", { name: "Close project" }),
+  );
+
+  await vi.waitFor(() =>
+    expect(
+      screen.queryByRole("button", { name: "Edit details" }),
+    ).not.toBeInTheDocument(),
+  );
+  expect(
+    calls.some(
+      (c) => c.method === "POST" && c.path === "/api/v1/projects/7/close/",
+    ),
+  ).toBe(true);
+});
+
+test("keeping the project sends nothing to the API", async () => {
+  const calls = mockApi((method, path) =>
+    path === "/api/v1/skills/"
+      ? [SKILLS, 200]
+      : [project({ status: "open", roles: [ROLE] }), 200],
+  );
+  renderEditor();
+  fireEvent.click(await screen.findByRole("button", { name: "Close project" }));
+  fireEvent.click(
+    within(screen.getByRole("dialog")).getByRole("button", {
+      name: "Keep project",
+    }),
+  );
+  expect(calls.some((c) => c.method === "POST")).toBe(false);
+});
+
+test("shows the server's reason when a project can't be closed", async () => {
+  mockApi((method, path) => {
+    if (path === "/api/v1/skills/") return [SKILLS, 200];
+    if (method === "POST")
+      return [{ detail: "This project is locked or archived." }, 409];
+    return [project({ status: "open", roles: [ROLE] }), 200];
+  });
+  renderEditor();
+  fireEvent.click(await screen.findByRole("button", { name: "Close project" }));
+  fireEvent.click(
+    within(screen.getByRole("dialog")).getByRole("button", {
+      name: "Close project",
+    }),
+  );
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "This project is locked or archived.",
+  );
+});
+
+test("hides edit and close from non-owners and from locked projects", async () => {
+  mockApi((method, path) =>
+    path === "/api/v1/skills/"
+      ? [SKILLS, 200]
+      : [project({ status: "locked", roles: [ROLE] }), 200],
+  );
+  renderEditor();
+  expect(await screen.findByText("TeamMatch")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Edit details" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Close project" }),
+  ).not.toBeInTheDocument();
+});
