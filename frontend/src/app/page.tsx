@@ -26,7 +26,7 @@ export default function Home() {
 
       <main className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-4 pt-6 pb-12 sm:px-6 lg:grid-cols-[1fr_auto] lg:gap-16 lg:py-12">
         <div className="flex flex-col items-start gap-6">
-          <Chip pill>For @latech.edu students</Chip>
+          <Chip pill>For LA Tech students</Chip>
           <h1 className="font-display text-hero font-black text-balance">
             Swipe on roles, not <em>people</em>.
           </h1>

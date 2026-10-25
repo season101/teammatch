@@ -36,7 +36,7 @@ Short, warm and a little playful. Never mean, never guilt-tripping, never about 
 - **Sentence case everywhere.** Title case only for names ("CampusEats", "Fall 2026").
 - **Buttons are verbs:** "Apply", "Send application", "Open team chat", "Delete role".
 - **Numbers beat adjectives:** "86% match", "2 roles to go", "Benched until Dec 12".
-- **Errors say how to fix it:** "Use your @latech.edu email to sign up." not "Invalid email".
+- **Errors say how to fix it:** "Use your @latech.edu or @email.latech.edu email." not "Invalid email".
 - **Celebrate the team, not the person:** "It's a Team!", not "You matched!"
 - **Talk to one person:** "you" and "your", never "the user".
 - **No exclamation marks** except in "It's a Team!" and the welcome screen.

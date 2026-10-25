@@ -4,7 +4,7 @@ Sign-up, profile setup and project creation. Fields follow [form-fields.md](../c
 
 ## Onboarding order
 1. **Sign up** with an email from an allowed domain, or Google.
-   - A wrong domain shows inline: "Use your @latech.edu email to sign up."
+   - A wrong domain shows inline: "Use your @latech.edu or @email.latech.edu email."
 2. **Verify email** (email sign-ups only).
    - "Check your inbox" screen with a resend link.
    - Links last 3 days. An expired link says so and offers a new one.
