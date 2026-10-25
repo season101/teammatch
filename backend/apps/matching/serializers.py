@@ -54,3 +54,19 @@ class ApplySerializer(serializers.ModelSerializer):
         model = Application
         fields = ["id", "role", "note", "status", "created_at"]
         read_only_fields = ["status"]
+
+
+class ApplicationDecisionSerializer(RoleApplicationSerializer):
+    """A like or pass, plus whether that like locked the team (F4-05)."""
+
+    team_locked = serializers.SerializerMethodField()
+    team_id = serializers.SerializerMethodField()
+
+    class Meta(RoleApplicationSerializer.Meta):
+        fields = [*RoleApplicationSerializer.Meta.fields, "team_locked", "team_id"]
+
+    def get_team_locked(self, application) -> bool:
+        return self.context["team"] is not None
+
+    def get_team_id(self, application) -> int | None:
+        return self.context["team"] and self.context["team"].id

@@ -30,7 +30,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Like or pass a pending applicant on my role. Not pending: 409. */
+        /**
+         * @description Like or pass a pending applicant on my role.
+         *
+         *     Not pending, or the applicant just joined another team: 409.
+         */
         post: operations["applications_like_create"];
         delete?: never;
         options?: never;
@@ -47,7 +51,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Like or pass a pending applicant on my role. Not pending: 409. */
+        /**
+         * @description Like or pass a pending applicant on my role.
+         *
+         *     Not pending, or the applicant just joined another team: 409.
+         */
         post: operations["applications_pass_create"];
         delete?: never;
         options?: never;
@@ -323,10 +331,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/teams/{id}/seen/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description I saw "It's a Team!" for this team (DD-27). Repeats keep the first time. Not mine: 404. */
+        post: operations["teams_seen_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description A like or pass, plus whether that like locked the team (F4-05). */
+        ApplicationDecision: {
+            readonly id: number;
+            readonly applicant: components["schemas"]["Profile"];
+            note?: string;
+            status?: components["schemas"]["ApplicationStatusEnum"];
+            /** Format: date-time */
+            readonly created_at: string;
+            readonly team_locked: boolean;
+            readonly team_id: number | null;
+        };
         ApplicationRole: {
             readonly id: number;
             title: string;
@@ -642,7 +678,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RoleApplication"];
+                    "application/json": components["schemas"]["ApplicationDecision"];
                 };
             };
         };
@@ -663,7 +699,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RoleApplication"];
+                    "application/json": components["schemas"]["ApplicationDecision"];
                 };
             };
         };
@@ -1126,6 +1162,26 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Skill"][];
                 };
+            };
+        };
+    };
+    teams_seen_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

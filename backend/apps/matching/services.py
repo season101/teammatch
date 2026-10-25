@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import APIException
@@ -44,18 +45,53 @@ class ApplicationNotPending(APIException):
     default_code = "application_not_pending"
 
 
+class ApplicantRetired(APIException):
+    status_code = 409
+    default_detail = "This person just joined another team."
+    default_code = "applicant_retired"
+
+
 @transaction.atomic
 def decide(application, status):
-    """The owner likes or passes a pending application (F4-02).
+    """The owner likes or passes a pending application (F4-02, F4-05).
 
-    The row lock stops two clicks from both deciding. Filling the role is F4-05.
+    A like fills the role, passes its other pending applications (BR-05) and
+    locks the team if that was the last open role (BR-06). Returns
+    (application, team); team is None unless this like locked it.
+
+    Rows are locked role, applicant, application, then project (in try_lock), so
+    two likes on one role, two likes of one person, or likes on the last two
+    roles wait for each other instead of double-filling or skipping the lock.
     """
-    application = Application.objects.select_for_update().get(pk=application.pk)
+    role = Role.objects.select_related("project").select_for_update(of=("self",))
+    role = role.get(pk=application.role_id)
+    if status == ApplicationStatus.LIKED:
+        get_user_model().objects.select_for_update().get(pk=application.applicant_id)
+        # A seat on any team this term means they're retired (BR-08), even before F4-07.
+        on_a_team = Membership.objects.filter(
+            user_id=application.applicant_id, team__project__term_id=role.project.term_id
+        )
+        if on_a_team.exists():
+            raise ApplicantRetired()
+    application = (
+        Application.objects.select_related("applicant__profile")
+        .select_for_update(of=("self",))
+        .get(pk=application.pk)
+    )
     if application.status != ApplicationStatus.PENDING:
         raise ApplicationNotPending()
     application.status = status
     application.save(update_fields=["status", "updated_at"])
-    return application
+    if status != ApplicationStatus.LIKED:
+        return application, None
+    if role.status != RoleStatus.OPEN:
+        raise RoleNotOpen("This role was just filled.")
+    role.status, role.filled_by_id = RoleStatus.FILLED, application.applicant_id
+    role.save(update_fields=["status", "filled_by", "updated_at"])
+    role.applications.filter(status=ApplicationStatus.PENDING).update(
+        status=ApplicationStatus.PASSED
+    )
+    return application, try_lock(role.project)
 
 
 @transaction.atomic
