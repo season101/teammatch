@@ -117,6 +117,8 @@ HEADLESS_CLIENTS = ("browser", "app")
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
 HEADLESS_FRONTEND_URLS = {
     "account_confirm_email": f"{FRONTEND_URL}/verify-email/{{key}}",
+    # A signup with a taken email mails a reset link from here; unset, that signup 500s.
+    "account_reset_password": f"{FRONTEND_URL}/reset-password",
     "account_reset_password_from_key": f"{FRONTEND_URL}/reset-password/{{key}}",
     "account_signup": f"{FRONTEND_URL}/signup",
 }

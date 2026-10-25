@@ -66,13 +66,10 @@ One email is always one account (`ACCOUNT_UNIQUE_EMAIL`). With `SOCIALACCOUNT_EM
 | Password, email verified | Continue with Google | Signed in to the same account, and Google is linked | Password and Google |
 | Password, email never verified | Continue with Google | Signed in and linked, but allauth wipes the old password, in case someone else registered the student's address first | Google |
 | Google | Sign in with email and password | Fails as a wrong password: an account made through Google has none | Google |
-| Google | Sign up with email and password, same address | No second account. allauth tries to email a "you already have an account" message with a reset link | Google |
+| Google | Sign up with email and password, same address | No second account. allauth answers as for a new signup and emails a "you already have an account" message with a reset link | Google |
 | Google | Reset the password, then sign in with it | allauth sends reset emails to Google-only accounts too | Password and Google |
 
-Known gaps:
-
-- Signing up again with an existing email currently returns a server error. allauth needs the reset-password page's address in `HEADLESS_FRONTEND_URLS["account_reset_password"]`, and that setting is missing.
-- There are no reset-password pages yet, although reset emails already link to `/reset-password/<key>`. Until they exist, a Google-only account can't add a password.
+Known gap: there are no reset-password pages yet, although emails already link to `/reset-password` and `/reset-password/<key>` (`HEADLESS_FRONTEND_URLS`). Until they exist, a Google-only account can't add a password. Tracked as F1-10 (#135).
 
 ## Where the sign-in comes back
 
