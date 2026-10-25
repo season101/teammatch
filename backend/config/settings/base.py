@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 from . import hostenv  # noqa: F401
 
@@ -100,7 +101,11 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_ADAPTER = "apps.accounts.adapter.AccountAdapter"
 # BR-01: only these domains may sign up or sign in (comma-separated in .env).
-ALLOWED_EMAIL_DOMAINS = env.list("ALLOWED_EMAIL_DOMAINS", default=["latech.edu"])
+ALLOWED_EMAIL_DOMAINS = env.list(
+    "ALLOWED_EMAIL_DOMAINS", default=["latech.edu", "email.latech.edu"]
+)
+if not ALLOWED_EMAIL_DOMAINS:
+    raise ImproperlyConfigured("ALLOWED_EMAIL_DOMAINS is empty")
 # The default prefix is "[<request host>] ", which reads "[api:8000]" behind the Next rewrite.
 ACCOUNT_EMAIL_SUBJECT_PREFIX = "TeamMatch: "
 DEFAULT_FROM_EMAIL = env(

@@ -129,7 +129,7 @@ test("shows one generic error for wrong credentials", async () => {
 });
 
 test("tells users from another email domain to use their school email", async () => {
-  const message = "Use your school email. Allowed: @latech.edu.";
+  const message = "Use your @latech.edu or @email.latech.edu email.";
   mockFetch(400, {
     status: 400,
     errors: [{ message, code: "email_domain_not_allowed", param: "email" }],

@@ -14,7 +14,5 @@ def is_allowed_email(email: str) -> bool:
 
 
 def domain_not_allowed_error() -> ValidationError:
-    domains = ", ".join(f"@{d}" for d in allowed_domains())
-    return ValidationError(
-        f"Use your school email. Allowed: {domains}.", code="email_domain_not_allowed"
-    )
+    domains = " or ".join(f"@{d}" for d in allowed_domains())
+    return ValidationError(f"Use your {domains} email.", code="email_domain_not_allowed")
