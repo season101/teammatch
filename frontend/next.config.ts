@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
       { source: "/api/:path*/", destination: `${apiUrl}/api/:path*/` },
       { source: "/api/:path*", destination: `${apiUrl}/api/:path*` },
       { source: "/_allauth/:path*", destination: `${apiUrl}/_allauth/:path*` },
+      // Google's OAuth callback, /accounts/google/login/callback/
+      { source: "/accounts/:path*/", destination: `${apiUrl}/accounts/:path*/` },
+      { source: "/accounts/:path*", destination: `${apiUrl}/accounts/:path*` },
       { source: "/ws/:path*", destination: `${apiUrl}/ws/:path*` },
     ];
   },
