@@ -2,10 +2,11 @@
 
 - Status: Accepted
 - Date: 2026-09-27
+- Refined by: [ADR 0007](0007-google-sign-in-trusts-la-tech-workspace.md), which Google accounts are trusted
 
 ## Context
 
-We need email/password and Google sign-in, email verification, password reset, and a configurable school email domain allowlist (`ALLOWED_EMAIL_DOMAINS`, e.g. `latech.edu`). The UI is a separate Next.js app, and a future Expo app should reuse the same auth. The host (sitashma-infra) has no shared auth middleware, and routes there are public, so the app has to own auth.
+We need email/password and Google sign-in, email verification, password reset, and a configurable school email domain allowlist (`ALLOWED_EMAIL_DOMAINS`, e.g. `latech.edu,email.latech.edu`). The UI is a separate Next.js app, and a future Expo app should reuse the same auth. The host (sitashma-infra) has no shared auth middleware, and routes there are public, so the app has to own auth.
 
 ## Decision
 

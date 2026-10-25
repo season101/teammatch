@@ -38,7 +38,7 @@ sequenceDiagram
 
 ## 2. Google sign-in via allauth headless
 
-The browser does a real form POST (not fetch) so allauth can redirect to Google.
+The browser does a real form POST (not fetch) so allauth can redirect to Google. Why only @email.latech.edu, and how LA Tech's login fits in: [Google Sign-In](google-sign-in.md).
 
 ```mermaid
 sequenceDiagram
@@ -51,17 +51,20 @@ sequenceDiagram
 
     U->>W: click Continue with Google
     W->>A: form POST /_allauth/browser/v1/auth/provider/redirect {provider google, callback_url /auth/callback, process login}
-    A-->>U: 302 to Google consent screen
-    U->>G: sign in and consent
+    A-->>U: 302 to Google, hd=email.latech.edu
+    U->>G: sign in at LA Tech CAS and consent
     G-->>A: 302 /accounts/google/login/callback/?code=...
     A->>G: exchange code for tokens
     G-->>A: id_token with email, email_verified, hd
-    A->>AD: pre_social_login / is_open_for_signup
-    alt email domain not allowed
+    A->>AD: pre_social_login
+    alt hd is not email.latech.edu, or email not verified
         AD-->>A: reject
-        A-->>U: 302 /auth/callback?error=domain_not_allowed
+        A-->>U: 302 /auth/callback?error=google_account_not_allowed
+    else email domain not in ALLOWED_EMAIL_DOMAINS
+        AD-->>A: reject
+        A-->>U: 302 /auth/callback?error=email_domain_not_allowed
     else allowed
-        A->>DB: get or create User, SocialAccount, Profile
+        A->>DB: find User by verified email or create one, link SocialAccount, Profile
         A-->>U: 302 /auth/callback with session cookie
         U->>W: GET /auth/callback
         W->>A: GET /_allauth/browser/v1/auth/session

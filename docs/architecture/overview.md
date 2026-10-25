@@ -37,11 +37,13 @@ flowchart LR
     admin["Admin<br/>moderation"]
     tm["TeamMatch<br/>web app + API"]
     google["Google OAuth<br/>identity provider"]
+    cas["LA Tech CAS<br/>school login + Duo"]
     smtp["SMTP server<br/>verification emails"]
 
     student -->|"uses via browser or PWA"| tm
     admin -->|"Django admin"| tm
     tm -->|"OAuth 2.0 / OIDC"| google
+    google -->|"SAML, email.latech.edu"| cas
     tm -->|"sends email"| smtp
 ```
 

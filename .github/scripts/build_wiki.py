@@ -36,6 +36,7 @@ PAGES = [
         ("docs/architecture/overview.md", "Architecture-Overview"),
         ("docs/architecture/data-model.md", "Data-Model"),
         ("docs/architecture/flows.md", "Main-Flows"),
+        ("docs/architecture/google-sign-in.md", "Google-Sign-In"),
         ("docs/architecture/api.md", "API-Contract"),
         ("docs/architecture/api-create-project.md", "API-Create-Project"),
         ("docs/architecture/api-roles-and-projects.md", "API-Roles-and-Projects"),
