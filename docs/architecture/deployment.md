@@ -116,7 +116,7 @@ Names only; see `.env.example` and [deploy/README.md](../../deploy/README.md). V
 | `POSTGRES_USER` | db | |
 | `POSTGRES_PASSWORD` | db | required |
 | `REDIS_URL` | api | |
-| `ALLOWED_EMAIL_DOMAINS` | api | comma separated, *later* (F1-06) |
+| `ALLOWED_EMAIL_DOMAINS` | api | comma separated (F1-06) |
 | `GOOGLE_CLIENT_ID` | api | empty hides Google sign-in |
 | `GOOGLE_CLIENT_SECRET` | api | required when `GOOGLE_CLIENT_ID` is set |
 | `EMAIL_URL` | api | `smtp+tls://...`, or `consolemail://` to log emails |
