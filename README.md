@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/season101/teammatch/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/season101/teammatch/actions/workflows/ci.yml?query=branch%3Amain)
 [![Release](https://github.com/season101/teammatch/actions/workflows/release.yml/badge.svg)](https://github.com/season101/teammatch/actions/workflows/release.yml)
+[![Deploy](https://img.shields.io/github/deployments/season101/teammatch/production?label=deploy)](https://github.com/season101/teammatch/deployments)
 [![Latest release](https://img.shields.io/github/v/release/season101/teammatch)](https://github.com/season101/teammatch/releases/latest)
 [![Live in prod](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fteammatch.sijancodes.com%2Fapi%2Fv1%2Fhealth%2F&query=%24.version&label=prod&prefix=v)](https://teammatch.sijancodes.com)
 

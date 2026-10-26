@@ -62,38 +62,35 @@ On push of a tag matching `v*`:
    - `ghcr.io/season101/teammatch-web`
 3. Tags from `docker/metadata-action`: `1.2.0` and `1.2`, plus `latest` (the action adds it for every semver tag).
 4. The `release` job runs after both images are pushed. It creates a GitHub Release for the tag with notes generated from the squash commits (`permissions: contents: write` on that job only).
+5. The `deploy` job calls `deploy.yml` (below) with the tag's version.
 
 The repo is public, so the images are public and the host can pull without logging in.
+
+## Deploy (`.github/workflows/deploy.yml`)
+
+Called by `release.yml` after each release. Run it by hand from the Actions tab (on `main`, with a version like `1.0.4`) to redeploy or roll back to a version that's already released.
+
+1. The job uses the `production` environment, so it waits until season101 approves it. The environment only accepts `v*` tags and `main`.
+2. It connects with `ssh` to `ssh.sijancodes.com:2222` as season101, using the environment secrets `DEPLOY_SSH_KEY` and `DEPLOY_KNOWN_HOSTS`, and sends only the version.
+3. On the host, that key can only run `~/bin/teammatch-deploy` (a copy of `deploy/deploy.sh`). The script:
+   - backs up the database to `~/backups`,
+   - fetches the tag and checks out `apps/teammatch` at it,
+   - sets `TEAMMATCH_VERSION` in `deploy/.env`,
+   - pulls and restarts only `teammatch-migrate`, `teammatch-api` and `teammatch-web`,
+   - waits about 2 minutes for `/api/v1/health/` to say `ok` with the new version.
+4. If any step after the checkout fails, the script puts the previous checkout and version back, restarts the same three services, and the job fails.
+
+`concurrency` keeps it to one deploy at a time, and the script takes a `flock` too. Its output shows in the Actions log and in `~/teammatch-deploy.log` on the host. The badge on the README shows the latest `production` deployment. Host setup is in [deploy/README.md](../../deploy/README.md#one-time-setup).
 
 ## Wiki (`.github/workflows/wiki.yml`)
 
 Runs when `docs/`, `README.md`, `deploy/README.md` or `packages/api-client/README.md` change. `.github/scripts/build_wiki.py` turns each doc into a wiki page, rewrites links between docs to point at wiki pages, and builds the sidebar. It fails when a link is broken or when a doc under `docs/` has no line in its `PAGES` list. On a PR the job only builds. On push to `main` it replaces the wiki's contents and pushes them with `GITHUB_TOKEN` (`permissions: contents: write`). Run it by hand from the Actions tab to undo edits someone made in the wiki itself.
 
-## Manual deploy
+## Manual deploy (fallback)
 
-Deploys follow the sitashma-infra convention and are done by hand after a release.
+If Actions or the deploy key isn't working, deploy from your own SSH session. Either run the same script, `ssh sitashma '~/bin/teammatch-deploy 1.0.0'`, or follow the manual steps in [deploy/README.md](../../deploy/README.md#manual-steps). Both only move the `apps/teammatch` submodule. Never pull, commit or push the sitashma-infra repo itself, because it pins the other apps too.
 
-1. Wait for the release workflow to finish and check both images exist on GHCR.
-2. In `sitashma-infra`, bump the submodule and set the version:
-   ```bash
-   cd apps/teammatch && git fetch --tags && git checkout v1.0.0 && cd ../..
-   # set TEAMMATCH_VERSION=1.0.0 in apps/teammatch/deploy/.env
-   git add apps/teammatch && git commit -m "Bump teammatch submodule to v1.0.0"
-   git push
-   ```
-3. On the host:
-   ```bash
-   git pull && git submodule update --init apps/teammatch
-   docker compose --profile apps pull teammatch-api teammatch-web
-   docker compose --profile apps up -d
-   docker compose ps
-   ```
-4. Verify:
-   - `docker compose ps` shows `teammatch-*` healthy and `teammatch-migrate` exited 0.
-   - `docker exec teammatch-api python -c "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/readyz')"` exits 0 (200).
-   - `https://teammatch.sijancodes.com` loads, login works, `/api/v1/me/profile/` returns 200 when logged in.
-   - Chat page connects (WS 101 in browser devtools).
-5. Rollback: set `TEAMMATCH_VERSION` to the previous tag and repeat step 3. Migrations must stay backward compatible for one release so this works.
+Migrations must stay backward compatible for one release, so rolling back to the previous version works without restoring the database.
 
 ## Pipeline
 
@@ -121,15 +118,17 @@ flowchart LR
         notes["GitHub Release notes"]
     end
 
-    subgraph deploy ["Manual deploy on sitashma-infra"]
+    subgraph deploy ["Deploy workflow, automatic"]
         direction TB
-        bump["bump submodule + TEAMMATCH_VERSION"]
-        pull["compose pull"]
-        up["compose up -d"]
-        verify["verify readyz + smoke test"]
+        approve["approve<br/>production environment"]
+        ssh["ssh, forced command<br/>teammatch-deploy X.Y.Z"]
+        steps["backup, check out tag,<br/>compose pull + up"]
+        verify["health ok on new version"]
+        rollback["roll back to previous version"]
     end
 
     dev --> pr --> ci
     ci -->|"all green"| review --> main --> tag --> build --> ghcr --> notes
-    ghcr --> bump --> pull --> up --> verify
+    notes --> approve --> ssh --> steps --> verify
+    verify -.->|"fails"| rollback
 ```
