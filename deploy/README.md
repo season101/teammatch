@@ -90,6 +90,8 @@ The example ships 1.0.0. Before you start, check that every PR for the release i
    gh run watch "$(gh run list --workflow release.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
    ```
 
+   GitHub's **Draft a new release** button works too: choose a new `vX.Y.Z` tag on `main` and publish. It makes the tag and the Release together, and the workflow keeps that Release.
+
 2. The release workflow pushes `ghcr.io/season101/teammatch-api:1.0.0` and `teammatch-web:1.0.0`, creates the GitHub Release, then the `deploy` job waits for you. Open the run, click **Review deployments**, tick `production` and approve.
 
 3. The deploy runs on its own: backup to `~/backups`, check out `v1.0.0` in `apps/teammatch`, set `TEAMMATCH_VERSION`, pull and restart `teammatch-migrate`, `teammatch-api` and `teammatch-web`, then wait for `/api/v1/health/` to say `ok` with `"version": "1.0.0"`. If anything after the checkout fails, it rolls back to the previous version and the job goes red. The output is in the Actions log and in `~/teammatch-deploy.log` on the server.

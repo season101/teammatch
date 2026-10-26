@@ -61,7 +61,7 @@ On push of a tag matching `v*`:
    - `ghcr.io/season101/teammatch-api`
    - `ghcr.io/season101/teammatch-web`
 3. Tags from `docker/metadata-action`: `1.2.0` and `1.2`, plus `latest` (the action adds it for every semver tag).
-4. The `release` job runs after both images are pushed. It creates a GitHub Release for the tag with notes generated from the squash commits (`permissions: contents: write` on that job only).
+4. The `release` job runs after both images are pushed. It creates a GitHub Release for the tag with notes generated from the squash commits, or keeps the one that's there if the Release was made with GitHub's "Draft a new release" button (`permissions: contents: write` on that job only).
 5. The `deploy` job calls `deploy.yml` (below) with the tag's version.
 
 The repo is public, so the images are public and the host can pull without logging in.
