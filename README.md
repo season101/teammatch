@@ -1,5 +1,10 @@
 # TeamMatch
 
+[![CI](https://github.com/season101/teammatch/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/season101/teammatch/actions/workflows/ci.yml?query=branch%3Amain)
+[![Release](https://github.com/season101/teammatch/actions/workflows/release.yml/badge.svg)](https://github.com/season101/teammatch/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/season101/teammatch)](https://github.com/season101/teammatch/releases/latest)
+[![Live in prod](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fteammatch.sijancodes.com%2Fapi%2Fv1%2Fhealth%2F&query=%24.version&label=prod&prefix=v)](https://teammatch.sijancodes.com)
+
 Swipe on roles, not people.
 
 Students post a project with open roles. Classmates swipe on the roles that fit their skills. Owners like or pass per role, and the team forms itself when every role is filled. Then team chat opens.

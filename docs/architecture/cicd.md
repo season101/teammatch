@@ -40,17 +40,17 @@ Runs on every PR and on push to `main`. `concurrency` cancels older runs on the 
 
 | Job | Steps | Fails when |
 |---|---|---|
-| `backend` | uv sync, `ruff check`, `ruff format --check`, `mypy`, `pytest` with Postgres 17 and Redis 7 service containers | lint, types or tests fail, coverage under threshold |
-| `frontend` | pnpm install (frozen lockfile), `eslint`, `tsc --noEmit`, `vitest`, `next build` | lint, types, tests or build fail |
-| `contract` | generate `backend/schema.yml`, regenerate `packages/api-client`, `git diff --exit-code` | schema or client not committed after an API change |
-| `docker` | buildx build `backend/Dockerfile` and `frontend/Dockerfile`, no push, GHA cache | an image does not build |
-| `gitleaks` | scan the diff for secrets | a secret is found |
+| `detect` | checks `backend/` and `frontend/` exist | never |
+| `backend` | uv sync, `ruff check`, `ruff format --check`, `pytest` with Postgres 17 and Redis 8 service containers, then regenerate `schema.yml` and `git diff --exit-code` | lint or tests fail, or `schema.yml` not committed after an API change |
+| `frontend` | pnpm install (frozen lockfile), `eslint`, `tsc --noEmit`, `vitest`, `next build`, then regenerate `packages/api-client` and `git diff --exit-code` | lint, types, tests or build fail, or the client is out of date |
+| `docker` | buildx build `backend/Dockerfile` and `frontend/Dockerfile`, no push | an image does not build |
+| `secrets` | gitleaks over the commits in the PR or push | a secret is found |
 
-Branch protection requires all five. `make check` runs the same checks locally.
+Branch protection requires all five jobs. `make check` runs the same checks locally.
 
 Playwright e2e for the golden path runs on `main` and nightly (added in Sprint 3), not on every PR, to keep PR CI fast.
 
-Dependabot opens weekly PRs for pip (uv), npm (pnpm) and GitHub Actions.
+Dependabot opens weekly PRs for uv (`backend/`), npm (`frontend/`) and GitHub Actions.
 
 ## Release (`.github/workflows/release.yml`)
 
@@ -60,8 +60,8 @@ On push of a tag matching `v*`:
 2. Build and push:
    - `ghcr.io/season101/teammatch-api`
    - `ghcr.io/season101/teammatch-web`
-3. Tags from `docker/metadata-action`: `1.2.0`, `1.2`, `latest`, and `sha-<short>`.
-4. Create a GitHub Release with auto-generated notes from the squash commits.
+3. Tags from `docker/metadata-action`: `1.2.0` and `1.2`, plus `latest` (the action adds it for every semver tag).
+4. The `release` job runs after both images are pushed. It creates a GitHub Release for the tag with notes generated from the squash commits (`permissions: contents: write` on that job only).
 
 The repo is public, so the images are public and the host can pull without logging in.
 
@@ -91,7 +91,7 @@ Deploys follow the sitashma-infra convention and are done by hand after a releas
 4. Verify:
    - `docker compose ps` shows `teammatch-*` healthy and `teammatch-migrate` exited 0.
    - `docker exec teammatch-api python -c "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/readyz')"` exits 0 (200).
-   - `https://teammatch.sijancodes.com` loads, login works, `/api/v1/me/` returns 200 when logged in.
+   - `https://teammatch.sijancodes.com` loads, login works, `/api/v1/me/profile/` returns 200 when logged in.
    - Chat page connects (WS 101 in browser devtools).
 5. Rollback: set `TEAMMATCH_VERSION` to the previous tag and repeat step 3. Migrations must stay backward compatible for one release so this works.
 
@@ -104,9 +104,8 @@ flowchart LR
 
     subgraph ci ["CI workflow"]
         direction TB
-        be["backend<br/>ruff, mypy, pytest"]
-        fe["frontend<br/>eslint, tsc, vitest, build"]
-        ct["contract<br/>schema + client drift"]
+        be["backend<br/>ruff, pytest, schema drift"]
+        fe["frontend<br/>eslint, tsc, vitest, build, client drift"]
         dk["docker<br/>build both images"]
         gl["gitleaks"]
     end
