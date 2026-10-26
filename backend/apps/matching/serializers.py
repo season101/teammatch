@@ -33,6 +33,22 @@ class RoleApplicationSerializer(serializers.ModelSerializer):
         fields = ["id", "applicant", "note", "status", "created_at"]
 
 
+class ApplicationRoleSerializer(serializers.ModelSerializer):
+    project = FeedProjectSerializer(read_only=True)
+
+    class Meta:
+        model = Role
+        fields = ["id", "title", "project"]
+
+
+class MyApplicationSerializer(serializers.ModelSerializer):
+    role = ApplicationRoleSerializer(read_only=True)
+
+    class Meta:
+        model = Application
+        fields = ["id", "role", "note", "status", "created_at"]
+
+
 class ApplySerializer(serializers.ModelSerializer):
     class Meta:
         model = Application

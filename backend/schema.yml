@@ -73,6 +73,65 @@ paths:
               schema:
                 $ref: '#/components/schemas/RoleApplication'
           description: ''
+  /api/v1/applications/{id}/withdraw/:
+    post:
+      operationId: applications_withdraw_create
+      description: 'Withdraw my pending application. Someone else''s: 404. Not pending:
+        409 (BR-11).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - matching
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyApplication'
+          description: ''
+  /api/v1/applications/mine/:
+    get:
+      operationId: applications_mine_list
+      description: My applications, newest first. ?status= keeps one status (F3-06).
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - liked
+          - passed
+          - pending
+          - withdrawn
+      tags:
+      - matching
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMyApplicationList'
+          description: ''
   /api/v1/feed/:
     get:
       operationId: feed_list
@@ -525,6 +584,23 @@ paths:
           description: ''
 components:
   schemas:
+    ApplicationRole:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        project:
+          allOf:
+          - $ref: '#/components/schemas/FeedProject'
+          readOnly: true
+      required:
+      - id
+      - project
+      - title
     ApplicationStatusEnum:
       enum:
       - pending
@@ -668,6 +744,29 @@ components:
       description: |-
         * `ok` - ok
         * `degraded` - degraded
+    MyApplication:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/ApplicationRole'
+          readOnly: true
+        note:
+          type: string
+          maxLength: 300
+        status:
+          $ref: '#/components/schemas/ApplicationStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - role
     MyProfile:
       type: object
       properties:
@@ -754,6 +853,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FeedRole'
+    PaginatedMyApplicationList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MyApplication'
     PaginatedProjectListList:
       type: object
       required:

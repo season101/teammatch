@@ -6,6 +6,12 @@ from .models import ApplicationStatus
 urlpatterns = [
     path("feed/", views.FeedView.as_view(), name="feed"),
     path("applications/", views.ApplyView.as_view(), name="application-create"),
+    path("applications/mine/", views.MyApplicationsView.as_view(), name="my-applications"),
+    path(
+        "applications/<int:pk>/withdraw/",
+        views.WithdrawApplicationView.as_view(),
+        name="application-withdraw",
+    ),
     path(
         "roles/<int:pk>/applications/",
         views.RoleApplicationsView.as_view(),
