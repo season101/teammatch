@@ -119,6 +119,27 @@ HEADLESS_FRONTEND_URLS = {
     "account_confirm_email": f"{FRONTEND_URL}/verify-email/{{key}}",
     "account_reset_password_from_key": f"{FRONTEND_URL}/reset-password/{{key}}",
     "account_signup": f"{FRONTEND_URL}/signup",
+    # Google errors that lose the callback_url (e.g. an expired state) land here with ?error=
+    "socialaccount_login_error": f"{FRONTEND_URL}/login",
+}
+
+# F1-05: Google sign-in. Students' @email.latech.edu is LA Tech's Google Workspace;
+# @latech.edu staff aren't on Google and keep email/password.
+SOCIALACCOUNT_ADAPTER = "apps.accounts.adapter.SocialAccountAdapter"
+# A Google login with the same verified email signs in to (and links) the existing account.
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": ["openid", "email", "profile"],
+        # Only a hint for Google's account picker; the adapter checks the ID token's hd.
+        "AUTH_PARAMS": {"hd": "email.latech.edu"},
+        # No client ID, no app: /_allauth/browser/v1/config then lists no providers.
+        "APPS": [{"client_id": GOOGLE_CLIENT_ID, "secret": env("GOOGLE_CLIENT_SECRET", default="")}]
+        if GOOGLE_CLIENT_ID
+        else [],
+    },
 }
 
 REST_FRAMEWORK = {

@@ -9,6 +9,8 @@ urlpatterns = [
     path("readyz", core_views.readyz),
     path("admin/", admin.site.urls),
     path("_allauth/", include("allauth.headless.urls")),
+    # With HEADLESS_ONLY this is just the provider callbacks, e.g. /accounts/google/login/callback/
+    path("accounts/", include("allauth.urls")),
     path("api/v1/", include("apps.core.urls")),
     path("api/v1/", include("apps.projects.urls")),
     path("api/v1/", include("apps.profiles.urls")),

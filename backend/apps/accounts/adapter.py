@@ -1,4 +1,7 @@
 from allauth.account.adapter import DefaultAccountAdapter
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from django.conf import settings
+from django.core.exceptions import ValidationError
 
 from .domains import domain_not_allowed_error, is_allowed_email
 
@@ -17,3 +20,18 @@ class AccountAdapter(DefaultAccountAdapter):
         if email and not is_allowed_email(email):
             raise domain_not_allowed_error()
         return super().authenticate(request, **credentials)
+
+
+class SocialAccountAdapter(DefaultSocialAccountAdapter):
+    # Runs on every Google login, new or returning. The hd auth param is only a hint
+    # to Google's account picker, so the ID token's claims decide.
+    def pre_social_login(self, request, sociallogin):
+        claims = sociallogin.account.extra_data
+        hd = settings.SOCIALACCOUNT_PROVIDERS["google"]["AUTH_PARAMS"]["hd"]
+        if claims.get("hd") != hd or claims.get("email_verified") is not True:
+            raise ValidationError(
+                f"Use your @{hd} Google account.", code="google_account_not_allowed"
+            )
+        # Social signup never calls clean_email, and a returning login never calls authenticate.
+        if not is_allowed_email(claims.get("email", "")):
+            raise domain_not_allowed_error()

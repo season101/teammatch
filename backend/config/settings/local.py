@@ -9,6 +9,8 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Behind the Next rewrite the Host is api:8000; Google's redirect_uri must say localhost:3000.
+USE_X_FORWARDED_HOST = True
 
 # uvicorn does not serve static like runserver does; with DEBUG on, WhiteNoise
 # reads straight from the app dirs so admin and /api/docs work without collectstatic.

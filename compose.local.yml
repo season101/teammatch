@@ -87,6 +87,8 @@ services:
       SEED_OWNER_PASSWORD: ${SEED_OWNER_PASSWORD:-}
       SEED_CANDIDATE_EMAIL: ${SEED_CANDIDATE_EMAIL:-}
       SEED_CANDIDATE_PASSWORD: ${SEED_CANDIDATE_PASSWORD:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     command: sh -c "python manage.py migrate --noinput && python manage.py bootstrap && exec uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --reload"
     ports:
       - "${API_PORT:-8000}:8000"
