@@ -14,11 +14,13 @@ import {
 import { RoleForm } from "./role-form";
 import { Modal } from "@/components/ui/modal";
 import { ProjectDetailsForm } from "./project-details-form";
+import { Chip } from "@/components/ui/chip";
+import { TeamStrip, type Segment } from "@/components/ui/team-strip";
 
 const noticeClass =
   "rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100";
 const buttonClass =
-  "rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800";
+  "rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-surface-2";
 
 export function ProjectEditor({
   projectId,
@@ -42,7 +44,7 @@ export function ProjectEditor({
 
   if (project.isPending || skills.isPending) {
     return (
-      <p role="status" className="text-sm text-zinc-500">
+      <p role="status" className="text-sm text-muted">
         Loading project…
       </p>
     );
@@ -64,16 +66,25 @@ export function ProjectEditor({
     isOwner && (data.status === "draft" || data.status === "open");
   const skillName = (id: number) =>
     skills.data.find((skill) => skill.id === id)?.name ?? "Unknown skill";
+  const locked = data.status === "locked";
+  const segments: Segment[] = data.roles.map((role) =>
+    role.status === "filled" ? "filled" : "open",
+  );
 
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
-        <Link
-          href="/projects"
-          className="text-sm text-indigo-600 hover:underline"
-        >
+        <Link href="/projects" className="text-sm text-primary hover:underline">
           ← All projects
         </Link>
+        {locked && (
+          <p
+            role="status"
+            className="rounded-lg border border-border p-3 text-sm font-medium"
+          >
+            This team is locked. Every role is filled.
+          </p>
+        )}
         {editingDetails ? (
           <ProjectDetailsForm
             projectId={projectId}
@@ -83,11 +94,16 @@ export function ProjectEditor({
           />
         ) : (
           <>
-            <h1 className="text-3xl font-bold tracking-tight">{data.title}</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <div className="flex flex-col gap-6 rounded-card bg-linear-to-br from-cover-indigo to-[color-mix(in_oklab,var(--color-cover-indigo)_62%,black)] p-6 text-white">
+              {segments.length > 0 && <TeamStrip segments={segments} />}
+              <h1 className="text-3xl font-bold tracking-tight">
+                {data.title}
+              </h1>
+            </div>
+            <p className="text-sm text-muted">
               {data.status} · by {data.owner_name || "an unnamed owner"}
             </p>
-            <p className="text-zinc-700 dark:text-zinc-300">{data.pitch}</p>
+            <p className="text-text">{data.pitch}</p>
             {canEdit && (
               <div className="mt-2 flex flex-wrap gap-3">
                 <button
@@ -124,7 +140,7 @@ export function ProjectEditor({
         </h2>
 
         {data.roles.length === 0 && (
-          <p className="text-zinc-600 dark:text-zinc-400">
+          <p className="text-muted">
             No roles yet.
             {isOwner ? " Add your first role, then publish the project." : ""}
           </p>
@@ -153,28 +169,24 @@ export function ProjectEditor({
                   }
                 />
               ) : (
-                <div className="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800">
+                <div className="rounded-2xl border border-border bg-surface p-5">
                   <h3 className="text-lg font-semibold">
                     {role.title}
-                    <span className="ml-2 text-sm font-normal text-zinc-500 dark:text-zinc-400">
+                    <span className="ml-2 text-sm font-normal text-muted">
                       {role.status}
+                      {role.filled_by_name ? ` · ${role.filled_by_name}` : ""}
                     </span>
                   </h3>
                   {role.description && (
-                    <p className="mt-1 text-zinc-700 dark:text-zinc-300">
-                      {role.description}
-                    </p>
+                    <p className="mt-1 text-text">{role.description}</p>
                   )}
                   <ul
                     aria-label={`Skills for ${role.title}`}
                     className="mt-3 flex flex-wrap gap-2"
                   >
                     {role.required_skills.map((id) => (
-                      <li
-                        key={id}
-                        className="rounded-full bg-indigo-100 px-3 py-1 text-sm text-indigo-900 dark:bg-indigo-950 dark:text-indigo-100"
-                      >
-                        {skillName(id)}
+                      <li key={id}>
+                        <Chip>{skillName(id)}</Chip>
                       </li>
                     ))}
                   </ul>

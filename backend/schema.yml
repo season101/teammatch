@@ -934,7 +934,7 @@ components:
         roles:
           type: array
           items:
-            $ref: '#/components/schemas/Role'
+            $ref: '#/components/schemas/RoleDetail'
           readOnly: true
         created_at:
           type: string
@@ -1063,6 +1063,44 @@ components:
       - applicant
       - created_at
       - id
+    RoleDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        project:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        status:
+          allOf:
+          - $ref: '#/components/schemas/RoleStatusEnum'
+          readOnly: true
+        required_skills:
+          type: array
+          items:
+            type: integer
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        filled_by_name:
+          type: string
+          readOnly: true
+      required:
+      - created_at
+      - filled_by_name
+      - id
+      - project
+      - required_skills
+      - status
+      - title
     RoleRequest:
       type: object
       properties:

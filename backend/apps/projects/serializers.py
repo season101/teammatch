@@ -58,6 +58,20 @@ class ProjectListSerializer(serializers.ModelSerializer):
         return Truncator(project.pitch).chars(200)
 
 
+class RoleDetailSerializer(RoleSerializer):
+    # Public info only: the member's display name, never their email.
+    filled_by_name = serializers.SerializerMethodField()
+
+    class Meta(RoleSerializer.Meta):
+        fields = [*RoleSerializer.Meta.fields, "filled_by_name"]
+
+    def get_filled_by_name(self, role) -> str:
+        if role.filled_by_id is None:
+            return ""
+        profile = getattr(role.filled_by, "profile", None)
+        return profile.display_name if profile else ""
+
+
 class MyRoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
@@ -75,7 +89,7 @@ class MyProjectSerializer(serializers.ModelSerializer):
 class ProjectDetailSerializer(serializers.ModelSerializer):
     # Public info only: the owner's display name, never their email.
     owner_name = serializers.CharField(source="owner.profile.display_name", read_only=True)
-    roles = RoleSerializer(many=True, read_only=True)
+    roles = RoleDetailSerializer(many=True, read_only=True)
 
     class Meta:
         model = Project

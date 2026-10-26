@@ -401,3 +401,49 @@ test("hides edit and close from non-owners and from locked projects", async () =
     screen.queryByRole("button", { name: "Close project" }),
   ).not.toBeInTheDocument();
 });
+
+const FILLED_ROLE = {
+  ...ROLE,
+  id: 4,
+  title: "Designer",
+  status: "filled",
+  filled_by_name: "Ava",
+};
+
+test("shows how many roles are filled on the project cover", async () => {
+  mockApi((method, path) =>
+    path === "/api/v1/skills/"
+      ? [SKILLS, 200]
+      : [project({ status: "open", roles: [ROLE, FILLED_ROLE] }), 200],
+  );
+  renderEditor(2);
+  expect(
+    await screen.findByRole("img", { name: "1 of 2 roles filled" }),
+  ).toBeInTheDocument();
+  expect(screen.queryByText(/team is locked/i)).not.toBeInTheDocument();
+});
+
+test("a locked project says so and names the member in each role", async () => {
+  mockApi((method, path) =>
+    path === "/api/v1/skills/"
+      ? [SKILLS, 200]
+      : [project({ status: "locked", roles: [FILLED_ROLE] }), 200],
+  );
+  renderEditor(2);
+  expect(
+    await screen.findByText("This team is locked. Every role is filled."),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/Ava/)).toBeInTheDocument();
+  expect(
+    screen.getByRole("img", { name: "1 of 1 roles filled" }),
+  ).toBeInTheDocument();
+});
+
+test("a project with no roles has no team strip", async () => {
+  mockApi((method, path) =>
+    path === "/api/v1/skills/" ? [SKILLS, 200] : [project(), 200],
+  );
+  renderEditor();
+  expect(await screen.findByText("TeamMatch")).toBeInTheDocument();
+  expect(screen.queryByRole("img")).not.toBeInTheDocument();
+});

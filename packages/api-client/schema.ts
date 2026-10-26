@@ -455,7 +455,7 @@ export interface components {
             status?: components["schemas"]["ProjectStatusEnum"];
             owner: number;
             readonly owner_name: string;
-            readonly roles: components["schemas"]["Role"][];
+            readonly roles: components["schemas"]["RoleDetail"][];
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -498,6 +498,17 @@ export interface components {
             status?: components["schemas"]["ApplicationStatusEnum"];
             /** Format: date-time */
             readonly created_at: string;
+        };
+        RoleDetail: {
+            readonly id: number;
+            readonly project: number;
+            title: string;
+            description?: string;
+            readonly status: components["schemas"]["RoleStatusEnum"];
+            required_skills: number[];
+            /** Format: date-time */
+            readonly created_at: string;
+            readonly filled_by_name: string;
         };
         RoleRequest: {
             title: string;
