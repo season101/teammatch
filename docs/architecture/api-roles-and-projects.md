@@ -43,7 +43,7 @@ All of them need a signed-in session. Unsafe methods (POST, PATCH) also need the
 }
 ```
 
-`filled_by_name` is the display name of the member who filled the role, and an empty string while the role is open. It is the name only, never the email.
+`filled_by_name` is the display name of the member who filled the role. It is an empty string while the role is open, or when the member has no display name. It is the name only, never the email.
 
 ## Add and edit a role
  

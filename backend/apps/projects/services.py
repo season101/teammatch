@@ -114,7 +114,11 @@ def my_projects(user):
 
 def visible_projects(user):
     """Projects this user may open: their own, and anyone's open or locked ones (F2-02)."""
-    roles = Role.objects.order_by("created_at").prefetch_related("required_skills")
+    roles = (
+        Role.objects.order_by("created_at")
+        .select_related("filled_by__profile")
+        .prefetch_related("required_skills")
+    )
     return (
         Project.objects.filter(
             Q(owner=user) | Q(status__in=[ProjectStatus.OPEN, ProjectStatus.LOCKED])

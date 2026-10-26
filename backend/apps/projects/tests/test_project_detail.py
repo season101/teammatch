@@ -144,3 +144,23 @@ def test_a_locked_project_is_visible_with_its_members(other, project, member):
     assert response.status_code == 200
     assert response.data["status"] == "locked"
     assert response.data["roles"][0]["filled_by_name"] == "Ava"
+
+
+def test_member_names_do_not_add_queries_per_role(other, project, django_assert_max_num_queries):
+    project.status = ProjectStatus.LOCKED
+    project.save()
+    for i in range(3):
+        user = get_user_model().objects.create_user(email=f"m{i}@latech.edu", password="pw")
+        fill_role(project, user)
+    with django_assert_max_num_queries(3):
+        client_for(other).get(url(project))
+
+
+def test_a_member_without_a_display_name_has_an_empty_name(other, project):
+    nameless = get_user_model().objects.create_user(email="noname@latech.edu", password="pw")
+    project.status = ProjectStatus.LOCKED
+    project.save()
+    fill_role(project, nameless)
+    response = client_for(other).get(url(project))
+    assert response.data["roles"][0]["filled_by_name"] == ""
+    assert "noname@latech.edu" not in response.content.decode()

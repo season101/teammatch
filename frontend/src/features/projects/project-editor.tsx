@@ -43,7 +43,11 @@ export function ProjectEditor({
   const [editingDetails, setEditingDetails] = useState(false);
 
   if (project.isPending || skills.isPending) {
-    return <p className="text-sm text-muted">Loading project…</p>;
+    return (
+      <p role="status" className="text-sm text-muted">
+        Loading project…
+      </p>
+    );
   }
   if (project.isError || skills.isError) {
     const notFound = project.error?.status === 404;
@@ -70,10 +74,7 @@ export function ProjectEditor({
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
-        <Link
-          href="/projects"
-          className="text-sm text-indigo-600 hover:underline"
-        >
+        <Link href="/projects" className="text-sm text-primary hover:underline">
           ← All projects
         </Link>
         {locked && (
