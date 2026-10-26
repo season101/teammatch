@@ -36,7 +36,7 @@ gitGraph
 
 ## CI (`.github/workflows/ci.yml`)
 
-Runs on every PR and on push to `main`. `concurrency` cancels older runs on the same branch. `permissions: contents: read`.
+Runs on every PR and on push to `main`. On a PR, `concurrency` cancels the older run when you push again. Every commit on `main` gets its own run, so a quick second merge doesn't cancel the first one's run and turn the badge red. `permissions: contents: read`.
 
 | Job | Steps | Fails when |
 |---|---|---|
