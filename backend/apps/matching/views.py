@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
@@ -9,8 +9,13 @@ from apps.core.pagination import DefaultCursorPagination
 from apps.projects.models import Role
 
 from . import services
-from .models import Application
-from .serializers import ApplySerializer, FeedRoleSerializer, RoleApplicationSerializer
+from .models import Application, ApplicationStatus
+from .serializers import (
+    ApplySerializer,
+    FeedRoleSerializer,
+    MyApplicationSerializer,
+    RoleApplicationSerializer,
+)
 
 
 @extend_schema(tags=["feed"])
@@ -63,3 +68,33 @@ class ApplyView(generics.CreateAPIView):
         serializer.instance = services.apply(
             role, self.request.user, serializer.validated_data.get("note", "")
         )
+
+
+@extend_schema(
+    tags=["matching"],
+    parameters=[OpenApiParameter("status", str, enum=ApplicationStatus.values)],
+)
+class MyApplicationsView(generics.ListAPIView):
+    """My applications, newest first. ?status= keeps one status (F3-06)."""
+
+    serializer_class = MyApplicationSerializer
+    pagination_class = DefaultCursorPagination
+
+    def get_queryset(self):
+        applications = Application.objects.filter(applicant=self.request.user).select_related(
+            "role__project__owner__profile"
+        )
+        status = self.request.query_params.get("status")
+        if status in ApplicationStatus.values:
+            applications = applications.filter(status=status)
+        return applications
+
+
+@extend_schema(tags=["matching"], request=None, responses=MyApplicationSerializer)
+class WithdrawApplicationView(APIView):
+    """Withdraw my pending application. Someone else's: 404. Not pending: 409 (BR-11)."""
+
+    def post(self, request, pk):
+        application = get_object_or_404(Application, pk=pk, applicant=request.user)
+        application = services.withdraw(application)
+        return Response(MyApplicationSerializer(application).data)

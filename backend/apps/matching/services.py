@@ -59,6 +59,20 @@ def decide(application, status):
 
 
 @transaction.atomic
+def withdraw(application):
+    """The candidate withdraws a pending application (F3-06).
+
+    It leaves the owner's queue. Liked (filled) applications can't be withdrawn (BR-11).
+    """
+    application = Application.objects.select_for_update().get(pk=application.pk)
+    if application.status != ApplicationStatus.PENDING:
+        raise ApplicationNotPending()
+    application.status = ApplicationStatus.WITHDRAWN
+    application.save(update_fields=["status", "updated_at"])
+    return application
+
+
+@transaction.atomic
 def try_lock(project):
     """Lock the project into a team once all its roles are filled (BR-06, F4-03).
 
