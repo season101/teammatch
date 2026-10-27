@@ -11,7 +11,7 @@ The source of truth is the OpenAPI schema, not this page. This page is the overv
 | Base path | `/api/v1/` |
 | Format | JSON, `snake_case` fields, ISO 8601 UTC timestamps |
 | Auth | Session cookie from allauth headless (`browser` client). Unsafe methods need the `X-CSRFToken` header. Future mobile app sends `X-Session-Token` (`app` client). |
-| Authz | Every object endpoint checks ownership or membership. Not allowed and not found both return `404` for objects the user cannot see. |
+| Authz | Every object endpoint checks ownership or membership. Objects the user cannot see return `404`. Acting on something you can see but don't own returns `403` (for example editing someone else's profile). |
 | IDs | Integer ids in paths |
 | Trailing slash | Always (`/api/v1/projects/`) |
 
@@ -29,6 +29,8 @@ The source of truth is the OpenAPI schema, not this page. This page is the overv
 - CI regenerates both and fails on `git diff`, so the schema, the client and the code cannot drift.
 
 ## Errors
+
+> Not built yet. Today the API returns Django REST Framework's default bodies: `{ "detail": "..." }`, or `{ "field": ["..."] }` for validation errors. The `code` values in the table below are raised by the backend, for example `project_locked`, but they are not in the response body yet. The shape below is the target.
 
 All `/api/v1/` errors use one shape (custom DRF exception handler in `core`):
 
@@ -69,20 +71,23 @@ allauth endpoints keep allauth's own response format (`status`, `errors`, `data`
 
 ## Endpoints
 
+Rows marked **(planned)** are the contract for stories that are not built yet. They are not in `backend/schema.yml`, and a request to them returns `404` today. Every other row matches the schema.
+
 ### core
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | GET | `/healthz` | none | liveness, no dependencies |
 | GET | `/readyz` | none | readiness, checks db + redis |
-| GET | `/api/v1/terms/` | user | list terms |
-| GET | `/api/v1/terms/current/` | user | current term |
+| GET | `/api/v1/health/` | none | same checks as `/readyz`; always `200`, the body says whether db and redis are healthy |
+| GET | `/api/v1/terms/` | user | list terms **(planned)** |
+| GET | `/api/v1/terms/current/` | user | current term **(planned)** |
 
 ### accounts
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/v1/me/` | user | current user + profile summary |
+| GET | `/api/v1/me/` | user | current user + profile summary **(planned)** |
 | DELETE | `/api/v1/me/` | user | deactivate own account (future, F1-09) |
 
 Login, signup, logout, password and Google live under allauth (below).
@@ -93,23 +98,24 @@ Login, signup, logout, password and Google live under allauth (below).
 |---|---|---|---|
 | GET | `/api/v1/me/profile/` | user | own profile |
 | PATCH | `/api/v1/me/profile/` | user | update display name, bio, major, skills |
-| POST | `/api/v1/me/avatar/` | user | upload avatar as `multipart/form-data` (JPEG/PNG/WebP, max 2 MB); API saves it to SeaweedFS via django-storages |
-| DELETE | `/api/v1/me/avatar/` | user | remove avatar |
-| GET | `/api/v1/profiles/{id}/avatar/` | user | avatar image, streamed by the API from SeaweedFS |
+| POST | `/api/v1/me/avatar/` | user | upload avatar as `multipart/form-data` (JPEG/PNG/WebP, max 2 MB); API saves it to SeaweedFS via django-storages **(planned)** |
+| DELETE | `/api/v1/me/avatar/` | user | remove avatar **(planned)** |
+| GET | `/api/v1/profiles/{id}/avatar/` | user | avatar image, streamed by the API from SeaweedFS **(planned)** |
 | GET | `/api/v1/profiles/{id}/` | user | public profile view |
-| GET | `/api/v1/skills/?q=` | user | search skills for pickers |
-| POST | `/api/v1/skills/` | user | add a new skill (deduped by name) |
+| PATCH | `/api/v1/profiles/{id}/` | owner | edit your own profile by id (`403` for anyone else) |
+| GET | `/api/v1/skills/?q=` | user | filter skills by name for pickers |
+| POST | `/api/v1/skills/` | user | add a new skill (deduped by name) **(planned)** |
 
 ### projects
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/v1/projects/?term=&skill=&q=&status=` | user | browse and search open projects |
+| GET | `/api/v1/projects/` | user | open projects, cursor-paginated. The `term`, `skill`, `q` and `status` filters are **(planned)** (F2-07) |
 | POST | `/api/v1/projects/` | user | create project (draft) |
 | GET | `/api/v1/projects/mine/` | user | projects I own |
 | GET | `/api/v1/projects/{id}/` | user | project detail with roles |
 | PATCH | `/api/v1/projects/{id}/` | owner | edit title, pitch |
-| DELETE | `/api/v1/projects/{id}/` | owner | delete draft |
+| DELETE | `/api/v1/projects/{id}/` | owner | delete draft **(planned)** |
 | POST | `/api/v1/projects/{id}/publish/` | owner | draft to open |
 | POST | `/api/v1/projects/{id}/close/` | owner | archive |
 | POST | `/api/v1/projects/{id}/roles/` | owner | add role |
@@ -121,22 +127,22 @@ Login, signup, logout, password and Google live under allauth (below).
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | GET | `/api/v1/feed/` | user | swipe deck, open roles ranked by skill overlap |
-| POST | `/api/v1/roles/{id}/dismiss/` | user | candidate pass on a role |
+| POST | `/api/v1/roles/{id}/dismiss/` | user | candidate pass on a role **(planned)** |
 | POST | `/api/v1/applications/` | user | apply to a role `{role, note}` |
 | GET | `/api/v1/applications/mine/?status=` | user | my applications |
 | POST | `/api/v1/applications/{id}/withdraw/` | applicant | withdraw pending application |
-| GET | `/api/v1/roles/{id}/applications/?status=pending` | owner | review queue for a role |
+| GET | `/api/v1/roles/{id}/applications/` | owner | pending applicants for a role (`403` if it's not your project) |
 | POST | `/api/v1/applications/{id}/like/` | owner | like, fills role, may lock team |
 | POST | `/api/v1/applications/{id}/pass/` | owner | pass |
-| GET | `/api/v1/teams/mine/` | user | my team this term, if any, with my `seen_at` |
-| GET | `/api/v1/teams/{id}/` | member | team detail with members and roles |
-| POST | `/api/v1/teams/{id}/seen/` | member | mark the "It's a Team!" screen as seen (sets my `seen_at`) |
+| GET | `/api/v1/teams/mine/` | user | my team this term, if any, with my `seen_at` **(planned)** |
+| GET | `/api/v1/teams/{id}/` | member | team detail with members and roles **(planned)** |
+| POST | `/api/v1/teams/{id}/seen/` | member | mark the "It's a Team!" screen as seen (sets my `seen_at`) **(planned)** |
 
 ### chat
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/v1/teams/{id}/messages/?cursor=` | member | chat history, newest first |
+| GET | `/api/v1/teams/{id}/messages/?cursor=` | member | chat history, newest first **(planned)** |
 
 Sending messages is WS only.
 
