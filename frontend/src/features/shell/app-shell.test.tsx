@@ -25,6 +25,7 @@ function renderShell(
   });
   client.setQueryData(["session"], { id: 1, email: "sam@latech.edu" });
   client.setQueryData(["my-projects"], projects);
+  client.setQueryData(["my-applications"], []);
   render(
     <QueryClientProvider client={client}>
       <AppShell>{children}</AppShell>

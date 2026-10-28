@@ -8,6 +8,7 @@ import { buttonClasses } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
 import { useSession } from "@/features/accounts/require-sign-in";
 import { SignOutButton } from "@/features/accounts/sign-out-button";
+import { ApplicationsPanel } from "@/features/applications/my-applications";
 import { Logo } from "@/features/landing/logo";
 import { useMyProjects, type MyProject } from "@/features/review/queries";
 import {
@@ -24,7 +25,7 @@ type NavItem = { href: string; label: string; icon: () => ReactNode; paths: stri
 
 // Phone and tablet tabs. Review is only for students who own a project.
 const TABS: (NavItem & { ownerOnly?: boolean })[] = [
-  { href: "/feed", label: "Discover", icon: DeckIcon, paths: ["/feed"] },
+  { href: "/feed", label: "Discover", icon: DeckIcon, paths: ["/feed", "/applications"] },
   { href: "/projects", label: "Projects", icon: FolderIcon, paths: ["/projects"] },
   { href: "/applicants", label: "Review", icon: ReviewIcon, paths: ["/applicants"], ownerOnly: true },
   { href: "/teams", label: "Teams", icon: TeamIcon, paths: ["/teams"] },
@@ -33,7 +34,7 @@ const TABS: (NavItem & { ownerOnly?: boolean })[] = [
 
 // Desktop sidebar modes. Each one switches what the sidebar lists, and the stage follows.
 const MODES: NavItem[] = [
-  { href: "/feed", label: "Discover", icon: DeckIcon, paths: ["/feed", "/teams"] },
+  { href: "/feed", label: "Discover", icon: DeckIcon, paths: ["/feed", "/teams", "/applications"] },
   { href: "/projects", label: "Projects", icon: FolderIcon, paths: ["/projects", "/applicants"] },
   { href: "/settings", label: "Settings", icon: SettingsIcon, paths: ["/settings", "/profile"] },
 ];
@@ -157,7 +158,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 const rowLink = "flex min-h-11 items-center justify-between gap-2 rounded-row px-3 hover:bg-surface-2";
 
-// What the sidebar lists in each mode. Rows for applications and teams arrive with F3-06 and F4-08.
+// What the sidebar lists in each mode. Team rows arrive with F4-08.
 function SidebarMode({ pathname, owned }: { pathname: string; owned: MyProject[] }) {
   if (isIn(pathname, ["/settings", "/profile"])) {
     return (
@@ -251,12 +252,7 @@ function SidebarMode({ pathname, owned }: { pathname: string; owned: MyProject[]
           {
             id: "applications",
             label: "Applications",
-            // F3-06 (#31) replaces this with the user's applications and their status chips.
-            panel: (
-              <p className="px-3 text-sm text-muted">
-                A list of the roles you&apos;ve applied to is coming soon.
-              </p>
-            ),
+            panel: <ApplicationsPanel />,
           },
           {
             id: "teams",
