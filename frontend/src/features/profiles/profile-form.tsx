@@ -1,5 +1,11 @@
 "use client";
 
+import { buttonClasses } from "@/components/ui/button";
+import {
+  errorClass,
+  helperClass,
+  inputClass,
+} from "@/components/ui/form-classes";
 import { useState, type FormEvent } from "react";
 import { SkillPicker } from "./skill-picker";
 import {
@@ -15,16 +21,12 @@ const NAME_MAX = 80;
 const BIO_MAX = 500;
 const MAJOR_MAX = 100;
 
-const inputClass =
-  "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900";
-const errorClass = "mt-1 text-sm text-rose-600 dark:text-rose-400";
-
 export function ProfileForm() {
   const profile = useMyProfile();
   const skills = useSkills();
 
   if (profile.isPending || skills.isPending) {
-    return <p className="text-zinc-500">Loading your profile…</p>;
+    return <p className="text-muted">Loading your profile…</p>;
   }
   if (profile.isError || skills.isError) {
     return (
@@ -134,7 +136,7 @@ function ProfileFields({
             edited();
           }}
         />
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <p className={helperClass}>
           {bio.length}/{BIO_MAX} characters
         </p>
         {errors.bio && (
@@ -156,10 +158,7 @@ function ProfileFields({
       />
 
       {save.isSuccess && (
-        <p
-          role="status"
-          className="text-sm text-emerald-700 dark:text-emerald-400"
-        >
+        <p role="status" className="text-sm text-success">
           Profile saved.
         </p>
       )}
@@ -172,7 +171,7 @@ function ProfileFields({
       <button
         type="submit"
         disabled={save.isPending}
-        className="self-start rounded-lg bg-indigo-600 px-5 py-2.5 font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className={`${buttonClasses("cta")} self-start`}
       >
         {save.isPending ? "Saving…" : "Save profile"}
       </button>

@@ -22,13 +22,13 @@ export function RoleCard({
   return (
     <article
       aria-labelledby={headingId}
-      className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-5 shadow-sm dark:border-zinc-800"
+      className="flex flex-col gap-3 rounded-card border border-border bg-surface p-5"
     >
       <header>
         <h2 id={headingId} className="text-lg font-semibold">
           {role.title}
         </h2>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm text-muted">
           {role.project.title} · by {role.project.owner_name || "a classmate"}
         </p>
       </header>
@@ -42,20 +42,22 @@ export function RoleCard({
                 key={skill.id}
                 className={
                   mine
-                    ? "rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"
-                    : "rounded-full border border-zinc-300 px-3 py-1 text-sm dark:border-zinc-700"
+                    ? "rounded-pill border border-success bg-surface-2 px-3 py-1 text-sm font-medium text-text"
+                    : "rounded-pill border border-border px-3 py-1 text-sm text-text"
                 }
               >
                 {mine && <span aria-hidden="true">✓ </span>}
                 {skill.name}
-                {mine && <span className="sr-only"> (you have this skill)</span>}
+                {mine && (
+                  <span className="sr-only"> (you have this skill)</span>
+                )}
               </li>
             );
           })}
         </ul>
       )}
 
-      <p className="text-zinc-700 dark:text-zinc-300">
+      <p className="text-text">
         {long && !expanded
           ? `${pitch.slice(0, PITCH_PREVIEW).trimEnd()}…`
           : pitch}{" "}
@@ -63,7 +65,7 @@ export function RoleCard({
           <button
             type="button"
             aria-expanded={expanded}
-            className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+            className="text-sm font-medium text-primary hover:underline"
             onClick={() => setExpanded(!expanded)}
           >
             {expanded ? "less" : "more"}

@@ -12,20 +12,18 @@ export function Feed() {
   const mySkillIds = profile.data?.skills.map((skill) => skill.id) ?? [];
 
   if (feed.isPending) {
-    return <p className="text-zinc-500">Loading open roles…</p>;
+    return <p className="text-muted">Loading open roles…</p>;
   }
   if (feed.isError) {
     return (
-      <p role="alert" className="text-rose-600 dark:text-rose-400">
+      <p role="alert" className="text-pass">
         Couldn&apos;t load roles. Refresh the page to try again.
       </p>
     );
   }
   if (feed.data.length === 0) {
     return (
-      <p className="text-zinc-600 dark:text-zinc-400">
-        No open roles right now. Check back later.
-      </p>
+      <p className="text-muted">No open roles right now. Check back later.</p>
     );
   }
   return (
