@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { buttonClasses } from "@/components/ui/button";
 import { SignedInProjects } from "@/features/projects/projects-list";
 
 export const metadata: Metadata = { title: "Projects · TeamMatch" };
@@ -10,14 +11,9 @@ export default function ProjectsPage() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Open projects this term, newest first.
-          </p>
+          <p className="text-muted">Open projects this term, newest first.</p>
         </div>
-        <Link
-          href="/projects/new"
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-        >
+        <Link href="/projects/new" className={buttonClasses("cta", "sm")}>
           New project
         </Link>
       </header>
