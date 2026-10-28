@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Chip } from "@/components/ui/chip";
+import { inputClass } from "@/components/ui/form-classes";
 import type { Skill } from "./queries";
 
 // Same cap as the API (skill_ids max_length in ProfileSerializer).
@@ -37,27 +39,22 @@ export function SkillPicker({
       <legend className="font-medium">Skills</legend>
 
       {chosen.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-muted">
           No skills yet. Search below to add some.
         </p>
       ) : (
         <ul aria-label="My skills" className="flex flex-wrap gap-2">
           {chosen.map((skill) => (
-            <li
-              key={skill.id}
-              className="flex items-center gap-1 rounded-full bg-indigo-100 py-1 pl-3 pr-1 text-sm text-indigo-900 dark:bg-indigo-950 dark:text-indigo-100"
-            >
-              {skill.name}
-              <button
-                type="button"
-                aria-label={`Remove ${skill.name}`}
-                className="rounded-full px-2 hover:bg-indigo-200 dark:hover:bg-indigo-900"
-                onClick={() =>
+            <li key={skill.id}>
+              <Chip
+                variant="selected"
+                pill
+                onRemove={() =>
                   onChange(selected.filter((id) => id !== skill.id))
                 }
               >
-                ×
-              </button>
+                {skill.name}
+              </Chip>
             </li>
           ))}
         </ul>
@@ -72,26 +69,24 @@ export function SkillPicker({
           type="search"
           value={query}
           placeholder="e.g. Python"
-          className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900"
+          className={inputClass}
           onChange={(event) => setQuery(event.target.value)}
         />
       </div>
 
       {full ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-muted">
           You can pick up to {MAX_SKILLS} skills.
         </p>
       ) : matches.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          No skills match your search.
-        </p>
+        <p className="text-sm text-muted">No skills match your search.</p>
       ) : (
         <ul aria-label="Skills to add" className="flex flex-wrap gap-2">
           {matches.map((skill) => (
             <li key={skill.id}>
               <button
                 type="button"
-                className="rounded-full border border-zinc-300 px-3 py-1 text-sm hover:border-indigo-500 dark:border-zinc-700"
+                className="rounded-pill border border-border px-3 py-1 text-sm text-text hover:border-muted"
                 onClick={() => {
                   onChange([...selected, skill.id]);
                   setQuery("");
@@ -105,7 +100,7 @@ export function SkillPicker({
       )}
 
       {error && (
-        <p role="alert" className="text-sm text-rose-600 dark:text-rose-400">
+        <p role="alert" className="text-sm text-pass">
           {error}
         </p>
       )}
