@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { buttonClasses } from "@/components/ui/button";
+import {
+  errorClass,
+  helperClass,
+  inputClass,
+  noticeClass,
+} from "@/components/ui/form-classes";
 import { useCreateProject, type FieldErrors } from "./queries";
 
 const TITLE_MAX = 100;
 const PITCH_MAX = 2000;
-
-const inputClass =
-  "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900";
-const errorClass = "mt-1 text-sm text-rose-600 dark:text-rose-400";
-const noticeClass =
-  "rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100";
 
 export function NewProjectForm() {
   const [title, setTitle] = useState("");
@@ -43,7 +44,7 @@ export function NewProjectForm() {
     return (
       <section
         role="status"
-        className="rounded-2xl border border-emerald-300 bg-emerald-50 p-5 dark:border-emerald-800 dark:bg-emerald-950"
+        className="rounded-card border border-success bg-surface-2 p-5"
       >
         <h2 className="text-lg font-semibold">Project created</h2>
         <p className="mt-1 text-sm">
@@ -52,13 +53,13 @@ export function NewProjectForm() {
         </p>
         <Link
           href={`/projects/${create.data.id}`}
-          className="mt-4 mr-3 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          className={`${buttonClasses("cta", "sm")} mt-4 mr-3`}
         >
           Add roles
         </Link>
         <button
           type="button"
-          className="mt-4 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
+          className={`${buttonClasses("secondary", "sm")} mt-4`}
           onClick={() => {
             create.reset();
             setTitle("");
@@ -108,7 +109,7 @@ export function NewProjectForm() {
             setClientErrors((prev) => ({ ...prev, title: undefined }));
           }}
         />
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <p className={helperClass}>
           {title.length}/{TITLE_MAX} characters
         </p>
         {errors.title && (
@@ -137,7 +138,7 @@ export function NewProjectForm() {
             setClientErrors((prev) => ({ ...prev, pitch: undefined }));
           }}
         />
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <p className={helperClass}>
           {pitch.length}/{PITCH_MAX} characters
         </p>
         {errors.pitch && (
@@ -150,7 +151,7 @@ export function NewProjectForm() {
       <button
         type="submit"
         disabled={create.isPending || noTerm}
-        className="self-start rounded-lg bg-indigo-600 px-5 py-2.5 font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className={`${buttonClasses("cta")} self-start`}
       >
         {create.isPending ? "Creating…" : "Create project"}
       </button>
