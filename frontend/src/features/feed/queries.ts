@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { components } from "@teammatch/api-client";
 import { api, csrfToken } from "@/lib/api";
 
@@ -28,7 +28,9 @@ export function useFeed() {
 }
 
 // The feed isn't refetched on success, so the card stays to show "Applied".
+// My applications is, so the sidebar lists the new one straight away.
 export function useApply() {
+  const queryClient = useQueryClient();
   return useMutation<Application, ApplyError, { role: number; note: string }>({
     mutationFn: async (body) => {
       const { data, error, response } = await api.POST("/api/v1/applications/", {
@@ -42,5 +44,6 @@ export function useApply() {
         typeof detail === "string" ? detail : "Couldn't apply. Please try again.",
       );
     },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["my-applications"] }),
   });
 }

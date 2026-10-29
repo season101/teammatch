@@ -763,10 +763,15 @@ components:
           type: string
           format: date-time
           readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
       required:
       - created_at
       - id
       - role
+      - updated_at
     MyProfile:
       type: object
       properties:

@@ -395,6 +395,8 @@ export interface components {
             status?: components["schemas"]["ApplicationStatusEnum"];
             /** Format: date-time */
             readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
         };
         MyProfile: {
             readonly id: number;

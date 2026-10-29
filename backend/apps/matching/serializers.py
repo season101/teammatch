@@ -46,7 +46,7 @@ class MyApplicationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Application
-        fields = ["id", "role", "note", "status", "created_at"]
+        fields = ["id", "role", "note", "status", "created_at", "updated_at"]
 
 
 class ApplySerializer(serializers.ModelSerializer):
