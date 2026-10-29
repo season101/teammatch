@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signOut } from "./allauth";
+import { buttonClasses } from "@/components/ui/button";
 
 export function SignOutButton() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export function SignOutButton() {
       type="button"
       onClick={handleClick}
       disabled={sending}
-      className="rounded-lg border border-zinc-300 px-4 py-2 font-medium hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+      className={buttonClasses("secondary")}
     >
       {sending ? "Signing out…" : "Sign out"}
     </button>
