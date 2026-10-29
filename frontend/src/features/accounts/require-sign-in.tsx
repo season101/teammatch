@@ -27,7 +27,7 @@ export function RequireSignIn({
   }, [isPending, user, pathname, router]);
 
   if (!user) {
-    return <p className="text-sm text-zinc-500">Checking your sign-in…</p>;
+    return <p className="text-sm text-muted">Checking your sign-in…</p>;
   }
   return <>{children(user)}</>;
 }

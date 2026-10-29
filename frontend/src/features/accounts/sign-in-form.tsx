@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { allauthPost } from "./allauth";
+import { buttonClasses } from "@/components/ui/button";
 
 // Only follow ?next= to a page on this site, never to another website. Default: the Discover deck.
 export function safeNext(next: string | undefined) {
@@ -71,7 +72,7 @@ export function SignInForm({ next }: { next?: string }) {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
         />
       </div>
 
@@ -86,27 +87,23 @@ export function SignInForm({ next }: { next?: string }) {
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
         />
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-rose-600 dark:text-rose-400">
+        <p role="alert" className="text-sm text-pass">
           {error}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={sending}
-        className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-      >
+      <button type="submit" disabled={sending} className={buttonClasses("cta")}>
         {sending ? "Signing in…" : "Sign in"}
       </button>
 
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-sm text-muted">
         No account yet?{" "}
-        <Link href="/signup" className="font-medium text-indigo-600 underline">
+        <Link href="/signup" className="font-medium text-primary underline">
           Sign up
         </Link>
       </p>

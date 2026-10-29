@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { allauthPost, type AllauthError } from "./allauth";
+import { buttonClasses } from "@/components/ui/button";
 
 type Status = "idle" | "sending" | "sent";
 
@@ -73,7 +74,7 @@ export function SignUpForm() {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
         />
       </div>
 
@@ -90,18 +91,15 @@ export function SignUpForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           aria-describedby="password-hint"
-          className="rounded-lg border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
         />
-        <p
-          id="password-hint"
-          className="text-xs text-zinc-500 dark:text-zinc-400"
-        >
+        <p id="password-hint" className="text-xs text-muted">
           At least 8 characters.
         </p>
       </div>
 
       {errors.length > 0 && (
-        <ul role="alert" className="text-sm text-rose-600 dark:text-rose-400">
+        <ul role="alert" className="text-sm text-pass">
           {errors.map((e) => (
             <li key={`${e.code}-${e.message}`}>{errorText(e)}</li>
           ))}
@@ -110,7 +108,7 @@ export function SignUpForm() {
       {emailTaken && (
         <Link
           href="/login"
-          className="text-sm font-medium text-indigo-600 underline"
+          className="text-sm font-medium text-primary underline"
         >
           Go to sign in
         </Link>
@@ -119,7 +117,7 @@ export function SignUpForm() {
       <button
         type="submit"
         disabled={status === "sending"}
-        className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+        className={buttonClasses("cta")}
       >
         {status === "sending" ? "Creating account…" : "Create account"}
       </button>

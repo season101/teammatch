@@ -8,20 +8,23 @@ export function ReviewApplicants() {
   const projects = useMyProjects();
 
   if (projects.isPending) {
-    return <p className="text-zinc-500">Loading your projects…</p>;
+    return <p className="text-muted">Loading your projects…</p>;
   }
   if (projects.isError) {
     return (
-      <p role="alert" className="text-rose-600 dark:text-rose-400">
+      <p role="alert" className="text-pass">
         Couldn&apos;t load your projects. Refresh the page to try again.
       </p>
     );
   }
   if (projects.data.length === 0) {
     return (
-      <p className="text-zinc-600 dark:text-zinc-400">
+      <p className="text-muted">
         You don&apos;t own any projects yet.{" "}
-        <Link href="/projects/new" className="font-medium text-indigo-600 hover:underline">
+        <Link
+          href="/projects/new"
+          className="font-medium text-primary hover:underline"
+        >
           Create one
         </Link>
         .
@@ -38,19 +41,23 @@ export function ReviewApplicants() {
         >
           <h2 id={`project-${project.id}`} className="text-lg font-semibold">
             {project.title}
-            <span className="ml-2 text-sm font-normal text-zinc-500 dark:text-zinc-400">
+            <span className="ml-2 text-sm font-normal text-muted">
               {project.status}
             </span>
           </h2>
           {project.status === "draft" ? (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-muted">
               Publish this project to get applicants.
             </p>
           ) : project.roles.length === 0 ? (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">No roles yet.</p>
+            <p className="text-sm text-muted">No roles yet.</p>
           ) : (
             project.roles.map((role) => (
-              <ApplicantList key={role.id} roleId={role.id} roleTitle={role.title} />
+              <ApplicantList
+                key={role.id}
+                roleId={role.id}
+                roleTitle={role.title}
+              />
             ))
           )}
         </section>

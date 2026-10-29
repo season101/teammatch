@@ -16,9 +16,9 @@ import { Modal } from "@/components/ui/modal";
 import { ProjectDetailsForm } from "./project-details-form";
 import { Chip } from "@/components/ui/chip";
 import { TeamStrip, type Segment } from "@/components/ui/team-strip";
+import { buttonClasses } from "@/components/ui/button";
+import { noticeClass, successClass } from "@/components/ui/form-classes";
 
-const noticeClass =
-  "rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100";
 const buttonClass =
   "rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-surface-2";
 
@@ -288,7 +288,7 @@ export function ProjectEditor({
           <button
             type="button"
             disabled={publish.isPending}
-            className="self-start rounded-lg bg-indigo-600 px-5 py-2.5 font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+            className={`${buttonClasses("cta")} self-start`}
             onClick={() => publish.mutate()}
           >
             {publish.isPending ? "Publishing…" : "Publish project"}
@@ -302,10 +302,7 @@ export function ProjectEditor({
       )}
 
       {publish.isSuccess && data.status === "open" && (
-        <p
-          role="status"
-          className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm dark:border-emerald-800 dark:bg-emerald-950"
-        >
+        <p role="status" className={successClass}>
           Published. Your project is now open for applications.
         </p>
       )}

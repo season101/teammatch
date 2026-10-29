@@ -4,13 +4,15 @@ import { useId, useState, type FormEvent } from "react";
 import type { Skill } from "@/features/profiles/queries";
 import { SkillPicker } from "@/features/profiles/skill-picker";
 import type { ApiError, RoleInput } from "./queries";
+import { buttonClasses } from "@/components/ui/button";
+import {
+  errorClass,
+  inputClass,
+  noticeClass,
+} from "@/components/ui/form-classes";
 
 const TITLE_MAX = 100;
 const DESCRIPTION_MAX = 1000;
-
-const inputClass =
-  "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900";
-const errorClass = "mt-1 text-sm text-rose-600 dark:text-rose-400";
 
 type Props = {
   skills: Skill[];
@@ -64,13 +66,10 @@ export function RoleForm({
     <form
       onSubmit={submit}
       noValidate
-      className="flex flex-col gap-4 rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800"
+      className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5"
     >
       {generalError && (
-        <p
-          role="alert"
-          className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
-        >
+        <p role="alert" className={noticeClass}>
           {generalError}
         </p>
       )}
@@ -128,14 +127,14 @@ export function RoleForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+          className={buttonClasses("cta", "sm")}
         >
           {pending ? "Saving…" : submitLabel}
         </button>
         <button
           type="button"
           disabled={pending}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-700"
+          className={buttonClasses("secondary", "sm")}
           onClick={onCancel}
         >
           Cancel
