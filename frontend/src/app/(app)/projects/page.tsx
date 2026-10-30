@@ -11,7 +11,9 @@ export default function ProjectsPage() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-          <p className="text-muted">Open projects this term, newest first.</p>
+          <p className="text-muted">
+            Find a project to join, or manage your own.
+          </p>
         </div>
         <Link href="/projects/new" className={buttonClasses("cta", "sm")}>
           New project
