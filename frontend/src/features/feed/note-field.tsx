@@ -1,32 +1,22 @@
 "use client";
 
-import type { FormEvent } from "react";
-import { buttonClasses } from "@/components/ui/button";
-
 // Same limit as Application.note.
 const NOTE_MAX = 300;
 
-// The deck owns the note, so a right swipe sends whatever is typed here.
-export function ApplyForm({
+// The deck owns the note, so a right swipe, ✓ or → sends whatever is typed here.
+export function NoteField({
   roleId,
   note,
   onNoteChange,
-  onApply,
 }: {
   roleId: number;
   note: string;
   onNoteChange: (note: string) => void;
-  onApply: () => void;
 }) {
   const noteId = `note-${roleId}`;
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    onApply();
-  }
-
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2">
       <label htmlFor={noteId} className="text-sm font-medium">
         Note to the owner (optional)
       </label>
@@ -41,9 +31,6 @@ export function ApplyForm({
       <p className="text-xs text-muted">
         {note.length}/{NOTE_MAX} characters
       </p>
-      <button type="submit" className={`${buttonClasses("cta", "sm")} self-start`}>
-        Apply
-      </button>
-    </form>
+    </div>
   );
 }

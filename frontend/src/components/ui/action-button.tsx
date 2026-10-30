@@ -41,7 +41,7 @@ export function ActionButton({ kind, label, className = "", ...props }: Props) {
     <button
       type="button"
       aria-label={label ?? defaultLabel}
-      className={`grid shrink-0 place-items-center rounded-full transition duration-fast ease-standard disabled:opacity-40 motion-safe:enabled:hover:scale-106 motion-safe:focus-visible:scale-106 motion-safe:enabled:active:scale-95 ${big ? "size-16" : "size-12"} ${look} ${className}`}
+      className={`grid shrink-0 place-items-center rounded-full transition duration-fast ease-standard disabled:opacity-40 aria-disabled:opacity-40 motion-safe:enabled:hover:scale-106 motion-safe:focus-visible:scale-106 motion-safe:enabled:active:scale-95 ${big ? "size-16" : "size-12"} ${look} ${className}`}
       {...props}
     >
       <svg
