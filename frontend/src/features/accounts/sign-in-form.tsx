@@ -3,8 +3,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { allauthPost } from "./allauth";
+import { googleErrorText } from "./google-button";
 import { buttonClasses } from "@/components/ui/button";
 
 // Only follow ?next= to a page on this site, never to another website. Default: the Discover deck.
@@ -14,7 +15,17 @@ export function safeNext(next: string | undefined) {
     : "/feed";
 }
 
-export function SignInForm({ next }: { next?: string }) {
+export function SignInForm({
+  next,
+  google,
+  googleError,
+}: {
+  next?: string;
+  // The page passes the Google button, shown under the title.
+  google?: ReactNode;
+  // ?error= from a Google sign-in that didn't work (/auth/callback sends it here)
+  googleError?: string;
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
@@ -59,7 +70,17 @@ export function SignInForm({ next }: { next?: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {googleError && (
+        <p
+          role="alert"
+          className="rounded-card border border-pass bg-surface-2 p-3 text-sm text-text"
+        >
+          {googleErrorText(googleError)}
+        </p>
+      )}
+
       <h1 className="text-2xl font-bold">Sign in to TeamMatch</h1>
+      {google}
 
       <div className="flex flex-col gap-1">
         <label htmlFor="email" className="text-sm font-medium">

@@ -61,3 +61,37 @@ export async function signOut(): Promise<void> {
     headers: { "X-CSRFToken": getCsrfToken() },
   });
 }
+
+// Which sign-in providers (like Google) the server has keys for. Empty when none.
+export async function getProviders(): Promise<string[]> {
+  const response = await fetch(`${BASE}/config`, {
+    credentials: "same-origin",
+  });
+  const data = await response.json().catch(() => ({}));
+  const providers: { id: string }[] = data.data?.socialaccount?.providers ?? [];
+  return providers.map((provider) => provider.id);
+}
+
+// Sends the browser to Google. A real form POST, not fetch, so allauth can
+// redirect the whole page. Google then comes back to /auth/callback.
+export async function continueWith(provider: string) {
+  await ensureCsrfToken();
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = `${BASE}/auth/provider/redirect`;
+  const fields = {
+    provider,
+    callback_url: "/auth/callback",
+    process: "login",
+    csrfmiddlewaretoken: getCsrfToken(),
+  };
+  for (const [name, value] of Object.entries(fields)) {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.value = value;
+    form.append(input);
+  }
+  document.body.append(form);
+  form.submit();
+}
