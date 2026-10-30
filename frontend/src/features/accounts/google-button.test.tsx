@@ -29,6 +29,7 @@ function renderWithClient(ui: React.ReactNode) {
     defaultOptions: { queries: { retry: false } },
   });
   render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+  return client;
 }
 
 afterEach(() => {
@@ -50,8 +51,11 @@ test("shows Continue with Google when the server has Google keys", async () => {
 
 test("shows nothing when the server has no Google keys", async () => {
   mockConfig([]);
-  renderWithClient(<GoogleButton />);
-  await waitFor(() => expect(fetch).toHaveBeenCalled());
+  const client = renderWithClient(<GoogleButton />);
+  // wait for the answer, not just the request, or the button hasn't had a chance to show
+  await waitFor(() =>
+    expect(client.getQueryState(["auth-providers"])?.status).toBe("success"),
+  );
   expect(
     screen.queryByRole("button", { name: "Continue with Google" }),
   ).not.toBeInTheDocument();
