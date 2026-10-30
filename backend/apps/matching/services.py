@@ -5,7 +5,7 @@ from rest_framework.exceptions import APIException
 
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 
-from .models import Application, ApplicationStatus, Membership, Team
+from .models import Application, ApplicationStatus, Membership, RoleDismissal, Team
 
 
 def feed_roles(user, today=None):
@@ -161,3 +161,13 @@ def apply(role, user, note=""):
     if role.applications.filter(applicant=user).exists():
         raise AlreadyApplied()
     return Application.objects.create(role=role, applicant=user, note=note)
+
+
+def dismiss(role, user):
+    """A candidate passes on a role so it leaves their feed (F3-05, BR-10).
+
+    The owner is never told. Passing twice keeps the first pass.
+    """
+    if role.status != RoleStatus.OPEN or role.project.status != ProjectStatus.OPEN:
+        raise RoleNotOpen()
+    RoleDismissal.objects.get_or_create(user=user, role=role)

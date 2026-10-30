@@ -21,9 +21,14 @@ const profile = {
   skills: [{ id: 1, name: "Python", slug: "python" }],
 };
 
-// Answers by method and path; records the apply requests.
-function mockApi({ roles = [role], apply = { status: 201, body: {} as unknown } } = {}) {
+// Answers by method and path; records the apply and pass requests.
+function mockApi({
+  roles = [role],
+  apply = { status: 201, body: {} as unknown },
+  dismiss = { status: 204, body: null as unknown },
+} = {}) {
   const applies: Request[] = [];
+  const dismisses: Request[] = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(async (request: Request) => {
@@ -35,14 +40,17 @@ function mockApi({ roles = [role], apply = { status: 201, body: {} as unknown } 
       else if (path === "/api/v1/applications/" && request.method === "POST") {
         applies.push(request.clone());
         ({ status, body } = apply);
+      } else if (path === `/api/v1/roles/${role.id}/dismiss/` && request.method === "POST") {
+        dismisses.push(request.clone());
+        ({ status, body } = dismiss);
       } else status = 404;
-      return new Response(JSON.stringify(body), {
+      return new Response(body === null ? null : JSON.stringify(body), {
         status,
         headers: { "Content-Type": "application/json" },
       });
     }),
   );
-  return applies;
+  return { applies, dismisses };
 }
 
 function renderFeed() {
@@ -75,7 +83,7 @@ test("says so when there are no open roles", async () => {
 
 test("applies with a note", async () => {
   document.cookie = "csrftoken=test-token";
-  const applies = mockApi({
+  const { applies } = mockApi({
     apply: { status: 201, body: { id: 9, role: 7, note: "I know DRF", status: "pending" } },
   });
   renderFeed();
@@ -109,4 +117,27 @@ test("keeps the form when applying fails for another reason", async () => {
 
   expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't apply. Please try again.");
   expect(screen.getByRole("button", { name: "Apply" })).toBeEnabled();
+});
+
+test("passing takes the card out of my feed", async () => {
+  document.cookie = "csrftoken=test-token";
+  const { dismisses } = mockApi();
+  renderFeed();
+
+  fireEvent.click(await screen.findByRole("button", { name: "Pass" }));
+
+  expect(await screen.findByText("No open roles right now. Check back later.")).toBeInTheDocument();
+  expect(dismisses).toHaveLength(1);
+  expect(dismisses[0].headers.get("X-CSRFToken")).toBe("test-token");
+});
+
+test("keeps the card and says so when passing fails", async () => {
+  mockApi({ dismiss: { status: 500, body: {} } });
+  renderFeed();
+
+  fireEvent.click(await screen.findByRole("button", { name: "Pass" }));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't pass. Please try again.");
+  expect(screen.getByRole("article", { name: "Backend dev" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Pass" })).toBeEnabled();
 });

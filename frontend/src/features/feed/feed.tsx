@@ -2,6 +2,7 @@
 
 import { useMyProfile } from "@/features/profiles/queries";
 import { ApplyForm } from "./apply-form";
+import { PassButton } from "./pass-button";
 import { useFeed } from "./queries";
 import { RoleCard } from "./role-card";
 
@@ -32,6 +33,7 @@ export function Feed() {
         <li key={role.id}>
           <RoleCard role={role} mySkillIds={mySkillIds}>
             <ApplyForm roleId={role.id} />
+            <PassButton roleId={role.id} />
           </RoleCard>
         </li>
       ))}

@@ -314,6 +314,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/roles/{id}/dismiss/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Pass on a role so it leaves my feed (BR-10). My own project: 403. Not open: 409. */
+        post: operations["roles_dismiss_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/skills/": {
         parameters: {
             query?: never;
@@ -1140,6 +1157,26 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PaginatedRoleApplicationList"];
                 };
+            };
+        };
+    };
+    roles_dismiss_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
