@@ -63,5 +63,7 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/deploy.yml
+    # a called workflow gets no secrets, not even its environment's, unless they're passed
+    secrets: inherit
     with:
       version: ${{ github.ref_name }}
