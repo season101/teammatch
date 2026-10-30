@@ -365,6 +365,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/teams/mine/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description My team this term, with my seen_at (F4-05). No team this term: team is null. */
+        get: operations["teams_mine_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -472,6 +489,18 @@ export interface components {
             readonly id: number;
             title: string;
             status?: components["schemas"]["RoleStatusEnum"];
+        };
+        /** @description My team this term, from my seat on it (F4-05). */
+        MyTeam: {
+            readonly id: number;
+            readonly project: components["schemas"]["TeamProject"];
+            readonly term: components["schemas"]["TeamTerm"];
+            readonly members: components["schemas"]["TeamMember"][];
+            /** Format: date-time */
+            readonly seen_at: string | null;
+        };
+        MyTeamResponse: {
+            readonly team: components["schemas"]["MyTeam"] | null;
         };
         PaginatedFeedRoleList: {
             /**
@@ -644,6 +673,19 @@ export interface components {
         SkillRequest: {
             name: string;
             slug: string;
+        };
+        TeamMember: {
+            readonly display_name: string;
+            readonly role: string;
+        };
+        TeamProject: {
+            readonly id: number;
+            title: string;
+        };
+        TeamTerm: {
+            name: string;
+            /** Format: date */
+            end_date: string;
         };
     };
     responses: never;
@@ -1219,6 +1261,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    teams_mine_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyTeamResponse"];
+                };
             };
         };
     };

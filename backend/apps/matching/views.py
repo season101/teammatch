@@ -17,6 +17,7 @@ from .serializers import (
     ApplySerializer,
     FeedRoleSerializer,
     MyApplicationSerializer,
+    MyTeamResponseSerializer,
     RoleApplicationSerializer,
 )
 
@@ -116,6 +117,15 @@ class WithdrawApplicationView(APIView):
         application = get_object_or_404(Application, pk=pk, applicant=request.user)
         application = services.withdraw(application)
         return Response(MyApplicationSerializer(application).data)
+
+
+@extend_schema(tags=["teams"], responses=MyTeamResponseSerializer)
+class MyTeamView(APIView):
+    """My team this term, with my seen_at (F4-05). No team this term: team is null."""
+
+    def get(self, request):
+        seat = services.my_team_seat(request.user)
+        return Response(MyTeamResponseSerializer({"team": seat}).data)
 
 
 @extend_schema(tags=["teams"], request=None, responses={204: None})

@@ -134,9 +134,9 @@ Login, signup, logout, password and Google live under allauth (below).
 | GET | `/api/v1/roles/{id}/applications/` | owner | pending applicants for a role (`403` if it's not your project) |
 | POST | `/api/v1/applications/{id}/like/` | owner | like, fills role, may lock team |
 | POST | `/api/v1/applications/{id}/pass/` | owner | pass |
-| GET | `/api/v1/teams/mine/` | user | my team this term, if any, with my `seen_at` **(planned)** |
+| GET | `/api/v1/teams/mine/` | user | my team this term with my `seen_at`: `{"team": {id, project {id, title}, term {name, end_date}, members [{display_name, role}], seen_at}}`. `role` is the role title, or `"Owner"`. No team this term: `200` with `{"team": null}` |
 | GET | `/api/v1/teams/{id}/` | member | team detail with members and roles **(planned)** |
-| POST | `/api/v1/teams/{id}/seen/` | member | mark the "It's a Team!" screen as seen (sets my `seen_at`) **(planned)** |
+| POST | `/api/v1/teams/{id}/seen/` | member | mark the "It's a Team!" screen as seen, `204`. Sets my `seen_at` the first time; repeats keep it. Not my team: `404` |
 
 ### chat
 

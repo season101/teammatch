@@ -624,6 +624,22 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/teams/mine/:
+    get:
+      operationId: teams_mine_retrieve
+      description: 'My team this term, with my seen_at (F4-05). No team this term:
+        team is null.'
+      tags:
+      - teams
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyTeamResponse'
+          description: ''
 components:
   schemas:
     ApplicationDecision:
@@ -914,6 +930,47 @@ components:
       required:
       - id
       - title
+    MyTeam:
+      type: object
+      description: My team this term, from my seat on it (F4-05).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        project:
+          allOf:
+          - $ref: '#/components/schemas/TeamProject'
+          readOnly: true
+        term:
+          allOf:
+          - $ref: '#/components/schemas/TeamTerm'
+          readOnly: true
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamMember'
+          readOnly: true
+        seen_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - id
+      - members
+      - project
+      - seen_at
+      - term
+    MyTeamResponse:
+      type: object
+      properties:
+        team:
+          allOf:
+          - $ref: '#/components/schemas/MyTeam'
+          readOnly: true
+          nullable: true
+      required:
+      - team
     PaginatedFeedRoleList:
       type: object
       required:
@@ -1356,6 +1413,42 @@ components:
       required:
       - name
       - slug
+    TeamMember:
+      type: object
+      properties:
+        display_name:
+          type: string
+          readOnly: true
+        role:
+          type: string
+          readOnly: true
+      required:
+      - display_name
+      - role
+    TeamProject:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+      required:
+      - id
+      - title
+    TeamTerm:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        end_date:
+          type: string
+          format: date
+      required:
+      - end_date
+      - name
   securitySchemes:
     cookieAuth:
       type: apiKey
