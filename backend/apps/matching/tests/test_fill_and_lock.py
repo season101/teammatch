@@ -1,4 +1,5 @@
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 
@@ -244,6 +245,15 @@ needs_postgres = pytest.mark.skipif(
 committed = pytest.mark.django_db(transaction=True, serialized_rollback=True)
 
 
+def waiting_on_a_lock():
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT 1 FROM pg_stat_activity"
+            " WHERE datname = current_database() AND wait_event_type = 'Lock'"
+        )
+        return cursor.fetchone() is not None
+
+
 def race(first, second, then=lambda: None):
     """Run second() while first() sits in an open transaction, and return second's outcome.
 
@@ -274,8 +284,12 @@ def race(first, second, then=lambda: None):
         held = pool.submit(run_first)
         assert holding.wait(5)
         raced = pool.submit(run_second)
-        with pytest.raises(TimeoutError):
-            raced.result(timeout=0.5)  # still waiting on first's locks
+        # Ask Postgres: a cold first request can take over 0.5 s without ever waiting on a lock.
+        deadline = time.monotonic() + 5
+        while not waiting_on_a_lock():
+            assert not raced.done(), "second() finished without waiting on first's locks"
+            assert time.monotonic() < deadline, "second() never waited on first's locks"
+            time.sleep(0.01)
         release.set()
         held.result(5)
         return raced.result(5)

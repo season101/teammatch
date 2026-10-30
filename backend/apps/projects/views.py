@@ -48,9 +48,12 @@ class ProjectRoleCreateView(generics.CreateAPIView):
 
     serializer_class = RoleSerializer
 
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         # check ownership first, so a non-owner gets 403 even with a bad body
-        self.project = owned_project(request, kwargs["pk"])
+        project = owned_project(request, kwargs["pk"])
+        # then lock it, so a like that just locked the team is seen, not added to
+        self.project = get_object_or_404(Project.objects.select_for_update(), pk=project.pk)
         services.ensure_roles_editable(self.project)
         return super().create(request, *args, **kwargs)
 

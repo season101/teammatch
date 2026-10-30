@@ -383,3 +383,22 @@ def test_edit_fails_if_a_like_just_filled_the_role(owner, other, role):
     assert outcome.status_code == 409
     role.refresh_from_db()
     assert (role.title, role.status, role.filled_by) == ("Backend dev", RoleStatus.FILLED, other)
+
+
+@needs_postgres
+@committed
+def test_add_fails_if_a_like_just_locked_the_project(owner, other, project, role, skill):
+    project.status = ProjectStatus.OPEN
+    project.save()
+    liked = Application.objects.create(role=role, applicant=other)
+    body = {"title": "Designer", "required_skills": [skill.id]}
+
+    outcome = race(
+        lambda: decide(liked, ApplicationStatus.LIKED),
+        lambda: client_for(owner).post(roles_url(project), body, format="json"),
+    )
+
+    assert outcome.status_code == 409
+    project.refresh_from_db()
+    assert project.status == ProjectStatus.LOCKED
+    assert list(project.roles.all()) == [role]
