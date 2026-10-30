@@ -47,3 +47,25 @@ export function useApply() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["my-applications"] }),
   });
 }
+// Drops the card from the cached feed instead of refetching it, so cards I just
+// applied to stay. The swipe deck (F3-03) reuses this for a left swipe.
+export function useDismiss() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, number>({
+    mutationFn: async (id) => {
+      const { error, response } = await api.POST("/api/v1/roles/{id}/dismiss/", {
+        params: { path: { id } },
+        headers: { "X-CSRFToken": csrfToken() },
+      });
+      if (response.ok) return;
+      const detail = (error as { detail?: unknown } | undefined)?.detail;
+      throw new Error(
+        typeof detail === "string" ? detail : "Couldn't pass. Please try again.",
+      );
+    },
+    onSuccess: (_, id) =>
+      queryClient.setQueryData<FeedRole[]>(["feed"], (roles) =>
+        roles?.filter((role) => role.id !== id),
+      ),
+  });
+}
