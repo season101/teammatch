@@ -5,17 +5,18 @@ import { api, csrfToken } from "@/lib/api";
 export type FeedRole = components["schemas"]["FeedRole"];
 export type Application = components["schemas"]["Apply"];
 
-export class ApplyError extends Error {
+export class ApiError extends Error {
   status: number;
 
   constructor(status: number, message: string) {
     super(message);
-    this.name = "ApplyError";
+    this.name = "ApiError";
     this.status = status;
   }
 }
 
-// shortcut: first page (20 roles) only; the swipe deck (F3-03) pages through the cursor.
+// First page only. Decided roles drop out of the feed, so the deck refetches
+// this page when it runs out instead of following the cursor.
 export function useFeed() {
   return useQuery({
     queryKey: ["feed"],
@@ -27,11 +28,11 @@ export function useFeed() {
   });
 }
 
-// The feed isn't refetched on success, so the card stays to show "Applied".
+// The deck takes the card out itself, so the feed isn't refetched on success.
 // My applications is, so the sidebar lists the new one straight away.
 export function useApply() {
   const queryClient = useQueryClient();
-  return useMutation<Application, ApplyError, { role: number; note: string }>({
+  return useMutation<Application, ApiError, { role: number; note: string }>({
     mutationFn: async (body) => {
       const { data, error, response } = await api.POST("/api/v1/applications/", {
         body,
@@ -39,7 +40,7 @@ export function useApply() {
       });
       if (data) return data;
       const detail = (error as { detail?: unknown } | undefined)?.detail;
-      throw new ApplyError(
+      throw new ApiError(
         response.status,
         typeof detail === "string" ? detail : "Couldn't apply. Please try again.",
       );
@@ -47,11 +48,12 @@ export function useApply() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["my-applications"] }),
   });
 }
-// Drops the card from the cached feed instead of refetching it, so cards I just
-// applied to stay. The swipe deck (F3-03) reuses this for a left swipe.
+
+// Drops the card from the cached feed instead of refetching it.
+// The swipe deck uses this for a left swipe.
 export function useDismiss() {
   const queryClient = useQueryClient();
-  return useMutation<void, Error, number>({
+  return useMutation<void, ApiError, number>({
     mutationFn: async (id) => {
       const { error, response } = await api.POST("/api/v1/roles/{id}/dismiss/", {
         params: { path: { id } },
@@ -59,7 +61,8 @@ export function useDismiss() {
       });
       if (response.ok) return;
       const detail = (error as { detail?: unknown } | undefined)?.detail;
-      throw new Error(
+      throw new ApiError(
+        response.status,
         typeof detail === "string" ? detail : "Couldn't pass. Please try again.",
       );
     },
