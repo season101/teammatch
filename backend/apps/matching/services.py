@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import F, Prefetch
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 
@@ -36,6 +37,28 @@ def pending_applications(role):
         role.applications.filter(status=ApplicationStatus.PENDING)
         .select_related("applicant__profile")
         .prefetch_related("applicant__profile__skills")
+    )
+
+
+def my_team_seat(user, today=None):
+    """My seat on a team in the current term, or None (F4-05).
+
+    Comes with the team's project, term and members, owner first.
+    """
+    today = today or timezone.localdate()
+    members = Membership.objects.select_related("user__profile", "role").order_by(
+        F("role").asc(nulls_first=True), "id"
+    )
+    return (
+        Membership.objects.filter(
+            user=user,
+            team__project__term__start_date__lte=today,
+            team__project__term__end_date__gte=today,
+        )
+        .select_related("team__project__term")
+        .prefetch_related(Prefetch("team__memberships", queryset=members))
+        .order_by("-team__created_at")
+        .first()
     )
 
 
