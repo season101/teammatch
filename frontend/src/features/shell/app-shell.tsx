@@ -9,6 +9,7 @@ import { Tabs } from "@/components/ui/tabs";
 import { useSession } from "@/features/accounts/require-sign-in";
 import { SignOutButton } from "@/features/accounts/sign-out-button";
 import { ApplicationsPanel } from "@/features/applications/my-applications";
+import { MyProjectsList } from "@/features/projects/my-projects-list";
 import { Logo } from "@/features/landing/logo";
 import { useMyProjects, type MyProject } from "@/features/review/queries";
 import {
@@ -21,22 +22,63 @@ import {
 } from "./icons";
 import { DECK_KEYS, KeyboardLegend, REVIEW_KEYS } from "./keyboard-legend";
 
-type NavItem = { href: string; label: string; icon: () => ReactNode; paths: string[] };
+type NavItem = {
+  href: string;
+  label: string;
+  icon: () => ReactNode;
+  paths: string[];
+};
 
 // Phone and tablet tabs. Review is only for students who own a project.
 const TABS: (NavItem & { ownerOnly?: boolean })[] = [
-  { href: "/feed", label: "Discover", icon: DeckIcon, paths: ["/feed", "/applications"] },
-  { href: "/projects", label: "Projects", icon: FolderIcon, paths: ["/projects"] },
-  { href: "/applicants", label: "Review", icon: ReviewIcon, paths: ["/applicants"], ownerOnly: true },
+  {
+    href: "/feed",
+    label: "Discover",
+    icon: DeckIcon,
+    paths: ["/feed", "/applications"],
+  },
+  {
+    href: "/projects",
+    label: "Projects",
+    icon: FolderIcon,
+    paths: ["/projects"],
+  },
+  {
+    href: "/applicants",
+    label: "Review",
+    icon: ReviewIcon,
+    paths: ["/applicants"],
+    ownerOnly: true,
+  },
   { href: "/teams", label: "Teams", icon: TeamIcon, paths: ["/teams"] },
-  { href: "/settings", label: "Me", icon: PersonIcon, paths: ["/settings", "/profile"] },
+  {
+    href: "/settings",
+    label: "Me",
+    icon: PersonIcon,
+    paths: ["/settings", "/profile"],
+  },
 ];
 
 // Desktop sidebar modes. Each one switches what the sidebar lists, and the stage follows.
 const MODES: NavItem[] = [
-  { href: "/feed", label: "Discover", icon: DeckIcon, paths: ["/feed", "/teams", "/applications"] },
-  { href: "/projects", label: "Projects", icon: FolderIcon, paths: ["/projects", "/applicants"] },
-  { href: "/settings", label: "Settings", icon: SettingsIcon, paths: ["/settings", "/profile"] },
+  {
+    href: "/feed",
+    label: "Discover",
+    icon: DeckIcon,
+    paths: ["/feed", "/teams", "/applications"],
+  },
+  {
+    href: "/projects",
+    label: "Projects",
+    icon: FolderIcon,
+    paths: ["/projects", "/applicants"],
+  },
+  {
+    href: "/settings",
+    label: "Settings",
+    icon: SettingsIcon,
+    paths: ["/settings", "/profile"],
+  },
 ];
 
 const LEGENDS: Record<string, typeof DECK_KEYS> = {
@@ -45,7 +87,9 @@ const LEGENDS: Record<string, typeof DECK_KEYS> = {
 };
 
 function isIn(pathname: string, paths: string[]) {
-  return paths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  return paths.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
 }
 
 // Arrow keys, Home and End move focus along a row of links, like the Tabs component.
@@ -68,7 +112,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { data: user } = useSession();
   const projects = useMyProjects(Boolean(user));
-  const owned = projects.data?.filter((project) => project.status !== "archived") ?? [];
+  const owned =
+    projects.data?.filter((project) => project.status !== "archived") ?? [];
   const tabs = TABS.filter((tab) => !tab.ownerOnly || owned.length > 0);
   const legend = LEGENDS[pathname];
 
@@ -156,10 +201,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-const rowLink = "flex min-h-11 items-center justify-between gap-2 rounded-row px-3 hover:bg-surface-2";
+const rowLink =
+  "flex min-h-11 items-center justify-between gap-2 rounded-row px-3 hover:bg-surface-2";
 
 // What the sidebar lists in each mode. Team rows arrive with F4-08.
-function SidebarMode({ pathname, owned }: { pathname: string; owned: MyProject[] }) {
+function SidebarMode({
+  pathname,
+  owned,
+}: {
+  pathname: string;
+  owned: MyProject[];
+}) {
   if (isIn(pathname, ["/settings", "/profile"])) {
     return (
       <div className="flex flex-col gap-2 p-4">
@@ -171,7 +223,10 @@ function SidebarMode({ pathname, owned }: { pathname: string; owned: MyProject[]
         >
           Profile
         </Link>
-        <Link href="/settings#appearance" className={`${rowLink} font-semibold`}>
+        <Link
+          href="/settings#appearance"
+          className={`${rowLink} font-semibold`}
+        >
           Appearance
         </Link>
         <Link href="/settings#keyboard" className={`${rowLink} font-semibold`}>
@@ -205,34 +260,24 @@ function SidebarMode({ pathname, owned }: { pathname: string; owned: MyProject[]
               label: "Mine",
               panel: (
                 <div className="flex flex-col gap-2">
-                  <Link href="/projects/new" className={buttonClasses("secondary", "sm")}>
+                  <Link
+                    href="/projects/new"
+                    className={buttonClasses("secondary", "sm")}
+                  >
                     New project
                   </Link>
                   {/* BR-14 blocks publishing a second open project, not drafting one. */}
                   {owned.some((project) => project.status === "open") && (
                     <p className="px-3 text-xs text-muted">
-                      You have an open project, so a new one stays a draft until you close it or it
-                      locks.
+                      You have an open project, so a new one stays a draft until
+                      you close it or it locks.
                     </p>
                   )}
-                  {owned.length === 0 ? (
-                    <p className="px-3 text-sm text-muted">You don&apos;t own a project yet.</p>
-                  ) : (
-                    <ul className="flex flex-col gap-1">
-                      {owned.map((project) => (
-                        <li key={project.id}>
-                          <Link href={`/projects/${project.id}`} className={rowLink}>
-                            <span className="font-semibold">{project.title}</span>
-                            <span className="text-xs text-muted">{project.status}</span>
-                          </Link>
-                        </li>
-                      ))}
-                      <li>
-                        <Link href="/applicants" className={rowLink}>
-                          Review applicants
-                        </Link>
-                      </li>
-                    </ul>
+                  <MyProjectsList projects={owned} />
+                  {owned.length > 0 && (
+                    <Link href="/applicants" className={rowLink}>
+                      Review applicants
+                    </Link>
                   )}
                 </div>
               ),
