@@ -6,9 +6,12 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.core.models import Term
-from apps.matching.models import Application, ApplicationStatus
+from apps.matching.models import Application, ApplicationStatus, Team
+from apps.matching.services import decide, try_lock
+from apps.matching.tests.test_fill_and_lock import committed, needs_postgres, race
 from apps.profiles.models import Skill
-from apps.projects.models import Project, ProjectStatus, Role
+from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
+from apps.projects.services import ProjectLocked, close_project
 
 pytestmark = pytest.mark.django_db
 
@@ -184,3 +187,60 @@ def test_locked_or_archived_project_cannot_be_closed(owner, project, status):
     response = client_for(owner).post(close_url(project))
     assert response.status_code == 409
     assert response.data["detail"].code == "project_locked"
+
+
+# edit and close racing a like (F4-05)
+
+
+@needs_postgres
+@committed
+def test_edit_fails_if_a_like_just_locked_the_project(owner, other, project, role):
+    liked = Application.objects.create(role=role, applicant=other)
+
+    outcome = race(
+        lambda: decide(liked, ApplicationStatus.LIKED),
+        lambda: client_for(owner).patch(detail_url(project), {"title": "New"}),
+    )
+
+    assert outcome.status_code == 409
+    project.refresh_from_db()
+    assert (project.title, project.status) == ("TeamMatch", ProjectStatus.LOCKED)
+
+
+@needs_postgres
+@committed
+def test_close_fails_if_a_like_just_locked_the_project(other, project, role):
+    liked = Application.objects.create(role=role, applicant=other)
+
+    outcome = race(lambda: decide(liked, ApplicationStatus.LIKED), lambda: close_project(project))
+
+    assert isinstance(outcome, ProjectLocked)
+    project.refresh_from_db()
+    assert project.status == ProjectStatus.LOCKED
+    assert Team.objects.filter(project=project).exists()
+
+
+@needs_postgres
+@committed
+def test_close_does_not_deadlock_with_a_like_about_to_lock_the_project(
+    other, third, project, monkeypatch
+):
+    # Created first, so close holds this filled role while it waits for the liked one.
+    Role.objects.create(
+        project=project, title="Designer", status=RoleStatus.FILLED, filled_by=third
+    )
+    liked = Application.objects.create(
+        role=Role.objects.create(project=project, title="Backend dev"), applicant=other
+    )
+    # The like holds its role and application rows and takes the project only once close waits.
+    monkeypatch.setattr("apps.matching.services.try_lock", lambda project: None)
+
+    outcome = race(
+        lambda: decide(liked, ApplicationStatus.LIKED),
+        lambda: close_project(project),
+        then=lambda: try_lock(project),
+    )
+
+    assert isinstance(outcome, ProjectLocked)
+    project.refresh_from_db()
+    assert project.status == ProjectStatus.LOCKED

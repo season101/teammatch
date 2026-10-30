@@ -27,4 +27,5 @@ urlpatterns = [
         views.ApplicationDecisionView.as_view(decision=ApplicationStatus.PASSED),
         name="application-pass",
     ),
+    path("teams/<int:pk>/seen/", views.TeamSeenView.as_view(), name="team-seen"),
 ]

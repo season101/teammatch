@@ -134,9 +134,13 @@ def delete_role(role):
 
     Its applications go with it. If every remaining role is already filled,
     the project locks now (BR-06).
+
+    Locks the role, then the project, the order a like uses (matching.services.decide),
+    so a like or a close committing at the same moment is seen, not overwritten.
     """
+    role = Role.objects.select_for_update().get(pk=role.pk)
+    project = role.project = Project.objects.select_for_update().get(pk=role.project_id)
     ensure_role_editable(role)  # 409 if the project is locked/archived or the role is filled
-    project = role.project
     if project.status == ProjectStatus.OPEN and project.roles.count() == 1:
         raise LastRole()  # an open project may not end up with zero roles
     role.delete()
@@ -155,7 +159,15 @@ def ensure_project_editable(project):
 
 @transaction.atomic
 def close_project(project):
-    """Archive a project: it leaves the feeds and its pending applications are withdrawn (F2-05)."""
+    """Archive a project: it leaves the feeds and its pending applications are withdrawn (F2-05).
+
+    Locks its roles, then the project, then its applications. A like locks its role
+    first and the project last (matching.services.decide), so the two queue on the role.
+    Locking the project first would deadlock with a like holding its application row.
+    no_key: a like that locks the team still takes KEY SHARE on filled roles for its seats.
+    """
+    list(Role.objects.filter(project=project).order_by("pk").select_for_update(no_key=True))
+    project = Project.objects.select_for_update().get(pk=project.pk)
     ensure_project_editable(project)
 
     from apps.matching.models import Application, ApplicationStatus  # matching imports projects

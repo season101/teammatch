@@ -1,3 +1,5 @@
+from django.db.models.functions import Coalesce, Now
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics
@@ -9,8 +11,9 @@ from apps.core.pagination import DefaultCursorPagination
 from apps.projects.models import Role
 
 from . import services
-from .models import Application, ApplicationStatus
+from .models import Application, ApplicationStatus, Membership
 from .serializers import (
+    ApplicationDecisionSerializer,
     ApplySerializer,
     FeedRoleSerializer,
     MyApplicationSerializer,
@@ -41,9 +44,12 @@ class RoleApplicationsView(generics.ListAPIView):
         return services.pending_applications(role)
 
 
-@extend_schema(tags=["matching"], request=None, responses=RoleApplicationSerializer)
+@extend_schema(tags=["matching"], request=None, responses=ApplicationDecisionSerializer)
 class ApplicationDecisionView(APIView):
-    """Like or pass a pending applicant on my role. Not pending: 409."""
+    """Like or pass a pending applicant on my role.
+
+    Not pending, or the applicant just joined another team: 409.
+    """
 
     decision = None  # set per URL
 
@@ -51,8 +57,8 @@ class ApplicationDecisionView(APIView):
         application = get_object_or_404(Application.objects.select_related("role__project"), pk=pk)
         if application.role.project.owner_id != request.user.id:
             raise PermissionDenied()
-        application = services.decide(application, self.decision)
-        return Response(RoleApplicationSerializer(application).data)
+        application, team = services.decide(application, self.decision)
+        return Response(ApplicationDecisionSerializer(application, context={"team": team}).data)
 
 
 @extend_schema(tags=["matching"])
@@ -98,3 +104,16 @@ class WithdrawApplicationView(APIView):
         application = get_object_or_404(Application, pk=pk, applicant=request.user)
         application = services.withdraw(application)
         return Response(MyApplicationSerializer(application).data)
+
+
+@extend_schema(tags=["teams"], request=None, responses={204: None})
+class TeamSeenView(APIView):
+    """I saw "It's a Team!" for this team (DD-27). Repeats keep the first time. Not mine: 404."""
+
+    def post(self, request, pk):
+        seen = Membership.objects.filter(team_id=pk, user=request.user).update(
+            seen_at=Coalesce("seen_at", Now())
+        )
+        if not seen:
+            raise Http404  # same answer as a missing team, so team ids do not leak
+        return Response(status=204)

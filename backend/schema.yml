@@ -34,7 +34,10 @@ paths:
   /api/v1/applications/{id}/like/:
     post:
       operationId: applications_like_create
-      description: 'Like or pass a pending applicant on my role. Not pending: 409.'
+      description: |-
+        Like or pass a pending applicant on my role.
+
+        Not pending, or the applicant just joined another team: 409.
       parameters:
       - in: path
         name: id
@@ -50,12 +53,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleApplication'
+                $ref: '#/components/schemas/ApplicationDecision'
           description: ''
   /api/v1/applications/{id}/pass/:
     post:
       operationId: applications_pass_create
-      description: 'Like or pass a pending applicant on my role. Not pending: 409.'
+      description: |-
+        Like or pass a pending applicant on my role.
+
+        Not pending, or the applicant just joined another team: 409.
       parameters:
       - in: path
         name: id
@@ -71,7 +77,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleApplication'
+                $ref: '#/components/schemas/ApplicationDecision'
           description: ''
   /api/v1/applications/{id}/withdraw/:
     post:
@@ -582,8 +588,59 @@ paths:
                 items:
                   $ref: '#/components/schemas/Skill'
           description: ''
+  /api/v1/teams/{id}/seen/:
+    post:
+      operationId: teams_seen_create
+      description: 'I saw "It''s a Team!" for this team (DD-27). Repeats keep the
+        first time. Not mine: 404.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - teams
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
 components:
   schemas:
+    ApplicationDecision:
+      type: object
+      description: A like or pass, plus whether that like locked the team (F4-05).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        applicant:
+          allOf:
+          - $ref: '#/components/schemas/Profile'
+          readOnly: true
+        note:
+          type: string
+          maxLength: 300
+        status:
+          $ref: '#/components/schemas/ApplicationStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        team_locked:
+          type: boolean
+          readOnly: true
+        team_id:
+          type: integer
+          nullable: true
+          readOnly: true
+      required:
+      - applicant
+      - created_at
+      - id
+      - team_id
+      - team_locked
     ApplicationRole:
       type: object
       properties:

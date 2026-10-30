@@ -83,6 +83,8 @@ class Membership(TimeStampedModel):
     role = models.OneToOneField(
         Role, on_delete=models.CASCADE, null=True, blank=True, related_name="membership"
     )
+    # When this member saw "It's a Team!" (DD-27). Empty until they do.
+    seen_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [

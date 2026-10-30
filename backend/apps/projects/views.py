@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics
@@ -47,9 +48,12 @@ class ProjectRoleCreateView(generics.CreateAPIView):
 
     serializer_class = RoleSerializer
 
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         # check ownership first, so a non-owner gets 403 even with a bad body
-        self.project = owned_project(request, kwargs["pk"])
+        project = owned_project(request, kwargs["pk"])
+        # then lock it, so a like that just locked the team is seen, not added to
+        self.project = get_object_or_404(Project.objects.select_for_update(), pk=project.pk)
         services.ensure_roles_editable(self.project)
         return super().create(request, *args, **kwargs)
 
@@ -68,8 +72,16 @@ class RoleUpdateView(generics.UpdateAPIView):
         role = get_object_or_404(Role.objects.select_related("project"), pk=self.kwargs["pk"])
         if role.project.owner_id != self.request.user.id:
             raise PermissionDenied()
+        if self.request.method == "PATCH":
+            # Lock, then read the project in its own query, so a like or close that just
+            # committed is seen, not overwritten. no_key: a team-locking like takes KEY SHARE.
+            role = get_object_or_404(Role.objects.select_for_update(no_key=True), pk=role.pk)
         services.ensure_role_editable(role)
         return role
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
 
     @extend_schema(tags=["projects"], request=None, responses={204: None})
     def delete(self, request, *args, **kwargs):
@@ -118,11 +130,17 @@ class ProjectDetailView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         if self.request.method == "PATCH":
-            # owner check first (403), then the locked/archived rule (409)
+            # owner check first (403), then the locked/archived rule (409) on the locked row,
+            # so a like or close that just committed is seen, not overwritten
             project = owned_project(self.request, self.kwargs["pk"])
+            project = get_object_or_404(Project.objects.select_for_update(), pk=project.pk)
             services.ensure_project_editable(project)
             return project
         return super().get_object()
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
 
 
 @extend_schema(tags=["projects"], request=None, responses=ProjectSerializer)
