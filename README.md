@@ -3,14 +3,14 @@
 [![CI](https://github.com/season101/teammatch/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/season101/teammatch/actions/workflows/ci.yml?query=branch%3Amain)
 [![Release](https://github.com/season101/teammatch/actions/workflows/release.yml/badge.svg)](https://github.com/season101/teammatch/actions/workflows/release.yml)
 [![Deploy](https://img.shields.io/github/deployments/season101/teammatch/production?label=deploy)](https://github.com/season101/teammatch/deployments)
-[![Latest release](https://img.shields.io/github/v/release/season101/teammatch)](https://github.com/season101/teammatch/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/season101/teammatch?label=latest)](https://github.com/season101/teammatch/releases/latest)
 [![Live in prod](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fteammatch.sijancodes.com%2Fapi%2Fv1%2Fhealth%2F&query=%24.version&label=prod&prefix=v)](https://teammatch.sijancodes.com)
 
 Swipe on roles, not people.
 
 Students post a project with open roles. Classmates swipe on the roles that fit their skills. Owners like or pass per role, and the team forms itself when every role is filled. Then team chat opens.
 
-CSC 5323 (Advanced Software Engineering), Louisiana Tech, Fall 2026. Four developers, three sprints, 10 h per person per sprint.
+CSC 5323 (Advanced Software Engineering), Louisiana Tech, Fall 2026. Three developers (four until Oct 16), three sprints, 10 h per person per sprint.
 
 ## How it works
 
@@ -56,7 +56,7 @@ make up      # build and start web, api, postgres, redis, storage
 make ps      # everything should say healthy
 ```
 
-Open http://localhost:3000. The homepage shows a live status card for the API, database, and Redis.
+Open http://localhost:3000. The `/status` page shows a live status card for the API, database, and Redis.
 
 Local services:
 
@@ -168,7 +168,7 @@ The [wiki](https://github.com/season101/teammatch/wiki) mirrors these docs and u
 
 ## Deploy
 
-Production runs at `teammatch.sijancodes.com` from the compose file in [deploy/](deploy/). CI builds images to GHCR on a release tag, and we deploy by hand on the server. Steps are in [deployment.md](docs/architecture/deployment.md).
+Production runs at `teammatch.sijancodes.com` from the compose file in [deploy/](deploy/). A release tag builds the images to GHCR, and once someone approves the `production` environment, the Release workflow deploys them over SSH. The pipeline is in [cicd.md](docs/architecture/cicd.md) and the server setup in [deployment.md](docs/architecture/deployment.md).
 
 ## License
 
