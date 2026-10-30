@@ -9,7 +9,11 @@ export default async function SignInPage({
   const { next, error } = await searchParams;
   return (
     <main className="mx-auto w-full max-w-sm px-4 py-12">
-      <SignInForm next={next} google={<GoogleButton />} googleError={error} />
+      <SignInForm
+        next={next}
+        google={<GoogleButton next={next} />}
+        googleError={error}
+      />
     </main>
   );
 }

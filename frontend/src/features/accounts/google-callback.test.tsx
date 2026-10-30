@@ -22,7 +22,7 @@ function mockSession(status: number) {
   return fetchMock;
 }
 
-function renderCallback(error?: string) {
+function renderCallback(error?: string, next?: string) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -30,7 +30,7 @@ function renderCallback(error?: string) {
   client.setQueryData(["session"], null);
   render(
     <QueryClientProvider client={client}>
-      <GoogleCallback error={error} />
+      <GoogleCallback error={error} next={next} />
     </QueryClientProvider>,
   );
   return client;
@@ -63,6 +63,22 @@ test("an error goes back to sign in, which shows the message", async () => {
     ),
   );
   expect(fetchMock).not.toHaveBeenCalled();
+});
+
+test("signed in with ?next=: goes back to the page the student was on", async () => {
+  mockSession(200);
+  renderCallback(undefined, "/projects/12");
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/projects/12"));
+});
+
+test("an error keeps ?next= for the next try", async () => {
+  mockSession(401);
+  renderCallback("cancelled", "/projects/12");
+  await waitFor(() =>
+    expect(replace).toHaveBeenCalledWith(
+      "/login?error=cancelled&next=%2Fprojects%2F12",
+    ),
+  );
 });
 
 test("no error but no session either: back to sign in with a general message", async () => {

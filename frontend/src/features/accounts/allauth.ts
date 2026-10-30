@@ -73,15 +73,18 @@ export async function getProviders(): Promise<string[]> {
 }
 
 // Sends the browser to Google. A real form POST, not fetch, so allauth can
-// redirect the whole page. Google then comes back to /auth/callback.
-export async function continueWith(provider: string) {
+// redirect the whole page. Google then comes back to /auth/callback, with
+// ?next= passed along so the student lands where they were going.
+export async function continueWith(provider: string, next?: string) {
   await ensureCsrfToken();
   const form = document.createElement("form");
   form.method = "POST";
   form.action = `${BASE}/auth/provider/redirect`;
   const fields = {
     provider,
-    callback_url: "/auth/callback",
+    callback_url: next
+      ? `/auth/callback?${new URLSearchParams({ next })}`
+      : "/auth/callback",
     process: "login",
     csrfmiddlewaretoken: getCsrfToken(),
   };

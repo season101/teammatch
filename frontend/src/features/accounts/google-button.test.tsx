@@ -83,6 +83,24 @@ test("clicking it posts a real form to allauth, which redirects to Google", asyn
   ).toBeDisabled();
 });
 
+test("passes ?next= through Google so the student lands where they were going", async () => {
+  mockConfig([{ id: "google" }]);
+  const submit = vi
+    .spyOn(HTMLFormElement.prototype, "submit")
+    .mockImplementation(() => {});
+  renderWithClient(<GoogleButton next="/projects/12" />);
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Continue with Google" }),
+  );
+
+  await waitFor(() => expect(submit).toHaveBeenCalled());
+  const form = submit.mock.contexts[0] as HTMLFormElement;
+  expect(new FormData(form).get("callback_url")).toBe(
+    "/auth/callback?next=%2Fprojects%2F12",
+  );
+});
+
 test.each([
   ["cancelled", "Google sign-in was cancelled."],
   [
