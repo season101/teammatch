@@ -158,7 +158,7 @@ function ProjectsView() {
               label: "Mine",
               panel: (
                 <div className="pt-4">
-                  <MyProjectsList projects={owned} />
+                  <MyProjectsList projects={owned} withOpenNote />
                 </div>
               ),
             },

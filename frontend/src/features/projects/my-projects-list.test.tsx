@@ -61,3 +61,26 @@ describe("MyProjectsList", () => {
     ).toHaveAttribute("href", "/projects/2");
   });
 });
+
+describe("the open-project note (BR-14)", () => {
+  const note = /a new one stays a draft/;
+
+  it("shows when asked and an open project exists", () => {
+    render(
+      <MyProjectsList projects={[project({ status: "open" })]} withOpenNote />,
+    );
+    expect(screen.getByText(note)).toBeInTheDocument();
+  });
+
+  it("stays hidden when there is no open project", () => {
+    render(
+      <MyProjectsList projects={[project({ status: "draft" })]} withOpenNote />,
+    );
+    expect(screen.queryByText(note)).not.toBeInTheDocument();
+  });
+
+  it("stays hidden unless asked", () => {
+    render(<MyProjectsList projects={[project({ status: "open" })]} />);
+    expect(screen.queryByText(note)).not.toBeInTheDocument();
+  });
+});
