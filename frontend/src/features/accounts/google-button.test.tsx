@@ -83,6 +83,42 @@ test("clicking it posts a real form to allauth, which redirects to Google", asyn
   ).toBeDisabled();
 });
 
+test("can be clicked again when the server can't be reached", async () => {
+  mockConfig([{ id: "google" }]);
+  document.cookie = "csrftoken=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  const config = vi.mocked(fetch).getMockImplementation()!;
+  // /config answers, then the csrf GET before the form POST fails
+  vi.mocked(fetch).mockImplementation(async (url, init) => {
+    if (String(url).endsWith("/config")) return config(url, init);
+    throw new TypeError("Failed to fetch");
+  });
+  renderWithClient(<GoogleButton />);
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Continue with Google" }),
+  );
+
+  expect(
+    await screen.findByRole("button", { name: "Continue with Google" }),
+  ).toBeEnabled();
+});
+
+test("Back from Google re-enables the button", async () => {
+  mockConfig([{ id: "google" }]);
+  vi.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(() => {});
+  renderWithClient(<GoogleButton />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Continue with Google" }),
+  );
+  await screen.findByRole("button", { name: "Opening Google…" });
+
+  fireEvent(window, new PageTransitionEvent("pageshow", { persisted: true }));
+
+  expect(
+    await screen.findByRole("button", { name: "Continue with Google" }),
+  ).toBeEnabled();
+});
+
 test("passes ?next= through Google so the student lands where they were going", async () => {
   mockConfig([{ id: "google" }]);
   const submit = vi

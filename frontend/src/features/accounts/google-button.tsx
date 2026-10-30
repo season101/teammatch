@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { buttonClasses } from "@/components/ui/button";
 import { continueWith, getProviders } from "./allauth";
 
@@ -15,6 +15,15 @@ export function GoogleButton({ next }: { next?: string }) {
   });
   const [leaving, setLeaving] = useState(false);
 
+  // Back from Google can restore this page from the browser's cache, button still disabled.
+  useEffect(() => {
+    const reset = (event: PageTransitionEvent) => {
+      if (event.persisted) setLeaving(false);
+    };
+    window.addEventListener("pageshow", reset);
+    return () => window.removeEventListener("pageshow", reset);
+  }, []);
+
   if (!providers.data?.includes("google")) return null;
 
   return (
@@ -24,7 +33,8 @@ export function GoogleButton({ next }: { next?: string }) {
         disabled={leaving}
         onClick={() => {
           setLeaving(true);
-          void continueWith("google", next);
+          // Couldn't reach the server: let them try again.
+          continueWith("google", next).catch(() => setLeaving(false));
         }}
         className={buttonClasses("secondary")}
       >
