@@ -1,6 +1,7 @@
 "use client";
 
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
+import { MyTeamView } from "@/features/teams/my-team";
 
 export default function TeamsPage() {
   return (
@@ -9,9 +10,7 @@ export default function TeamsPage() {
         {() => (
           <>
             <h1 className="text-2xl font-bold">Teams</h1>
-            <p className="text-muted">
-              Your team shows up here once every role is filled. Team chat opens then.
-            </p>
+            <MyTeamView />
           </>
         )}
       </RequireSignIn>

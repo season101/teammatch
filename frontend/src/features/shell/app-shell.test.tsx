@@ -17,7 +17,11 @@ const project = { id: 4, title: "Bulldog Bites", status: "open", roles: [], crea
 // Session and projects come from the cache, so nothing hits the network.
 function renderShell(
   pathname: string,
-  { projects = [project] as unknown[], children = <p>Stage</p> as ReactNode } = {},
+  {
+    projects = [project] as unknown[],
+    team = null as unknown,
+    children = <p>Stage</p> as ReactNode,
+  } = {},
 ) {
   nav.pathname = pathname;
   const client = new QueryClient({
@@ -26,6 +30,7 @@ function renderShell(
   client.setQueryData(["session"], { id: 1, email: "sam@latech.edu" });
   client.setQueryData(["my-projects"], projects);
   client.setQueryData(["my-applications"], []);
+  client.setQueryData(["my-team"], team);
   render(
     <QueryClientProvider client={client}>
       <AppShell>{children}</AppShell>
@@ -181,4 +186,17 @@ test("no note when the owner only has drafts", () => {
   renderShell("/applicants", { projects: [{ ...project, status: "draft" }] });
   expect(screen.getByRole("link", { name: "New project" })).toBeInTheDocument();
   expect(screen.queryByText(/a new one stays a draft/)).toBeNull();
+});
+
+test("the sidebar's Teams tab links to my team once I have one", () => {
+  renderShell("/teams", {
+    team: { id: 3, project: { id: 4, title: "Bulldog Bites" }, members: [], seen_at: "x" },
+  });
+  const sidebar = screen.getByRole("navigation", { name: "Modes" }).closest("aside")!;
+
+  expect(within(sidebar).getByRole("link", { name: "Bulldog Bites" })).toHaveAttribute(
+    "href",
+    "/teams",
+  );
+  expect(within(sidebar).queryByText(/once every role is filled/)).not.toBeInTheDocument();
 });

@@ -4,6 +4,7 @@ import { api, csrfToken } from "@/lib/api";
 
 export type MyProject = components["schemas"]["MyProject"];
 export type Applicant = components["schemas"]["RoleApplication"];
+type Decided = components["schemas"]["ApplicationDecision"];
 export type Decision = { id: number; name: string; like: boolean };
 
 export class DecideError extends Error {
@@ -45,7 +46,7 @@ export function useApplicants(roleId: number) {
 
 export function useDecide(roleId: number) {
   const queryClient = useQueryClient();
-  return useMutation<Applicant, DecideError, Decision>({
+  return useMutation<Decided, DecideError, Decision>({
     mutationFn: async ({ id, like }) => {
       const init = {
         params: { path: { id } },
@@ -60,6 +61,10 @@ export function useDecide(roleId: number) {
         response.status,
         typeof detail === "string" ? detail : "Couldn't save your decision. Please try again.",
       );
+    },
+    // A like that locks the team: the app shell refetches my team and shows "It's a Team!".
+    onSuccess: (decided) => {
+      if (decided.team_locked) queryClient.invalidateQueries({ queryKey: ["my-team"] });
     },
     // The decided applicant is no longer pending, so the list drops them.
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["applicants", roleId] }),

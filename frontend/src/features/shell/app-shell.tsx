@@ -12,6 +12,8 @@ import { ApplicationsPanel } from "@/features/applications/my-applications";
 import { MyProjectsList } from "@/features/projects/my-projects-list";
 import { Logo } from "@/features/landing/logo";
 import { useMyProjects, type MyProject } from "@/features/review/queries";
+import { TeamCelebration } from "@/features/teams/its-a-team";
+import { useMyTeam, type MyTeam } from "@/features/teams/queries";
 import {
   DeckIcon,
   FolderIcon,
@@ -115,6 +117,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const owned =
     projects.data?.filter((project) => project.status !== "archived") ?? [];
   const tabs = TABS.filter((tab) => !tab.ownerOnly || owned.length > 0);
+  const team = useMyTeam(Boolean(user)).data;
   const legend = LEGENDS[pathname];
 
   return (
@@ -167,13 +170,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </nav>
         </div>
-        <SidebarMode pathname={pathname} owned={owned} />
+        <SidebarMode pathname={pathname} owned={owned} team={team} />
       </aside>
 
       <div className="flex flex-1 flex-col">
         {children}
         {legend && <KeyboardLegend key={pathname} keys={legend} />}
       </div>
+
+      {user && <TeamCelebration />}
 
       <nav
         aria-label="Main"
@@ -204,13 +209,15 @@ export function AppShell({ children }: { children: ReactNode }) {
 const rowLink =
   "flex min-h-11 items-center justify-between gap-2 rounded-row px-3 hover:bg-surface-2";
 
-// What the sidebar lists in each mode. Team rows arrive with F4-08.
+// What the sidebar lists in each mode. Team chat rows arrive with F4-08.
 function SidebarMode({
   pathname,
   owned,
+  team,
 }: {
   pathname: string;
   owned: MyProject[];
+  team?: MyTeam | null;
 }) {
   if (isIn(pathname, ["/settings", "/profile"])) {
     return (
@@ -302,7 +309,15 @@ function SidebarMode({
           {
             id: "teams",
             label: "Teams",
-            panel: (
+            panel: team ? (
+              <Link
+                href="/teams"
+                aria-current={pathname === "/teams" ? "page" : undefined}
+                className={`${rowLink} font-semibold aria-[current=page]:bg-surface-2`}
+              >
+                {team.project.title}
+              </Link>
+            ) : (
               <p className="px-3 text-sm text-muted">
                 Your team shows up here once every role is filled.
               </p>
