@@ -127,7 +127,7 @@ Login, signup, logout, password and Google live under allauth (below).
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | GET | `/api/v1/feed/` | user | swipe deck, open roles ranked by skill overlap |
-| POST | `/api/v1/roles/{id}/dismiss/` | user | candidate pass on a role **(planned)** |
+| POST | `/api/v1/roles/{id}/dismiss/` | user | candidate pass on a role, `204`; repeats are fine. My own project: `403`; role or project not open: `409` |
 | POST | `/api/v1/applications/` | user | apply to a role `{role, note}` |
 | GET | `/api/v1/applications/mine/?status=` | user | my applications |
 | POST | `/api/v1/applications/{id}/withdraw/` | applicant | withdraw pending application |

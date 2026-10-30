@@ -12,6 +12,7 @@ urlpatterns = [
         views.WithdrawApplicationView.as_view(),
         name="application-withdraw",
     ),
+    path("roles/<int:pk>/dismiss/", views.DismissRoleView.as_view(), name="role-dismiss"),
     path(
         "roles/<int:pk>/applications/",
         views.RoleApplicationsView.as_view(),

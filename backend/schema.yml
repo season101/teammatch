@@ -564,6 +564,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedRoleApplicationList'
           description: ''
+  /api/v1/roles/{id}/dismiss/:
+    post:
+      operationId: roles_dismiss_create
+      description: 'Pass on a role so it leaves my feed (BR-10). My own project: 403.
+        Not open: 409.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - matching
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/skills/:
     get:
       operationId: skills_list

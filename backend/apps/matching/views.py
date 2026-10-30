@@ -76,6 +76,18 @@ class ApplyView(generics.CreateAPIView):
         )
 
 
+@extend_schema(tags=["matching"], request=None, responses={204: None})
+class DismissRoleView(APIView):
+    """Pass on a role so it leaves my feed (BR-10). My own project: 403. Not open: 409."""
+
+    def post(self, request, pk):
+        role = get_object_or_404(Role.objects.select_related("project"), pk=pk)
+        if role.project.owner_id == request.user.id:
+            raise PermissionDenied()
+        services.dismiss(role, request.user)
+        return Response(status=204)
+
+
 @extend_schema(
     tags=["matching"],
     parameters=[OpenApiParameter("status", str, enum=ApplicationStatus.values)],
