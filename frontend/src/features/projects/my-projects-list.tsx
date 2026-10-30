@@ -33,7 +33,14 @@ export function projectSummary(project: MyProject): string {
 const rowClass =
   "flex min-h-11 flex-col gap-0.5 rounded-row border border-border bg-surface px-3 py-2 hover:bg-surface-2";
 
-export function MyProjectsList({ projects }: { projects: MyProject[] }) {
+// withOpenNote: the phone Mine tab shows the BR-14 note here. The desktop sidebar has its own.
+export function MyProjectsList({
+  projects,
+  withOpenNote = false,
+}: {
+  projects: MyProject[];
+  withOpenNote?: boolean;
+}) {
   if (projects.length === 0) {
     return (
       <div className="flex flex-col gap-1 px-3 py-4">
@@ -48,6 +55,14 @@ export function MyProjectsList({ projects }: { projects: MyProject[] }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* BR-14 blocks publishing a second open project, not drafting one. */}
+      {withOpenNote &&
+        projects.some((project) => project.status === "open") && (
+          <p className="px-3 text-sm text-muted">
+            You have an open project, so a new one stays a draft until you close
+            it or it locks.
+          </p>
+        )}
       {GROUPS.map(({ status, heading }) => {
         const items = projects.filter((project) => project.status === status);
         if (items.length === 0) return null;
