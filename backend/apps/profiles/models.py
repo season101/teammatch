@@ -23,7 +23,7 @@ class Skill(models.Model):
         return self.name
 
 
-# One profile per user. Avatar (F1-07) and retired_until (F1-08) come later.
+# One profile per user. Avatar (F1-07) comes later.
 class Profile(TimeStampedModel):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile"
@@ -32,6 +32,8 @@ class Profile(TimeStampedModel):
     bio = models.TextField(max_length=500, blank=True)
     major = models.CharField(max_length=100, blank=True)
     skills = models.ManyToManyField(Skill, blank=True, related_name="profiles")
+    # Set by retire() when their team locks (BR-08). F1-08 adds the rest.
+    retired_until = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return self.display_name or self.user.email
