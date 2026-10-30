@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { buttonClasses } from "@/components/ui/button";
 import { noticeClass } from "@/components/ui/form-classes";
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
+import { useMyProjects } from "@/features/review/queries";
+import { MyProjectsList } from "./my-projects-list";
 import { useOpenProjects } from "./queries";
 
 export function ProjectsList() {
@@ -79,7 +82,48 @@ export function ProjectsList() {
   );
 }
 
+// Phone and tablet get Browse | Mine here. On desktop the sidebar has those tabs,
+// so only the Browse list shows and the toggle is hidden.
+function ProjectsView() {
+  const [view, setView] = useState<"browse" | "mine">("browse");
+  const mine = useMyProjects();
+  const owned =
+    mine.data?.filter((project) => project.status !== "archived") ?? [];
+
+  const toggle = (id: "browse" | "mine", label: string) => (
+    <button
+      type="button"
+      aria-pressed={view === id}
+      onClick={() => setView(id)}
+      className="min-h-11 flex-1 rounded-pill px-4 text-sm font-semibold text-muted aria-pressed:bg-text aria-pressed:text-surface"
+    >
+      {label}
+    </button>
+  );
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div
+        role="group"
+        aria-label="Projects"
+        className="flex rounded-pill border border-border bg-surface-2 p-1 lg:hidden"
+      >
+        {toggle("browse", "Browse")}
+        {toggle("mine", "Mine")}
+      </div>
+      <div className={view === "mine" ? "hidden lg:block" : undefined}>
+        <ProjectsList />
+      </div>
+      {view === "mine" && (
+        <div className="lg:hidden">
+          <MyProjectsList projects={owned} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // The page itself is a server component, so the sign-in wrapper lives here.
 export function SignedInProjects() {
-  return <RequireSignIn>{() => <ProjectsList />}</RequireSignIn>;
+  return <RequireSignIn>{() => <ProjectsView />}</RequireSignIn>;
 }
