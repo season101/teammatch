@@ -32,11 +32,13 @@ export function SignInForm({
   const [password, setPassword] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); // stop the browser from reloading the page
     setSending(true);
     setError("");
+    setSubmitted(true); // the Google error is about an earlier try, so hide it now
     try {
       const result = await allauthPost("/auth/login", { email, password });
       // 409 means this browser is already signed in, which is fine too
@@ -70,7 +72,7 @@ export function SignInForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {googleError && (
+      {googleError && !submitted && (
         <p
           role="alert"
           className="rounded-card border border-pass bg-surface-2 p-3 text-sm text-text"

@@ -128,6 +128,25 @@ test("shows one generic error for wrong credentials", async () => {
   expect(replace).not.toHaveBeenCalled();
 });
 
+test("hides the Google error once the email form is used", async () => {
+  mockFetch(400, { status: 400, errors: [] });
+  render(
+    <QueryClientProvider client={newClient()}>
+      <SignInForm googleError="cancelled" />
+    </QueryClientProvider>,
+  );
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "Google sign-in was cancelled.",
+  );
+
+  fillAndSubmit("sam@latech.edu", "wrong-password");
+
+  // findByRole fails if both messages are still showing
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Email or password is incorrect.",
+  );
+});
+
 test("tells users from another email domain to use their school email", async () => {
   const message = "Use your @latech.edu or @email.latech.edu email.";
   mockFetch(400, {
