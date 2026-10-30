@@ -3,6 +3,7 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 
+from apps.profiles.services import retire
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 
 from .models import Application, ApplicationStatus, Membership, RoleDismissal, Team
@@ -67,7 +68,7 @@ def decide(application, status):
     role = role.get(pk=application.role_id)
     if status == ApplicationStatus.LIKED:
         get_user_model().objects.select_for_update().get(pk=application.applicant_id)
-        # A seat on any team this term means they're retired (BR-08), even before F4-07.
+        # A seat on any team this term means they're retired (BR-08).
         on_a_team = Membership.objects.filter(
             user_id=application.applicant_id, team__project__term_id=role.project.term_id
         )
@@ -112,10 +113,21 @@ def withdraw(application):
 def try_lock(project):
     """Lock the project into a team once all its roles are filled (BR-06, F4-03).
 
+    Then every member's other pending applications that term are withdrawn and
+    they're retired until the term ends (BR-08, F4-07).
+
     Returns the team, or None while the project can't lock. Safe to call twice:
     the project row lock serialises callers and Team.project is unique.
+
+    Lock order: role, applicant, application, project (as in decide), then the
+    members' other applications and profiles. The membership inserts wait for any
+    like holding a member's user row, so we never hold an application that like
+    needs next. Two teams locking at the same moment with crossed applicants can
+    still deadlock; Postgres then rolls one like back.
     """
-    project = Project.objects.select_for_update().get(pk=project.pk)
+    project = (
+        Project.objects.select_related("term").select_for_update(of=("self",)).get(pk=project.pk)
+    )
     team = Team.objects.filter(project=project).first()
     if team or project.status != ProjectStatus.OPEN:
         return team
@@ -127,6 +139,14 @@ def try_lock(project):
         [Membership(team=team, user_id=project.owner_id)]
         + [Membership(team=team, user_id=role.filled_by_id, role=role) for role in roles]
     )
+    members = [project.owner_id] + [role.filled_by_id for role in roles]
+    # role_id__in, not role__project: a join would hide status from the recheck after a
+    # row lock wait, and a pass that committed meanwhile would be turned into withdrawn.
+    other_roles = Role.objects.filter(project__term_id=project.term_id).exclude(project=project)
+    Application.objects.filter(
+        status=ApplicationStatus.PENDING, applicant_id__in=members, role_id__in=other_roles
+    ).update(status=ApplicationStatus.WITHDRAWN, updated_at=timezone.now())
+    retire(members, project.term.end_date)
     project.status = ProjectStatus.LOCKED
     project.save(update_fields=["status", "updated_at"])
     return team

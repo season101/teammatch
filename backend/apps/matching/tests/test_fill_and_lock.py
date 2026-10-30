@@ -13,12 +13,14 @@ from rest_framework.test import APIClient
 from apps.core.models import Term
 from apps.matching.models import Application, ApplicationStatus, Membership, Team
 from apps.matching.services import ApplicantRetired, ApplicationNotPending, decide
+from apps.profiles.models import Profile
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 
 pytestmark = pytest.mark.django_db
 
 User = get_user_model()
-LIKED = ApplicationStatus.LIKED
+PENDING, LIKED = ApplicationStatus.PENDING, ApplicationStatus.LIKED
+PASSED, WITHDRAWN = ApplicationStatus.PASSED, ApplicationStatus.WITHDRAWN
 
 
 @pytest.fixture
@@ -150,7 +152,7 @@ def test_a_locking_like_runs_a_fixed_number_of_queries(
     apply(role, "lee@latech.edu")
     client = as_user(owner)
 
-    with django_assert_num_queries(19):  # same count however many roles or rivals
+    with django_assert_num_queries(21):  # same count however many roles or rivals
         response = client.post(f"/api/v1/applications/{liked.id}/like/")
 
     assert response.json()["team_locked"] is True
@@ -191,6 +193,96 @@ def test_a_team_from_a_past_term_does_not_block_a_like(owner, project):
     response = like(owner, apply(add_role(project), "sam@latech.edu"))
 
     assert response.status_code == 200
+
+
+# BR-08: a lock withdraws the members' other pending applications and retires them (F4-07)
+
+
+@pytest.fixture
+def other(term):
+    return Project.objects.create(
+        owner=user("other@latech.edu"), term=term, title="Other", pitch="p", status="open"
+    )
+
+
+def lock(owner, project):
+    """Like Sam onto a new last role, which locks the project."""
+    assert like(owner, apply(add_role(project), "sam@latech.edu")).json()["team_locked"]
+
+
+def test_a_lock_withdraws_every_members_other_pending_applications(owner, project, other):
+    add_role(project, filled_by="kim@latech.edu")
+    members = ["sam@latech.edu", "kim@latech.edu", "owner@latech.edu"]  # liked, earlier, owner
+    elsewhere = [apply(add_role(other), email) for email in members]
+
+    lock(owner, project)
+
+    assert [status_of(a) for a in elsewhere] == [WITHDRAWN] * 3
+
+
+def test_a_lock_leaves_other_terms_other_people_and_this_project_alone(owner, project, other):
+    today = timezone.localdate()
+    next_term = Term.objects.create(
+        name="Next", start_date=today + timedelta(days=90), end_date=today + timedelta(days=200)
+    )
+    later = Project.objects.create(
+        owner=user("other@latech.edu"), term=next_term, title="Later", pitch="p", status="open"
+    )
+    untouched = [
+        apply(add_role(later), "sam@latech.edu"),
+        apply(add_role(other), "lee@latech.edu"),
+        apply(add_role(project, filled_by="kim@latech.edu"), "sam@latech.edu"),
+    ]
+
+    lock(owner, project)
+
+    assert [status_of(a) for a in untouched] == [PENDING] * 3
+
+
+def test_a_lock_leaves_liked_and_passed_applications_alone(owner, project, other):
+    kim = user("kim@latech.edu")
+    liked = Application.objects.create(role=add_role(other), applicant=kim, status=LIKED)
+    passed = Application.objects.create(role=add_role(other), applicant=kim, status=PASSED)
+    add_role(project, filled_by="kim@latech.edu")
+
+    lock(owner, project)
+
+    assert (status_of(liked), status_of(passed)) == (LIKED, PASSED)
+
+
+def test_a_lock_retires_every_member_until_the_term_ends(owner, project, term):
+    add_role(project, filled_by="kim@latech.edu")
+    user("lee@latech.edu")  # not on the team
+
+    lock(owner, project)
+
+    assert dict(Profile.objects.values_list("user__email", "retired_until")) == {
+        "owner@latech.edu": term.end_date,
+        "kim@latech.edu": term.end_date,
+        "sam@latech.edu": term.end_date,
+        "lee@latech.edu": None,
+    }
+
+
+def test_withdrawn_applications_leave_the_other_owners_queue(owner, project, other):
+    other_role = add_role(other)
+    apply(other_role, "sam@latech.edu")
+    lee = apply(other_role, "lee@latech.edu")
+
+    lock(owner, project)
+
+    response = as_user(other.owner).get(f"/api/v1/roles/{other_role.id}/applications/")
+    assert [a["id"] for a in response.json()["results"]] == [lee.id]
+
+
+def test_no_lock_means_nothing_is_withdrawn(owner, project, other):
+    add_role(project)  # still open after the like
+    elsewhere = apply(add_role(other), "sam@latech.edu")
+
+    assert like(owner, apply(add_role(project), "sam@latech.edu")).json()["team_locked"] is False
+
+    assert status_of(elsewhere) == PENDING
+    assert Profile.objects.get(user=elsewhere.applicant).retired_until is None
 
 
 # DD-27: POST /teams/{id}/seen/
@@ -336,3 +428,17 @@ def test_like_fails_if_another_team_took_the_applicant_a_moment_earlier(project,
     assert isinstance(outcome, ApplicantRetired)
     other_role.refresh_from_db()
     assert other_role.status == RoleStatus.OPEN
+    assert status_of(second) == WITHDRAWN  # the first lock withdrew it
+
+
+@needs_postgres
+@committed
+def test_a_pass_that_commits_while_a_lock_waits_stays_passed(project, other):
+    elsewhere = apply(add_role(other), "sam@latech.edu")
+    liked = apply(add_role(project), "sam@latech.edu")
+
+    # the lock's withdraw waits on the pass's row lock, then rechecks the status
+    _, team = race(lambda: decide(elsewhere, PASSED), lambda: decide(liked, LIKED))
+
+    assert team == Team.objects.get()
+    assert status_of(elsewhere) == PASSED
