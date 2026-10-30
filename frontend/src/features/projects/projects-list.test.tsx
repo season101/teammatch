@@ -93,3 +93,67 @@ test("shows a message when the list can't be loaded", async () => {
     /could not load projects/i,
   );
 });
+
+test("search narrows the list by title, owner or pitch", async () => {
+  mockFetch([
+    {
+      next: null,
+      previous: null,
+      results: [project(1, "Bulldog Bites"), project(2, "Thesis Tracker")],
+    },
+    200,
+  ]);
+  renderList();
+  expect(await screen.findByText("Bulldog Bites")).toBeInTheDocument();
+
+  fireEvent.change(
+    screen.getByRole("searchbox", { name: /search projects/i }),
+    {
+      target: { value: "thesis" },
+    },
+  );
+  expect(screen.getByText("Thesis Tracker")).toBeInTheDocument();
+  expect(screen.queryByText("Bulldog Bites")).not.toBeInTheDocument();
+});
+
+test("says nothing matches and clears the search", async () => {
+  mockFetch([
+    { next: null, previous: null, results: [project(1, "Bulldog Bites")] },
+    200,
+  ]);
+  renderList();
+  await screen.findByText("Bulldog Bites");
+
+  fireEvent.change(
+    screen.getByRole("searchbox", { name: /search projects/i }),
+    {
+      target: { value: "Unity" },
+    },
+  );
+  expect(screen.getByText(/No projects match/)).toBeInTheDocument();
+  expect(screen.queryByText("Bulldog Bites")).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: /clear search/i }));
+  expect(screen.getByText("Bulldog Bites")).toBeInTheDocument();
+});
+
+test("warns that search only covers the loaded projects while more pages exist", async () => {
+  mockFetch([
+    {
+      next: "http://localhost/api/v1/projects/?cursor=abc",
+      previous: null,
+      results: [project(1, "First")],
+    },
+    200,
+  ]);
+  renderList();
+  await screen.findByText("First");
+
+  fireEvent.change(
+    screen.getByRole("searchbox", { name: /search projects/i }),
+    {
+      target: { value: "first" },
+    },
+  );
+  expect(screen.getByText(/loaded so far/i)).toBeInTheDocument();
+});
