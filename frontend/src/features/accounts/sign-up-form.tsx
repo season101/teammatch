@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { allauthPost, type AllauthError } from "./allauth";
 import { buttonClasses } from "@/components/ui/button";
 
@@ -13,7 +13,8 @@ function errorText(error: AllauthError) {
   return error.message;
 }
 
-export function SignUpForm() {
+// The page passes the Google button as `google`, shown under the title.
+export function SignUpForm({ google }: { google?: ReactNode }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<Status>("idle");
@@ -62,6 +63,7 @@ export function SignUpForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">Create your TeamMatch account</h1>
+      {google}
 
       <div className="flex flex-col gap-1">
         <label htmlFor="email" className="text-sm font-medium">
