@@ -2,10 +2,12 @@
 
 import { AnimatePresence } from "motion/react";
 import Link from "next/link";
-import { useState } from "react";
-import { Button, buttonClasses } from "@/components/ui/button";
+import { useRef, useState, type KeyboardEvent } from "react";
+import { ActionButton } from "@/components/ui/action-button";
+import { buttonClasses } from "@/components/ui/button";
 import { useMyProfile } from "@/features/profiles/queries";
-import { ApplyForm } from "./apply-form";
+import { useShortcutsEnabled } from "@/features/shell/preferences";
+import { NoteField } from "./note-field";
 import { useApply, useDismiss, useFeed, type ApiError } from "./queries";
 import { RoleCard } from "./role-card";
 import { SwipeCard, type Direction } from "./swipe-card";
@@ -23,6 +25,10 @@ export function Feed() {
   const [note, setNote] = useState("");
   const [announcement, setAnnouncement] = useState("");
   const [error, setError] = useState("");
+  // True while a decision is being sent. The buttons and keys wait for it.
+  const [busy, setBusy] = useState(false);
+  const shortcuts = useShortcutsEnabled();
+  const stack = useRef<HTMLDivElement>(null);
 
   if (feed.isPending) {
     return <p className="text-muted">Loading open roles…</p>;
@@ -38,12 +44,13 @@ export function Feed() {
   const deck = feed.data.filter((role) => !gone.includes(role.id));
   const top = deck[0];
 
-  // Right applies with the typed note, left passes. Drags and the card's buttons
-  // both end up here, and F3-09's button row and arrow keys can too.
+  // Right applies with the typed note, left passes. Drags, the ✕/✓ buttons and
+  // the arrow keys all end up here.
   async function commit(to: Direction) {
     if (!top) return;
     const role = top;
     const sent = note.trim();
+    setBusy(true);
     setDirection(to);
     setGone((ids) => [...ids, role.id]);
     setNote("");
@@ -70,11 +77,27 @@ export function Feed() {
         setGone((ids) => ids.filter((id) => id !== role.id));
         setNote((current) => current || sent);
       }
+    } finally {
+      setBusy(false);
     }
   }
 
+  // ← and → anywhere in the deck, but not while typing the note. Modifiers are
+  // left alone (Alt+← is Back), and a held key doesn't keep deciding.
+  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const to = event.key === "ArrowRight" ? "right" : event.key === "ArrowLeft" ? "left" : null;
+    const target = event.target as Element;
+    if (!to || !top || !shortcuts || busy || event.repeat) return;
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (target.matches("input, textarea, select")) return;
+    event.preventDefault();
+    // Focus inside the leaving card would drop to the page. The stack stays put.
+    stack.current?.focus();
+    commit(to);
+  }
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4" onKeyDown={onKeyDown}>
       <p role="status" className="sr-only">
         {announcement}
       </p>
@@ -83,28 +106,20 @@ export function Feed() {
           {error}
         </p>
       )}
-      <div className="isolate grid">
+      <div
+        ref={stack}
+        role="group"
+        aria-label="Deck of open roles"
+        aria-keyshortcuts={shortcuts ? "ArrowLeft ArrowRight" : undefined}
+        tabIndex={top ? 0 : undefined}
+        className="isolate grid rounded-card"
+      >
         <AnimatePresence initial={false} custom={direction}>
           {deck.slice(0, 2).map((role) => (
             <SwipeCard key={role.id} isTop={role === top} onCommit={commit}>
               <RoleCard role={role} mySkillIds={mySkillIds}>
                 {role === top && (
-                  <>
-                    <ApplyForm
-                      roleId={role.id}
-                      note={note}
-                      onNoteChange={setNote}
-                      onApply={() => commit("right")}
-                    />
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="self-start"
-                      onClick={() => commit("left")}
-                    >
-                      Pass
-                    </Button>
-                  </>
+                  <NoteField roleId={role.id} note={note} onNoteChange={setNote} />
                 )}
               </RoleCard>
             </SwipeCard>
@@ -127,6 +142,23 @@ export function Feed() {
             </div>
           ))}
       </div>
+      {/* aria-disabled, not disabled: Chrome drops focus from a button that gets disabled. */}
+      {top && (
+        <div className="flex items-center justify-center gap-3">
+          <ActionButton
+            kind="pass"
+            label={`Pass on ${top.title}`}
+            aria-disabled={busy}
+            onClick={() => !busy && commit("left")}
+          />
+          <ActionButton
+            kind="apply"
+            label={`Apply to ${top.title} on ${top.project.title}`}
+            aria-disabled={busy}
+            onClick={() => !busy && commit("right")}
+          />
+        </div>
+      )}
     </div>
   );
 }
