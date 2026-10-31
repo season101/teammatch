@@ -26,11 +26,12 @@ Don't use a modal for information that could be inline, or for forms longer than
 | `children` | `ReactNode` | The consequence text |
 | `ctaLabel`, `onCta` | `string`, `() => void` | The safe choice. It gets focus first. |
 | `escapeLabel`, `onEscape` | `string`, `() => void` | The risky choice. Defaults to `onClose`. |
+| `escapeVariant` | `"danger"` \| `"ghost"` | `danger` by default; `ghost` for logout |
 
 ## Behaviour
 - Built on the native `<dialog>` with `showModal()`. The page behind is inert, Esc closes, and focus returns to the opener.
 - It fades and rises in `slow`; with reduced motion it only fades.
-- **Logout is the exception:** "Log out" is the CTA and "Cancel" the escape, because logging out loses nothing. The escape should then be a ghost button, not danger text. That needs a small `escapeVariant` prop, to add when the logout screen is built.
+- **Logout is the exception:** "Log out" is the CTA and "Cancel" the escape, because logging out loses nothing. The escape is then a ghost button, not danger text: pass `escapeVariant="ghost"`.
 
 ## Do and don't
 - **Do** say exactly what will be lost.

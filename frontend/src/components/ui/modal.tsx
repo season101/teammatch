@@ -14,6 +14,8 @@ type Props = {
   onCta: () => void;
   escapeLabel: string;
   onEscape?: () => void;
+  // Danger text by default. Logout uses ghost: leaving loses nothing (modal.md).
+  escapeVariant?: "danger" | "ghost";
 };
 
 // A gate: one CTA (the safe choice) plus a danger text button as the escape.
@@ -28,6 +30,7 @@ export function Modal({
   onCta,
   escapeLabel,
   onEscape = onClose,
+  escapeVariant = "danger",
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const ctaRef = useRef<HTMLButtonElement>(null);
@@ -59,7 +62,7 @@ export function Modal({
         <Button ref={ctaRef} onClick={onCta} className="w-full">
           {ctaLabel}
         </Button>
-        <Button variant="danger" onClick={onEscape}>
+        <Button variant={escapeVariant} onClick={onEscape}>
           {escapeLabel}
         </Button>
       </div>
