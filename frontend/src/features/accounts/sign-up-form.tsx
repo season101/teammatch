@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { allauthPost, type AllauthError } from "./allauth";
+import { StatusIcon } from "./auth-layout";
 import { buttonClasses } from "@/components/ui/button";
 
 type Status = "idle" | "sending" | "sent";
@@ -46,14 +47,25 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
 
   if (status === "sent") {
     return (
-      <section aria-labelledby="sent-heading" className="flex flex-col gap-3">
-        <h1 id="sent-heading" className="text-2xl font-bold">
-          Check your email
+      <section
+        aria-labelledby="sent-heading"
+        className="flex flex-col items-center gap-3 text-center"
+      >
+        <StatusIcon name="mail" />
+        <h1 id="sent-heading" className="font-display text-2xl font-extrabold">
+          Check your inbox
         </h1>
-        <p role="status">
-          We sent a link to <strong>{email}</strong>. Click it to verify your
-          account.
+        <p role="status" className="text-muted">
+          We sent a link to <strong className="text-text">{email}</strong>. Open
+          it to finish signing up.
         </p>
+        <button
+          type="button"
+          onClick={() => setStatus("idle")}
+          className={buttonClasses("ghost", "sm")}
+        >
+          Use a different email
+        </button>
       </section>
     );
   }
@@ -62,7 +74,14 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Create your TeamMatch account</h1>
+      <div className="flex flex-col gap-1">
+        <h1 className="font-display text-3xl font-extrabold">
+          Find your <em>team</em>.
+        </h1>
+        <p className="text-sm text-muted">
+          Use your @latech.edu or @email.latech.edu email.
+        </p>
+      </div>
       {google}
 
       <div className="flex flex-col gap-1">
@@ -96,7 +115,7 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
           className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
         />
         <p id="password-hint" className="text-xs text-muted">
-          At least 8 characters.
+          8 or more characters. Not all numbers, and not close to your email.
         </p>
       </div>
 
@@ -123,6 +142,13 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
       >
         {status === "sending" ? "Creating account…" : "Create account"}
       </button>
+
+      <p className="text-center text-sm text-muted">
+        Already have an account?{" "}
+        <Link href="/login" className="font-medium text-primary underline">
+          Sign in
+        </Link>
+      </p>
     </form>
   );
 }
