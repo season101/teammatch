@@ -36,7 +36,7 @@ test("sends email and password to allauth and asks the user to check their email
   render(<SignUpForm />);
   fillAndSubmit("sam@latech.edu", "a-long-password");
 
-  expect(await screen.findByText("Check your email")).toBeInTheDocument();
+  expect(await screen.findByText("Check your inbox")).toBeInTheDocument();
   const [url, init] = fetchMock.mock.calls[0];
   expect(url).toBe("/_allauth/browser/v1/auth/signup");
   expect(JSON.parse(init?.body as string)).toEqual({

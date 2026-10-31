@@ -22,7 +22,7 @@ test("decodes the key from the link before sending it to allauth", async () => {
   render(<VerifyEmail verificationKey="Mw%3A1xH8V1%3Aabc-_123" />);
   fireEvent.click(screen.getByRole("button", { name: "Verify my email" }));
 
-  expect(await screen.findByText("Email verified")).toBeInTheDocument();
+  expect(await screen.findByText("You're verified")).toBeInTheDocument();
   const [url, init] = fetchMock.mock.calls[0];
   expect(url).toBe("/_allauth/browser/v1/auth/email/verify");
   expect(JSON.parse(init?.body as string)).toEqual({
@@ -36,6 +36,10 @@ test("shows an error for an invalid or expired key", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Verify my email" }));
 
   expect(await screen.findByRole("alert")).toHaveTextContent(
-    "invalid or has expired",
+    "Verification links last 3 days",
+  );
+  expect(screen.getByRole("link", { name: "Sign up again" })).toHaveAttribute(
+    "href",
+    "/signup",
   );
 });

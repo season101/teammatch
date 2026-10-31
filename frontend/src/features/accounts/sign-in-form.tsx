@@ -81,7 +81,12 @@ export function SignInForm({
         </p>
       )}
 
-      <h1 className="text-2xl font-bold">Sign in to TeamMatch</h1>
+      <div className="flex flex-col gap-1">
+        <h1 className="font-display text-3xl font-extrabold">Welcome back.</h1>
+        <p className="text-sm text-muted">
+          Sign in with your @latech.edu or @email.latech.edu account.
+        </p>
+      </div>
       {google}
 
       <div className="flex flex-col gap-1">
@@ -124,10 +129,10 @@ export function SignInForm({
         {sending ? "Signing in…" : "Sign in"}
       </button>
 
-      <p className="text-sm text-muted">
-        No account yet?{" "}
+      <p className="text-center text-sm text-muted">
+        New here?{" "}
         <Link href="/signup" className="font-medium text-primary underline">
-          Sign up
+          Create account
         </Link>
       </p>
     </form>
