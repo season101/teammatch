@@ -172,9 +172,33 @@ test("asks unverified users to check their email", async () => {
   ).toBeInTheDocument();
 });
 
-test("never redirects to another website", () => {
-  expect(safeNext("//evil.example")).toBe("/feed");
-  expect(safeNext("https://evil.example")).toBe("/feed");
-  expect(safeNext(undefined)).toBe("/feed");
-  expect(safeNext("/projects")).toBe("/projects");
+// Each of these would send the browser to another website, or isn't a page at all.
+const UNSAFE_NEXT = [
+  "//evil.com",
+  "/\\evil.com", // browsers read \ as /
+  "/\t/evil.com", // browsers drop tabs and newlines
+  "/.//evil.com", // tidies up to the path //evil.com
+  "/a/..//evil.com",
+  "https://evil.com",
+  "javascript:alert(1)",
+  "",
+  undefined,
+];
+
+test.each(UNSAFE_NEXT)("never redirects to ?next=%j", (next) => {
+  expect(safeNext(next)).toBe("/feed");
+});
+
+test.each(["/feed", "/projects", "/projects/3?tab=mine#roles"])(
+  "keeps ?next=%j, a page on this site",
+  (next) => {
+    expect(safeNext(next)).toBe(next);
+  },
+);
+
+test("a ?next= to another website goes to Discover after sign-in", async () => {
+  mockFetch(200);
+  renderForm("/\\evil.com");
+  fillAndSubmit("sam@latech.edu", "a-long-password");
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/feed"));
 });
