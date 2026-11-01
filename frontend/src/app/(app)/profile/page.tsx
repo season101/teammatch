@@ -1,7 +1,7 @@
 "use client";
 
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
-import { ProfileForm } from "@/features/profiles/profile-form";
+import { ProfileTabs } from "@/features/profiles/profile-tabs";
 
 export default function ProfilePage() {
   return (
@@ -16,7 +16,7 @@ export default function ProfilePage() {
                 email.
               </p>
             </header>
-            <ProfileForm />
+            <ProfileTabs />
           </>
         )}
       </RequireSignIn>
