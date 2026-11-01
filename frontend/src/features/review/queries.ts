@@ -24,7 +24,8 @@ export function useMyProjects(enabled = true) {
     enabled,
     queryFn: async () => {
       const { data, response } = await api.GET("/api/v1/projects/mine/");
-      if (!data) throw new Error(`Could not load your projects (${response.status}).`);
+      if (!data)
+        throw new Error(`Could not load your projects (${response.status}).`);
       return data;
     },
   });
@@ -35,10 +36,14 @@ export function useApplicants(roleId: number) {
   return useQuery({
     queryKey: ["applicants", roleId],
     queryFn: async () => {
-      const { data, response } = await api.GET("/api/v1/roles/{id}/applications/", {
-        params: { path: { id: roleId } },
-      });
-      if (!data) throw new Error(`Could not load applicants (${response.status}).`);
+      const { data, response } = await api.GET(
+        "/api/v1/roles/{id}/applications/",
+        {
+          params: { path: { id: roleId } },
+        },
+      );
+      if (!data)
+        throw new Error(`Could not load applicants (${response.status}).`);
       return data.results;
     },
   });
@@ -59,14 +64,20 @@ export function useDecide(roleId: number) {
       const detail = (error as { detail?: unknown } | undefined)?.detail;
       throw new DecideError(
         response.status,
-        typeof detail === "string" ? detail : "Couldn't save your decision. Please try again.",
+        typeof detail === "string"
+          ? detail
+          : "Couldn't save your decision. Please try again.",
       );
     },
     // A like that locks the team: the app shell refetches my team and shows "It's a Team!".
-    onSuccess: (decided) => {
-      if (decided.team_locked) queryClient.invalidateQueries({ queryKey: ["my-team"] });
+    // Any like fills the role, so my projects (tabs, sidebar counts) refetch too.
+    onSuccess: (decided, { like }) => {
+      if (decided.team_locked)
+        queryClient.invalidateQueries({ queryKey: ["my-team"] });
+      if (like) queryClient.invalidateQueries({ queryKey: ["my-projects"] });
     },
     // The decided applicant is no longer pending, so the list drops them.
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["applicants", roleId] }),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: ["applicants", roleId] }),
   });
 }

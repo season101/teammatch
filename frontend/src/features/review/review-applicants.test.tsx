@@ -156,9 +156,10 @@ test("liking sends the like with the CSRF token and moves on", async () => {
     await screen.findByRole("button", { name: "Like Sam Candidate" }),
   );
 
-  expect(await screen.findByRole("status")).toHaveTextContent(
-    "Liked Sam Candidate.",
-  );
+  expect(
+    await screen.findByText("Frontend developer filled"),
+  ).toBeInTheDocument();
+  expect(screen.getByText("1 role to go.")).toBeInTheDocument();
   const like = requests.find((r) => r.method === "POST");
   expect(new URL(like!.url).pathname).toBe("/api/v1/applications/9/like/");
   expect(like!.headers.get("X-CSRFToken")).toBe("test-token");
@@ -224,4 +225,97 @@ test("says so when I own no projects", async () => {
     "href",
     "/projects/new",
   );
+});
+
+test("the right arrow likes the first applicant", async () => {
+  const requests = mockApi();
+  renderPage();
+  await screen.findByRole("article", { name: /Applicant Sam Candidate/ });
+
+  fireEvent.keyDown(document.body, { key: "ArrowRight" });
+
+  expect(
+    await screen.findByText("Frontend developer filled"),
+  ).toBeInTheDocument();
+  const like = requests.find((r) => r.method === "POST");
+  expect(new URL(like!.url).pathname).toBe("/api/v1/applications/9/like/");
+});
+
+test("the left arrow passes the first applicant", async () => {
+  const requests = mockApi({
+    decision: { status: 200, body: { ...sam, status: "passed" } },
+  });
+  renderPage();
+  await screen.findByRole("article", { name: /Applicant Sam Candidate/ });
+
+  fireEvent.keyDown(document.body, { key: "ArrowLeft" });
+
+  expect(await screen.findByRole("status")).toHaveTextContent(
+    "Passed on Sam Candidate.",
+  );
+  const pass = requests.find((r) => r.method === "POST");
+  expect(new URL(pass!.url).pathname).toBe("/api/v1/applications/9/pass/");
+});
+
+test("arrow keys on a role tab switch tabs instead of deciding", async () => {
+  const requests = mockApi();
+  renderPage();
+  const frontend = await screen.findByRole("tab", {
+    name: /Frontend developer/,
+  });
+  await screen.findByRole("article", { name: /Applicant Sam Candidate/ });
+
+  fireEvent.keyDown(frontend, { key: "ArrowRight" });
+
+  expect(
+    await screen.findByRole("tab", {
+      name: /Backend developer/,
+      selected: true,
+    }),
+  ).toBeInTheDocument();
+  expect(requests.some((r) => r.method === "POST")).toBe(false);
+});
+
+test("keys only act on the role you are looking at", async () => {
+  const requests = mockApi();
+  renderPage();
+  fireEvent.click(
+    await screen.findByRole("tab", { name: /Backend developer/ }),
+  );
+  await screen.findByText("No one's waiting for Backend developer.");
+
+  fireEvent.keyDown(document.body, { key: "ArrowRight" });
+
+  expect(requests.some((r) => r.method === "POST")).toBe(false);
+});
+
+test("an empty role offers Edit role", async () => {
+  mockApi();
+  renderPage();
+
+  fireEvent.click(
+    await screen.findByRole("tab", { name: /Backend developer/ }),
+  );
+
+  expect(
+    await screen.findByRole("link", { name: "Edit role" }),
+  ).toHaveAttribute("href", "/projects/4");
+});
+
+test("a like that fills the last role says the team is locked", async () => {
+  mockApi({
+    decision: {
+      status: 200,
+      body: { ...sam, status: "liked", team_locked: true, team_id: 3 },
+    },
+  });
+  renderPage();
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Like Sam Candidate" }),
+  );
+
+  expect(
+    await screen.findByText("That was the last role. Your team is locked."),
+  ).toBeInTheDocument();
 });
