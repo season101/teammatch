@@ -1,9 +1,22 @@
 "use client";
 
+import Link from "next/link";
+import { useEffect, useRef } from "react";
+import { buttonClasses } from "@/components/ui/button";
 import { ApplicantCard } from "./applicant-card";
 import { useApplicants, useDecide, type MyProject } from "./queries";
 
 type Role = MyProject["roles"][number];
+
+export type FilledNotice = { title: string; detail: string };
+
+type QueueProps = {
+  role: Role;
+  projectId: number;
+  // Open roles in the project besides this one, for "2 roles to go".
+  rolesToGo: number;
+  onFilled: (notice: FilledNotice) => void;
+};
 
 // What goes in the role tab: "Frontend developer 3", or a tick once the role is filled.
 export function RoleTabLabel({ role }: { role: Role }) {
@@ -31,17 +44,58 @@ function OpenRoleLabel({ role }: { role: Role }) {
 }
 
 // One role's queue: the first waiting applicant as a card, with Pass and Like.
-export function RoleQueue({ role }: { role: Role }) {
-  return role.status === "filled" ? (
-    <p className="py-6 text-center text-muted">{role.title} is filled.</p>
+export function RoleQueue(props: QueueProps) {
+  return props.role.status === "filled" ? (
+    <p className="py-6 text-center text-muted">{props.role.title} is filled.</p>
   ) : (
-    <OpenRoleQueue role={role} />
+    <OpenRoleQueue {...props} />
   );
 }
 
-function OpenRoleQueue({ role }: { role: Role }) {
+function OpenRoleQueue({ role, projectId, rolesToGo, onFilled }: QueueProps) {
   const applicants = useApplicants(role.id);
   const decide = useDecide(role.id);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const current = applicants.data?.[0];
+  const name = current?.applicant.display_name || "Unnamed applicant";
+
+  function decideOn(like: boolean) {
+    if (!current || decide.isPending) return;
+    decide.mutate(
+      { id: current.id, name, like },
+      {
+        onSuccess: (decided) => {
+          if (!like) return;
+          onFilled({
+            title: `${role.title} filled`,
+            detail: decided.team_locked
+              ? "That was the last role. Your team is locked."
+              : `${rolesToGo} ${rolesToGo === 1 ? "role" : "roles"} to go.`,
+          });
+        },
+      },
+    );
+  }
+
+  // ← Pass and → Like (docs/design/patterns/review-queue.md). Skipped while typing, on a
+  // role tab (the arrows switch tabs there), behind a dialog, or in a hidden role panel.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.defaultPrevented) return;
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+        return;
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('input, textarea, select, [role="tab"]')) return;
+      if (document.querySelector("dialog[open]")) return;
+      if (!rootRef.current || rootRef.current.closest("[hidden]")) return;
+      if (!current) return;
+      event.preventDefault();
+      decideOn(event.key === "ArrowRight");
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 
   if (applicants.isPending) {
     return <p className="pt-4 text-sm text-muted">Loading applicants…</p>;
@@ -54,15 +108,11 @@ function OpenRoleQueue({ role }: { role: Role }) {
     );
   }
 
-  const [current] = applicants.data;
-  const name = current?.applicant.display_name || "Unnamed applicant";
-
   return (
-    <div className="flex flex-col gap-4 pt-4">
-      {decide.isSuccess && (
+    <div ref={rootRef} className="flex flex-col gap-4 pt-4">
+      {decide.isSuccess && !decide.variables.like && (
         <p role="status" className="text-sm text-success">
-          {decide.variables.like ? "Liked" : "Passed on"}{" "}
-          {decide.variables.name}.
+          Passed on {decide.variables.name}.
         </p>
       )}
       {decide.isError && (
@@ -81,14 +131,20 @@ function OpenRoleQueue({ role }: { role: Role }) {
             application={current}
             roleTitle={role.title}
             disabled={decide.isPending}
-            onLike={() => decide.mutate({ id: current.id, name, like: true })}
-            onPass={() => decide.mutate({ id: current.id, name, like: false })}
+            onLike={() => decideOn(true)}
+            onPass={() => decideOn(false)}
           />
         </>
       ) : (
-        <p className="py-6 text-center text-muted">
-          No one&apos;s waiting for {role.title}.
-        </p>
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <p className="text-muted">No one&apos;s waiting for {role.title}.</p>
+          <Link
+            href={`/projects/${projectId}`}
+            className={buttonClasses("secondary", "sm")}
+          >
+            Edit role
+          </Link>
+        </div>
       )}
     </div>
   );
