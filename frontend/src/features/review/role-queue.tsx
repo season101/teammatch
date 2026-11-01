@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { buttonClasses } from "@/components/ui/button";
+import { useProject } from "@/features/projects/queries";
 import { ApplicantCard } from "./applicant-card";
 import { useApplicants, useDecide, type MyProject } from "./queries";
 
@@ -55,6 +56,10 @@ export function RoleQueue(props: QueueProps) {
 function OpenRoleQueue({ role, projectId, rolesToGo, onFilled }: QueueProps) {
   const applicants = useApplicants(role.id);
   const decide = useDecide(role.id);
+  const project = useProject(projectId);
+  const requiredSkillIds =
+    project.data?.roles.find((other) => other.id === role.id)
+      ?.required_skills ?? [];
   const rootRef = useRef<HTMLDivElement>(null);
   const current = applicants.data?.[0];
   const name = current?.applicant.display_name || "Unnamed applicant";
@@ -130,6 +135,7 @@ function OpenRoleQueue({ role, projectId, rolesToGo, onFilled }: QueueProps) {
             key={current.id}
             application={current}
             roleTitle={role.title}
+            requiredSkillIds={requiredSkillIds}
             disabled={decide.isPending}
             onLike={() => decideOn(true)}
             onPass={() => decideOn(false)}
