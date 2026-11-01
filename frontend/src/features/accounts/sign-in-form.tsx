@@ -9,10 +9,23 @@ import { googleErrorText } from "./google-button";
 import { buttonClasses } from "@/components/ui/button";
 
 // Only follow ?next= to a page on this site, never to another website. Default: the Discover deck.
+// Checks the address the browser would build from it, not the raw text: browsers
+// read "/\evil.com" as "//evil.com" and drop tabs and newlines.
 export function safeNext(next: string | undefined) {
-  return next && next.startsWith("/") && !next.startsWith("//")
-    ? next
-    : "/feed";
+  if (!next) return "/feed";
+  // No window on the server. Any origin works there, since only the path is kept.
+  const origin =
+    typeof window === "undefined" ? "http://localhost" : window.location.origin;
+  let url: URL;
+  try {
+    url = new URL(next, origin);
+  } catch {
+    return "/feed"; // not an address at all, like "https://"
+  }
+  // "/.//evil.com" stays on this site but tidies up to the path "//evil.com",
+  // which the browser reads as another website.
+  if (url.origin !== origin || url.pathname.startsWith("//")) return "/feed";
+  return url.pathname + url.search + url.hash;
 }
 
 export function SignInForm({

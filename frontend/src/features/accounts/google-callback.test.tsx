@@ -71,6 +71,33 @@ test("signed in with ?next=: goes back to the page the student was on", async ()
   await waitFor(() => expect(replace).toHaveBeenCalledWith("/projects/12"));
 });
 
+test.each(["/feed", "/projects/3?tab=mine#roles"])(
+  "signed in with ?next=%j: goes there",
+  async (next) => {
+    mockSession(200);
+    renderCallback(undefined, next);
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(next));
+  },
+);
+
+test.each([
+  "//evil.com",
+  "/\\evil.com", // browsers read \ as /
+  "/\t/evil.com", // browsers drop tabs and newlines
+  "/.//evil.com", // tidies up to the path //evil.com
+  "https://evil.com",
+  "javascript:alert(1)",
+  "",
+  undefined,
+])(
+  "signed in with ?next=%j: goes to the deck, not another website",
+  async (next) => {
+    mockSession(200);
+    renderCallback(undefined, next);
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/feed"));
+  },
+);
+
 test("an error keeps ?next= for the next try", async () => {
   mockSession(401);
   renderCallback("cancelled", "/projects/12");
