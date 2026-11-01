@@ -43,11 +43,18 @@ function mockApi({
       requests.push(request.clone());
       const path = new URL(request.url).pathname;
       let reply: Reply = { status: 404, body: {} };
-      if (path === "/api/v1/projects/mine/") reply = { status: 200, body: projects };
+      if (path === "/api/v1/projects/mine/")
+        reply = { status: 200, body: projects };
       else if (path === "/api/v1/roles/2/applications/")
-        reply = { status: 200, body: { next: null, previous: null, results: pending } };
+        reply = {
+          status: 200,
+          body: { next: null, previous: null, results: pending },
+        };
       else if (path === "/api/v1/roles/1/applications/")
-        reply = { status: 200, body: { next: null, previous: null, results: [] } };
+        reply = {
+          status: 200,
+          body: { next: null, previous: null, results: [] },
+        };
       else if (/^\/api\/v1\/applications\/9\/(like|pass)\/$/.test(path)) {
         reply = decision;
         if (decision.status === 200) pending = [];
@@ -62,7 +69,9 @@ function mockApi({
 }
 
 function renderPage() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
     <QueryClientProvider client={client}>
       <ReviewApplicants />
@@ -75,67 +84,132 @@ afterEach(() => {
   document.cookie = "csrftoken=; max-age=0";
 });
 
-test("lists each role's pending applicants with name, major, skills and note", async () => {
+test("shows a tab per role with its count, and the first applicant as a card", async () => {
   mockApi();
   renderPage();
 
-  const frontend = await screen.findByRole("region", { name: /Frontend developer/ });
-  expect(await within(frontend).findByText("Sam Candidate")).toBeInTheDocument();
-  expect(within(frontend).getByText("Cyber Engineering")).toBeInTheDocument();
-  expect(within(frontend).getByRole("list", { name: "Sam Candidate's skills" })).toHaveTextContent(
-    "React",
-  );
-  expect(within(frontend).getByText("I know React")).toBeInTheDocument();
-  expect(within(frontend).getByText("1 pending")).toBeInTheDocument();
+  expect(
+    await screen.findByRole("tab", { name: /Frontend developer\s*1/ }),
+  ).toBeInTheDocument();
+  expect(
+    await screen.findByRole("tab", { name: /Backend developer\s*0/ }),
+  ).toBeInTheDocument();
 
-  const backend = screen.getByRole("region", { name: /Backend developer/ });
-  expect(await within(backend).findByText("No pending applicants.")).toBeInTheDocument();
+  const card = await screen.findByRole("article", {
+    name: "Applicant Sam Candidate for Frontend developer",
+  });
+  expect(within(card).getByText("Cyber Engineering")).toBeInTheDocument();
+  expect(
+    within(card).getByRole("list", { name: "Sam Candidate's skills" }),
+  ).toHaveTextContent("React");
+  expect(within(card).getByText("I know React")).toBeInTheDocument();
+  expect(
+    screen.getByText("Frontend developer · 1 of 1 waiting"),
+  ).toBeInTheDocument();
 });
 
-test("liking sends the like with the CSRF token and drops the applicant", async () => {
+test("a role with no one waiting says so", async () => {
+  mockApi();
+  renderPage();
+
+  fireEvent.click(
+    await screen.findByRole("tab", { name: /Backend developer/ }),
+  );
+
+  expect(
+    await screen.findByText("No one's waiting for Backend developer."),
+  ).toBeInTheDocument();
+});
+
+test("a filled role shows a tick and does not load applicants", async () => {
+  const requests = mockApi({
+    projects: [
+      {
+        ...openProject,
+        roles: [
+          { id: 2, title: "Frontend developer", status: "open" },
+          { id: 1, title: "Backend developer", status: "filled" },
+        ],
+      },
+    ],
+  });
+  renderPage();
+
+  fireEvent.click(
+    await screen.findByRole("tab", { name: /Backend developer/ }),
+  );
+
+  expect(
+    await screen.findByText("Backend developer is filled."),
+  ).toBeInTheDocument();
+  expect(requests.some((r) => r.url.includes("/roles/1/applications/"))).toBe(
+    false,
+  );
+});
+
+test("liking sends the like with the CSRF token and moves on", async () => {
   document.cookie = "csrftoken=test-token";
   const requests = mockApi();
   renderPage();
 
-  fireEvent.click(await screen.findByRole("button", { name: "Like Sam Candidate" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Like Sam Candidate" }),
+  );
 
-  expect(await screen.findByRole("status")).toHaveTextContent("Liked Sam Candidate.");
+  expect(await screen.findByRole("status")).toHaveTextContent(
+    "Liked Sam Candidate.",
+  );
   const like = requests.find((r) => r.method === "POST");
   expect(new URL(like!.url).pathname).toBe("/api/v1/applications/9/like/");
   expect(like!.headers.get("X-CSRFToken")).toBe("test-token");
-  const frontend = screen.getByRole("region", { name: /Frontend developer/ });
-  expect(await within(frontend).findByText("No pending applicants.")).toBeInTheDocument();
+  expect(
+    await screen.findByText("No one's waiting for Frontend developer."),
+  ).toBeInTheDocument();
 });
 
 test("passing sends the pass", async () => {
-  const requests = mockApi({ decision: { status: 200, body: { ...sam, status: "passed" } } });
+  const requests = mockApi({
+    decision: { status: 200, body: { ...sam, status: "passed" } },
+  });
   renderPage();
 
-  fireEvent.click(await screen.findByRole("button", { name: "Pass on Sam Candidate" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Pass on Sam Candidate" }),
+  );
 
-  expect(await screen.findByRole("status")).toHaveTextContent("Passed on Sam Candidate.");
+  expect(await screen.findByRole("status")).toHaveTextContent(
+    "Passed on Sam Candidate.",
+  );
   const pass = requests.find((r) => r.method === "POST");
   expect(new URL(pass!.url).pathname).toBe("/api/v1/applications/9/pass/");
 });
 
 test("shows the API's message when the application was already decided", async () => {
   mockApi({
-    decision: { status: 409, body: { detail: "This application is no longer pending." } },
+    decision: {
+      status: 409,
+      body: { detail: "This application is no longer pending." },
+    },
   });
   renderPage();
 
-  fireEvent.click(await screen.findByRole("button", { name: "Like Sam Candidate" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Like Sam Candidate" }),
+  );
 
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "This application is no longer pending.",
   );
 });
 
-test("a draft project asks to be published instead of loading applicants", async () => {
+test("a draft project is not listed, and the page says there is nothing to review", async () => {
   const requests = mockApi({ projects: [{ ...openProject, status: "draft" }] });
   renderPage();
 
-  expect(await screen.findByText("Publish this project to get applicants.")).toBeInTheDocument();
+  expect(
+    await screen.findByText(/No open project to review yet/),
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Campus Ride Share")).not.toBeInTheDocument();
   expect(requests.some((r) => r.url.includes("/applications/"))).toBe(false);
 });
 
@@ -143,6 +217,11 @@ test("says so when I own no projects", async () => {
   mockApi({ projects: [] });
   renderPage();
 
-  expect(await screen.findByText(/You don.t own any projects yet/)).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "Create one" })).toHaveAttribute("href", "/projects/new");
+  expect(
+    await screen.findByText(/You don.t own any projects yet/),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Create one" })).toHaveAttribute(
+    "href",
+    "/projects/new",
+  );
 });

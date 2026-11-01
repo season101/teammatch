@@ -1,9 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { MotionGlobalConfig } from "motion/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeAll, vi } from "vitest";
-import { ApplicantList } from "@/features/review/applicant-list";
+import { RoleQueue } from "@/features/review/role-queue";
 import { TeamCelebration } from "./its-a-team";
 
 MotionGlobalConfig.skipAnimations = true;
@@ -52,7 +58,8 @@ function mockApi(myTeam: () => typeof team | null) {
         body = { next: null, previous: null, results: [sam] };
       else if (path === "/api/v1/applications/9/like/")
         body = { ...sam, status: "liked", team_locked: true, team_id: team.id };
-      else if (path === "/api/v1/teams/3/seen/") return new Response(null, { status: 204 });
+      else if (path === "/api/v1/teams/3/seen/")
+        return new Response(null, { status: 204 });
       return new Response(JSON.stringify(body), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -60,12 +67,16 @@ function mockApi(myTeam: () => typeof team | null) {
     }),
   );
   const seen = () =>
-    posts.map((r) => new URL(r.url).pathname).filter((path) => path.endsWith("/seen/"));
+    posts
+      .map((r) => new URL(r.url).pathname)
+      .filter((path) => path.endsWith("/seen/"));
   return { posts, seen };
 }
 
 function renderWithClient(ui: ReactNode) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
   return client;
 }
@@ -81,7 +92,9 @@ test("shows once when my seen_at is empty, and marks it seen", async () => {
   renderWithClient(<TeamCelebration />);
 
   const dialog = await screen.findByRole("dialog", { name: "It's a Team!" });
-  expect(within(dialog).getByText("Bulldog Bites · Fall 2026")).toBeInTheDocument();
+  expect(
+    within(dialog).getByText("Bulldog Bites · Fall 2026"),
+  ).toBeInTheDocument();
   expect(within(dialog).getByText(/until Dec 12/)).toBeInTheDocument();
   expect(
     within(dialog)
@@ -91,16 +104,17 @@ test("shows once when my seen_at is empty, and marks it seen", async () => {
   const cta = within(dialog).getByRole("link", { name: "Open team chat" });
   expect(cta).toHaveFocus();
   expect(cta).toHaveAttribute("href", "/teams");
-  expect(within(dialog).getByRole("link", { name: "See the team" })).toHaveAttribute(
-    "href",
-    "/teams",
-  );
+  expect(
+    within(dialog).getByRole("link", { name: "See the team" }),
+  ).toHaveAttribute("href", "/teams");
   await waitFor(() => expect(seen()).toEqual(["/api/v1/teams/3/seen/"]));
   expect(posts[0].headers.get("X-CSRFToken")).toBe("test-token");
 
   // Esc closes it, and it doesn't come back.
   (dialog as HTMLDialogElement).close();
-  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+  );
   expect(seen()).toHaveLength(1);
 });
 
@@ -109,7 +123,9 @@ test("doesn't show once I've seen it, or when I have no team", async () => {
     const { seen } = mockApi(() => myTeam);
     const client = renderWithClient(<TeamCelebration />);
 
-    await waitFor(() => expect(client.getQueryState(["my-team"])?.status).toBe("success"));
+    await waitFor(() =>
+      expect(client.getQueryState(["my-team"])?.status).toBe("success"),
+    );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(seen()).toEqual([]);
   }
@@ -120,7 +136,9 @@ test("the owner sees it right after the like that locks the team", async () => {
   const { seen } = mockApi(() => (locked ? team : null));
   renderWithClient(
     <>
-      <ApplicantList roleId={2} roleTitle="Frontend developer" />
+      <RoleQueue
+        role={{ id: 2, title: "Frontend developer", status: "open" }}
+      />
       <TeamCelebration />
     </>,
   );
@@ -130,6 +148,8 @@ test("the owner sees it right after the like that locks the team", async () => {
   locked = true;
   fireEvent.click(like);
 
-  expect(await screen.findByRole("dialog", { name: "It's a Team!" })).toBeInTheDocument();
+  expect(
+    await screen.findByRole("dialog", { name: "It's a Team!" }),
+  ).toBeInTheDocument();
   await waitFor(() => expect(seen()).toEqual(["/api/v1/teams/3/seen/"]));
 });
