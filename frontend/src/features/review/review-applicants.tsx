@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ApplicantList } from "./applicant-list";
+import { Tabs } from "@/components/ui/tabs";
 import { useMyProjects } from "./queries";
+import { RoleQueue, RoleTabLabel } from "./role-queue";
 
 export function ReviewApplicants() {
   const projects = useMyProjects();
@@ -31,9 +32,27 @@ export function ReviewApplicants() {
       </p>
     );
   }
+
+  // Drafts have no applicants and archived projects are done, so only open projects show.
+  const open = projects.data.filter((project) => project.status === "open");
+  if (open.length === 0) {
+    return (
+      <p className="text-muted">
+        No open project to review yet. Publish a draft from{" "}
+        <Link
+          href="/projects"
+          className="font-medium text-primary hover:underline"
+        >
+          Projects
+        </Link>{" "}
+        to start getting applicants.
+      </p>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-8">
-      {projects.data.map((project) => (
+      {open.map((project) => (
         <section
           key={project.id}
           aria-labelledby={`project-${project.id}`}
@@ -41,24 +60,18 @@ export function ReviewApplicants() {
         >
           <h2 id={`project-${project.id}`} className="text-lg font-semibold">
             {project.title}
-            <span className="ml-2 text-sm font-normal text-muted">
-              {project.status}
-            </span>
           </h2>
-          {project.status === "draft" ? (
-            <p className="text-sm text-muted">
-              Publish this project to get applicants.
-            </p>
-          ) : project.roles.length === 0 ? (
+          {project.roles.length === 0 ? (
             <p className="text-sm text-muted">No roles yet.</p>
           ) : (
-            project.roles.map((role) => (
-              <ApplicantList
-                key={role.id}
-                roleId={role.id}
-                roleTitle={role.title}
-              />
-            ))
+            <Tabs
+              label={`Roles of ${project.title}`}
+              tabs={project.roles.map((role) => ({
+                id: String(role.id),
+                label: <RoleTabLabel role={role} />,
+                panel: <RoleQueue role={role} />,
+              }))}
+            />
           )}
         </section>
       ))}
