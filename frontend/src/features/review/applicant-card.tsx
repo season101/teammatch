@@ -4,22 +4,31 @@ import { initials } from "@/features/teams/my-team";
 import type { Applicant } from "./queries";
 
 // One candidate for one role, as in docs/design/components/applicant-card.md.
-// Match badge and the Details panel come in later PRs.
+// The match percentage badge and the Details panel are not built yet.
 export function ApplicantCard({
   application,
   roleTitle,
+  requiredSkillIds,
   disabled,
   onLike,
   onPass,
 }: {
   application: Applicant;
   roleTitle: string;
+  // The skills the role asks for. The ones the applicant has are shown first, in lime.
+  requiredSkillIds: number[];
   disabled: boolean;
   onLike: () => void;
   onPass: () => void;
 }) {
   const { applicant } = application;
   const name = applicant.display_name || "Unnamed applicant";
+  const matched = applicant.skills.filter((skill) =>
+    requiredSkillIds.includes(skill.id),
+  );
+  const others = applicant.skills.filter(
+    (skill) => !requiredSkillIds.includes(skill.id),
+  );
 
   return (
     <article
@@ -40,9 +49,21 @@ export function ApplicantCard({
       </header>
 
       <div className="flex flex-col gap-4 p-5">
+        {requiredSkillIds.length > 0 && (
+          <p className="text-sm text-muted">
+            Has {matched.length} of {requiredSkillIds.length} required{" "}
+            {requiredSkillIds.length === 1 ? "skill" : "skills"}
+          </p>
+        )}
+
         {applicant.skills.length > 0 && (
           <ul aria-label={`${name}'s skills`} className="flex flex-wrap gap-2">
-            {applicant.skills.map((skill) => (
+            {matched.map((skill) => (
+              <li key={skill.id}>
+                <Chip variant="matched">{skill.name}</Chip>
+              </li>
+            ))}
+            {others.map((skill) => (
               <li key={skill.id}>
                 <Chip>{skill.name}</Chip>
               </li>
@@ -68,7 +89,7 @@ export function ApplicantCard({
           type="button"
           aria-label={`Pass on ${name}`}
           disabled={disabled}
-          className={`${buttonClasses("secondary")} flex-1 hover:border-pass hover:text-pass`}
+          className={`${buttonClasses("secondary")} flex-1 hover:border-pass hover:text-pass active:border-pass active:text-pass`}
           onClick={onPass}
         >
           Pass
@@ -77,7 +98,7 @@ export function ApplicantCard({
           type="button"
           aria-label={`Like ${name}`}
           disabled={disabled}
-          className={`${buttonClasses("cta")} flex-1 hover:bg-apply hover:text-on-apply`}
+          className={`${buttonClasses("cta")} flex-1 hover:bg-apply hover:text-on-apply active:bg-apply active:text-on-apply`}
           onClick={onLike}
         >
           Like

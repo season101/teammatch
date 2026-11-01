@@ -28,6 +28,39 @@ const openProject = {
   ],
 };
 
+// Role 2 asks for React (Sam has it) and Python (Sam does not).
+const projectDetail = {
+  id: 4,
+  title: "Campus Ride Share",
+  pitch: "",
+  status: "open",
+  owner: 1,
+  owner_name: "Owner",
+  created_at: "2026-10-16T00:00:00Z",
+  roles: [
+    {
+      id: 2,
+      project: 4,
+      title: "Frontend developer",
+      description: "",
+      status: "open",
+      required_skills: [5, 6],
+      created_at: "2026-10-16T00:00:00Z",
+      filled_by_name: "",
+    },
+    {
+      id: 1,
+      project: 4,
+      title: "Backend developer",
+      description: "",
+      status: "open",
+      required_skills: [],
+      created_at: "2026-10-16T00:00:00Z",
+      filled_by_name: "",
+    },
+  ],
+};
+
 type Reply = { status: number; body: unknown };
 
 // A tiny fake API: role 2 has Sam until a decision succeeds. Records every request.
@@ -45,6 +78,8 @@ function mockApi({
       let reply: Reply = { status: 404, body: {} };
       if (path === "/api/v1/projects/mine/")
         reply = { status: 200, body: projects };
+      else if (path === "/api/v1/projects/4/")
+        reply = { status: 200, body: projectDetail };
       else if (path === "/api/v1/roles/2/applications/")
         reply = {
           status: 200,
@@ -318,4 +353,19 @@ test("a like that fills the last role says the team is locked", async () => {
   expect(
     await screen.findByText("That was the last role. Your team is locked."),
   ).toBeInTheDocument();
+});
+
+test("the card shows how many required skills the applicant has, matched ones first", async () => {
+  mockApi();
+  renderPage();
+
+  const card = await screen.findByRole("article", {
+    name: /Applicant Sam Candidate/,
+  });
+  expect(
+    await within(card).findByText("Has 1 of 2 required skills"),
+  ).toBeInTheDocument();
+  expect(within(card).getByText("React").closest("li")).toHaveTextContent(
+    "(matched)",
+  );
 });
