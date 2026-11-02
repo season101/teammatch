@@ -18,8 +18,9 @@ export function SignOutButton() {
     setAsking(false);
     setSending(true);
     await signOut();
-    // Forget the cached user so protected pages see "signed out" right away.
-    queryClient.setQueryData(["session"], null);
+    // Drop everything cached for this user, so the next person on this browser
+    // doesn't see their profile or projects, and pages ask the server again.
+    queryClient.clear();
     router.replace("/");
   }
 

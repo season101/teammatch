@@ -31,6 +31,7 @@ function renderButton() {
   vi.stubGlobal("fetch", fetchMock);
   const client = new QueryClient();
   client.setQueryData(["session"], { id: 1, email: "sam@latech.edu" });
+  client.setQueryData(["my-profile"], { id: 7, display_name: "Sam" });
   render(
     <QueryClientProvider client={client}>
       <SignOutButton />
@@ -45,7 +46,7 @@ afterEach(() => {
 });
 
 test("asks first, then ends the session and goes to the landing page", async () => {
-  const { fetchMock, client } = renderButton();
+  const { fetchMock } = renderButton();
 
   fireEvent.click(screen.getByRole("button", { name: "Log out" }));
   const dialog = screen.getByRole("dialog", { name: "Log out of TeamMatch?" });
@@ -56,7 +57,20 @@ test("asks first, then ends the session and goes to the landing page", async () 
   const [url, init] = fetchMock.mock.calls[0];
   expect(url).toBe("/_allauth/browser/v1/auth/session");
   expect(init?.method).toBe("DELETE");
-  expect(client.getQueryData(["session"])).toBeNull();
+});
+
+// The next person on this browser shouldn't see Sam's profile, projects or team.
+test("forgets everything cached for the signed-out user", async () => {
+  const { client } = renderButton();
+
+  fireEvent.click(screen.getByRole("button", { name: "Log out" }));
+  fireEvent.click(
+    within(screen.getByRole("dialog")).getByRole("button", { name: "Log out" }),
+  );
+
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
+  expect(client.getQueryData(["session"])).toBeUndefined();
+  expect(client.getQueryData(["my-profile"])).toBeUndefined();
 });
 
 test("Cancel keeps you signed in", () => {
