@@ -104,6 +104,89 @@ test("refreshes a cached signed-out session before going back", async () => {
   expect(sessionAtRedirect).toEqual({ id: 1 });
 });
 
+// Olive left the lab PC signed in. allauth answers 409 to Sam's right password
+// and keeps Olive's session (found in the 11-01 bug sweep).
+function mockSignedInAsOlive(retryStatus: number) {
+  document.cookie = "csrftoken=test-token";
+  let user: { id: number; email: string } | null = {
+    id: 1,
+    email: "olive@latech.edu",
+  };
+  const reply = (status: number, body: unknown = {}) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+  const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
+    const url = String(input);
+    if (url.endsWith("/auth/login")) {
+      if (user) return reply(409, { status: 409 });
+      if (retryStatus !== 200)
+        return reply(retryStatus, { status: retryStatus });
+      user = { id: 2, email: "sam@latech.edu" };
+      return reply(200, { status: 200 });
+    }
+    if (url.endsWith("/auth/session")) {
+      if (init?.method === "DELETE") user = null;
+      return user
+        ? reply(200, { status: 200, data: { user } })
+        : reply(401, { status: 401 });
+    }
+    return reply(404);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+test("signs the other account out when someone else is still signed in", async () => {
+  const fetchMock = mockSignedInAsOlive(200);
+  const client = newClient();
+  await client.prefetchQuery({
+    queryKey: ["session"],
+    queryFn: getSessionUser,
+  });
+  expect(client.getQueryData(["session"])).toEqual({
+    id: 1,
+    email: "olive@latech.edu",
+  });
+  fetchMock.mockClear();
+  let sessionAtRedirect: unknown;
+  replace.mockImplementation(() => {
+    sessionAtRedirect = client.getQueryData(["session"]);
+  });
+
+  renderForm("/profile", client);
+  fillAndSubmit("sam@latech.edu", "a-long-password");
+
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/profile"));
+  expect(sessionAtRedirect).toEqual({ id: 2, email: "sam@latech.edu" });
+  const calls = fetchMock.mock.calls.map(
+    ([url, init]) => `${init?.method ?? "GET"} ${url}`,
+  );
+  expect(calls).toEqual([
+    "POST /_allauth/browser/v1/auth/login",
+    "DELETE /_allauth/browser/v1/auth/session",
+    "POST /_allauth/browser/v1/auth/login",
+    "GET /_allauth/browser/v1/auth/session",
+  ]);
+});
+
+test("shows the normal error when the retry after signing out fails", async () => {
+  const fetchMock = mockSignedInAsOlive(400);
+  renderForm();
+  fillAndSubmit("sam@latech.edu", "a-long-password");
+
+  expect(
+    await screen.findByText("Email or password is incorrect."),
+  ).toBeInTheDocument();
+  expect(replace).not.toHaveBeenCalled();
+  // one retry only
+  const logins = fetchMock.mock.calls.filter(([url]) =>
+    String(url).endsWith("/auth/login"),
+  );
+  expect(logins).toHaveLength(2);
+});
+
 test("goes back to the page that asked for sign-in", async () => {
   mockFetch(200);
   renderForm("/projects");
