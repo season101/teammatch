@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import F, Prefetch
+from django.db.models import F, Prefetch, Q
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 
@@ -75,6 +75,12 @@ class ApplicantRetired(APIException):
     default_code = "applicant_retired"
 
 
+class ApplicantCommitted(APIException):
+    status_code = 409
+    default_detail = "This person already has a spot on an open project."
+    default_code = "applicant_committed"
+
+
 @transaction.atomic
 def decide(application, status):
     """The owner likes or passes a pending application (F4-02, F4-05).
@@ -97,6 +103,15 @@ def decide(application, status):
         )
         if on_a_team.exists():
             raise ApplicantRetired()
+        # A like can't be undone (BR-11), so an open project they own or fill a role on
+        # already holds their one spot this term.
+        committed = Project.objects.filter(
+            Q(owner_id=application.applicant_id) | Q(roles__filled_by_id=application.applicant_id),
+            term_id=role.project.term_id,
+            status=ProjectStatus.OPEN,
+        )
+        if committed.exists():
+            raise ApplicantCommitted()
     application = (
         Application.objects.select_related("applicant__profile")
         .select_for_update(of=("self",))

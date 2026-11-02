@@ -49,7 +49,7 @@ class RoleApplicationsView(generics.ListAPIView):
 class ApplicationDecisionView(APIView):
     """Like or pass a pending applicant on my role.
 
-    Not pending, or the applicant just joined another team: 409.
+    Not pending, or the applicant is on another team or has a spot on an open project: 409.
     """
 
     decision = None  # set per URL

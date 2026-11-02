@@ -6,7 +6,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.core.models import Term
-from apps.matching.models import Application, ApplicationStatus, Team
+from apps.matching.models import Application, ApplicationStatus, Membership, Team
 from apps.matching.services import decide
 from apps.matching.tests.test_fill_and_lock import committed, needs_postgres, race
 from apps.profiles.models import Skill
@@ -230,12 +230,40 @@ def test_can_publish_another_once_the_first_is_archived(owner, term, project, ro
     assert draft.status == ProjectStatus.OPEN
 
 
-def test_can_publish_another_once_the_first_is_locked(owner, term, project, role, skill):
+def test_cannot_publish_another_once_the_first_is_locked(owner, term, project, role, skill):
     project.status = ProjectStatus.LOCKED
     project.save()
+    Membership.objects.create(team=Team.objects.create(project=project), user=owner)
     draft = second_draft(owner, term, skill)
 
     response = client_for(owner).post(publish_url(draft))
+
+    # the owner is on that team for the rest of the term (BR-08)
+    assert response.status_code == 409
+    assert response.data["detail"].code == "owner_has_a_spot"
+    draft.refresh_from_db()
+    assert draft.status == ProjectStatus.DRAFT
+
+
+def test_cannot_publish_while_filling_a_role_on_an_open_project(owner, other, term, project, role):
+    theirs = Project.objects.create(
+        owner=other, term=term, title="Theirs", pitch="p", status=ProjectStatus.OPEN
+    )
+    filled_role(theirs, "Backend", owner)
+
+    response = client_for(owner).post(publish_url(project))
+
+    assert response.status_code == 409
+    assert response.data["detail"].code == "owner_has_a_spot"
+
+
+def test_a_role_on_a_closed_project_does_not_block_publishing(owner, other, term, project, role):
+    theirs = Project.objects.create(
+        owner=other, term=term, title="Theirs", pitch="p", status=ProjectStatus.ARCHIVED
+    )
+    filled_role(theirs, "Backend", owner)
+
+    response = client_for(owner).post(publish_url(project))
 
     assert response.status_code == 200
 
@@ -383,6 +411,27 @@ def test_edit_fails_if_a_like_just_filled_the_role(owner, other, role):
     assert outcome.status_code == 409
     role.refresh_from_db()
     assert (role.title, role.status, role.filled_by) == ("Backend dev", RoleStatus.FILLED, other)
+
+
+@needs_postgres
+@committed
+def test_publish_fails_if_a_like_just_gave_the_owner_a_role(owner, other, term, project, role):
+    theirs = Project.objects.create(
+        owner=other, term=term, title="Theirs", pitch="p", status=ProjectStatus.OPEN
+    )
+    Role.objects.create(project=theirs, title="Still open")
+    liked = Application.objects.create(
+        role=Role.objects.create(project=theirs, title="Backend"), applicant=owner
+    )
+
+    outcome = race(
+        lambda: decide(liked, ApplicationStatus.LIKED),
+        lambda: client_for(owner).post(publish_url(project)),
+    )
+
+    assert outcome.status_code == 409
+    project.refresh_from_db()
+    assert project.status == ProjectStatus.DRAFT
 
 
 @needs_postgres

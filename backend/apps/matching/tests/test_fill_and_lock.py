@@ -12,7 +12,12 @@ from rest_framework.test import APIClient
 
 from apps.core.models import Term
 from apps.matching.models import Application, ApplicationStatus, Membership, Team
-from apps.matching.services import ApplicantRetired, ApplicationNotPending, decide
+from apps.matching.services import (
+    ApplicantCommitted,
+    ApplicantRetired,
+    ApplicationNotPending,
+    decide,
+)
 from apps.profiles.models import Profile
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 
@@ -152,7 +157,7 @@ def test_a_locking_like_runs_a_fixed_number_of_queries(
     apply(role, "lee@latech.edu")
     client = as_user(owner)
 
-    with django_assert_num_queries(21):  # same count however many roles or rivals
+    with django_assert_num_queries(22):  # same count however many roles or rivals
         response = client.post(f"/api/v1/applications/{liked.id}/like/")
 
     assert response.json()["team_locked"] is True
@@ -283,6 +288,48 @@ def test_no_lock_means_nothing_is_withdrawn(owner, project, other):
 
     assert status_of(elsewhere) == PENDING
     assert Profile.objects.get(user=elsewhere.applicant).retired_until is None
+
+
+# One spot per person per term: a like can't be undone (BR-11), so it's a commitment
+
+
+def test_like_fails_if_the_applicant_already_fills_a_role_on_an_open_project(owner, project, other):
+    mine, theirs, their_last = add_role(project), add_role(other), add_role(other)
+    here, there = apply(mine, "sam@latech.edu"), apply(theirs, "sam@latech.edu")
+    assert like(other.owner, there).json()["team_locked"] is False
+
+    response = like(owner, here)
+
+    assert response.status_code == 409
+    assert response.json() == {"detail": "This person already has a spot on an open project."}
+    assert status_of(here) == PENDING
+    mine.refresh_from_db()
+    assert mine.status == RoleStatus.OPEN
+    # the other project still locks, and Sam is on one team
+    assert like(other.owner, apply(their_last, "lee@latech.edu")).json()["team_locked"]
+    assert Membership.objects.filter(user=here.applicant).count() == 1
+    assert status_of(here) == WITHDRAWN
+
+
+def test_like_fails_if_the_applicant_owns_an_open_project(owner, project, other):
+    add_role(other)
+    application = apply(add_role(project), "other@latech.edu")  # other's owner
+
+    response = like(owner, application)
+
+    assert response.status_code == 409
+    assert status_of(application) == PENDING
+
+
+def test_a_closed_project_or_a_draft_does_not_block_a_like(owner, project, other, term):
+    add_role(other, filled_by="sam@latech.edu")
+    other.status = ProjectStatus.ARCHIVED
+    other.save()
+    Project.objects.create(owner=user("sam@latech.edu"), term=term, title="Idea", pitch="p")
+
+    response = like(owner, apply(add_role(project), "sam@latech.edu"))
+
+    assert response.status_code == 200
 
 
 # DD-27: POST /teams/{id}/seen/
@@ -429,6 +476,19 @@ def test_like_fails_if_another_team_took_the_applicant_a_moment_earlier(project,
     other_role.refresh_from_db()
     assert other_role.status == RoleStatus.OPEN
     assert status_of(second) == WITHDRAWN  # the first lock withdrew it
+
+
+@needs_postgres
+@committed
+def test_two_likes_of_one_person_on_two_open_projects_fill_one_role(project, other):
+    add_role(project), add_role(other)  # neither project locks
+    first = apply(add_role(project), "sam@latech.edu")
+    second = apply(add_role(other), "sam@latech.edu")
+
+    outcome = race(lambda: decide(first, LIKED), lambda: decide(second, LIKED))
+
+    assert isinstance(outcome, ApplicantCommitted)
+    assert list(Role.objects.filter(filled_by=first.applicant)) == [first.role]
 
 
 @needs_postgres

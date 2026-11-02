@@ -82,7 +82,7 @@ These are enforced in the backend and each one has a test.
 | BR-11 | A candidate can withdraw a pending application. Liked (filled) applications cannot be withdrawn by the candidate. |
 | BR-12 | A chat room exists only for a locked team. Only team members (owner + filled roles) can read or post. |
 | BR-13 | Locked projects are read-only except for archiving by the owner or admin. |
-| BR-14 | An owner can have only one `open` project per term. Publishing a second is rejected until the first is closed or locks. |
+| BR-14 | An owner can have only one `open` project per term. Publishing a second is rejected until the first is closed. Once it locks, the owner is on that team (BR-08), so they can't open another that term, and neither can someone who fills a role on another open project. |
 
 ## 8. Data model (summary)
 
