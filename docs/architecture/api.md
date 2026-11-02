@@ -126,12 +126,12 @@ Login, signup, logout, password and Google live under allauth (below).
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/v1/feed/` | user | swipe deck, open roles ranked by skill overlap |
+| GET | `/api/v1/feed/` | user | swipe deck, open roles ranked by skill overlap. Empty while I'm retired |
 | POST | `/api/v1/roles/{id}/dismiss/` | user | candidate pass on a role, `204`; repeats are fine. My own project: `403`; role or project not open: `409` |
-| POST | `/api/v1/applications/` | user | apply to a role `{role, note}` |
+| POST | `/api/v1/applications/` | user | apply to a role `{role, note}`. Retired: `403` `profile_retired` |
 | GET | `/api/v1/applications/mine/?status=` | user | my applications |
 | POST | `/api/v1/applications/{id}/withdraw/` | applicant | withdraw pending application |
-| GET | `/api/v1/roles/{id}/applications/` | owner | pending applicants for a role (`403` if it's not your project) |
+| GET | `/api/v1/roles/{id}/applications/` | owner | pending applicants for a role, minus retired ones (`403` if it's not your project) |
 | POST | `/api/v1/applications/{id}/like/` | owner | like, fills role, may lock team |
 | POST | `/api/v1/applications/{id}/pass/` | owner | pass |
 | GET | `/api/v1/teams/mine/` | user | my team this term with my `seen_at`: `{"team": {id, project {id, title}, term {name, end_date}, members [{display_name, role}], seen_at}}`. `role` is the role title, or `"Owner"`. No team this term: `200` with `{"team": null}` |

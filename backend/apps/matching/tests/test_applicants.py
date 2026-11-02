@@ -7,7 +7,7 @@ from rest_framework.test import APIClient
 
 from apps.core.models import Term
 from apps.matching.models import Application, ApplicationStatus
-from apps.profiles.models import Skill
+from apps.profiles.models import Profile, Skill
 from apps.projects.models import Project, ProjectStatus, Role
 
 pytestmark = pytest.mark.django_db
@@ -73,6 +73,17 @@ def test_only_pending_applications_are_listed(owner, role):
     response = as_user(owner).get(url(role))
 
     assert [a["id"] for a in response.json()["results"]] == [pending.id]
+
+
+def test_retired_applicants_are_left_out(owner, role):
+    shown, ended, retired = (apply(role, f"{name}@latech.edu") for name in ("a", "b", "c"))
+    today = timezone.localdate()
+    Profile.objects.filter(user=ended.applicant).update(retired_until=today - timedelta(days=1))
+    Profile.objects.filter(user=retired.applicant).update(retired_until=today)
+
+    response = as_user(owner).get(url(role))
+
+    assert {a["id"] for a in response.json()["results"]} == {shown.id, ended.id}
 
 
 def test_someone_elses_role_returns_403(role):

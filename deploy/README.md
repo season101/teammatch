@@ -227,3 +227,11 @@ docker exec teammatch-api python manage.py seed_demo --remove   # delete the sam
 ```
 
 Locally, run `make seed`, and `make seed args=--remove` to take the data out again.
+
+## New term
+
+When a team locks, its members are retired until the term's last day, so they can't apply or show up in review queues. That ends by itself the day after. `reset_retired` clears the old dates so the data matches. It's one UPDATE, and running it again changes nothing.
+
+```bash
+docker exec teammatch-api python manage.py reset_retired
+```

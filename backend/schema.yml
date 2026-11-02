@@ -7,7 +7,8 @@ paths:
   /api/v1/applications/:
     post:
       operationId: applications_create
-      description: 'Apply to an open role with an optional note. My own project: 403.'
+      description: 'Apply to an open role with an optional note. My own project, or
+        I''m retired: 403.'
       tags:
       - matching
       requestBody:
@@ -141,6 +142,7 @@ paths:
   /api/v1/feed/:
     get:
       operationId: feed_list
+      description: Open roles I can still apply to. Empty while I'm retired (BR-09).
       parameters:
       - name: cursor
         required: false
@@ -534,7 +536,8 @@ paths:
   /api/v1/roles/{id}/applications/:
     get:
       operationId: roles_applications_list
-      description: 'Pending applicants for one of my roles. Not my project: 403.'
+      description: 'Pending applicants for one of my roles, minus retired ones (BR-09).
+        Not my project: 403.'
       parameters:
       - name: cursor
         required: false

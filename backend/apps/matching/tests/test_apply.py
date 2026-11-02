@@ -7,6 +7,7 @@ from rest_framework.test import APIClient
 
 from apps.core.models import Term
 from apps.matching.models import Application, ApplicationStatus
+from apps.matching.services import decide
 from apps.matching.tests.test_fill_and_lock import committed, needs_postgres, race
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 from apps.projects.services import close_project
@@ -123,3 +124,47 @@ def test_apply_fails_if_the_project_was_just_closed(candidate, role):
 
     assert outcome.status_code == 409
     assert not Application.objects.exists()
+
+
+# F1-08: a retired candidate can't apply (BR-09)
+
+
+def retire_for(user, days):
+    user.profile.retired_until = timezone.localdate() + timedelta(days=days)
+    user.profile.save()
+
+
+@pytest.mark.parametrize("days", [0, 30])
+def test_a_retired_candidate_cannot_apply(candidate, role, days):
+    retire_for(candidate, days)
+
+    response = apply(candidate, role)
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == (
+        "You're on a team this term, so you can't apply until it ends."
+    )
+    assert not Application.objects.exists()
+
+
+def test_a_candidate_whose_retirement_ended_can_apply(candidate, role):
+    retire_for(candidate, -1)
+
+    assert apply(candidate, role).status_code == 201
+
+
+@needs_postgres
+@committed
+def test_apply_waits_for_a_lock_that_retires_the_candidate(candidate, role):
+    olive = User.objects.create_user(email="olive@latech.edu", password="pw")
+    other = Project.objects.create(
+        owner=olive, term=role.project.term, title="CampusEats", status=ProjectStatus.OPEN
+    )
+    seat = Application.objects.create(
+        role=Role.objects.create(project=other, title="Designer"), applicant=candidate
+    )
+
+    outcome = race(lambda: decide(seat, ApplicationStatus.LIKED), lambda: apply(candidate, role))
+
+    assert outcome.status_code == 403
+    assert not Application.objects.filter(role=role).exists()

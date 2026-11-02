@@ -168,3 +168,15 @@ def test_feed_pages_20_at_a_time_newest_first(api, project):
     second = api.get(first["next"]).json()
     assert [r["id"] for r in second["results"]] == newest_first[20:]
     assert second["next"] is None
+
+
+# F1-08: a retired candidate's deck is empty (BR-09)
+
+
+@pytest.mark.parametrize(("days", "shown"), [(-1, True), (0, False), (60, False)])
+def test_feed_is_empty_while_im_retired(api, candidate, project, days, shown):
+    role = make_role(project)
+    candidate.profile.retired_until = timezone.localdate() + timedelta(days=days)
+    candidate.profile.save()
+
+    assert feed_ids(api) == ([role.id] if shown else [])
