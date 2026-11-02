@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
-import { allauthPost } from "./allauth";
+import { allauthPost, signOut } from "./allauth";
 import { googleErrorText } from "./google-button";
 import { buttonClasses } from "@/components/ui/button";
 
@@ -53,9 +53,14 @@ export function SignInForm({
     setError("");
     setSubmitted(true); // the Google error is about an earlier try, so hide it now
     try {
-      const result = await allauthPost("/auth/login", { email, password });
-      // 409 means this browser is already signed in, which is fine too
-      if (result.status === 200 || result.status === 409) {
+      let result = await allauthPost("/auth/login", { email, password });
+      // 409: the password was right, but someone else is still signed in on this
+      // browser (a shared lab PC). Sign them out and try once more.
+      if (result.status === 409) {
+        await signOut();
+        result = await allauthPost("/auth/login", { email, password });
+      }
+      if (result.status === 200) {
         // "all": nothing on this page watches the session, and a stale "signed out"
         // would send the next page straight back here.
         await queryClient.invalidateQueries({
