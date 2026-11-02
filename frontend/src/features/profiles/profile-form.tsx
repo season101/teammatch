@@ -25,7 +25,9 @@ export function ProfileForm() {
   const profile = useMyProfile();
   const skills = useSkills();
 
-  if (profile.isPending || skills.isPending) {
+  // Wait for a fresh copy: the fields are filled once, and a cached profile can
+  // belong to someone else who used this browser. Saving would copy it over.
+  if (profile.isPending || !profile.isFetchedAfterMount || skills.isPending) {
     return <p className="text-muted">Loading your profile…</p>;
   }
   if (profile.isError || skills.isError) {

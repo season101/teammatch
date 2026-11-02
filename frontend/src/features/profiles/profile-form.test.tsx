@@ -18,10 +18,11 @@ const PROFILE = {
   email: "sam@latech.edu",
 };
 
-function renderForm() {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
+function newClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false } } });
+}
+
+function renderForm(client = newClient()) {
   return render(
     <QueryClientProvider client={client}>
       <ProfileForm />
@@ -66,6 +67,24 @@ test("shows the saved profile", async () => {
   expect(
     screen.getByRole("button", { name: "Remove Python" }),
   ).toBeInTheDocument();
+});
+
+// Saving would write Olive's details into Sam's profile.
+test("waits for the server instead of filling in another user's cached profile", async () => {
+  mockApi({ status: 200, body: PROFILE });
+  const client = newClient();
+  client.setQueryData(["skills"], SKILLS); // cached for good after the first visit
+  client.setQueryData(["my-profile"], {
+    ...PROFILE,
+    id: 3,
+    display_name: "Olive",
+    major: "Biology",
+    email: "olive@latech.edu",
+  });
+  renderForm(client);
+
+  expect(await screen.findByLabelText("Display name")).toHaveValue("Sam");
+  expect(screen.getByLabelText("Major")).toHaveValue("Computer Science");
 });
 
 test("saves name, major, bio and skills", async () => {

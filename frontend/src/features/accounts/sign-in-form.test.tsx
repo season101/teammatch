@@ -171,6 +171,32 @@ test("signs the other account out when someone else is still signed in", async (
   ]);
 });
 
+test("drops the other account's cached data before going on", async () => {
+  mockSignedInAsOlive(200);
+  const client = newClient();
+  await client.prefetchQuery({
+    queryKey: ["session"],
+    queryFn: getSessionUser,
+  });
+  client.setQueryData(["my-profile"], { id: 1, display_name: "Olive" });
+  let cacheAtRedirect: unknown[] = [];
+  replace.mockImplementation(() => {
+    cacheAtRedirect = [
+      client.getQueryData(["session"]),
+      client.getQueryData(["my-profile"]),
+    ];
+  });
+
+  renderForm("/profile", client);
+  fillAndSubmit("sam@latech.edu", "a-long-password");
+
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/profile"));
+  expect(cacheAtRedirect).toEqual([
+    { id: 2, email: "sam@latech.edu" },
+    undefined,
+  ]);
+});
+
 test("shows the normal error when the retry after signing out fails", async () => {
   const fetchMock = mockSignedInAsOlive(400);
   renderForm();

@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
-import { allauthPost, signOut } from "./allauth";
+import { allauthPost, getSessionUser, signOut } from "./allauth";
 import { googleErrorText } from "./google-button";
 import { buttonClasses } from "@/components/ui/button";
 
@@ -61,11 +61,13 @@ export function SignInForm({
         result = await allauthPost("/auth/login", { email, password });
       }
       if (result.status === 200) {
-        // "all": nothing on this page watches the session, and a stale "signed out"
-        // would send the next page straight back here.
-        await queryClient.invalidateQueries({
+        // Drop whatever is cached from before (maybe another account's profile),
+        // then load the new session: a stale "signed out" would send the next
+        // page straight back here.
+        queryClient.clear();
+        await queryClient.fetchQuery({
           queryKey: ["session"],
-          refetchType: "all",
+          queryFn: getSessionUser,
         });
         router.replace(safeNext(next));
         return;
