@@ -87,8 +87,9 @@ function mockApi({
   return { applies, dismisses };
 }
 
-function renderFeed() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function renderFeed(
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
   return render(
     <QueryClientProvider client={client}>
       <Feed />
@@ -360,7 +361,7 @@ test("a benched member sees their team instead of the deck", async () => {
   expect(screen.queryByRole("group", { name: "Deck of open roles" })).not.toBeInTheDocument();
 });
 
-test("applying after my team locked shows the benched state", async () => {
+test("applying after my team locked shows the benched state and reloads my applications", async () => {
   let seated: unknown = null;
   mockApi({
     apply: {
@@ -369,7 +370,9 @@ test("applying after my team locked shows the benched state", async () => {
     },
     team: () => seated,
   });
-  renderFeed();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  client.setQueryData(["my-applications"], []);
+  renderFeed(client);
   const button = await applyButton();
 
   seated = myTeam;
@@ -378,4 +381,6 @@ test("applying after my team locked shows the benched state", async () => {
   expect(
     await screen.findByRole("heading", { name: "You're on CampusEats" }),
   ).toBeInTheDocument();
+  // The lock liked one of them and withdrew the rest, so the sidebar list is stale.
+  expect(client.getQueryState(["my-applications"])?.isInvalidated).toBe(true);
 });
