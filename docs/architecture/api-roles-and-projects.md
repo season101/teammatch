@@ -80,6 +80,7 @@ A successful add returns `201 Created` with the role. A successful edit returns 
 | 409 | publishing a project with no roles | `project_needs_roles` | `{ "detail": "Add at least one role before publishing." }` |
 | 409 | deleting the only role of an open project | `project_needs_roles` | `{ "detail": "An open project needs at least one role. Close the project instead." }` |
 | 409 | publishing while you already have an open project | `open_project_exists` | `{ "detail": "You already have an open project. Close it or wait until it locks." }` |
+| 409 | publishing while you are on a team, or fill a role on an open project, this term | `owner_has_a_spot` | `{ "detail": "You already have a spot on another project this term." }` |
 | 409 | editing or closing a locked or archived project | `project_locked` | `{ "detail": "This project is locked or archived, so it cannot be changed." }` |
  
 The owner check runs before the body is validated, so a non-owner gets `403` rather than a `400`.

@@ -33,7 +33,7 @@ export interface paths {
         /**
          * @description Like or pass a pending applicant on my role.
          *
-         *     Not pending, or the applicant just joined another team: 409.
+         *     Not pending, or the applicant is on another team or has a spot on an open project: 409.
          */
         post: operations["applications_like_create"];
         delete?: never;
@@ -54,7 +54,7 @@ export interface paths {
         /**
          * @description Like or pass a pending applicant on my role.
          *
-         *     Not pending, or the applicant just joined another team: 409.
+         *     Not pending, or the applicant is on another team or has a spot on an open project: 409.
          */
         post: operations["applications_pass_create"];
         delete?: never;
