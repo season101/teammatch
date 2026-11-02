@@ -183,7 +183,7 @@ Rules enforced in the service layer (not expressible as simple constraints):
 
 - Owner cannot apply to roles in their own project.
 - A user with `retired_until >= today` cannot apply.
-- A user can be a member of at most one team per term (checked inside the lock transaction).
+- A user can be a member of at most one team per term. A like can't be undone, so it is refused while the applicant owns or fills a role on another open project that term, and publishing is refused while the owner fills a role on an open project or is on a team that term. Both checks hold the user's row lock.
 - Project can only be `locked` when every role is `filled`.
 
 ## Indexes

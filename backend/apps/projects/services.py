@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count, Prefetch, Q
 from django.utils import timezone
@@ -50,6 +51,12 @@ class OpenProjectExists(APIException):
     default_code = "open_project_exists"
 
 
+class OwnerHasASpot(APIException):
+    status_code = 409
+    default_detail = "You already have a spot on another project this term."
+    default_code = "owner_has_a_spot"
+
+
 def get_active_term(today=None):
     """The term whose dates include today, or None."""
     today = today or timezone.localdate()
@@ -75,8 +82,15 @@ def ensure_role_editable(role):
         raise RoleNotOpen()
 
 
+@transaction.atomic
 def publish_project(project):
-    """Draft to open. A project with no roles cannot be opened (BR-06)."""
+    """Draft to open. A project with no roles cannot be opened (BR-06).
+
+    Nor can it while the owner is on a team or fills a role on an open project this term.
+    Their user row is locked first, as a like locks its applicant's, so a like can't give
+    them a role between the check and the publish.
+    """
+    get_user_model().objects.select_for_update().get(pk=project.owner_id)
     if project.status != ProjectStatus.DRAFT:
         raise ProjectNotDraft()
     if not project.roles.exists():
@@ -88,6 +102,13 @@ def publish_project(project):
     )
     if already_open:
         raise OpenProjectExists()
+    has_a_spot = Project.objects.filter(
+        Q(status=ProjectStatus.OPEN, roles__filled_by_id=project.owner_id)
+        | Q(team__memberships__user_id=project.owner_id),
+        term_id=project.term_id,
+    )
+    if has_a_spot.exists():
+        raise OwnerHasASpot()
     project.status = ProjectStatus.OPEN
     project.save()
     return project
