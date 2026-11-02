@@ -46,6 +46,10 @@ export function useApply() {
       );
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["my-applications"] }),
+    // 403: my team just locked, so the deck turns into the benched state.
+    onError: (error) => {
+      if (error.status === 403) queryClient.invalidateQueries({ queryKey: ["my-team"] });
+    },
   });
 }
 

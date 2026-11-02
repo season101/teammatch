@@ -7,6 +7,8 @@ import { ActionButton } from "@/components/ui/action-button";
 import { buttonClasses } from "@/components/ui/button";
 import { useMyProfile } from "@/features/profiles/queries";
 import { useShortcutsEnabled } from "@/features/shell/preferences";
+import { termEnd } from "@/features/teams/my-team";
+import { useMyTeam } from "@/features/teams/queries";
 import { NoteField } from "./note-field";
 import { useApply, useDismiss, useFeed, type ApiError } from "./queries";
 import { RoleCard } from "./role-card";
@@ -14,6 +16,8 @@ import { SwipeCard, type Direction } from "./swipe-card";
 
 export function Feed() {
   const feed = useFeed();
+  // A seat on a team this term means I'm benched (BR-09). The shell loads it too.
+  const team = useMyTeam();
   // Only used to highlight matching skills, so the feed doesn't wait for it.
   const profile = useMyProfile();
   const mySkillIds = profile.data?.skills.map((skill) => skill.id) ?? [];
@@ -30,8 +34,25 @@ export function Feed() {
   const shortcuts = useShortcutsEnabled();
   const stack = useRef<HTMLDivElement>(null);
 
-  if (feed.isPending) {
+  if (feed.isPending || team.isPending) {
     return <p className="text-muted">Loading open roles…</p>;
+  }
+  if (team.data) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-12 text-center">
+        <h2 className="font-display text-3xl font-extrabold">
+          You&apos;re on {team.data.project.title}
+        </h2>
+        <p className="text-muted">
+          You&apos;re on a team until {termEnd(team.data)}. Your other applications were
+          withdrawn.
+        </p>
+        {/* Becomes Open team chat once chat ships. */}
+        <Link href="/teams" className={`${buttonClasses()} mt-3`}>
+          See your team
+        </Link>
+      </div>
+    );
   }
   if (feed.isError) {
     return (

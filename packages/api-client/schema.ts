@@ -13,7 +13,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Apply to an open role with an optional note. My own project: 403. */
+        /** @description Apply to an open role with an optional note. My own project, or I'm retired: 403. */
         post: operations["applications_create"];
         delete?: never;
         options?: never;
@@ -104,6 +104,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Open roles I can still apply to. Empty while I'm retired (BR-09). */
         get: operations["feed_list"];
         put?: never;
         post?: never;
@@ -304,7 +305,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Pending applicants for one of my roles. Not my project: 403. */
+        /** @description Pending applicants for one of my roles, minus retired ones (BR-09). Not my project: 403. */
         get: operations["roles_applications_list"];
         put?: never;
         post?: never;
