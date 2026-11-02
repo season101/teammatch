@@ -24,6 +24,8 @@ from .serializers import (
 
 @extend_schema(tags=["feed"])
 class FeedView(generics.ListAPIView):
+    """Open roles I can still apply to. Empty while I'm retired (BR-09)."""
+
     serializer_class = FeedRoleSerializer
     pagination_class = DefaultCursorPagination
 
@@ -33,7 +35,7 @@ class FeedView(generics.ListAPIView):
 
 @extend_schema(tags=["matching"])
 class RoleApplicationsView(generics.ListAPIView):
-    """Pending applicants for one of my roles. Not my project: 403."""
+    """Pending applicants for one of my roles, minus retired ones (BR-09). Not my project: 403."""
 
     serializer_class = RoleApplicationSerializer
     pagination_class = DefaultCursorPagination
@@ -64,7 +66,7 @@ class ApplicationDecisionView(APIView):
 
 @extend_schema(tags=["matching"])
 class ApplyView(generics.CreateAPIView):
-    """Apply to an open role with an optional note. My own project: 403."""
+    """Apply to an open role with an optional note. My own project, or I'm retired: 403."""
 
     serializer_class = ApplySerializer
 

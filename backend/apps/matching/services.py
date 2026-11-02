@@ -4,7 +4,7 @@ from django.db.models import F, Prefetch, Q
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 
-from apps.profiles.services import retire
+from apps.profiles.services import is_retired, retire
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 
 from .models import Application, ApplicationStatus, Membership, RoleDismissal, Team
@@ -15,8 +15,11 @@ def feed_roles(user, today=None):
 
     Skips the user's own projects (BR-04) and roles they already applied to
     (any status, since an application is one per user per role) or passed.
+    Empty while they're retired (BR-09).
     """
     today = today or timezone.localdate()
+    if is_retired(user, today):
+        return Role.objects.none()
     return (
         Role.objects.filter(
             status=RoleStatus.OPEN,
@@ -33,9 +36,10 @@ def feed_roles(user, today=None):
 
 
 def pending_applications(role):
-    """The review queue for one role (F4-01)."""
+    """The review queue for one role (F4-01). Retired applicants are left out (BR-09)."""
     return (
         role.applications.filter(status=ApplicationStatus.PENDING)
+        .exclude(applicant__profile__retired_until__gte=timezone.localdate())
         .select_related("applicant__profile")
         .prefetch_related("applicant__profile__skills")
     )
@@ -203,6 +207,12 @@ class RoleNotOpen(APIException):
     default_code = "role_not_open"
 
 
+class ProfileRetired(APIException):
+    status_code = 403
+    default_detail = "You're on a team this term, so you can't apply until it ends."
+    default_code = "profile_retired"
+
+
 class AlreadyApplied(APIException):
     status_code = 409
     default_detail = "You already applied to this role."
@@ -214,11 +224,15 @@ def apply(role, user, note=""):
     """A candidate applies to an open role (F3-02).
 
     Locking the role row makes the filled check and the one-per-role check (BR-02)
-    race-free. Only the role is locked, so this can't deadlock with a like.
+    race-free. The user row is locked next, as in decide, so an apply waits for a
+    team lock seating this user and then sees them retired (BR-09).
     The project is read after that lock in its own query: a row joined to the locked
     role would come from before a close that held it committed (F2-05).
     """
     role = Role.objects.select_for_update().get(pk=role.pk)
+    get_user_model().objects.select_for_update().get(pk=user.pk)
+    if is_retired(user):
+        raise ProfileRetired()
     if role.status == RoleStatus.FILLED:
         raise RoleNotOpen("This role was just filled.")
     if Project.objects.get(pk=role.project_id).status != ProjectStatus.OPEN:

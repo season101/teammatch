@@ -46,6 +46,13 @@ export function useApply() {
       );
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["my-applications"] }),
+    // 403: my team just locked, so the deck turns into the benched state, and the
+    // lock liked one of my applications and withdrew the rest.
+    onError: (error) => {
+      if (error.status !== 403) return;
+      queryClient.invalidateQueries({ queryKey: ["my-team"] });
+      queryClient.invalidateQueries({ queryKey: ["my-applications"] });
+    },
   });
 }
 

@@ -33,6 +33,14 @@ const profile = {
   skills: [{ id: 1, name: "Python", slug: "python" }],
 };
 
+const myTeam = {
+  id: 5,
+  project: { id: 4, title: "CampusEats" },
+  term: { name: "Fall 2026", end_date: "2026-11-20" },
+  members: [],
+  seen_at: "2026-11-01T00:00:00Z",
+};
+
 // Answers by method and path; records the apply and pass requests. Like the real
 // feed, a role I applied to or passed on doesn't come back on the next fetch.
 // Apply and pass answer once `wait` settles.
@@ -41,6 +49,7 @@ function mockApi({
   apply = { status: 201, body: {} as unknown },
   dismiss = { status: 204, body: null as unknown },
   wait = Promise.resolve(),
+  team = (): unknown => null,
 } = {}) {
   let open = [...roles];
   const applies: Request[] = [];
@@ -54,6 +63,7 @@ function mockApi({
       let body: unknown = {};
       if (path === "/api/v1/feed/") body = { next: null, previous: null, results: open };
       else if (path === "/api/v1/me/profile/") body = profile;
+      else if (path === "/api/v1/teams/mine/") body = { team: team() };
       else if (path === "/api/v1/applications/" && request.method === "POST") {
         applies.push(request.clone());
         await wait;
@@ -77,8 +87,9 @@ function mockApi({
   return { applies, dismisses };
 }
 
-function renderFeed() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function renderFeed(
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
   return render(
     <QueryClientProvider client={client}>
       <Feed />
@@ -334,4 +345,42 @@ test("the buttons and keys wait while a decision is being sent", async () => {
   expect(applies).toHaveLength(1);
   expect(dismisses).toHaveLength(0);
   expect(screen.getByRole("article", { name: "Frontend dev" })).toBeInTheDocument();
+});
+
+test("a benched member sees their team instead of the deck", async () => {
+  mockApi({ team: () => myTeam });
+  renderFeed();
+
+  expect(
+    await screen.findByRole("heading", { name: "You're on CampusEats" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("You're on a team until Nov 20. Your other applications were withdrawn."),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "See your team" })).toHaveAttribute("href", "/teams");
+  expect(screen.queryByRole("group", { name: "Deck of open roles" })).not.toBeInTheDocument();
+});
+
+test("applying after my team locked shows the benched state and reloads my applications", async () => {
+  let seated: unknown = null;
+  mockApi({
+    apply: {
+      status: 403,
+      body: { detail: "You're on a team this term, so you can't apply until it ends." },
+    },
+    team: () => seated,
+  });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  client.setQueryData(["my-applications"], []);
+  renderFeed(client);
+  const button = await applyButton();
+
+  seated = myTeam;
+  fireEvent.click(button);
+
+  expect(
+    await screen.findByRole("heading", { name: "You're on CampusEats" }),
+  ).toBeInTheDocument();
+  // The lock liked one of them and withdrew the rest, so the sidebar list is stale.
+  expect(client.getQueryState(["my-applications"])?.isInvalidated).toBe(true);
 });
