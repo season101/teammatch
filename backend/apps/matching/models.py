@@ -93,6 +93,7 @@ class Membership(TimeStampedModel):
                 condition=models.Q(role__isnull=True),
                 name="membership_one_owner_seat",
             ),
+            models.UniqueConstraint(fields=["team", "user"], name="membership_one_seat_per_user"),
         ]
 
     def __str__(self):

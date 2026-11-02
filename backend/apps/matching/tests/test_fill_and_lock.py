@@ -157,7 +157,7 @@ def test_a_locking_like_runs_a_fixed_number_of_queries(
     apply(role, "lee@latech.edu")
     client = as_user(owner)
 
-    with django_assert_num_queries(22):  # same count however many roles or rivals
+    with django_assert_num_queries(23):  # same count however many roles or rivals
         response = client.post(f"/api/v1/applications/{liked.id}/like/")
 
     assert response.json()["team_locked"] is True
@@ -233,10 +233,11 @@ def test_a_lock_leaves_other_terms_other_people_and_this_project_alone(owner, pr
     later = Project.objects.create(
         owner=user("other@latech.edu"), term=next_term, title="Later", pitch="p", status="open"
     )
+    add_role(project, filled_by="kim@latech.edu")
     untouched = [
         apply(add_role(later), "sam@latech.edu"),
         apply(add_role(other), "lee@latech.edu"),
-        apply(add_role(project, filled_by="kim@latech.edu"), "sam@latech.edu"),
+        apply(add_role(project, filled_by="max@latech.edu"), "kim@latech.edu"),  # a member here
     ]
 
     lock(owner, project)
@@ -319,6 +320,19 @@ def test_like_fails_if_the_applicant_owns_an_open_project(owner, project, other)
 
     assert response.status_code == 409
     assert status_of(application) == PENDING
+
+
+def test_a_like_withdraws_the_applicants_other_applications_on_the_same_project(owner, project):
+    first, second = add_role(project), add_role(project)
+    liked, same_person = apply(first, "sam@latech.edu"), apply(second, "sam@latech.edu")
+    rival = apply(second, "lee@latech.edu")
+
+    like(owner, liked)
+
+    # one person, one seat: Sam leaves the second role's queue, Lee stays in it
+    assert status_of(same_person) == WITHDRAWN
+    assert status_of(rival) == PENDING
+    assert like(owner, same_person).status_code == 409
 
 
 def test_a_closed_project_or_a_draft_does_not_block_a_like(owner, project, other, term):

@@ -166,7 +166,7 @@ Business rules (BR-xx) are defined in [prd.md](prd.md#7-business-rules). Backlog
   1. Owner opens the review queue and picks a role.
   2. System shows pending applicants one at a time: name, avatar, major, skills (with matches highlighted), note.
   3. Owner likes an applicant.
-  4. System sets the application to `liked`, sets the role to `filled` with `filled_by`, and sets the other pending applications for that role to `passed`.
+  4. System sets the application to `liked`, sets the role to `filled` with `filled_by`, and sets the other pending applications for that role to `passed`, and sets the applicant's other pending applications on the project to `withdrawn`.
   5. System runs the team-lock check (UC-11).
   6. Applicant sees the application as `liked` in My applications. (Live notification is future, F3-07.)
 - **Alternate flows:**

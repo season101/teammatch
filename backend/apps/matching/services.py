@@ -85,9 +85,10 @@ class ApplicantCommitted(APIException):
 def decide(application, status):
     """The owner likes or passes a pending application (F4-02, F4-05).
 
-    A like fills the role, passes its other pending applications (BR-05) and
-    locks the team if that was the last open role (BR-06). Returns
-    (application, team); team is None unless this like locked it.
+    A like fills the role, passes its other pending applications, withdraws the
+    applicant's other pending applications on the project (BR-05) and locks the
+    team if that was the last open role (BR-06). Returns (application, team);
+    team is None unless this like locked it.
 
     Rows are locked role, applicant, application, then project (in try_lock), so
     two likes on one role, two likes of one person, or likes on the last two
@@ -130,6 +131,12 @@ def decide(application, status):
     role.applications.filter(status=ApplicationStatus.PENDING).update(
         status=ApplicationStatus.PASSED
     )
+    # One seat per person per team: their other roles here leave the queue, as at a lock (BR-08).
+    Application.objects.filter(
+        status=ApplicationStatus.PENDING,
+        applicant_id=application.applicant_id,
+        role_id__in=Role.objects.filter(project_id=role.project_id),
+    ).update(status=ApplicationStatus.WITHDRAWN, updated_at=timezone.now())
     return application, try_lock(role.project)
 
 
