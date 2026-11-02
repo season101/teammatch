@@ -130,6 +130,7 @@ sequenceDiagram
         A->>DB: application.status = liked
         A->>DB: role.status = filled, filled_by = candidate
         A->>DB: other pending apps for this role = passed
+        A->>DB: candidate's other pending apps on this project = withdrawn
         A->>DB: count open roles in project
         alt open roles remain
             A->>DB: COMMIT

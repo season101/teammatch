@@ -101,3 +101,10 @@ def test_db_allows_one_owner_seat_per_team(project, owner):
     Membership.objects.create(team=team, user=owner)
     with pytest.raises(IntegrityError):
         Membership.objects.create(team=team, user=owner)
+
+
+def test_db_allows_one_seat_per_person_per_team(project, owner):
+    team = Team.objects.create(project=project)
+    Membership.objects.create(team=team, user=owner)
+    with pytest.raises(IntegrityError):
+        Membership.objects.create(team=team, user=owner, role=Role.objects.create(project=project))

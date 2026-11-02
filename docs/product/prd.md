@@ -73,7 +73,7 @@ These are enforced in the backend and each one has a test.
 | BR-02 | One application per (user, role). Re-applying to the same role is rejected. |
 | BR-03 | A user can apply to many roles across many projects at the same time. |
 | BR-04 | An owner cannot apply to roles on their own project. |
-| BR-05 | A role is filled when the owner likes an applicant who has a pending application for it (mutual like). A filled role stores `filled_by`. |
+| BR-05 | A role is filled when the owner likes an applicant who has a pending application for it (mutual like). A filled role stores `filled_by`. The applicant's other pending applications on that project are set to `withdrawn`, since a person takes one seat per team. |
 | BR-06 | A project locks only when **all** of its roles are filled. A project with zero roles cannot be opened. |
 | BR-07 | The owner can delete an open role that cannot be filled. Deleting the last unfilled role triggers the lock check. |
 | BR-08 | When a team locks, every member's other pending applications for that term are set to `withdrawn`, and their profile gets `retired_until = term.end`. |
