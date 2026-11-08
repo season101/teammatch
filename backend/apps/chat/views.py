@@ -1,7 +1,7 @@
 from django.http import Http404
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import ValidationError
 
 from apps.core.pagination import DefaultCursorPagination
 
@@ -25,18 +25,15 @@ class ChatHistoryPagination(DefaultCursorPagination):
     ],
 )
 class TeamMessagesView(generics.ListAPIView):
-    """My team's chat, newest first, 50 a page (F4-09). Not a member: 403. No such team: 404."""
+    """My team's chat, newest first, 50 a page (F4-09). Not on the team or no such team: 404."""
 
     serializer_class = ChatMessageSerializer
     pagination_class = ChatHistoryPagination
 
     def get_queryset(self):
         team_id = self.kwargs["pk"]
-        access = services.team_access(self.request.user, team_id)
-        if access is services.TeamAccess.NO_TEAM:
+        if not services.is_member(self.request.user, team_id):
             raise Http404
-        if access is services.TeamAccess.NOT_MEMBER:
-            raise PermissionDenied()
         messages = ChatMessage.objects.filter(team_id=team_id).select_related("sender__profile")
         after = self.request.query_params.get("after")
         if after:

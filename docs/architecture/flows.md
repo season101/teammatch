@@ -172,8 +172,10 @@ sequenceDiagram
     T->>C: upgrade, same origin
     C->>C: AuthMiddlewareStack loads user from session
     C->>DB: Membership exists for team and user?
-    alt anonymous or not a member
-        C-->>W: close 4403
+    alt anonymous
+        C-->>W: close 4401
+    else not a member or no such team
+        C-->>W: close 4404
     else member
         C->>R: group_add team_{id}
         C-->>W: accept
