@@ -37,10 +37,10 @@ export function useTeamSocket(teamId: number) {
 
     // Everything after the newest message we have, page by page. Waits for the
     // history load, so a message sent before the first join isn't lost either.
+    // With no messages yet it asks for after=0, which is just that gap.
     async function catchUp(seen: number) {
       const history = await queryClient.ensureQueryData(teamMessagesQuery(teamId));
       const after = Math.max(seen, history[0]?.id ?? 0);
-      if (!after) return; // no messages yet, the history load covers it
       let cursor: string | undefined;
       do {
         const { data } = await api.GET("/api/v1/teams/{id}/messages/", {

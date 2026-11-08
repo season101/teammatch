@@ -311,6 +311,20 @@ test("each open catches up on missed messages, once each", async () => {
   ]);
 });
 
+test("with no messages yet, the first open still catches up with after=0", async () => {
+  vi.useFakeTimers();
+  fetchMock.mockImplementationOnce(async () => page([]));
+  missed = () => page([message(1, ava, "First!")]);
+  renderChat();
+  await wait(0);
+  socket().open();
+  receive(message(1, ava, "First!"));
+  await wait(0);
+
+  expect(catchUps()).toEqual(["?after=0"]);
+  expect(bubbles()).toEqual(["AvaFirst!"]);
+});
+
 test.each([4401, 4404])("a %i close never retries", async (code) => {
   vi.useFakeTimers();
   renderChat();
