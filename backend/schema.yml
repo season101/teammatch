@@ -167,6 +167,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedFeedRoleList'
           description: ''
+  /api/v1/feed/reset/:
+    post:
+      operationId: feed_reset_create
+      description: Show every role I passed on in my feed again.
+      tags:
+      - feed
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/health/:
     get:
       operationId: health_retrieve

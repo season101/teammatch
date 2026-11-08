@@ -79,3 +79,20 @@ export function useDismiss() {
       ),
   });
 }
+
+// Brings back every role I passed on. The deck refetches the feed itself.
+export function useResetPasses() {
+  return useMutation<void, ApiError>({
+    mutationFn: async () => {
+      const { error, response } = await api.POST("/api/v1/feed/reset/", {
+        headers: { "X-CSRFToken": csrfToken() },
+      });
+      if (response.ok) return;
+      const detail = (error as { detail?: unknown } | undefined)?.detail;
+      throw new ApiError(
+        response.status,
+        typeof detail === "string" ? detail : "Couldn't show passed roles. Please try again.",
+      );
+    },
+  });
+}

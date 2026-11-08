@@ -48,6 +48,7 @@ Each story is written so it can be pasted into a GitHub issue (User Story templa
 | F3-04 | Rank roles by skill overlap | C | S3 | 3 | Should |
 | F3-09 | Keyboard and button swipe controls | C | S3 | 1 | Should |
 | F3-10 | Undo last swipe | C | S3 | 2 | Should |
+| F3-11 | See passed roles again | C | S3 | 1 | Could |
 | BUF-C3 | Buffer | C | S3 | 2 | - |
 | F4-01 | See applicants per role | D | S1 | 3 | Must |
 | F4-02 | Like or pass an applicant | D | S1 | 2 | Must |
@@ -366,6 +367,16 @@ As a candidate, I want to undo my last pass so that a mis-swipe isn't permanent.
 Design: [undo](../design/patterns/swipe-deck.md#undo), [action button](../design/components/action-button.md)
 
 Sprint S3 | 2 h | Should | UC-07, UC-08
+
+### F3-11 See passed roles again
+As a candidate, I want to see the roles I passed on again once my deck is empty so that I can rethink a pass.
+- Given I'm all caught up, then I see "Show passed roles again" next to "Browse projects".
+- Given I tap it, then all my dismissals are removed and the roles that are still open come back into my deck.
+- Given I applied to a role, then a reset doesn't bring it back (BR-02).
+- Given I never passed on an open role, then I see "No passed roles to bring back."
+- Given another candidate's passes, then my reset leaves them alone.
+
+Sprint S3 | 1 h | Could | UC-08
 
 ### F3-07 Live notifications (future)
 As a user, I want to be told right away when I'm liked or my team forms so that I don't have to keep checking.

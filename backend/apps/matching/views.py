@@ -79,6 +79,15 @@ class ApplyView(generics.CreateAPIView):
         )
 
 
+@extend_schema(tags=["feed"], request=None, responses={204: None})
+class ResetPassesView(APIView):
+    """Show every role I passed on in my feed again."""
+
+    def post(self, request):
+        services.reset_passes(request.user)
+        return Response(status=204)
+
+
 @extend_schema(tags=["matching"], request=None, responses={204: None})
 class DismissRoleView(APIView):
     """Pass on a role so it leaves my feed (BR-10). My own project: 403. Not open: 409."""
