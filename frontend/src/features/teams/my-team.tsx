@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { buttonClasses } from "@/components/ui/button";
 import { useMyTeam, type MyTeam } from "./queries";
 
 export function initials(name: string) {
@@ -70,6 +72,12 @@ export function MyTeamView() {
           </li>
         ))}
       </ul>
+      <Link
+        href={`/teams/${team.data.id}/chat`}
+        className={`${buttonClasses()} w-full sm:w-auto sm:self-start`}
+      >
+        Open team chat
+      </Link>
     </section>
   );
 }

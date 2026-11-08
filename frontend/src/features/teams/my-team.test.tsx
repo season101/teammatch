@@ -44,6 +44,15 @@ test("shows my team's project, term end and members with their roles", () => {
   ]);
 });
 
+test("links to the team's chat", () => {
+  renderPage(team);
+
+  expect(screen.getByRole("link", { name: "Open team chat" })).toHaveAttribute(
+    "href",
+    "/teams/3/chat",
+  );
+});
+
 test("without a team it says when one shows up", () => {
   renderPage(null);
 
