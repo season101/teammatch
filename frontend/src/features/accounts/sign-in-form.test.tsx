@@ -311,3 +311,10 @@ test("a ?next= to another website goes to Discover after sign-in", async () => {
   fillAndSubmit("sam@latech.edu", "a-long-password");
   await waitFor(() => expect(replace).toHaveBeenCalledWith("/feed"));
 });
+
+test("links to the forgot password page (F1-10)", () => {
+  renderForm();
+  expect(
+    screen.getByRole("link", { name: "Forgot password?" }),
+  ).toHaveAttribute("href", "/reset-password");
+});

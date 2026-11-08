@@ -137,6 +137,12 @@ export function SignInForm({
           onChange={(e) => setPassword(e.target.value)}
           className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
         />
+        <Link
+          href="/reset-password"
+          className="self-end text-sm font-medium text-primary underline"
+        >
+          Forgot password?
+        </Link>
       </div>
 
       {error && (
