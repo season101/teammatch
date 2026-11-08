@@ -33,6 +33,7 @@ const team = {
     { display_name: "Marco Rossi", role: "Owner" },
     { display_name: "Ava", role: "Backend developer" },
   ],
+  formed_at: "2026-10-24T18:00:00Z",
   seen_at: null as string | null,
 };
 

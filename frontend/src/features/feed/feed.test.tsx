@@ -38,6 +38,7 @@ const myTeam = {
   project: { id: 4, title: "CampusEats" },
   term: { name: "Fall 2026", end_date: "2026-11-20" },
   members: [],
+  formed_at: "2026-11-01T00:00:00Z",
   seen_at: "2026-11-01T00:00:00Z",
 };
 
