@@ -178,7 +178,7 @@ function ChatRoom({ team, userId }: { team: MyTeam; userId: number }) {
               }
             }}
             placeholder={`Message ${title}`}
-            className={`${inputClass} max-h-32 resize-none field-sizing-content`}
+            className={`${inputClass} block max-h-32 resize-none field-sizing-content`}
           />
         </label>
         <button
