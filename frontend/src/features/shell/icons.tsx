@@ -57,3 +57,15 @@ export const SettingsIcon = () => (
     <circle cx="8" cy="17" r="2" />
   </Icon>
 );
+
+export const BackIcon = () => (
+  <Icon>
+    <path d="m15 18-6-6 6-6" />
+  </Icon>
+);
+
+export const SendIcon = () => (
+  <Icon>
+    <path d="M21 3 10 14M21 3l-7 18-4-7-7-4z" />
+  </Icon>
+);
