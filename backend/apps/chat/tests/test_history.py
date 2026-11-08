@@ -3,7 +3,6 @@ from rest_framework.test import APIClient
 
 from apps.chat.models import ChatMessage
 from apps.chat.services import is_member
-from apps.matching.tests.test_my_team import locked_team, term, user
 
 pytestmark = pytest.mark.django_db
 
@@ -16,26 +15,6 @@ def client_for(someone):
     client = APIClient()
     client.force_authenticate(someone)
     return client
-
-
-@pytest.fixture
-def marco():
-    return user("marco@latech.edu", "Marco")
-
-
-@pytest.fixture
-def ava():
-    return user("ava@latech.edu", "Ava")
-
-
-@pytest.fixture
-def outsider():
-    return user("outsider@latech.edu", "Outsider")
-
-
-@pytest.fixture
-def team(marco, ava):
-    return locked_team(marco, term("Fall 2026", -30), "Bulldog Bites", [("Backend developer", ava)])
 
 
 def post(team, sender, count):
