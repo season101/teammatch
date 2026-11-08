@@ -1,6 +1,6 @@
 # User flows
 
-The three journeys every screen serves. Numbers in brackets are screen numbers from [README.md](README.md). For the API calls behind each step, see [../../architecture/flows.md](../../architecture/flows.md).
+The three journeys every screen serves, plus one that's planned. Numbers in brackets are screen numbers from [README.md](README.md). For the API calls behind each step, see [../../architecture/flows.md](../../architecture/flows.md).
 
 The diagrams below render on GitHub. Image versions for slides or offline reading: [sign-up](img/flow-signup.png), [apply](img/flow-apply.png), [owner](img/flow-owner.png).
 
@@ -66,3 +66,29 @@ flowchart LR
 - An owner can have one open project at a time.
 - A project needs at least one role before it can open.
 - When a role fills, its other pending applicants become passed.
+
+## 4. Planned: candidate commits to one offer
+
+Planned for F4-10 and F4-11. It replaces the "owner likes" step in flows 2 and 3 when it ships. See the [commit flow](../patterns/commit-flow.md) guide.
+
+```mermaid
+flowchart LR
+    RQ["Review queue [17]"] -->|"→ Like"| OS["Offer sent [33]"]
+    OS --> DK["Discover with offers [26]"]
+    DK --> OL["Offers list [27]"]
+    OL -->|Commit| FC["Final confirm [28]"]
+    OL -->|Decline| DO["Decline offer [29]"]
+    DO -->|owner likes someone else| RQ
+    FC -->|owns an open project| B["Commit blocked [30]"]
+    B --> OL
+    FC -->|committed| AC["After committing [31]"]
+    AC --> DC["Deck closed [32]"]
+    AC --> CC["Candidate committed [34]"]
+    CC -->|last role filled| T["It's a Team! [19]"]
+    CC -->|roles left| RQ
+    T --> C["Team chat [22]"]
+```
+
+- A student can hold several offers at once. Committing closes the rest.
+- The role stays open until someone commits, so the first commit wins.
+- A commit can't be undone.

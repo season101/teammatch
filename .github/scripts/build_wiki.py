@@ -84,6 +84,7 @@ PAGES = [
         ("docs/design/patterns/forms.md", "Pattern-Forms"),
         ("docs/design/patterns/confirmations.md", "Pattern-Confirmations"),
         ("docs/design/patterns/feedback-states.md", "Pattern-Feedback-States"),
+        ("docs/design/patterns/commit-flow.md", "Pattern-Commit-Flow"),
     ]),
     ("Operations", [
         ("deploy/README.md", "Deploy-Runbook"),

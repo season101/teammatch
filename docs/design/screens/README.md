@@ -55,5 +55,20 @@ Wireframes for every screen at phone (375px) and desktop (1440px), with their ke
 | 24 | Profile | [24-profile.png](img/24-profile.png) | [profile strength](../components/profile-strength.md), [forms](../patterns/forms.md) |
 | 25 | Settings | [25-settings.png](img/25-settings.png) | [navigation](../patterns/navigation.md#desktop-sidebar-modes), [confirmations](../patterns/confirmations.md) |
 
+## Commit flow (planned)
+Full-colour mockups for [F4-10](../../product/backlog.md#f4-10-commit-to-one-offer-api) and [F4-11](../../product/backlog.md#f4-11-commit-to-one-offer-screens), unlike the greyscale wireframes above. Phone is 390px wide and desktop is 1280px. To build them, read the [commit flow](../patterns/commit-flow.md) guide.
+
+| # | Screen | Phone | Desktop |
+|---|---|---|---|
+| 26 | Discover with offers | [dark](img/26-discover-offers-phone-dark.png), [light](img/26-discover-offers-phone-light.png) | [dark](img/26-discover-offers-desktop-dark.png), [light](img/26-discover-offers-desktop-light.png) |
+| 27 | Offers list | [dark](img/27-offers-list-phone-dark.png), [light](img/27-offers-list-phone-light.png) | [dark](img/27-offers-list-desktop-dark.png), [light](img/27-offers-list-desktop-light.png) |
+| 28 | Final confirm | [dark](img/28-final-confirm-phone-dark.png), [light](img/28-final-confirm-phone-light.png) | [dark](img/28-final-confirm-desktop-dark.png), [light](img/28-final-confirm-desktop-light.png) |
+| 29 | Decline offer | [dark](img/29-decline-offer-phone-dark.png), [light](img/29-decline-offer-phone-light.png) | [dark](img/29-decline-offer-desktop-dark.png), [light](img/29-decline-offer-desktop-light.png) |
+| 30 | Commit blocked | [dark](img/30-commit-blocked-phone-dark.png), [light](img/30-commit-blocked-phone-light.png) | [dark](img/30-commit-blocked-desktop-dark.png), [light](img/30-commit-blocked-desktop-light.png) |
+| 31 | After committing | [dark](img/31-after-committing-phone-dark.png), [light](img/31-after-committing-phone-light.png) | [dark](img/31-after-committing-desktop-dark.png), [light](img/31-after-committing-desktop-light.png) |
+| 32 | Deck closed | [dark](img/32-deck-closed-phone-dark.png), [light](img/32-deck-closed-phone-light.png) | [dark](img/32-deck-closed-desktop-dark.png), [light](img/32-deck-closed-desktop-light.png) |
+| 33 | Offer sent (owner) | [dark](img/33-offer-sent-phone-dark.png), [light](img/33-offer-sent-phone-light.png) | [dark](img/33-offer-sent-desktop-dark.png), [light](img/33-offer-sent-desktop-light.png) |
+| 34 | Candidate committed (owner) | [dark](img/34-candidate-committed-phone-dark.png), [light](img/34-candidate-committed-phone-light.png) | [dark](img/34-candidate-committed-desktop-dark.png), [light](img/34-candidate-committed-desktop-light.png) |
+
 ## When a wireframe and a doc disagree
 The pattern and component docs win on behaviour and styling; the wireframe wins on layout and content. Fix whichever is wrong in your pull request, and say so in its description.

@@ -58,6 +58,8 @@ Each story is written so it can be pasted into a GitHub issue (User Story templa
 | F4-07 | Auto-withdraw and retire on lock | D | S2 | 2 | Must |
 | F4-08 | Team chat over WebSocket | D | S3 | 6 | Must |
 | F4-09 | Chat history and reconnect | D | S3 | 2 | Should |
+| F4-10 | Commit to one offer (API) | D | S3 | 4.5 | Must |
+| F4-11 | Commit to one offer (screens) | D | S3 | 2.5 | Must |
 | PL-05 | First production deploy | rotating | S1 | 1 | Must |
 | PL-10 | Seed data script | rotating | S1 | 1 | Should |
 | PL-11 | Burn chart and sprint report | rotating | S1, S2, S3 | 1 each | Must |
@@ -461,6 +463,53 @@ As a team member, I want to see earlier messages and not lose any when my connec
 - Given the socket drops, then the client reconnects and fetches messages it missed.
 
 Sprint S3 | 2 h | Should | UC-12
+
+### F4-10 Commit to one offer (API)
+As a student liked by several projects, I want to choose which one I join so that I end up on the team I want.
+- Given an owner likes a pending applicant, then the application becomes `liked`, the role stays `open` and no seat fills.
+- Given an applicant owns an open project, then an owner can still like them.
+- Given I commit to one of my offers, then in one transaction my application becomes `committed`, the role is `filled` with `filled_by` set, other `pending` and `liked` applications on that role become `passed`, my other `pending` and `liked` applications that term become `withdrawn`, and the lock check runs.
+- Given that was the last open role, then the project locks and the `Team` is created in the same transaction (BR-06).
+- Given two people commit to the same role at once, then one gets the seat and the other gets a 409 `role_not_open`.
+- Given I own an open project, then commit returns a 409 `owns_open_project` and my offer stays.
+- Given I already hold a seat on another open project, then commit returns a 409 `applicant_committed`.
+- Given I decline an offer, then my application becomes `declined` and the role stays `open`.
+- Given I have committed, then applying returns a 409 and my feed is empty.
+- Given the application isn't mine, then commit and decline are refused. Test the 403 case.
+- Given a project closes, then its `liked` applications are withdrawn along with its `pending` ones.
+- Given existing `liked` applications, then a data migration makes them `committed`, so current teams don't change.
+
+API sketch:
+
+| Method | Path | Who | Result |
+|---|---|---|---|
+| POST | `/api/v1/applications/{id}/like/` | owner | Now creates an offer and doesn't fill the role |
+| POST | `/api/v1/applications/{id}/commit/` | applicant | The application and `team`, which is null unless this commit locked it. `409` `role_not_open`, `owns_open_project`, `applicant_committed` |
+| POST | `/api/v1/applications/{id}/decline/` | applicant | The application. `409` if it isn't an offer |
+
+Update the docs listed in the [commit flow](../design/patterns/commit-flow.md#docs-to-update-with-the-code) guide in the same pull request.
+
+Design: [commit flow](../design/patterns/commit-flow.md), [flow 4](../design/screens/flows.md#4-planned-candidate-commits-to-one-offer)
+
+Sprint S3 | 4.5 h | Must | UC-10, UC-11
+
+### F4-11 Commit to one offer (screens)
+As a student with offers, I want to compare them and commit to one so that I can pick my team with confidence. As an owner, I want to see who I'm waiting on.
+- Given I have offers, then Discover shows a banner and a count, and My applications opens on an Offers tab with one card per offer.
+- Given I press Commit, then a confirmation says which seat I take and what closes, and focus starts on Keep my options.
+- Given I confirm, then I see my Committed card and what closed, and my deck is closed.
+- Given I decline, then I confirm first, and the offer moves to Closed.
+- Given I own an open project, then committing shows Commit blocked with a link to that project.
+- Given the role filled while I decided, then I see why and the offer moves to Closed.
+- Given I like an applicant as an owner, then I see Offer sent, the person appears under Offers out, and the queue moves on.
+- Given someone commits, then the role shows who took the seat and what happened to the others.
+- Given any of these screens, then they work in dark and light, at phone and desktop width, and with the keyboard alone.
+
+Depends on F4-10.
+
+Design: [commit flow](../design/patterns/commit-flow.md), [screens 26 to 34](../design/screens/README.md#commit-flow-planned)
+
+Sprint S3 | 2.5 h | Must | UC-10, UC-11
 
 ---
 
