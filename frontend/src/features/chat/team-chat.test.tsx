@@ -70,21 +70,34 @@ const history = [
   message(1, marco, "Welcome, all. Kickoff Thursday?"),
 ];
 
-const fetchMock = vi.fn<(request: Request) => Promise<Response>>(
-  async () =>
-    new Response(JSON.stringify({ next: null, previous: null, results: history }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    }),
-);
+function page(results: unknown[], next: string | null = null, status = 200) {
+  return new Response(JSON.stringify({ next, previous: null, results }), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+// A plain load gets the history. A catch-up (?after=) gets whatever `missed` returns.
+let missed: (url: URL) => Response;
+const fetchMock = vi.fn<(request: Request) => Promise<Response>>(async (request) => {
+  const url = new URL(request.url);
+  return url.searchParams.has("after") ? missed(url) : page(history);
+});
+const catchUps = () =>
+  fetchMock.mock.calls
+    .map(([request]) => new URL(request.url))
+    .filter((url) => url.searchParams.has("after"))
+    .map((url) => url.search);
 
 beforeEach(() => {
+  missed = () => page([]);
   FakeSocket.all = [];
   vi.stubGlobal("WebSocket", FakeSocket);
   vi.stubGlobal("fetch", fetchMock);
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
@@ -218,11 +231,150 @@ test("a 4401 close sends me to sign in", () => {
   expect(replace).toHaveBeenCalledWith("/login?next=%2Fteams%2F3%2Fchat");
 });
 
-test("any other close says to refresh", () => {
+const receive = (data: ReturnType<typeof message>) =>
+  socket().receive({ type: "chat.message", data: { ...data, client_id: null } });
+
+// Moves the fake clock and lets the fetches it started finish.
+const wait = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
+
+// The next socket opens after exactly `ms`, not before.
+async function expectRetryAfter(ms: number) {
+  const count = FakeSocket.all.length;
+  await wait(ms - 1);
+  expect(FakeSocket.all).toHaveLength(count);
+  await wait(1);
+  expect(FakeSocket.all).toHaveLength(count + 1);
+}
+
+test("a dropped socket shows Reconnecting, then reconnects after 1 s", async () => {
+  vi.useFakeTimers();
   renderChat();
   socket().open();
   socket().drop(1006);
 
-  expect(screen.getByRole("alert")).toHaveTextContent("Disconnected. Refresh to try again.");
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "Reconnecting… New messages will load when you're back.",
+  );
   expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
+  await expectRetryAfter(1000);
+  expect(socket().url).toBe(`ws://${location.host}/ws/teams/3/`);
+
+  socket().open();
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Send" })).toBeEnabled();
+});
+
+test("retries back off 1, 2, 4 ... 30 s and start over after a good open", async () => {
+  vi.useFakeTimers();
+  renderChat();
+
+  for (const ms of [1000, 2000, 4000, 8000, 16000, 30000, 30000]) {
+    socket().drop(1006);
+    await expectRetryAfter(ms);
+  }
+  socket().open();
+  socket().drop(1006);
+  await expectRetryAfter(1000);
+});
+
+test("each open catches up on missed messages, once each", async () => {
+  vi.useFakeTimers();
+  renderChat();
+  await wait(0);
+  socket().open();
+  await wait(0);
+  receive(message(3, me, "On my way."));
+  socket().drop(1006);
+
+  // 4 and 5 came in while we were away, 5 and 6 arrive live right after the reopen
+  missed = (url) =>
+    url.searchParams.has("cursor")
+      ? page([message(4, marco, "Room 120.")])
+      : page(
+          [message(6, ava, "See you."), message(5, marco, "Bring laptops.")],
+          `${url.href}&cursor=p2`,
+        );
+  await wait(1000);
+  socket().open();
+  receive(message(5, marco, "Bring laptops."));
+  await wait(0);
+  receive(message(6, ava, "See you."));
+
+  expect(catchUps()).toEqual(["?after=2", "?after=3", "?after=3&cursor=p2"]);
+  expect(bubbles()).toEqual([
+    "MarcoWelcome, all. Kickoff Thursday?",
+    "AvaWorks for me.",
+    "You: On my way.",
+    "MarcoRoom 120.",
+    "MarcoBring laptops.",
+    "AvaSee you.",
+  ]);
+});
+
+test("with no messages yet, the first open still catches up with after=0", async () => {
+  vi.useFakeTimers();
+  fetchMock.mockImplementationOnce(async () => page([]));
+  missed = () => page([message(1, ava, "First!")]);
+  renderChat();
+  await wait(0);
+  socket().open();
+  receive(message(1, ava, "First!"));
+  await wait(0);
+
+  expect(catchUps()).toEqual(["?after=0"]);
+  expect(bubbles()).toEqual(["AvaFirst!"]);
+});
+
+test.each([4401, 4404])("a %i close never retries", async (code) => {
+  vi.useFakeTimers();
+  renderChat();
+  socket().open();
+  socket().drop(code);
+
+  await wait(60_000);
+  expect(FakeSocket.all).toHaveLength(1);
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+});
+
+test("leaving while a retry is pending opens no new socket", async () => {
+  vi.useFakeTimers();
+  const { unmount } = renderChat();
+  socket().drop(1006);
+  unmount();
+
+  await wait(60_000);
+  expect(FakeSocket.all).toHaveLength(1);
+});
+
+test("a failed catch-up shows an alert and the chat keeps working", async () => {
+  vi.useFakeTimers();
+  missed = () => page([], null, 500);
+  renderChat();
+  socket().open();
+  await wait(0);
+
+  expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load missed messages.");
+  receive(message(3, ava, "Still here?"));
+  expect(bubbles().at(-1)).toBe("AvaStill here?");
+  fireEvent.change(box(), { target: { value: "Yes" } });
+  fireEvent.keyDown(box(), { key: "Enter" });
+  expect(socket().sent).toHaveLength(1);
+});
+
+test("the draft survives a reconnect", async () => {
+  vi.useFakeTimers();
+  renderChat();
+  socket().open();
+  fireEvent.change(box(), { target: { value: "half a thought" } });
+  socket().drop(1006);
+
+  fireEvent.keyDown(box(), { key: "Enter" });
+  expect(box()).toHaveValue("half a thought");
+  await wait(1000);
+  socket().open();
+  fireEvent.keyDown(box(), { key: "Enter" });
+
+  expect(socket().sent).toEqual([
+    { type: "chat.send", data: { body: "half a thought", client_id: expect.any(String) } },
+  ]);
 });

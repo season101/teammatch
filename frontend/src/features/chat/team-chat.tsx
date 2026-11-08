@@ -104,9 +104,9 @@ function ChatRoom({ team, userId }: { team: MyTeam; userId: number }) {
         <span aria-hidden="true" className="size-11 shrink-0" />
       </header>
 
-      {closed !== null && closed !== 4401 && (
-        <p role="alert" className={`${noticeClass} mx-4 mt-4`}>
-          Disconnected. Refresh to try again.
+      {socket.status.state === "reconnecting" && (
+        <p role="status" className={`${noticeClass} mx-4 mt-4`}>
+          <strong>Reconnecting…</strong> New messages will load when you&apos;re back.
         </p>
       )}
 
