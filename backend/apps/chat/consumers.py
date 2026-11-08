@@ -33,7 +33,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return  # refused sockets can't post, even if a frame slips in before the close
         try:
             content = json.loads(text_data)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, RecursionError):  # RecursionError: deeply nested JSON
             await self.send_error("Frames must be JSON text.")
         else:
             await self.receive_json(content)
