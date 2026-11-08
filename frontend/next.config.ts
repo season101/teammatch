@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
       // Google's OAuth callback, /accounts/google/login/callback/
       { source: "/accounts/:path*/", destination: `${apiUrl}/accounts/:path*/` },
       { source: "/accounts/:path*", destination: `${apiUrl}/accounts/:path*` },
+      // Chat socket, /ws/teams/3/. Without the slash rule Channels finds no route.
+      { source: "/ws/:path*/", destination: `${apiUrl}/ws/:path*/` },
       { source: "/ws/:path*", destination: `${apiUrl}/ws/:path*` },
     ];
   },
