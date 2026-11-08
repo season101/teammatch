@@ -1,2 +1,7 @@
-# Chat consumers get added here (/ws/teams/<id>/) in F4-08.
-websocket_urlpatterns = []
+from django.urls import path
+
+from apps.chat.consumers import ChatConsumer
+
+websocket_urlpatterns = [
+    path("ws/teams/<int:team_id>/", ChatConsumer.as_asgi()),
+]

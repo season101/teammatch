@@ -219,4 +219,4 @@ Every frame is JSON:
 
 ## Rate limits
 
-DRF throttles: `apply` 60/hour per user, `chat.send` 30/10s per connection, anonymous auth endpoints 20/min per IP.
+DRF throttles: `apply` 60/hour per user, `chat.send` 30/10s per connection **(planned)**, anonymous auth endpoints 20/min per IP.
