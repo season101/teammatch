@@ -250,3 +250,8 @@ def dismiss(role, user):
     if role.status != RoleStatus.OPEN or role.project.status != ProjectStatus.OPEN:
         raise RoleNotOpen()
     RoleDismissal.objects.get_or_create(user=user, role=role)
+
+
+def reset_passes(user):
+    """Bring every role I passed on back into my feed. Applied roles stay out."""
+    RoleDismissal.objects.filter(user=user).delete()

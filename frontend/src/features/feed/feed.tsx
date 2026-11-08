@@ -10,7 +10,7 @@ import { useShortcutsEnabled } from "@/features/shell/preferences";
 import { termEnd } from "@/features/teams/my-team";
 import { useMyTeam } from "@/features/teams/queries";
 import { NoteField } from "./note-field";
-import { useApply, useDismiss, useFeed, type ApiError } from "./queries";
+import { useApply, useDismiss, useFeed, useResetPasses, type ApiError } from "./queries";
 import { RoleCard } from "./role-card";
 import { SwipeCard, type Direction } from "./swipe-card";
 
@@ -23,6 +23,9 @@ export function Feed() {
   const mySkillIds = profile.data?.skills.map((skill) => skill.id) ?? [];
   const apply = useApply();
   const dismiss = useDismiss();
+  const reset = useResetPasses();
+  // Set when a reset brought nothing back.
+  const [noPasses, setNoPasses] = useState(false);
   // Roles decided here. They leave the deck at once and come back if the request fails.
   const [gone, setGone] = useState<number[]>([]);
   const [direction, setDirection] = useState<Direction>("right");
@@ -83,6 +86,7 @@ export function Feed() {
         message = `Applied to ${role.title} at ${role.project.title}.`;
       } else {
         await dismiss.mutateAsync(role.id);
+        setNoPasses(false);
         message = `Passed on ${role.title}.`;
       }
       if (deck.length === 1) {
@@ -100,6 +104,26 @@ export function Feed() {
       }
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function showPassedAgain() {
+    // The button goes away either way. Focus waits on the deck for the cards.
+    stack.current?.focus();
+    setError("");
+    try {
+      await reset.mutateAsync();
+    } catch (err) {
+      setError((err as ApiError).message);
+      return;
+    }
+    setGone([]);
+    const { data } = await feed.refetch();
+    if (data?.length === 0) {
+      setNoPasses(true);
+      setAnnouncement("No passed roles to bring back.");
+    } else {
+      setAnnouncement("Your passed roles are back.");
     }
   }
 
@@ -132,7 +156,7 @@ export function Feed() {
         role="group"
         aria-label="Deck of open roles"
         aria-keyshortcuts={shortcuts ? "ArrowLeft ArrowRight" : undefined}
-        tabIndex={top ? 0 : undefined}
+        tabIndex={top ? 0 : -1}
         className="isolate grid rounded-card"
       >
         <AnimatePresence initial={false} custom={direction}>
@@ -157,9 +181,22 @@ export function Feed() {
               <p className="text-muted">
                 You&apos;ve seen every open role. New projects show up here first.
               </p>
-              <Link href="/projects" className={`${buttonClasses()} mt-3`}>
-                Browse projects
-              </Link>
+              <div className="mt-3 flex flex-wrap justify-center gap-3">
+                <Link href="/projects" className={buttonClasses()}>
+                  Browse projects
+                </Link>
+                {!noPasses && (
+                  <button
+                    type="button"
+                    className={buttonClasses("secondary")}
+                    aria-disabled={reset.isPending}
+                    onClick={() => !reset.isPending && showPassedAgain()}
+                  >
+                    Show passed roles again
+                  </button>
+                )}
+              </div>
+              {noPasses && <p className="text-sm text-muted">No passed roles to bring back.</p>}
             </div>
           ))}
       </div>

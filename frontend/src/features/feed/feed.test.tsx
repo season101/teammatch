@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MotionGlobalConfig } from "motion/react";
 import { afterEach, vi } from "vitest";
 import { setShortcutsEnabled } from "@/features/shell/preferences";
@@ -42,19 +42,22 @@ const myTeam = {
   seen_at: "2026-11-01T00:00:00Z",
 };
 
-// Answers by method and path; records the apply and pass requests. Like the real
-// feed, a role I applied to or passed on doesn't come back on the next fetch.
-// Apply and pass answer once `wait` settles.
+// Answers by method and path; records the apply, pass and reset requests. Like the
+// real feed, a role I applied to or passed on doesn't come back on the next fetch,
+// and a reset brings the passed ones back. Apply and pass answer once `wait` settles.
 function mockApi({
   roles = [role],
   apply = { status: 201, body: {} as unknown },
   dismiss = { status: 204, body: null as unknown },
+  reset = { status: 204, body: null as unknown },
   wait = Promise.resolve(),
   team = (): unknown => null,
 } = {}) {
   let open = [...roles];
+  let passed: typeof roles = [];
   const applies: Request[] = [];
   const dismisses: Request[] = [];
+  const resets: Request[] = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(async (request: Request) => {
@@ -77,7 +80,14 @@ function mockApi({
         dismisses.push(request.clone());
         await wait;
         ({ status, body } = dismiss);
-        if (status === 204) open = open.filter((r) => r.id !== dismissId);
+        if (status === 204) {
+          passed = [...passed, ...open.filter((r) => r.id === dismissId)];
+          open = open.filter((r) => r.id !== dismissId);
+        }
+      } else if (path === "/api/v1/feed/reset/" && request.method === "POST") {
+        resets.push(request.clone());
+        ({ status, body } = reset);
+        if (status === 204) [open, passed] = [[...open, ...passed], []];
       } else status = 404;
       return new Response(body === null ? null : JSON.stringify(body), {
         status,
@@ -85,7 +95,7 @@ function mockApi({
       });
     }),
   );
-  return { applies, dismisses };
+  return { applies, dismisses, resets };
 }
 
 function renderFeed(
@@ -176,6 +186,58 @@ test("passing the last card leaves me all caught up", async () => {
   expect(dismisses).toHaveLength(1);
   expect(new URL(dismisses[0].url).pathname).toBe("/api/v1/roles/7/dismiss/");
   expect(dismisses[0].headers.get("X-CSRFToken")).toBe("test-token");
+});
+
+test("after passing every role I can see the passed ones again", async () => {
+  document.cookie = "csrftoken=test-token";
+  const { resets } = mockApi();
+  renderFeed();
+
+  fireEvent.click(await passButton());
+  fireEvent.click(await screen.findByRole("button", { name: "Show passed roles again" }));
+
+  expect(await screen.findByRole("article", { name: "Backend dev" })).toBeInTheDocument();
+  // The arrow keys work straight away.
+  expect(await deck()).toHaveFocus();
+  expect(screen.getByRole("status")).toHaveTextContent("Your passed roles are back.");
+  expect(resets).toHaveLength(1);
+  expect(resets[0].headers.get("X-CSRFToken")).toBe("test-token");
+});
+
+test("I'm told when there are no passed roles to bring back", async () => {
+  mockApi({ roles: [] });
+  renderFeed();
+
+  fireEvent.click(await screen.findByRole("button", { name: "Show passed roles again" }));
+
+  expect(await within(await deck()).findByText("No passed roles to bring back.")).toBeInTheDocument();
+  expect(screen.getByRole("status")).toHaveTextContent("No passed roles to bring back.");
+  expect(screen.queryByRole("button", { name: "Show passed roles again" })).not.toBeInTheDocument();
+});
+
+test("passing on a role that shows up later brings the button back", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  mockApi({ roles: [] });
+  renderFeed(client);
+  fireEvent.click(await screen.findByRole("button", { name: "Show passed roles again" }));
+  await within(await deck()).findByText("No passed roles to bring back.");
+
+  // A new project shows up the next time the feed loads.
+  act(() => client.setQueryData(["feed"], [role]));
+  fireEvent.click(await passButton());
+
+  expect(await screen.findByRole("button", { name: "Show passed roles again" })).toBeInTheDocument();
+});
+
+test("I'm told when showing passed roles again fails", async () => {
+  mockApi({ roles: [], reset: { status: 500, body: {} } });
+  renderFeed();
+
+  fireEvent.click(await screen.findByRole("button", { name: "Show passed roles again" }));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Couldn't show passed roles. Please try again.",
+  );
 });
 
 test("dragging right applies", async () => {

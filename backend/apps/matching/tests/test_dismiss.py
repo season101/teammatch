@@ -110,3 +110,38 @@ def test_unknown_role_is_404(candidate):
 def test_requires_sign_in(role):
     assert APIClient().post(f"/api/v1/roles/{role.id}/dismiss/").status_code in (401, 403)
     assert not RoleDismissal.objects.exists()
+
+
+def reset(user):
+    return as_user(user).post("/api/v1/feed/reset/")
+
+
+def test_reset_brings_my_passed_roles_back(candidate, role):
+    dismiss(candidate, role)
+
+    assert reset(candidate).status_code == 204
+    assert feed_ids(candidate) == [role.id]
+
+
+def test_reset_keeps_roles_i_applied_to_out(candidate, role):
+    applied = Role.objects.create(project=role.project, title="Frontend dev")
+    as_user(candidate).post("/api/v1/applications/", {"role": applied.id})
+    dismiss(candidate, role)
+
+    reset(candidate)
+
+    assert feed_ids(candidate) == [role.id]
+
+
+def test_reset_only_clears_my_passes(candidate, role):
+    other = User.objects.create_user(email="kim@latech.edu", password="pw")
+    dismiss(candidate, role)
+    dismiss(other, role)
+
+    reset(candidate)
+
+    assert list(RoleDismissal.objects.values_list("user", flat=True)) == [other.id]
+
+
+def test_reset_requires_sign_in():
+    assert APIClient().post("/api/v1/feed/reset/").status_code in (401, 403)

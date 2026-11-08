@@ -11,7 +11,7 @@ Business rules (BR-xx) are defined in [prd.md](prd.md#7-business-rules). Backlog
 | UC-05 | Create project with roles | Owner | F2 | F2-01, F2-02 |
 | UC-06 | Browse and search projects | Candidate | F2 | F2-03, F2-04, F2-07 |
 | UC-07 | Swipe right to apply | Candidate | F3 | F3-02, F3-03, F3-04, F3-10 |
-| UC-08 | Swipe left to pass | Candidate | F3 | F3-05, F3-10 |
+| UC-08 | Swipe left to pass | Candidate | F3 | F3-05, F3-10, F3-11 |
 | UC-09 | Withdraw application | Candidate | F3 | F3-06 |
 | UC-10 | Review applicants (like / pass) | Owner | F4 | F4-01, F4-02, F4-04, F4-05 |
 | UC-11 | Team auto-lock, auto-withdraw, retire | System | F4 | F4-03, F4-05, F4-07, F1-08 |

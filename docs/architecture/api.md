@@ -127,6 +127,7 @@ Login, signup, logout, password and Google live under allauth (below).
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | GET | `/api/v1/feed/` | user | swipe deck, open roles ranked by skill overlap. Empty while I'm retired |
+| POST | `/api/v1/feed/reset/` | user | clear my passes so those roles come back into my feed, `204`. Applied roles stay out |
 | POST | `/api/v1/roles/{id}/dismiss/` | user | candidate pass on a role, `204`; repeats are fine. My own project: `403`; role or project not open: `409` |
 | POST | `/api/v1/applications/` | user | apply to a role `{role, note}`. Retired: `403` `profile_retired` |
 | GET | `/api/v1/applications/mine/?status=` | user | my applications |

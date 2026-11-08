@@ -114,6 +114,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/feed/reset/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Show every role I passed on in my feed again. */
+        post: operations["feed_reset_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health/": {
         parameters: {
             query?: never;
@@ -876,6 +893,24 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PaginatedFeedRoleList"];
                 };
+            };
+        };
+    };
+    feed_reset_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
