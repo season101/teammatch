@@ -12,11 +12,13 @@ from django.test import Client
 
 from apps.chat.models import ChatMessage
 from apps.chat.services import post_message
+from apps.matching.tests.test_fill_and_lock import committed
 from config.asgi import application
 from config.routing import websocket_urlpatterns
 
-# The consumer's DB work and on_commit need real commits.
-pytestmark = pytest.mark.django_db(transaction=True)
+# The consumer's DB work and on_commit need real commits. A plain transaction=True flush
+# would recreate content types under new ids and break the other committed tests.
+pytestmark = committed
 
 ORIGIN = (b"origin", b"http://localhost")
 count_messages = database_sync_to_async(ChatMessage.objects.count)
