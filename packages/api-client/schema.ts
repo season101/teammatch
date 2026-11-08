@@ -356,7 +356,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description My team's chat, newest first, 50 a page (F4-09). Not a member: 403. No such team: 404. */
+        /** @description My team's chat, newest first, 50 a page (F4-09). Not on the team or no such team: 404. */
         get: operations["teams_messages_list"];
         put?: never;
         post?: never;

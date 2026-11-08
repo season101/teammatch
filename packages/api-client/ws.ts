@@ -27,5 +27,4 @@ export type ServerFrame = ChatMessageEvent | ChatError | Pong;
 
 export type WsCloseCode =
   | 4401 // not logged in
-  | 4403 // not a member
-  | 4404; // team not found
+  | 4404; // team not found or not a member

@@ -2,7 +2,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from apps.chat.models import ChatMessage
-from apps.chat.services import TeamAccess, team_access
+from apps.chat.services import is_member
 from apps.matching.tests.test_my_team import locked_team, term, user
 
 pytestmark = pytest.mark.django_db
@@ -88,8 +88,8 @@ def test_sender_has_id_and_display_name_and_no_email(team, marco, ava):
     assert "@latech.edu" not in response.content.decode()
 
 
-def test_a_non_member_of_a_locked_team_gets_403(team, outsider):
-    assert client_for(outsider).get(messages_url(team.id)).status_code == 403
+def test_a_non_member_of_a_locked_team_gets_404_like_a_missing_team(team, outsider):
+    assert client_for(outsider).get(messages_url(team.id)).status_code == 404
 
 
 def test_a_missing_team_is_404(team, marco):
@@ -112,8 +112,8 @@ def test_query_count_does_not_grow_with_the_page(
         assert len(client.get(messages_url(team.id)).json()["results"]) == count
 
 
-def test_team_access_tells_member_outsider_and_missing_team_apart(team, marco, ava, outsider):
-    assert team_access(marco, team.id) is TeamAccess.MEMBER
-    assert team_access(ava, team.id) is TeamAccess.MEMBER
-    assert team_access(outsider, team.id) is TeamAccess.NOT_MEMBER
-    assert team_access(outsider, team.id + 1) is TeamAccess.NO_TEAM
+def test_is_member_is_true_for_owner_and_filled_roles_only(team, marco, ava, outsider):
+    assert is_member(marco, team.id)
+    assert is_member(ava, team.id)
+    assert not is_member(outsider, team.id)
+    assert not is_member(marco, team.id + 1)

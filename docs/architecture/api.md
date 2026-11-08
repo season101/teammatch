@@ -142,7 +142,7 @@ Login, signup, logout, password and Google live under allauth (below).
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/v1/teams/{id}/messages/?cursor=&after=` | member | chat history, newest first, 50 a page: `{id, team, sender {id, display_name}, body, created_at}`. `after=<message id>` keeps only newer messages (catch-up after a reconnect) and stays in the `next` link; not an integer: `400`. Signed in but not on the team: `403`. No such team: `404` |
+| GET | `/api/v1/teams/{id}/messages/?cursor=&after=` | member | chat history, newest first, 50 a page: `{id, team, sender {id, display_name}, body, created_at}`. `after=<message id>` keeps only newer messages (catch-up after a reconnect) and stays in the `next` link; not an integer: `400`. Not on the team or no such team: `404` |
 
 Sending messages is WS only.
 
@@ -188,7 +188,7 @@ Domain allowlist (`ALLOWED_EMAIL_DOMAINS`) is enforced in the account and social
 
 The MVP only builds `/ws/teams/{id}/` for chat. `/ws/notifications/` and its events are kept here as the future contract.
 
-Handshake: same origin, cookie sent automatically. Origin is checked (`AllowedHostsOriginValidator`). Close codes: `4401` not logged in, `4403` not a member, `4404` team not found.
+Handshake: same origin, cookie sent automatically. Origin is checked (`AllowedHostsOriginValidator`). Close codes: `4401` not logged in, `4404` team not found or not a member (same answer, so team ids do not leak).
 
 ### Message envelope
 
@@ -210,12 +210,12 @@ Every frame is JSON:
 | `type` | `data` |
 |---|---|
 | `chat.message` | `{ "id": 1, "team": 3, "sender": { "id": 7, "display_name": "..." }, "body": "...", "created_at": "2026-10-30T18:00:00Z", "client_id": "uuid or null" }` |
-| `chat.error` | `{ "code": "validation_error", "message": "...", "client_id": "uuid" }` |
+| `chat.error` | `{ "code": "validation_error", "message": "...", "client_id": "uuid or null" }` |
 | `application.liked` | `{ "application": 12, "role": 4, "project": 2 }` (future, `/ws/notifications/`) |
 | `team.formed` | `{ "team": 3, "project": 2 }` (future, `/ws/notifications/`) |
 | `pong` | `{}` |
 
-TypeScript types for these live in `packages/api-client/ws.ts`. Any change to this table updates that file in the same PR.
+`packages/api-client/ws.ts` has TypeScript types for the chat socket frames and close codes. Any change to the chat rows above updates that file in the same PR.
 
 ## Rate limits
 

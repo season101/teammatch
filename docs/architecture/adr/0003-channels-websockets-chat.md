@@ -12,10 +12,10 @@ Locked teams get a chat room. Candidates should also see "you got liked" and "te
 - Run Django under ASGI (uvicorn). The same `api` container serves HTTP and WebSocket.
 - Django Channels 4 with `channels-redis` as the channel layer, backed by our own Redis container.
 - Paths: `/ws/teams/<id>/` for chat (MVP). `/ws/notifications/` for per-user events is future (F3-07); the path is reserved.
-- On connect: authenticate from the session (`AuthMiddlewareStack`), check origin, check team membership, then join group `team_<id>`. Close with `4403` if not a member.
+- On connect: authenticate from the session (`AuthMiddlewareStack`), check origin, check team membership, then join group `team_<id>`. Close with `4404` if not a member, the same as a missing team.
 - Messages are saved to Postgres before broadcast. History is loaded over REST with cursor pagination.
 - When live notifications are added (future), domain events (like, team formed) will be pushed with `group_send` inside `transaction.on_commit`.
-- The JSON message schema is documented in `api.md` and typed in `packages/api-client/src/ws.ts`.
+- The JSON message schema is documented in `api.md` and typed in `packages/api-client/ws.ts`.
 
 ## Consequences
 
