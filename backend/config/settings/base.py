@@ -77,7 +77,8 @@ REDIS_URL = env("REDIS_URL")
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {"hosts": [REDIS_URL]},
+        # The layer's receive blocks 5 s per read, same as redis-py 8's default read timeout.
+        "CONFIG": {"hosts": [{"address": REDIS_URL, "socket_timeout": 15}]},
     },
 }
 
