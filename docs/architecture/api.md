@@ -134,7 +134,7 @@ Login, signup, logout, password and Google live under allauth (below).
 | GET | `/api/v1/roles/{id}/applications/` | owner | pending applicants for a role, minus retired ones (`403` if it's not your project) |
 | POST | `/api/v1/applications/{id}/like/` | owner | like, fills role, may lock team |
 | POST | `/api/v1/applications/{id}/pass/` | owner | pass |
-| GET | `/api/v1/teams/mine/` | user | my team this term with my `seen_at`: `{"team": {id, project {id, title}, term {name, end_date}, members [{display_name, role}], seen_at}}`. `role` is the role title, or `"Owner"`. No team this term: `200` with `{"team": null}` |
+| GET | `/api/v1/teams/mine/` | user | my team this term with my `seen_at`: `{"team": {id, project {id, title}, term {name, end_date}, members [{display_name, role}], formed_at, seen_at}}`. `role` is the role title, or `"Owner"`. `formed_at` is when the team locked. No team this term: `200` with `{"team": null}` |
 | GET | `/api/v1/teams/{id}/` | member | team detail with members and roles **(planned)** |
 | POST | `/api/v1/teams/{id}/seen/` | member | mark the "It's a Team!" screen as seen, `204`. Sets my `seen_at` the first time; repeats keep it. Not my team: `404` |
 
@@ -142,7 +142,7 @@ Login, signup, logout, password and Google live under allauth (below).
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/v1/teams/{id}/messages/?cursor=` | member | chat history, newest first **(planned)** |
+| GET | `/api/v1/teams/{id}/messages/?cursor=&after=` | member | chat history, newest first, 50 a page: `{id, team, sender {id, display_name}, body, created_at}`. `after=<message id>` keeps only newer messages (catch-up after a reconnect) and stays in the `next` link; not an integer: `400`. Signed in but not on the team: `403`. No such team: `404` |
 
 Sending messages is WS only.
 
@@ -215,7 +215,7 @@ Every frame is JSON:
 | `team.formed` | `{ "team": 3, "project": 2 }` (future, `/ws/notifications/`) |
 | `pong` | `{}` |
 
-TypeScript types for these live in `packages/api-client/src/ws.ts`. Any change to this table updates that file in the same PR.
+TypeScript types for these live in `packages/api-client/ws.ts`. Any change to this table updates that file in the same PR.
 
 ## Rate limits
 

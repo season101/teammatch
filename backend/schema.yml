@@ -609,6 +609,45 @@ paths:
                 items:
                   $ref: '#/components/schemas/Skill'
           description: ''
+  /api/v1/teams/{id}/messages/:
+    get:
+      operationId: teams_messages_list
+      description: 'My team''s chat, newest first, 50 a page (F4-09). Not a member:
+        403. No such team: 404.'
+      parameters:
+      - in: query
+        name: after
+        schema:
+          type: integer
+        description: Only messages with a greater id, to catch up after a reconnect.
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - chat
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedChatMessageList'
+          description: ''
   /api/v1/teams/{id}/seen/:
     post:
       operationId: teams_seen_create
@@ -741,6 +780,45 @@ components:
           maxLength: 300
       required:
       - role
+    ChatMessage:
+      type: object
+      description: Same shape as the chat.message socket event, minus client_id.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        team:
+          type: integer
+          readOnly: true
+        sender:
+          allOf:
+          - $ref: '#/components/schemas/ChatSender'
+          readOnly: true
+        body:
+          type: string
+          maxLength: 2000
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - body
+      - created_at
+      - id
+      - sender
+      - team
+    ChatSender:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        display_name:
+          type: string
+          readOnly: true
+      required:
+      - display_name
+      - id
     Check:
       type: object
       properties:
@@ -953,12 +1031,17 @@ components:
           items:
             $ref: '#/components/schemas/TeamMember'
           readOnly: true
+        formed_at:
+          type: string
+          format: date-time
+          readOnly: true
         seen_at:
           type: string
           format: date-time
           readOnly: true
           nullable: true
       required:
+      - formed_at
       - id
       - members
       - project
@@ -974,6 +1057,25 @@ components:
           nullable: true
       required:
       - team
+    PaginatedChatMessageList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
     PaginatedFeedRoleList:
       type: object
       required:

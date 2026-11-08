@@ -349,6 +349,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/teams/{id}/messages/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description My team's chat, newest first, 50 a page (F4-09). Not a member: 403. No such team: 404. */
+        get: operations["teams_messages_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/teams/{id}/seen/": {
         parameters: {
             query?: never;
@@ -422,6 +439,19 @@ export interface components {
         ApplyRequest: {
             role: number;
             note?: string;
+        };
+        /** @description Same shape as the chat.message socket event, minus client_id. */
+        ChatMessage: {
+            readonly id: number;
+            readonly team: number;
+            readonly sender: components["schemas"]["ChatSender"];
+            body: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        ChatSender: {
+            readonly id: number;
+            readonly display_name: string;
         };
         Check: {
             ok: boolean;
@@ -498,10 +528,25 @@ export interface components {
             readonly term: components["schemas"]["TeamTerm"];
             readonly members: components["schemas"]["TeamMember"][];
             /** Format: date-time */
+            readonly formed_at: string;
+            /** Format: date-time */
             readonly seen_at: string | null;
         };
         MyTeamResponse: {
             readonly team: components["schemas"]["MyTeam"] | null;
+        };
+        PaginatedChatMessageList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["ChatMessage"][];
         };
         PaginatedFeedRoleList: {
             /**
@@ -1241,6 +1286,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Skill"][];
+                };
+            };
+        };
+    };
+    teams_messages_list: {
+        parameters: {
+            query?: {
+                /** @description Only messages with a greater id, to catch up after a reconnect. */
+                after?: number;
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedChatMessageList"];
                 };
             };
         };

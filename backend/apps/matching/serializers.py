@@ -105,10 +105,11 @@ class MyTeamSerializer(serializers.ModelSerializer):
     project = TeamProjectSerializer(source="team.project", read_only=True)
     term = TeamTermSerializer(source="team.project.term", read_only=True)
     members = TeamMemberSerializer(source="team.memberships", many=True, read_only=True)
+    formed_at = serializers.DateTimeField(source="team.created_at", read_only=True)
 
     class Meta:
         model = Membership
-        fields = ["id", "project", "term", "members", "seen_at"]
+        fields = ["id", "project", "term", "members", "formed_at", "seen_at"]
         read_only_fields = ["seen_at"]
 
 
