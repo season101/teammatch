@@ -411,11 +411,11 @@ const FILLED_ROLE = {
 };
 
 test("shows how many roles are filled on the project cover", async () => {
-  mockApi((method, path) =>
-    path === "/api/v1/skills/"
-      ? [SKILLS, 200]
-      : [project({ status: "open", roles: [ROLE, FILLED_ROLE] }), 200],
-  );
+  mockApi((method, path) => {
+    if (path === "/api/v1/skills/") return [SKILLS, 200];
+    if (path === "/api/v1/applications/mine/") return [{ results: [] }, 200];
+    return [project({ status: "open", roles: [ROLE, FILLED_ROLE] }), 200];
+  });
   renderEditor(2);
   expect(
     await screen.findByRole("img", { name: "1 of 2 roles filled" }),
@@ -446,4 +446,129 @@ test("a project with no roles has no team strip", async () => {
   renderEditor();
   expect(await screen.findByText("TeamMatch")).toBeInTheDocument();
   expect(screen.queryByRole("img")).not.toBeInTheDocument();
+});
+
+// Apply from the project page (#172)
+const APPLICATION = {
+  id: 20,
+  role: { id: 3, title: "Backend dev" },
+  note: "",
+  status: "pending",
+  created_at: "2026-11-08T00:00:00Z",
+  updated_at: "2026-11-08T00:00:00Z",
+};
+
+// Someone else's open project with one open role; `applications` is what GET mine returns.
+function applyApi(applications: unknown[] = []) {
+  return mockApi((method, path) => {
+    if (path === "/api/v1/skills/") return [SKILLS, 200];
+    if (path === "/api/v1/applications/mine/")
+      return [{ results: applications }, 200];
+    return [project({ status: "open", owner: 2, roles: [ROLE] }), 200];
+  });
+}
+
+test("offers Apply on an open role of someone else's project", async () => {
+  applyApi();
+  renderEditor(1);
+  expect(
+    await screen.findByRole("button", { name: "Apply to Backend dev" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByLabelText("Note to the owner (optional)"),
+  ).toBeInTheDocument();
+});
+
+test("the owner doesn't get Apply on their own project", async () => {
+  applyApi();
+  renderEditor(2);
+  expect(await screen.findByText("Backend dev")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Apply to Backend dev" }),
+  ).not.toBeInTheDocument();
+});
+
+test("a project that isn't open can't be applied to", async () => {
+  mockApi((method, path) =>
+    path === "/api/v1/skills/"
+      ? [SKILLS, 200]
+      : [project({ status: "locked", owner: 2, roles: [ROLE] }), 200],
+  );
+  renderEditor(1);
+  expect(await screen.findByText("Backend dev")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Apply to Backend dev" }),
+  ).not.toBeInTheDocument();
+});
+
+test("applies with the note, then shows Applied instead of the form", async () => {
+  let applied = false;
+  const calls = mockApi((method, path) => {
+    if (path === "/api/v1/skills/") return [SKILLS, 200];
+    if (path === "/api/v1/applications/mine/")
+      return [{ results: applied ? [APPLICATION] : [] }, 200];
+    if (path === "/api/v1/applications/" && method === "POST") {
+      applied = true;
+      return [
+        {
+          id: 20,
+          role: 3,
+          note: "Hi",
+          status: "pending",
+          created_at: "2026-11-08T00:00:00Z",
+        },
+        201,
+      ];
+    }
+    return [project({ status: "open", owner: 2, roles: [ROLE] }), 200];
+  });
+  renderEditor(1);
+  fireEvent.change(
+    await screen.findByLabelText("Note to the owner (optional)"),
+    { target: { value: " Hi " } },
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Apply to Backend dev" }));
+  expect(await screen.findByText("Applied")).toBeInTheDocument();
+  expect(calls.find((call) => call.method === "POST")?.body).toEqual({
+    role: 3,
+    note: "Hi",
+  });
+  expect(
+    screen.queryByRole("button", { name: "Apply to Backend dev" }),
+  ).not.toBeInTheDocument();
+});
+
+test("a role I already applied to shows Applied when the page loads", async () => {
+  applyApi([APPLICATION]);
+  renderEditor(1);
+  expect(await screen.findByText("Applied")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Apply to Backend dev" }),
+  ).not.toBeInTheDocument();
+});
+
+test("a withdrawn application still blocks applying again", async () => {
+  applyApi([{ ...APPLICATION, status: "withdrawn" }]);
+  renderEditor(1);
+  expect(await screen.findByText("Applied")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Apply to Backend dev" }),
+  ).not.toBeInTheDocument();
+});
+
+test("shows the server's message when applying fails", async () => {
+  mockApi((method, path) => {
+    if (path === "/api/v1/skills/") return [SKILLS, 200];
+    if (path === "/api/v1/applications/mine/") return [{ results: [] }, 200];
+    if (path === "/api/v1/applications/" && method === "POST")
+      return [{ detail: "This role was just filled." }, 409];
+    return [project({ status: "open", owner: 2, roles: [ROLE] }), 200];
+  });
+  renderEditor(1);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Apply to Backend dev" }),
+  );
+  expect(
+    await screen.findByText("This role was just filled."),
+  ).toBeInTheDocument();
 });
