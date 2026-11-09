@@ -1,6 +1,6 @@
 # User flows
 
-The three journeys every screen serves, plus one that's planned. Numbers in brackets are screen numbers from [README.md](README.md). For the API calls behind each step, see [../../architecture/flows.md](../../architecture/flows.md).
+The three journeys every screen serves, plus two that are planned. Numbers in brackets are screen numbers from [README.md](README.md). For the API calls behind each step, see [../../architecture/flows.md](../../architecture/flows.md).
 
 The diagrams below render on GitHub. Image versions for slides or offline reading: [sign-up](img/flow-signup.png), [apply](img/flow-apply.png), [owner](img/flow-owner.png).
 
@@ -92,3 +92,29 @@ flowchart LR
 - A student can hold several offers at once. Committing closes the rest.
 - The role stays open until someone commits, so the first commit wins.
 - A commit can't be undone.
+
+## 5. Planned: adding a way to sign in
+
+Planned for F1-10, F1-12 and F1-13. See the [account paths](../patterns/account-paths.md) guide.
+
+```mermaid
+flowchart LR
+    SI["Sign in [35]"] -->|Forgot password?| FP["Forgot password [36]"]
+    SI -->|Google-only email| GP["Google-only prompt [41]"]
+    FP -->|Send link| CI["Check your inbox [37]"]
+    GP -->|Set a password| CI
+    CI -->|opens the emailed link| SP["Set a password [38]"]
+    SP -->|link used or expired| LE["Link expired [40]"]
+    LE --> FP
+    SP -->|saved| PS["Password saved [39]"]
+    PS --> SI
+    WA["Ways to sign in [42, 43]"] -->|Set a password| SS["Set a password [44]"]
+    SS --> BW["Both ways on [45]"]
+    WA -->|Connect, same email| BW
+    WA -->|Connect, different email| CC["Can't connect [46]"]
+    CC --> WA
+```
+
+- Signed out, a password is always set through an emailed link, which proves the person owns the inbox.
+- Signed in, Settings saves it directly.
+- Connect only links a Google account with the same email as the account.

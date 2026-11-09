@@ -70,5 +70,23 @@ Full-colour mockups for [F4-10](../../product/backlog.md#f4-10-commit-to-one-off
 | 33 | Offer sent (owner) | [dark](img/33-offer-sent-phone-dark.png), [light](img/33-offer-sent-phone-light.png) | [dark](img/33-offer-sent-desktop-dark.png), [light](img/33-offer-sent-desktop-light.png) |
 | 34 | Candidate committed (owner) | [dark](img/34-candidate-committed-phone-dark.png), [light](img/34-candidate-committed-phone-light.png) | [dark](img/34-candidate-committed-desktop-dark.png), [light](img/34-candidate-committed-desktop-light.png) |
 
+## Account paths (planned)
+Full-colour phone mockups at 390px, in dark, for [F1-10](../../product/backlog.md#f1-10-reset-a-forgotten-password), [F1-12](../../product/backlog.md#f1-12-add-google-or-a-password-from-settings) and [F1-13](../../product/backlog.md#f1-13-offer-a-password-to-google-only-accounts-at-sign-in). They're the real pages with the planned parts added, so final wording and layout may change. The [interactive board](wireframes.html) has greyscale wireframes of the same screens. To build them, read the [account paths](../patterns/account-paths.md) guide.
+
+| # | Screen | Phone | Story |
+|---|---|---|---|
+| 35 | Forgot password? link | [dark](img/35-sign-in-forgot-link-phone-dark.png) | F1-10 |
+| 36 | Forgot password | [dark](img/36-forgot-password-phone-dark.png) | F1-10 |
+| 37 | Check your inbox | [dark](img/37-forgot-check-inbox-phone-dark.png) | F1-10 |
+| 38 | Set a password | [dark](img/38-set-password-phone-dark.png) | F1-10 |
+| 39 | Password saved | [dark](img/39-password-saved-phone-dark.png) | F1-10 |
+| 40 | Link expired | [dark](img/40-reset-link-expired-phone-dark.png) | F1-10 |
+| 41 | Google-only prompt | [dark](img/41-sign-in-google-prompt-phone-dark.png) | F1-13 |
+| 42 | Ways to sign in, email account | [dark](img/42-settings-email-account-phone-dark.png) | F1-12 |
+| 43 | Ways to sign in, Google account | [dark](img/43-settings-google-account-phone-dark.png) | F1-12 |
+| 44 | Set a password in Settings | [dark](img/44-settings-set-password-phone-dark.png) | F1-12 |
+| 45 | Both ways on | [dark](img/45-settings-both-on-phone-dark.png) | F1-12 |
+| 46 | Can't connect that account | [dark](img/46-settings-connect-refused-phone-dark.png) | F1-12 |
+
 ## When a wireframe and a doc disagree
 The pattern and component docs win on behaviour and styling; the wireframe wins on layout and content. Fix whichever is wrong in your pull request, and say so in its description.

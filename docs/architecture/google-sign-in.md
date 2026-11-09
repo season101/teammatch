@@ -64,7 +64,7 @@ One email is always one account (`ACCOUNT_UNIQUE_EMAIL`). With `SOCIALACCOUNT_EM
 | You start with | Then you | What happens | Works afterward |
 |---|---|---|---|
 | Password, email verified | Continue with Google | Signed in to the same account, and Google is linked | Password and Google |
-| Password, email never verified | Continue with Google | Signed in and linked, but allauth wipes the old password, in case someone else registered the student's address first | Google |
+| Password, email never verified | Continue with Google | Not signed in. allauth wipes the old password, in case someone else registered the student's address first, links Google and sends a verification email. F1-14 (#201) will sign them in and mark the email verified | Google, once the email is verified |
 | Google | Sign in with email and password | Fails as a wrong password: an account made through Google has none | Google |
 | Google | Sign up with email and password, same address | No second account. allauth answers as for a new signup and emails a "you already have an account" message with a reset link | Google |
 | Google | Reset the password, then sign in with it | allauth sends reset emails to Google-only accounts too | Password and Google |
