@@ -27,6 +27,10 @@ Each story is written so it can be pasted into a GitHub issue (User Story templa
 | F1-06 | Email domain allowlist | A | S2 | 2 | Must |
 | F1-08 | Retired users blocked and term reset | A | S2 | 3 | Must |
 | F1-07 | Upload an avatar | A | S3 | 4 | Should |
+| F1-10 | Reset a forgotten password | A | S3 | 2 | Should |
+| F1-12 | Add Google or a password from Settings | A | S3 | 3 | Should |
+| F1-13 | Offer a password to Google-only accounts at sign-in | A | S3 | 1.5 | Should |
+| F1-14 | Never-verified account can sign in with Google | A | S3 | 1 | Should |
 | PL-07 | Admin moderation | A | S3 | 2 | Should |
 | BUF-A3 | Polish and bug buffer | A | S3 | 2 | - |
 | F2-01 | Create a project | B | S1 | 3 | Must |
@@ -100,7 +104,7 @@ Sprint S1 | 2 h | Must | UC-01
 ### F1-02 Sign in and sign out
 As a user, I want to sign in and out so that my account stays mine on shared devices.
 - Given a verified account, when I enter the right email and password, then I am signed in with a session cookie.
-- Given wrong credentials, when I submit, then I see a generic error.
+- Given wrong credentials, when I submit, then I see a generic error. One planned exception: an account with Google and no password gets a prompt to set one (F1-13, [DD-37](../design/decisions.md)).
 - Given I am signed in, when I click sign out, then my session ends and protected pages redirect to sign-in.
 
 Design: [forms](../design/patterns/forms.md), [confirmations](../design/patterns/confirmations.md), screens [02](../design/screens/img/02-sign-in.png) and [25](../design/screens/img/25-settings.png)
@@ -168,6 +172,60 @@ As an admin, I want to manage users, projects, skills, terms, and messages in Dj
 - Given I add a term or skill, then it is available in the app right away.
 
 Sprint S3 | 2 h | Should | Slot A | UC-14
+
+### F1-10 Reset a forgotten password
+As a student or staff member who forgot my password, or who signed up with Google, I want to set a new password from an email link so that I can sign in with email and password.
+- Given I click "Forgot password?" on sign-in and enter my school email, then the app asks for a link and says to check my inbox, whether or not that account exists.
+- Given an email outside the school domains, then the form shows the domain message and not "Check your inbox" (BR-01).
+- Given I open the emailed link and enter a new password, then it is saved and I can sign in with it.
+- Given the key is expired or already used, then the page says so and offers to send a new link.
+- Given an account made through Google, then "Forgot password?" sets a password, and both Google and email sign-in work afterward. Add a backend test.
+- Given I signed up with Google and then try to sign up with the same email, then no second account is made, and the "you already have an account" email links to a working page.
+- Given the reset emails, then the wording covers both a forgotten password and a Google account adding one.
+
+Design: [account paths](../design/patterns/account-paths.md), [flow 5](../design/screens/flows.md#5-planned-adding-a-way-to-sign-in), screens [35 to 40](../design/screens/README.md#account-paths-planned)
+
+Sprint S3 | 2 h | Should | Slot A | BR-01
+
+### F1-12 Add Google or a password from Settings
+As a student who signed up one way, I want to add the other way from Settings so that I can still get in if one stops working.
+- Given I'm signed in, then Settings has a Ways to sign in section showing Email and password and Google, each on or not set up.
+- Given my account has no password, when I save one under Set a password, then it doesn't ask for a current password or an email link, and email and Google both sign in afterward.
+- Given my account is on `@email.latech.edu` without Google, when I choose Connect and pick the Google account with the same email, then Google is linked, my password stays, and Settings shows Connected.
+- Given I pick a Google account with a different email, then nothing is linked and Settings says so. The server enforces this, with a backend test.
+- Given that Google account is already linked to another TeamMatch account, or isn't a school account, then nothing is linked and Settings says why.
+- Given my account is on `@latech.edu`, then Connect isn't shown.
+- Given a 390 px phone, both themes and keyboard only, then all of this works.
+
+Design: [account paths](../design/patterns/account-paths.md), screens [42 to 46](../design/screens/README.md#account-paths-planned), [DD-35 and DD-36](../design/decisions.md)
+
+Sprint S3 | 3 h | Should | Slot A | BR-01
+
+### F1-13 Offer a password to Google-only accounts at sign-in
+As a student who signed up with Google and then tries a password, I want to be told my account uses Google so that I'm not stuck on "Email or password is incorrect."
+- Given an account linked to Google with no password, when I sign in with its email and any password, then I see "This email signs in with Google. Want to set a password too?" with a Set a password button.
+- Given I choose Set a password, then the app asks for a link and shows Check your inbox, and the emailed link opens `/reset-password/<key>`.
+- Given a wrong password on an account that has one, or an email with no account, then I see the single "Email or password is incorrect." (F1-02).
+- Given an account with no password and no Google link, then I see that same single message.
+- Given the new server answer, then a backend test covers it and Vitest covers the prompt.
+- Given a 390 px phone, both themes and keyboard only, then all of this works.
+
+Needs F1-10.
+
+Design: [account paths](../design/patterns/account-paths.md), screen [41](../design/screens/README.md#account-paths-planned), [DD-37](../design/decisions.md)
+
+Sprint S3 | 1.5 h | Should | Slot A
+
+### F1-14 Never-verified account can sign in with Google
+As a student who signed up with a password and never verified my email, I want Continue with Google to sign me in so that I'm not locked out after proving the address is mine.
+- Given a password account whose email was never verified, when I Continue with Google with the same school email, then I'm signed in, Google is linked, and the email is marked verified.
+- Given that case, then the old password stops working, because someone else may have registered my address and set it.
+- Given an expired verification link, then the page says to sign in to get a new one and links to `/login`, not "Sign up again".
+- Given the fix, then `backend/apps/accounts/tests/test_google_sign_in.py` covers it and `docs/architecture/google-sign-in.md` says what happens now.
+
+Design: [account paths](../design/patterns/account-paths.md), [DD-38](../design/decisions.md)
+
+Sprint S3 | 1 h | Should | Slot A | BR-01
 
 ### F1-09 Account settings (future)
 As a user, I want to change my password and delete my account so that I control my data.
