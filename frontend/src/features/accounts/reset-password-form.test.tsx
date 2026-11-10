@@ -120,3 +120,13 @@ test("shows the server's reasons when the password is too weak", async () => {
   expect(alert).toHaveTextContent("This password is entirely numeric.");
   expect(screen.getByLabelText("New password")).toBeInTheDocument();
 });
+
+test("a server error while checking the link still shows the form", async () => {
+  mockFetch({ status: 500 });
+  render(<ResetPasswordForm resetKey="1-abc" />);
+
+  expect(await screen.findByLabelText("New password")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", { name: "This link has expired" }),
+  ).not.toBeInTheDocument();
+});

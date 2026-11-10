@@ -2,20 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
-import { allauthPost, type AllauthError } from "./allauth";
+import { allauthPost, checkResetKey, type AllauthError } from "./allauth";
 import { StatusIcon } from "./auth-layout";
 import { buttonClasses } from "@/components/ui/button";
 
 type Status = "checking" | "ready" | "sending" | "done" | "expired";
-
-// Is the key from the email still good? A GET only checks it; it doesn't use it up.
-async function keyIsValid(key: string) {
-  const response = await fetch("/_allauth/browser/v1/auth/password/reset", {
-    credentials: "same-origin",
-    headers: { "X-Password-Reset-Key": key },
-  });
-  return response.status === 200;
-}
 
 // Step 2 of a password reset (F1-10): the link in the email opens this with its key.
 export function ResetPasswordForm({ resetKey }: { resetKey: string }) {
@@ -27,8 +18,11 @@ export function ResetPasswordForm({ resetKey }: { resetKey: string }) {
 
   useEffect(() => {
     let active = true;
-    keyIsValid(key)
-      .then((valid) => active && setStatus(valid ? "ready" : "expired"))
+    checkResetKey(key)
+      .then(
+        (result) =>
+          active && setStatus(result === "expired" ? "expired" : "ready"),
+      )
       // Can't check it now: show the form, and the POST will tell us.
       .catch(() => active && setStatus("ready"));
     return () => {
@@ -79,7 +73,8 @@ export function ResetPasswordForm({ resetKey }: { resetKey: string }) {
           Your password is set
         </h1>
         <p role="status" className="text-muted">
-          Sign in with your email and new password.
+          Sign in with your email and new password. If you use Google, that
+          still works.
         </p>
         <Link href="/login" className={`${buttonClasses("cta")} w-full`}>
           Sign in
@@ -118,7 +113,8 @@ export function ResetPasswordForm({ resetKey }: { resetKey: string }) {
           Set a new password
         </h1>
         <p className="text-sm text-muted">
-          After this, you can sign in with your email and this password.
+          After this, you can sign in with your email and this password. If you
+          signed up with Google, that keeps working too.
         </p>
       </div>
 

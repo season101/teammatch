@@ -139,7 +139,7 @@ export function SignInForm({
         />
         <Link
           href="/reset-password"
-          className="self-end text-sm font-medium text-primary underline"
+          className="inline-flex min-h-11 items-center self-end text-sm font-medium text-primary underline"
         >
           Forgot password?
         </Link>

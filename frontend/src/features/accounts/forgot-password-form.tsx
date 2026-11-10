@@ -49,8 +49,8 @@ export function ForgotPasswordForm() {
           Check your inbox
         </h1>
         <p role="status" className="text-muted">
-          If <strong className="text-text">{email}</strong> has a TeamMatch
-          account, we sent it a link to set a new password.
+          We sent an email to <strong className="text-text">{email}</strong>{" "}
+          with the next step.
         </p>
         <Link href="/login" className={`${buttonClasses("cta")} w-full`}>
           Back to sign in

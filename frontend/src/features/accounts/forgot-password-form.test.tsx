@@ -33,7 +33,7 @@ test("asks allauth for a reset link and says to check the inbox", async () => {
     await screen.findByRole("heading", { name: "Check your inbox" }),
   ).toBeInTheDocument();
   expect(screen.getByRole("status")).toHaveTextContent(
-    "If weibo@latech.edu has a TeamMatch account",
+    "We sent an email to weibo@latech.edu with the next step.",
   );
   const [url, init] = fetchMock.mock.calls[0];
   expect(url).toBe("/_allauth/browser/v1/auth/password/request");
