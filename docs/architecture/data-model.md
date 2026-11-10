@@ -82,7 +82,7 @@ erDiagram
         bigint id PK
         bigint role_id FK
         bigint applicant_id FK
-        string status "pending, liked, passed, withdrawn"
+        string status "pending, liked, committed, declined, passed, withdrawn"
         text note
     }
     ROLE_DISMISSAL {
@@ -126,17 +126,22 @@ Notes:
 ```mermaid
 stateDiagram-v2
     [*] --> pending : candidate swipes apply
-    pending --> liked : owner likes
+    pending --> liked : owner likes (an offer)
     pending --> passed : owner passes
     pending --> withdrawn : candidate withdraws
-    pending --> withdrawn : auto, candidate locked into another team
-    pending --> withdrawn : auto, role filled by someone else
-    liked --> [*]
+    pending --> withdrawn : auto, candidate committed elsewhere or locked into a team
+    pending --> passed : auto, someone else committed to the role
+    liked --> committed : candidate commits (fills the role)
+    liked --> declined : candidate declines
+    liked --> passed : auto, someone else committed to the role
+    liked --> withdrawn : auto, candidate committed elsewhere, or the project closed
+    committed --> [*]
+    declined --> [*]
     passed --> [*]
     withdrawn --> [*]
 ```
 
-A like fills the role immediately, so `liked` is final. Only `pending` rows can change.
+A like is an offer: the role stays open, and an owner can like several people for one role (F4-10). The seat fills when the candidate commits, and the first commit wins. `committed` is final, and one person holds one seat per term.
 
 ### Role
 

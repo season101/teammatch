@@ -21,6 +21,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/applications/{id}/commit/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Take the seat this offer is for (F4-10). Closes my other applications this term.
+         *
+         *     409: offer_not_open, role_not_open, owns_open_project or applicant_committed.
+         */
+        post: operations["applications_commit_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}/decline/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Turn this offer down (F4-10). The role stays open. Not an open offer: 409. */
+        post: operations["applications_decline_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/applications/{id}/like/": {
         parameters: {
             query?: never;
@@ -31,9 +69,9 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * @description Like or pass a pending applicant on my role.
+         * @description Like or pass a pending applicant on my role. A like is an offer (F4-10).
          *
-         *     Not pending, or the applicant is on another team or has a spot on an open project: 409.
+         *     Not pending, the role is filled, or the applicant is on a team or committed: 409.
          */
         post: operations["applications_like_create"];
         delete?: never;
@@ -52,9 +90,9 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * @description Like or pass a pending applicant on my role.
+         * @description Like or pass a pending applicant on my role. A like is an offer (F4-10).
          *
-         *     Not pending, or the applicant is on another team or has a spot on an open project: 409.
+         *     Not pending, the role is filled, or the applicant is on a team or committed: 409.
          */
         post: operations["applications_pass_create"];
         delete?: never;
@@ -421,7 +459,7 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** @description A like or pass, plus whether that like locked the team (F4-05). */
+        /** @description A like or pass. A like no longer locks a team (F4-10), so team_locked is false. */
         ApplicationDecision: {
             readonly id: number;
             readonly applicant: components["schemas"]["Profile"];
@@ -440,11 +478,13 @@ export interface components {
         /**
          * @description * `pending` - Pending
          *     * `liked` - Liked
+         *     * `committed` - Committed
+         *     * `declined` - Declined
          *     * `passed` - Passed
          *     * `withdrawn` - Withdrawn
          * @enum {string}
          */
-        ApplicationStatusEnum: "pending" | "liked" | "passed" | "withdrawn";
+        ApplicationStatusEnum: "pending" | "liked" | "committed" | "declined" | "passed" | "withdrawn";
         Apply: {
             readonly id: number;
             role: number;
@@ -479,6 +519,19 @@ export interface components {
         Checks: {
             database: components["schemas"]["Check"];
             redis: components["schemas"]["Check"];
+        };
+        /** @description My committed application, plus whether that commit locked the team (F4-10). */
+        Commit: {
+            readonly id: number;
+            readonly role: components["schemas"]["ApplicationRole"];
+            note?: string;
+            status?: components["schemas"]["ApplicationStatusEnum"];
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            readonly team_locked: boolean;
+            readonly team_id: number | null;
         };
         FeedProject: {
             readonly id: number;
@@ -784,6 +837,48 @@ export interface operations {
             };
         };
     };
+    applications_commit_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commit"];
+                };
+            };
+        };
+    };
+    applications_decline_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyApplication"];
+                };
+            };
+        };
+    };
     applications_like_create: {
         parameters: {
             query?: never;
@@ -854,7 +949,7 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
-                status?: "liked" | "passed" | "pending" | "withdrawn";
+                status?: "committed" | "declined" | "liked" | "passed" | "pending" | "withdrawn";
             };
             header?: never;
             path?: never;

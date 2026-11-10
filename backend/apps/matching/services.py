@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import F, Prefetch, Q
+from django.db.models import F, Prefetch
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 
@@ -15,10 +15,10 @@ def feed_roles(user, today=None):
 
     Skips the user's own projects (BR-04) and roles they already applied to
     (any status, since an application is one per user per role) or passed.
-    Empty while they're retired (BR-09).
+    Empty while they're retired (BR-09) or hold a seat they committed to (F4-10).
     """
     today = today or timezone.localdate()
-    if is_retired(user, today):
+    if is_retired(user, today) or holds_seat(user, today=today):
         return Role.objects.none()
     return (
         Role.objects.filter(
@@ -85,18 +85,45 @@ class ApplicantCommitted(APIException):
     default_code = "applicant_committed"
 
 
+class OfferNotOpen(APIException):
+    status_code = 409
+    default_detail = "This offer is no longer open."
+    default_code = "offer_not_open"
+
+
+class OwnsOpenProject(APIException):
+    status_code = 409
+    default_detail = "Close your open project before you commit to another team."
+    default_code = "owns_open_project"
+
+
+def holds_seat(user_id, term_id=None, today=None):
+    """Does this person hold a seat on an open project this term (one seat per term, F4-10)?
+
+    A seat is a role they fill. Once the project locks, they're retired instead (BR-08).
+    Pass term_id, or today to mean the term running then.
+    """
+    user_id = getattr(user_id, "pk", user_id)
+    seats = Role.objects.filter(filled_by_id=user_id, project__status=ProjectStatus.OPEN)
+    if term_id is not None:
+        return seats.filter(project__term_id=term_id).exists()
+    today = today or timezone.localdate()
+    return seats.filter(
+        project__term__start_date__lte=today, project__term__end_date__gte=today
+    ).exists()
+
+
 @transaction.atomic
 def decide(application, status):
-    """The owner likes or passes a pending application (F4-02, F4-05).
+    """The owner likes or passes a pending application (F4-02, F4-10).
 
-    A like fills the role, passes its other pending applications, withdraws the
-    applicant's other pending applications on the project (BR-05) and locks the
-    team if that was the last open role (BR-06). Returns (application, team);
-    team is None unless this like locked it.
+    A like is an offer: the application becomes liked, the role stays open and no
+    seat fills. The candidate takes the seat with commit(). An owner can like
+    someone who owns an open project; they have to close it before committing.
+    Returns (application, None); only a commit can lock a team now.
 
-    Rows are locked role, applicant, application, then project (in try_lock), so
-    two likes on one role, two likes of one person, or likes on the last two
-    roles wait for each other instead of double-filling or skipping the lock.
+    Rows are locked role, applicant, then application, as in commit, so a like and
+    a commit on the same role or person wait for each other.
     """
     role = Role.objects.select_related("project").select_for_update(of=("self",))
     role = role.get(pk=application.role_id)
@@ -108,15 +135,11 @@ def decide(application, status):
         )
         if on_a_team.exists():
             raise ApplicantRetired()
-        # A like can't be undone (BR-11), so an open project they own or fill a role on
-        # already holds their one spot this term.
-        committed = Project.objects.filter(
-            Q(owner_id=application.applicant_id) | Q(roles__filled_by_id=application.applicant_id),
-            term_id=role.project.term_id,
-            status=ProjectStatus.OPEN,
-        )
-        if committed.exists():
+        # They already committed to a seat on another open project this term.
+        if holds_seat(application.applicant_id, term_id=role.project.term_id):
             raise ApplicantCommitted()
+        if role.status != RoleStatus.OPEN:
+            raise RoleNotOpen("This role was just filled.")
     application = (
         Application.objects.select_related("applicant__profile")
         .select_for_update(of=("self",))
@@ -126,29 +149,76 @@ def decide(application, status):
         raise ApplicationNotPending()
     application.status = status
     application.save(update_fields=["status", "updated_at"])
-    if status != ApplicationStatus.LIKED:
-        return application, None
-    if role.status != RoleStatus.OPEN:
+    return application, None
+
+
+@transaction.atomic
+def commit(application):
+    """The candidate takes the seat an offer is for (F4-10, BR-05).
+
+    In one transaction: the application becomes committed, the role is filled by
+    them, the role's other pending and liked applications are passed, their own
+    other pending and liked applications that term are withdrawn, and the team
+    locks if that was the last open role (BR-06). Returns (application, team);
+    team is None unless this commit locked it.
+
+    Locks role, applicant, application, then project (in try_lock), like decide.
+    Two commits on one role queue on the role row, and the second sees it filled.
+    """
+    role = Role.objects.select_for_update().get(pk=application.role_id)
+    get_user_model().objects.select_for_update().get(pk=application.applicant_id)
+    application = Application.objects.select_for_update().get(pk=application.pk)
+    if application.status != ApplicationStatus.LIKED:
+        raise OfferNotOpen()
+    # Read after the role lock, so a close that held it is seen (see apply).
+    project = Project.objects.get(pk=role.project_id)
+    if role.status != RoleStatus.OPEN or project.status != ProjectStatus.OPEN:
         raise RoleNotOpen("This role was just filled.")
-    role.status, role.filled_by_id = RoleStatus.FILLED, application.applicant_id
-    role.save(update_fields=["status", "filled_by", "updated_at"])
-    role.applications.filter(status=ApplicationStatus.PENDING).update(
-        status=ApplicationStatus.PASSED
+    applicant_id = application.applicant_id
+    if is_retired(applicant_id) or holds_seat(applicant_id, term_id=project.term_id):
+        raise ApplicantCommitted("You already have a spot on a team this term.")
+    owns_open = Project.objects.filter(
+        owner_id=applicant_id, term_id=project.term_id, status=ProjectStatus.OPEN
     )
-    # One seat per person per team: their other roles here leave the queue, as at a lock (BR-08).
+    if owns_open.exists():
+        raise OwnsOpenProject()
+
+    application.status = ApplicationStatus.COMMITTED
+    application.save(update_fields=["status", "updated_at"])
+    role.status, role.filled_by_id = RoleStatus.FILLED, applicant_id
+    role.save(update_fields=["status", "filled_by", "updated_at"])
+    still_open = [ApplicationStatus.PENDING, ApplicationStatus.LIKED]
+    now = timezone.now()
+    # The others on this role: the seat is gone, and their offers close.
+    role.applications.filter(status__in=still_open).update(
+        status=ApplicationStatus.PASSED, updated_at=now
+    )
+    # One seat per person per term: my other applications and offers close.
     Application.objects.filter(
-        status=ApplicationStatus.PENDING,
-        applicant_id=application.applicant_id,
-        role_id__in=Role.objects.filter(project_id=role.project_id),
-    ).update(status=ApplicationStatus.WITHDRAWN, updated_at=timezone.now())
-    return application, try_lock(role.project)
+        status__in=still_open,
+        applicant_id=applicant_id,
+        role_id__in=Role.objects.filter(project__term_id=project.term_id),
+    ).update(status=ApplicationStatus.WITHDRAWN, updated_at=now)
+    return application, try_lock(project)
+
+
+@transaction.atomic
+def decline(application):
+    """The candidate turns an offer down (F4-10). The role stays open."""
+    application = Application.objects.select_for_update().get(pk=application.pk)
+    if application.status != ApplicationStatus.LIKED:
+        raise OfferNotOpen()
+    application.status = ApplicationStatus.DECLINED
+    application.save(update_fields=["status", "updated_at"])
+    return application
 
 
 @transaction.atomic
 def withdraw(application):
     """The candidate withdraws a pending application (F3-06).
 
-    It leaves the owner's queue. Liked (filled) applications can't be withdrawn (BR-11).
+    It leaves the owner's queue. An offer is declined instead, and a committed seat
+    can't be withdrawn (BR-11).
     """
     application = Application.objects.select_for_update().get(pk=application.pk)
     if application.status != ApplicationStatus.PENDING:
@@ -162,15 +232,15 @@ def withdraw(application):
 def try_lock(project):
     """Lock the project into a team once all its roles are filled (BR-06, F4-03).
 
-    Then every member's other pending applications that term are withdrawn and
+    Then every member's other pending applications and offers that term are withdrawn and
     they're retired until the term ends (BR-08, F4-07).
 
     Returns the team, or None while the project can't lock. Safe to call twice:
     the project row lock serialises callers and Team.project is unique.
 
-    Lock order: role, applicant, application, project (as in decide), then the
+    Lock order: role, applicant, application, project (as in commit), then the
     members' other applications and profiles. The membership inserts wait for any
-    like holding a member's user row, so we never hold an application that like
+    commit holding a member's user row, so we never hold an application that commit
     needs next. Two teams locking at the same moment with crossed applicants can
     still deadlock; Postgres then rolls one like back.
     """
@@ -193,7 +263,9 @@ def try_lock(project):
     # row lock wait, and a pass that committed meanwhile would be turned into withdrawn.
     other_roles = Role.objects.filter(project__term_id=project.term_id).exclude(project=project)
     Application.objects.filter(
-        status=ApplicationStatus.PENDING, applicant_id__in=members, role_id__in=other_roles
+        status__in=[ApplicationStatus.PENDING, ApplicationStatus.LIKED],
+        applicant_id__in=members,
+        role_id__in=other_roles,
     ).update(status=ApplicationStatus.WITHDRAWN, updated_at=timezone.now())
     retire(members, project.term.end_date)
     project.status = ProjectStatus.LOCKED
@@ -233,6 +305,8 @@ def apply(role, user, note=""):
     get_user_model().objects.select_for_update().get(pk=user.pk)
     if is_retired(user):
         raise ProfileRetired()
+    if holds_seat(user):
+        raise ApplicantCommitted("You already committed to a team this term.")
     if role.status == RoleStatus.FILLED:
         raise RoleNotOpen("This role was just filled.")
     if Project.objects.get(pk=role.project_id).status != ProjectStatus.OPEN:

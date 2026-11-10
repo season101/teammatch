@@ -129,11 +129,13 @@ Login, signup, logout, password and Google live under allauth (below).
 | GET | `/api/v1/feed/` | user | swipe deck, open roles ranked by skill overlap. Empty while I'm retired |
 | POST | `/api/v1/feed/reset/` | user | clear my passes so those roles come back into my feed, `204`. Applied roles stay out |
 | POST | `/api/v1/roles/{id}/dismiss/` | user | candidate pass on a role, `204`; repeats are fine. My own project: `403`; role or project not open: `409` |
-| POST | `/api/v1/applications/` | user | apply to a role `{role, note}`. Retired: `403` `profile_retired` |
+| POST | `/api/v1/applications/` | user | apply to a role `{role, note}`. Retired: `403` `profile_retired`. Committed this term: `409` `applicant_committed` |
 | GET | `/api/v1/applications/mine/?status=` | user | my applications |
 | POST | `/api/v1/applications/{id}/withdraw/` | applicant | withdraw pending application |
 | GET | `/api/v1/roles/{id}/applications/` | owner | pending applicants for a role, minus retired ones (`403` if it's not your project) |
-| POST | `/api/v1/applications/{id}/like/` | owner | like, fills role, may lock team |
+| POST | `/api/v1/applications/{id}/like/` | owner | like: sends an offer, the role stays open (F4-10). Applicant on a team or committed: `409` |
+| POST | `/api/v1/applications/{id}/commit/` | applicant | take the seat an offer is for: fills the role, closes my other applications this term, may lock the team. `409` `offer_not_open`, `role_not_open`, `owns_open_project` or `applicant_committed`; someone else's: `403` |
+| POST | `/api/v1/applications/{id}/decline/` | applicant | turn an offer down; the role stays open. Not an open offer: `409` |
 | POST | `/api/v1/applications/{id}/pass/` | owner | pass |
 | GET | `/api/v1/teams/mine/` | user | my team this term with my `seen_at`: `{"team": {id, project {id, title}, term {name, end_date}, members [{display_name, role}], formed_at, seen_at}}`. `role` is the role title, or `"Owner"`. `formed_at` is when the team locked. No team this term: `200` with `{"team": null}` |
 | GET | `/api/v1/teams/{id}/` | member | team detail with members and roles **(planned)** |

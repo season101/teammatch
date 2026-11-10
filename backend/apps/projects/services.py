@@ -180,12 +180,13 @@ def ensure_project_editable(project):
 
 @transaction.atomic
 def close_project(project):
-    """Archive a project: it leaves the feeds and its pending applications are withdrawn (F2-05).
+    """Archive a project: it leaves the feeds, and its pending applications and offers
+    are withdrawn (F2-05, F4-10).
 
-    Locks its roles, then the project, then its applications. A like locks its role
-    first and the project last (matching.services.decide), so the two queue on the role.
-    Locking the project first would deadlock with a like holding its application row.
-    no_key: a like that locks the team still takes KEY SHARE on filled roles for its seats.
+    Locks its roles, then the project, then its applications. A commit locks its role
+    first and the project last (matching.services.commit), so the two queue on the role.
+    Locking the project first would deadlock with a commit holding its application row.
+    no_key: a commit that locks the team still takes KEY SHARE on filled roles for its seats.
     """
     list(Role.objects.filter(project=project).order_by("pk").select_for_update(no_key=True))
     project = Project.objects.select_for_update().get(pk=project.pk)
@@ -193,9 +194,9 @@ def close_project(project):
 
     from apps.matching.models import Application, ApplicationStatus  # matching imports projects
 
-    Application.objects.filter(role__project=project, status=ApplicationStatus.PENDING).update(
-        status=ApplicationStatus.WITHDRAWN
-    )
+    Application.objects.filter(
+        role__project=project, status__in=[ApplicationStatus.PENDING, ApplicationStatus.LIKED]
+    ).update(status=ApplicationStatus.WITHDRAWN)
     project.status = ProjectStatus.ARCHIVED
     project.save()
     return project

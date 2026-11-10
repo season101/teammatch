@@ -1,6 +1,6 @@
 # Commit flow
 
-**Planned, not built yet.** This is the guide for [F4-10](../../product/backlog.md#f4-10-commit-to-one-offer-api) and [F4-11](../../product/backlog.md#f4-11-commit-to-one-offer-screens). Until they ship, a Like still fills the role.
+**The API is built (F4-10); the screens are planned (F4-11).** This is the guide for [F4-10](../../product/backlog.md#f4-10-commit-to-one-offer-api) and [F4-11](../../product/backlog.md#f4-11-commit-to-one-offer-screens). Until the screens ship, a Like sends an offer that candidates can only commit to through the API.
 
 A like becomes an offer. A student can hold offers from several projects, then commits to the one they want. The seat fills on the commit, not on the like.
 

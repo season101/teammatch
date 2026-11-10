@@ -7,7 +7,12 @@ from apps.projects.models import Project, Role
 
 class ApplicationStatus(models.TextChoices):
     PENDING = "pending", "Pending"
+    # An offer: the owner liked them. The role stays open until someone commits (F4-10).
     LIKED = "liked", "Liked"
+    # The candidate took the seat. Only one per person per term.
+    COMMITTED = "committed", "Committed"
+    # The candidate turned the offer down.
+    DECLINED = "declined", "Declined"
     PASSED = "passed", "Passed"
     WITHDRAWN = "withdrawn", "Withdrawn"
 

@@ -73,13 +73,13 @@ These are enforced in the backend and each one has a test.
 | BR-02 | One application per (user, role). Re-applying to the same role is rejected. |
 | BR-03 | A user can apply to many roles across many projects at the same time. |
 | BR-04 | An owner cannot apply to roles on their own project. |
-| BR-05 | A role is filled when the owner likes an applicant who has a pending application for it (mutual like). A filled role stores `filled_by`. The applicant's other pending applications on that project are set to `withdrawn`, since a person takes one seat per team. |
+| BR-05 | An owner's like is an offer; the role stays open. A role is filled when the applicant commits to that offer, and the first commit wins. A filled role stores `filled_by`. The role's other applications and offers are set to `passed`, and the applicant's other pending applications and offers that term are set to `withdrawn`, since a person takes one seat per term (F4-10). |
 | BR-06 | A project locks only when **all** of its roles are filled. A project with zero roles cannot be opened. |
 | BR-07 | The owner can delete an open role that cannot be filled. Deleting the last unfilled role triggers the lock check. |
 | BR-08 | When a team locks, every member's other pending applications for that term are set to `withdrawn`, and their profile gets `retired_until = term.end`. |
 | BR-09 | Retired users do not appear to owners as applicants and cannot apply until their retirement ends. |
 | BR-10 | A candidate "pass" hides that role from their deck (`RoleDismissal`); it does not notify the owner. |
-| BR-11 | A candidate can withdraw a pending application. Liked (filled) applications cannot be withdrawn by the candidate. |
+| BR-11 | A candidate can withdraw a pending application, and decline an offer. A committed seat cannot be undone. |
 | BR-12 | A chat room exists only for a locked team. Only team members (owner + filled roles) can read or post. |
 | BR-13 | Locked projects are read-only except for archiving by the owner or admin. |
 | BR-14 | An owner can have only one `open` project per term. Publishing a second is rejected until the first is closed. Once it locks, the owner is on that team (BR-08), so they can't open another that term, and neither can someone who fills a role on another open project. |

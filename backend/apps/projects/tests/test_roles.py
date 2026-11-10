@@ -6,9 +6,9 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.core.models import Term
-from apps.matching.models import Application, ApplicationStatus, Membership, Team
-from apps.matching.services import decide
-from apps.matching.tests.test_fill_and_lock import committed, needs_postgres, race
+from apps.matching.models import Application, Membership, Team
+from apps.matching.services import commit
+from apps.matching.tests.test_fill_and_lock import committed, needs_postgres, offer, race
 from apps.profiles.models import Skill
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 from apps.projects.services import RoleNotOpen, delete_role
@@ -385,13 +385,13 @@ def test_deleting_a_role_while_others_are_open_does_not_lock(owner, project, rol
 
 @needs_postgres
 @committed
-def test_delete_fails_if_a_like_just_filled_the_role(other, project, role, skill):
+def test_delete_fails_if_a_commit_just_filled_the_role(other, project, role, skill):
     open_role(project, "Designer", skill)
     project.status = ProjectStatus.OPEN
     project.save()
     liked = Application.objects.create(role=role, applicant=other)
 
-    outcome = race(lambda: decide(liked, ApplicationStatus.LIKED), lambda: delete_role(role))
+    outcome = race(lambda: commit(offer(liked)), lambda: delete_role(role))
 
     assert isinstance(outcome, RoleNotOpen)
     role.refresh_from_db()
@@ -400,11 +400,13 @@ def test_delete_fails_if_a_like_just_filled_the_role(other, project, role, skill
 
 @needs_postgres
 @committed
-def test_edit_fails_if_a_like_just_filled_the_role(owner, other, role):
+def test_edit_fails_if_a_commit_just_filled_the_role(owner, other, project, role):
+    project.status = ProjectStatus.OPEN  # only an open project's role can be committed to
+    project.save()
     liked = Application.objects.create(role=role, applicant=other)
 
     outcome = race(
-        lambda: decide(liked, ApplicationStatus.LIKED),
+        lambda: commit(offer(liked)),
         lambda: client_for(owner).patch(role_url(role), {"title": "New"}, format="json"),
     )
 
@@ -415,7 +417,7 @@ def test_edit_fails_if_a_like_just_filled_the_role(owner, other, role):
 
 @needs_postgres
 @committed
-def test_publish_fails_if_a_like_just_gave_the_owner_a_role(owner, other, term, project, role):
+def test_publish_fails_if_a_commit_just_gave_the_owner_a_role(owner, other, term, project, role):
     theirs = Project.objects.create(
         owner=other, term=term, title="Theirs", pitch="p", status=ProjectStatus.OPEN
     )
@@ -425,7 +427,7 @@ def test_publish_fails_if_a_like_just_gave_the_owner_a_role(owner, other, term, 
     )
 
     outcome = race(
-        lambda: decide(liked, ApplicationStatus.LIKED),
+        lambda: commit(offer(liked)),
         lambda: client_for(owner).post(publish_url(project)),
     )
 
@@ -436,14 +438,14 @@ def test_publish_fails_if_a_like_just_gave_the_owner_a_role(owner, other, term, 
 
 @needs_postgres
 @committed
-def test_add_fails_if_a_like_just_locked_the_project(owner, other, project, role, skill):
+def test_add_fails_if_a_commit_just_locked_the_project(owner, other, project, role, skill):
     project.status = ProjectStatus.OPEN
     project.save()
     liked = Application.objects.create(role=role, applicant=other)
     body = {"title": "Designer", "required_skills": [skill.id]}
 
     outcome = race(
-        lambda: decide(liked, ApplicationStatus.LIKED),
+        lambda: commit(offer(liked)),
         lambda: client_for(owner).post(roles_url(project), body, format="json"),
     )
 

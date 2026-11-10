@@ -32,13 +32,59 @@ paths:
               schema:
                 $ref: '#/components/schemas/Apply'
           description: ''
+  /api/v1/applications/{id}/commit/:
+    post:
+      operationId: applications_commit_create
+      description: |-
+        Take the seat this offer is for (F4-10). Closes my other applications this term.
+
+        409: offer_not_open, role_not_open, owns_open_project or applicant_committed.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - matching
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Commit'
+          description: ''
+  /api/v1/applications/{id}/decline/:
+    post:
+      operationId: applications_decline_create
+      description: 'Turn this offer down (F4-10). The role stays open. Not an open
+        offer: 409.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - matching
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyApplication'
+          description: ''
   /api/v1/applications/{id}/like/:
     post:
       operationId: applications_like_create
       description: |-
-        Like or pass a pending applicant on my role.
+        Like or pass a pending applicant on my role. A like is an offer (F4-10).
 
-        Not pending, or the applicant is on another team or has a spot on an open project: 409.
+        Not pending, the role is filled, or the applicant is on a team or committed: 409.
       parameters:
       - in: path
         name: id
@@ -60,9 +106,9 @@ paths:
     post:
       operationId: applications_pass_create
       description: |-
-        Like or pass a pending applicant on my role.
+        Like or pass a pending applicant on my role. A like is an offer (F4-10).
 
-        Not pending, or the applicant is on another team or has a spot on an open project: 409.
+        Not pending, the role is filled, or the applicant is on a team or committed: 409.
       parameters:
       - in: path
         name: id
@@ -124,6 +170,8 @@ paths:
         schema:
           type: string
           enum:
+          - committed
+          - declined
           - liked
           - passed
           - pending
@@ -697,7 +745,8 @@ components:
   schemas:
     ApplicationDecision:
       type: object
-      description: A like or pass, plus whether that like locked the team (F4-05).
+      description: A like or pass. A like no longer locks a team (F4-10), so team_locked
+        is false.
       properties:
         id:
           type: integer
@@ -749,12 +798,16 @@ components:
       enum:
       - pending
       - liked
+      - committed
+      - declined
       - passed
       - withdrawn
       type: string
       description: |-
         * `pending` - Pending
         * `liked` - Liked
+        * `committed` - Committed
+        * `declined` - Declined
         * `passed` - Passed
         * `withdrawn` - Withdrawn
     Apply:
@@ -855,6 +908,45 @@ components:
       required:
       - database
       - redis
+    Commit:
+      type: object
+      description: My committed application, plus whether that commit locked the team
+        (F4-10).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/ApplicationRole'
+          readOnly: true
+        note:
+          type: string
+          maxLength: 300
+        status:
+          $ref: '#/components/schemas/ApplicationStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        team_locked:
+          type: boolean
+          readOnly: true
+        team_id:
+          type: integer
+          nullable: true
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - role
+      - team_id
+      - team_locked
+      - updated_at
     FeedProject:
       type: object
       properties:
