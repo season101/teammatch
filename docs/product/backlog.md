@@ -31,6 +31,9 @@ Each story is written so it can be pasted into a GitHub issue (User Story templa
 | F1-12 | Add Google or a password from Settings | A | S3 | 3 | Should |
 | F1-13 | Offer a password to Google-only accounts at sign-in | A | S3 | 1.5 | Should |
 | F1-14 | Never-verified account can sign in with Google | A | S3 | 1 | Should |
+| F1-15 | GitHub and LinkedIn on profiles | A | S3 (proposed) | TBD | Should |
+| F1-16 | Upload a resume | A | S3 (proposed) | TBD | Could |
+| F1-17 | Read a resume in the app | A | S3 (proposed) | TBD | Could |
 | PL-07 | Admin moderation | A | S3 | 2 | Should |
 | BUF-A3 | Polish and bug buffer | A | S3 | 2 | - |
 | F2-01 | Create a project | B | S1 | 3 | Must |
@@ -43,6 +46,7 @@ Each story is written so it can be pasted into a GitHub issue (User Story templa
 | F2-08 | Installable PWA | B | S3 | 3 | Must |
 | F2-07 | Search by keyword and filter by skill | B | S3 | 3 | Should |
 | F2-10 | Responsive pass | B | S3 | 2 | Should |
+| F2-12 | Repository link and more details on projects | B | S3 (proposed) | TBD | Should |
 | F3-08 | Role card component | C | S1 | 2 | Must |
 | F3-01 | Role feed (list view) | C | S1 | 3 | Must |
 | F3-02 | Apply to a role with a note | C | S1 | 3 | Must |
@@ -53,6 +57,7 @@ Each story is written so it can be pasted into a GitHub issue (User Story templa
 | F3-09 | Keyboard and button swipe controls | C | S3 | 1 | Should |
 | F3-10 | Undo last swipe | C | S3 | 2 | Should |
 | F3-11 | See passed roles again | C | S3 | 1 | Could |
+| F3-13 | Role details page | C | S3 (proposed) | TBD | Should |
 | BUF-C3 | Buffer | C | S3 | 2 | - |
 | F4-01 | See applicants per role | D | S1 | 3 | Must |
 | F4-02 | Like or pass an applicant | D | S1 | 2 | Must |
@@ -227,6 +232,47 @@ Design: [account paths](../design/patterns/account-paths.md), [DD-38](../design/
 
 Sprint S3 | 1 h | Should | Slot A | BR-01
 
+### F1-15 GitHub and LinkedIn on profiles
+As a student, I want to add my GitHub and LinkedIn to my profile so that owners can see my work.
+- Given I add a GitHub link, then it has to be an https link to github.com, and a LinkedIn link has to be an https link to linkedin.com. Anything else shows "Enter a link that starts with https://github.com/" (or linkedin.com) on the field, and the server enforces it with a backend test.
+- Given I save them, then my Preview tab shows each one as a card with its icon, and each opens in a new tab.
+- Given I applied to a role, then the owner sees them as small cards on my applicant card in Review.
+- Given I add them, then profile strength goes up 5% for GitHub and 5% for LinkedIn (DD-43).
+- Given a 390 px phone, both themes and keyboard only, then all of this works.
+
+Design: [deck details](../design/patterns/deck-details.md), screens [51 and 52](../design/screens/README.md#deck-details-planned), [DD-43](../design/decisions.md)
+
+Proposed for S3 | hours TBD | Should | Slot A
+
+### F1-16 Upload a resume
+As a student, I want to add my resume as a PDF so that owners I apply to can read it.
+- Given I pick a PDF of 5 MB or less, when I upload it, then it's stored privately, my profile shows the file name with Replace and Remove, and profile strength goes up 10%.
+- Given a file over 5 MB, or a file that isn't a PDF (checked from the file itself, not the name), then nothing is saved and I'm told what to fix.
+- Given someone asks for my resume, then the server sends it only to me and to owners of projects I applied to. Everyone else gets a 403, and there's never a public link. Test the 403 case.
+- Given I replace or remove it, then the old file is deleted from storage.
+- Given a 390 px phone, both themes and keyboard only, then all of this works.
+
+Needs F1-15, since both change the profile form.
+
+Design: [deck details](../design/patterns/deck-details.md), screen [51](../design/screens/README.md#deck-details-planned), [flow 8](../design/screens/flows.md#8-planned-candidate-adds-links-and-a-resume), [DD-42 and DD-45](../design/decisions.md)
+
+Proposed for S3, first to move out | hours TBD | Could | Slot A | TR-04
+
+### F1-17 Read a resume in the app
+As an owner, I want to read an applicant's resume inside TeamMatch so that I don't have to download it.
+- Given I'm allowed to open a resume, when I tap it in Review or on my own profile, then the resume viewer opens with the pages in one column, a page count, zoom and Download.
+- Given I press Back, then I return to the same applicant or to my profile.
+- Given I'm not allowed, then I see "You can't open this resume" and no file is sent.
+- Given a file the viewer can't draw, then I see "This file won't display here" with Download instead, which is still permission checked.
+- Given any other page, then PDF.js isn't loaded.
+- Given a phone browser, a desktop browser and the installed app, then the viewer works in each.
+
+Needs F1-16.
+
+Design: [deck details](../design/patterns/deck-details.md), screen [53](../design/screens/README.md#deck-details-planned), [flow 9](../design/screens/flows.md#9-planned-reading-a-resume), [DD-44 and DD-45](../design/decisions.md)
+
+Proposed for S3, first to move out | hours TBD | Could | Slot A
+
 ### F1-09 Account settings (future)
 As a user, I want to change my password and delete my account so that I control my data.
 - Given I enter my current password and a new strong one, then my password is changed and other sessions are signed out.
@@ -333,6 +379,21 @@ Design: [layout](../design/foundations/layout.md), [navigation](../design/patter
 
 Sprint S3 | 2 h | Should
 
+### F2-12 Repository link and more details on projects
+As an owner, I want to add my project's GitHub repository and more details so that students can see the code and my plans before they apply.
+- Given I create or edit a project, then I see two optional fields after the pitch: GitHub repository and More details (2,000 characters).
+- Given a repository that isn't an https link to github.com, then saving shows "Enter a link that starts with https://github.com/" on the field, the rest of the form keeps what I typed, and the server enforces it with a backend test.
+- Given I leave both empty, then the project saves as before and nothing extra shows.
+- Given they're filled in, then the project page and the role details page show View the code, which opens in a new tab and shows the address, and More from the owner.
+- Given the API change, then `backend/schema.yml` and `packages/api-client` are regenerated.
+- Given a 390 px phone, both themes and keyboard only, then all of this works.
+
+Best before F3-13, so the details page has the repository from the start.
+
+Design: [deck details](../design/patterns/deck-details.md), screens [49 and 50](../design/screens/README.md#deck-details-planned), [flow 7](../design/screens/flows.md#7-planned-owner-adds-a-repository), [DD-41](../design/decisions.md)
+
+Proposed for S3 | hours TBD | Should | Slot B | UC-05, UC-06
+
 ### F2-09 Full accessibility audit (future)
 As any user, I want every screen to work with a keyboard and screen reader so that everyone can use it.
 - Given Lighthouse accessibility, then score is 90 or higher on feed, project, review, and chat pages.
@@ -437,6 +498,21 @@ As a candidate, I want to see the roles I passed on again once my deck is empty 
 - Given another candidate's passes, then my reset leaves them alone.
 
 Sprint S3 | 1 h | Could | UC-08
+
+### F3-13 Role details page
+As a candidate, I want to open a card and see everything about the role before I decide so that I can apply with confidence.
+- Given a card on the deck, when I tap it or press ↑ or Enter, then the project page opens focused on that role, with the role, the project, the repository, more from the owner and the team so far.
+- Given I press Back, then I'm on the deck at the same card. If I opened the page from a link, Back goes to Discover.
+- Given I Apply or Pass there, then the decision is saved, with my note if I wrote one, and I'm back on the deck at the next card.
+- Given the note, then it's only on this page now, with today's 300-character limit (DD-40).
+- Given my own project, a role I already applied to, or a filled role, then Apply and Pass aren't offered.
+- Given a 390 px phone, both themes and keyboard only, then all of this works, and Apply and Pass stay above the tab bar.
+
+Takes in #172 (Apply from the project page), which PR #208 is building now. Needs UI-06 (#207).
+
+Design: [deck details](../design/patterns/deck-details.md), screen [48](../design/screens/README.md#deck-details-planned), [flow 6](../design/screens/flows.md#6-planned-deck-to-details-and-back), [DD-39 and DD-40](../design/decisions.md)
+
+Proposed for S3 | hours TBD | Should | Slot C | UC-06, UC-07, UC-08
 
 ### F3-07 Live notifications (future)
 As a user, I want to be told right away when I'm liked or my team forms so that I don't have to keep checking.

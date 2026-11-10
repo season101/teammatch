@@ -21,7 +21,7 @@ The system is built in layers. Each layer only uses the ones above it.
 | Tokens | Every raw value, in one machine-readable file | [tokens.json](tokens.json) |
 | Components | Reusable UI pieces: anatomy, props, states, do and don't | [components/](components/README.md) |
 | Patterns | How components combine for a job: the deck, review, forms, confirmations | [patterns/](patterns/) |
-| Screens | Wireframes for 37 screens, mockups for the 21 planned commit flow and account screens, plus the main flows | [screens/](screens/README.md) |
+| Screens | Wireframes for 44 screens, mockups for the 21 planned commit flow and account screens, proposal frames for the 7 deck details screens, plus the main flows | [screens/](screens/README.md) |
 | Process | How we change the system, review UI work and keep it consistent | [process.md](process.md) |
 | Decisions | Why things are the way they are | [decisions.md](decisions.md) |
 

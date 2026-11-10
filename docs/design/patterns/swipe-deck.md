@@ -34,6 +34,8 @@ The opacity is the drag distance ÷ the commit distance. Stamps are decorative (
 **Undo only brings back the last pass.** You can't re-apply to a role you've applied to, so an apply can't be undone from the deck. The candidate withdraws from My applications instead. The Undo button is disabled unless the last decision was a pass. The pass toast also offers Undo for 4 seconds.
 
 ## Apply with a note
+Planned: the note leaves the deck and moves to the role details page ([DD-40](../decisions.md), not agreed yet). See [deck details](deck-details.md).
+
 - Opens a bottom sheet on phone, a modal on desktop, or the right panel at 1440px and up.
 - One textarea: "Add a note for the owner", 300 characters max, with a counter.
 - CTA "Send application"; ghost "Apply without a note".

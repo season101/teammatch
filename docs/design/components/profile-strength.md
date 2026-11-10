@@ -10,6 +10,8 @@ A labelled meter showing how complete a profile is. Stronger profiles rank highe
 | Bio | 20% |
 | Avatar | 20% |
 
+Planned: GitHub +5%, LinkedIn +5% and a resume +10% take the avatar's 20%. That's [DD-43](../decisions.md), which the team hasn't agreed to yet. See [deck details](../patterns/deck-details.md#profile-strength).
+
 ## Look
 - A label on the left and a Geist Mono percentage on the right.
 - Under them, a 6px track in `surface-2`, filled with `apply-text`: lime in dark, deep green in light, so the bar is visible on white.
