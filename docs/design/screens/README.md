@@ -88,5 +88,18 @@ Full-colour phone mockups at 390px, in dark, for [F1-10](../../product/backlog.m
 | 45 | Both ways on | [dark](img/45-settings-both-on-phone-dark.png) | F1-12 |
 | 46 | Can't connect that account | [dark](img/46-settings-connect-refused-phone-dark.png) | F1-12 |
 
+## Deck details (planned)
+Phone frames from the deck details proposal, in dark and light, for UI-06, [F3-13](../../product/backlog.md#f3-13-role-details-page), [F2-12](../../product/backlog.md#f2-12-repository-link-and-more-details-on-projects) and [F1-15 to F1-17](../../product/backlog.md#f1-15-github-and-linkedin-on-profiles). Each image shows the screen's states and its loading skeleton. Dashed purple outlines mark what's new, and the numbers match the notes beside the frames. The [interactive board](wireframes.html) has greyscale phone and desktop wireframes of the same screens. To build them, read the [deck details](../patterns/deck-details.md) guide. Its seven decisions aren't agreed yet.
+
+| # | Screen | Phone | Story |
+|---|---|---|---|
+| 47 | Discover deck, uniform card | [dark](img/47-deck-card-phone-dark.png), [light](img/47-deck-card-phone-light.png) | UI-06 |
+| 48 | Role details page | [dark](img/48-role-details-phone-dark.png), [light](img/48-role-details-phone-light.png) | F3-13 |
+| 49 | Project repository and more details | [dark](img/49-project-form-repo-phone-dark.png), [light](img/49-project-form-repo-phone-light.png) | F2-12 |
+| 50 | Project page with the repository | [dark](img/50-project-page-repo-phone-dark.png), [light](img/50-project-page-repo-phone-light.png) | F2-12 |
+| 51 | Profile links and resume | [dark](img/51-profile-links-resume-phone-dark.png), [light](img/51-profile-links-resume-phone-light.png) | F1-15, F1-16 |
+| 52 | Review queue with links | [dark](img/52-review-links-phone-dark.png), [light](img/52-review-links-phone-light.png) | F1-15, F1-16 |
+| 53 | Resume viewer | [dark](img/53-resume-viewer-phone-dark.png), [light](img/53-resume-viewer-phone-light.png) | F1-17 |
+
 ## When a wireframe and a doc disagree
 The pattern and component docs win on behaviour and styling; the wireframe wins on layout and content. Fix whichever is wrong in your pull request, and say so in its description.
