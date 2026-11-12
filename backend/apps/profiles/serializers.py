@@ -39,5 +39,5 @@ class MyProfileSerializer(ProfileSerializer):
     email = serializers.EmailField(source="user.email", read_only=True)
 
     class Meta(ProfileSerializer.Meta):
-        fields = [*ProfileSerializer.Meta.fields, "email"]
-        read_only_fields = ["id", "email"]
+        fields = [*ProfileSerializer.Meta.fields, "email", "rules_accepted_at"]
+        read_only_fields = ["id", "email", "rules_accepted_at"]

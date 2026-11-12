@@ -15,6 +15,7 @@ const PROFILE = {
   major: "Computer Science",
   skills: [SKILLS[1]],
   email: "sam@latech.edu",
+  rules_accepted_at: null,
 };
 
 const EMPTY = { ...PROFILE, bio: "", major: "", skills: [] };

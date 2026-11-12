@@ -86,8 +86,52 @@ def test_feed_lists_open_roles_with_project(api, project, owner):
             },
             "required_skills": [{"id": django.id, "name": "Test Django", "slug": "test-django"}],
             "created_at": mock.ANY,
+            "match_percent": 0,
+            "roles_filled": 0,
+            "roles_total": 1,
+            "term": "Current",
         }
     ]
+
+
+# Deck card extras: match % (DD-20), team progress and the term (DD-21)
+
+
+def feed_role(api, role):
+    return next(r for r in api.get(FEED_URL).json()["results"] if r["id"] == role.id)
+
+
+def test_match_percent_is_the_share_of_required_skills_i_have(api, candidate, project):
+    skills = [Skill.objects.create(name=f"Test {i}", slug=f"test-{i}") for i in range(3)]
+    role = make_role(project)
+    role.required_skills.set(skills)
+    candidate.profile.skills.set(skills[:2])
+
+    assert feed_role(api, role)["match_percent"] == 67
+
+
+def test_match_percent_is_null_when_the_role_asks_for_nothing(api, project):
+    assert feed_role(api, make_role(project))["match_percent"] is None
+
+
+def test_match_percent_ignores_other_peoples_skills(api, owner, project):
+    skill = Skill.objects.create(name="Test Django", slug="test-django")
+    role = make_role(project)
+    role.required_skills.add(skill)
+    owner.profile.skills.add(skill)
+
+    assert feed_role(api, role)["match_percent"] == 0
+
+
+def test_team_progress_counts_the_projects_roles(api, owner, project):
+    role = make_role(project, title="Open one")
+    make_role(project, title="Open two")
+    make_role(project, title="Taken", status=RoleStatus.FILLED, filled_by=owner)
+    skills = [Skill.objects.create(name=f"Test {i}", slug=f"test-{i}") for i in range(2)]
+    role.required_skills.set(skills)  # extra joins must not inflate the counts
+
+    card = feed_role(api, role)
+    assert (card["roles_filled"], card["roles_total"]) == (1, 3)
 
 
 def test_feed_query_count_does_not_grow_with_roles(api, project, django_assert_max_num_queries):

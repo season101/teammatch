@@ -80,3 +80,51 @@ def test_cannot_edit_someone_elses_profile(client, sam, alex):
     assert response.status_code == 403
     profile.refresh_from_db()
     assert profile.display_name == "Sam"
+
+
+# Team rules (DD-12): everyone agrees once, before their first deck.
+
+RULES_URL = "/api/v1/me/rules/accept/"
+
+
+def test_accept_rules_needs_sign_in(client):
+    assert client.post(RULES_URL).status_code in (401, 403)
+
+
+def test_new_profile_has_not_accepted_the_rules(client, sam):
+    client.force_login(sam)
+    assert client.get("/api/v1/me/profile/").json()["rules_accepted_at"] is None
+
+
+def test_accept_rules_stamps_my_profile_only(client, sam, alex):
+    client.force_login(sam)
+
+    assert client.post(RULES_URL).status_code == 204
+
+    assert client.get("/api/v1/me/profile/").json()["rules_accepted_at"] is not None
+    assert Profile.objects.get(user=alex).rules_accepted_at is None
+
+
+def test_accepting_twice_keeps_the_first_time(client, sam):
+    client.force_login(sam)
+    client.post(RULES_URL)
+    first = Profile.objects.get(user=sam).rules_accepted_at
+
+    assert client.post(RULES_URL).status_code == 204
+    assert Profile.objects.get(user=sam).rules_accepted_at == first
+
+
+def test_rules_accepted_at_cannot_be_patched(client, sam):
+    client.force_login(sam)
+    client.patch(
+        "/api/v1/me/profile/",
+        {"rules_accepted_at": "2020-01-01T00:00:00Z"},
+        content_type="application/json",
+    )
+    assert Profile.objects.get(user=sam).rules_accepted_at is None
+
+
+def test_rules_accepted_at_is_not_on_the_public_profile(client, sam, alex):
+    client.force_login(alex)
+    profile = Profile.objects.get(user=sam)
+    assert "rules_accepted_at" not in client.get(f"/api/v1/profiles/{profile.id}/").json()

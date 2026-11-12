@@ -19,10 +19,37 @@ class FeedProjectSerializer(serializers.ModelSerializer):
 class FeedRoleSerializer(serializers.ModelSerializer):
     project = FeedProjectSerializer(read_only=True)
     required_skills = SkillSerializer(many=True, read_only=True)
+    match_percent = serializers.SerializerMethodField()
+    roles_filled = serializers.IntegerField(read_only=True)
+    roles_total = serializers.IntegerField(read_only=True)
+    term = serializers.CharField(source="project.term.name", read_only=True)
 
     class Meta:
         model = Role
-        fields = ["id", "title", "description", "project", "required_skills", "created_at"]
+        fields = [
+            "id",
+            "title",
+            "description",
+            "project",
+            "required_skills",
+            "created_at",
+            "match_percent",
+            "roles_filled",
+            "roles_total",
+            "term",
+        ]
+
+    def get_match_percent(self, role) -> int | None:
+        # Share of the required skills I have (DD-20). Null when the role asks for none.
+        if not role.skills_total:
+            return None
+        return int(100 * role.skills_matched / role.skills_total + 0.5)
+
+
+class MySummarySerializer(serializers.Serializer):
+    offers = serializers.IntegerField(read_only=True)
+    applicants_waiting = serializers.IntegerField(read_only=True)
+    deck = serializers.ChoiceField(choices=["open", "benched", "committed"], read_only=True)
 
 
 class RoleApplicationSerializer(serializers.ModelSerializer):

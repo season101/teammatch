@@ -4,6 +4,7 @@ from . import views
 from .models import ApplicationStatus
 
 urlpatterns = [
+    path("me/summary/", views.MySummaryView.as_view(), name="my-summary"),
     path("feed/", views.FeedView.as_view(), name="feed"),
     path("feed/reset/", views.ResetPassesView.as_view(), name="feed-reset"),
     path("applications/", views.ApplyView.as_view(), name="application-create"),
