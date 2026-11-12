@@ -18,9 +18,9 @@ Same frame as the [RoleCard](role-card.md): 3:4.6, `rounded-card`, 380 × 640 on
 
 ## Behaviour
 - **Queue order:** match %, then the oldest application first.
-- **Like** fills the role. The card flies right, and a toast says "Backend Developer filled. 2 roles to go." If that was the last role, the "It's a Team!" screen opens ([patterns/feedback-states.md](../patterns/feedback-states.md#its-a-team)).
+- **Like** sends an offer; the role stays open until someone commits ([commit flow](../patterns/commit-flow.md)). A status line says "Offer sent to Riley Chen." and the next applicant shows.
 - **Pass** sets the application to passed and shows the next applicant.
-- **When a role fills,** its other pending applicants become passed.
+- **When someone commits,** the role fills and its other applicants and offers become passed.
 - **Benched candidates never appear.** If someone joins another team while the owner is looking, Like fails with "This person just joined another team." and the card moves on.
 
 ## Accessibility

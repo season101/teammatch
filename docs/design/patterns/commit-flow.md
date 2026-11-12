@@ -1,10 +1,10 @@
 # Commit flow
 
-**The API is built (F4-10); the screens are planned (F4-11).** This is the guide for [F4-10](../../product/backlog.md#f4-10-commit-to-one-offer-api) and [F4-11](../../product/backlog.md#f4-11-commit-to-one-offer-screens). Until the screens ship, a Like sends an offer that candidates can only commit to through the API.
+This is the guide for [F4-10](../../product/backlog.md#f4-10-commit-to-one-offer-api) (the API) and [F4-11](../../product/backlog.md#f4-11-commit-to-one-offer-screens) (the screens). Both are built.
 
 A like becomes an offer. A student can hold offers from several projects, then commits to the one they want. The seat fills on the commit, not on the like.
 
-Screens are numbered 26 to 34 in [screens/README.md](../screens/README.md#commit-flow-planned), and the full journey is [flow 4](../screens/flows.md#4-planned-candidate-commits-to-one-offer).
+Screens are numbered 26 to 34 in [screens/README.md](../screens/README.md#commit-flow), and the full journey is [flow 4](../screens/flows.md#4-candidate-commits-to-one-offer).
 
 ## The rules
 
@@ -33,7 +33,7 @@ Screens are numbered 26 to 34 in [screens/README.md](../screens/README.md#commit
 
 | # | Screen | Where | What changes | Code |
 |---|---|---|---|---|
-| 26 | Discover with offers | `/feed` | Banner above the deck when there's at least one offer, linking to `/applications`. Offer count on the Discover tab. | `frontend/src/app/(app)/feed/page.tsx`, `frontend/src/features/shell/app-shell.tsx` |
+| 26 | Discover with offers | `/feed` | Banner above the deck when there's at least one offer, linking to `/applications`. Offer count on the Discover tab. | `frontend/src/features/feed/feed.tsx` (banner), `frontend/src/features/shell/app-shell.tsx` (count) |
 | 27 | Offers list | `/applications` | Tabs become Offers, Pending, Committed, Closed. Offers comes first and opens by default when there are offers. One card per offer with Decline and Commit. Three columns on desktop so offers can be compared. The sidebar shows an Offer chip. | `frontend/src/features/applications/my-applications.tsx` |
 | 28 | Final confirm | Dialog | Opens from Commit. Says which seat you take and what closes. | `my-applications.tsx`, `frontend/src/components/ui/modal.tsx` |
 | 29 | Decline offer | Dialog | Standard confirmation: the safe choice is the primary button. | `my-applications.tsx` |
@@ -49,9 +49,9 @@ Reuse what's in `frontend/src/components/ui/`. Nothing new is needed.
 
 | Component | How it's used |
 |---|---|
-| `Modal` | Screen 28: `ctaLabel` is "Commit to {project}", `escapeLabel` is "Keep my options", `escapeVariant="ghost"`. Add a prop so first focus can start on the escape button. |
+| `Modal` | Screen 28: `ctaLabel` is "Commit to {project}", `escapeLabel` is "Keep my options", `escapeVariant="ghost"`, and `focusEscape` starts focus on the escape button. Screen 30 uses `escapeHref` so "Go to {project}" is a link. |
 | `Button` | Commit on the offer cards is `secondary`, so the dialog holds the view's one CTA. Decline is `danger`. |
-| `Chip` | Offer uses `selected`, Committed uses `matched`, the rest use the default. Update the "Pickers only" comment on `selected`. |
+| `Chip` | Offer uses `selected`, Committed uses `matched`, the rest use the default. |
 | `Tabs`, `TeamStrip`, `MatchBadge` | As they are. |
 
 ## Copy
@@ -98,9 +98,25 @@ There are no live notifications, so offers are found through the banner and the 
 4. Review: Offers out and the filled state (33, 34).
 5. Add the commit step to the golden-path test (PL-08).
 
-## Docs to update with the code
+## How it's built
 
-Change these in the pull request that ships the behaviour, and remove "Planned" from this page:
+- Team progress on the offer and Committed cards comes from `GET /api/v1/projects/{id}/`. `MyApplication` doesn't carry it.
+- "What closed" is my `withdrawn` applications stamped at or after the commit.
+- A 409 body has the sentence but not the error code, so Commit blocked is matched on the `owns_open_project` sentence. The project to link to is my open one in `GET /api/v1/projects/mine/`.
+- The counts and the deck state come from `GET /api/v1/me/summary/`. Apply, withdraw, like, pass, commit and decline all refetch it.
+
+## Not built yet
+
+- The match badge and per-project cover colours on the offer cards. `MyApplication` has no match % and projects have no colour, so every cover is indigo.
+- The team strip on Deck closed (32). The strip is only drawn on a cover.
+- Offers out sits under the applicant card, not above it as drawn, so Pass and Like don't move as offers go out.
+- On a filled role, people the commit closed show "Closed". The API doesn't say which of them had an offer, so there's no "Offer closed".
+- The "Review {next role}" button on screen 34. Use the role tabs.
+- The commit step in the golden-path test (PL-08).
+
+## Docs updated with the code
+
+These changed with F4-10 and F4-11:
 
 - `docs/product/prd.md`: BR-03, BR-05, BR-11
 - `docs/product/use-cases.md`, `docs/architecture/api.md`, `docs/architecture/data-model.md`, `docs/architecture/flows.md`

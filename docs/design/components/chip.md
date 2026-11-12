@@ -6,8 +6,8 @@ A small tag for a skill or interest. It shows on cards, in profiles and in skill
 | Variant | Look | Means |
 |---|---|---|
 | `default` | `surface-2` fill, 1px `border`, `text-muted` | A skill the role wants that you don't list, or any neutral tag |
-| `matched` | Solid `apply` fill, `on-apply` text, leading ✓ | You have this skill and the role wants it |
-| `selected` | `primary` at 16% fill, 1px `primary` border, `text` | Picked in a skill picker |
+| `matched` | Solid `apply` fill, `on-apply` text, leading ✓ | You have this skill and the role wants it. Also the Committed status. |
+| `selected` | `primary` at 16% fill, 1px `primary` border, `text` | Picked in a skill picker. Also the Offer status on an application. |
 
 Any variant can be **removable**: it gets a × button.
 

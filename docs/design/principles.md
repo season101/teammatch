@@ -15,7 +15,7 @@ Fraunces display type and the spark gradient are kept for the landing hero, scre
 Swipe on touch, arrow keys on desktop, and a legend on screen that teaches the keys. Undoing a pass is one tap away. Forms ask only for what we use.
 
 ## 5. The safe choice is the primary button
-When an action can't be undone (withdraw an application, delete a role), the button that keeps things as they are gets the CTA style. The destructive choice is red text. The one exception is logout: logging out isn't destructive, so Log out is the CTA there.
+When an action can't be undone (withdraw an application, delete a role), the button that keeps things as they are gets the CTA style. The destructive choice is red text. There are two exceptions. Logging out isn't destructive, so Log out is the CTA there. And in the final confirm of a commit, Commit is the CTA and focus starts on "Keep my options" ([DD-34](decisions.md)).
 
 ## 6. Explain the consequence, not the field
 Helper text says what happens next: "Your skills decide which roles you see first." "Your name is shown to project owners." Labels say what a field is; helper text says why it matters.
@@ -53,7 +53,9 @@ Use these terms in UI copy, code names and docs, so everyone means the same thin
 | Candidate | A student applying to roles | Applicant (except on the owner's review screen) |
 | Apply / Pass | The candidate's two choices on a role card | Like / Nope (for candidates) |
 | Like / Pass | The owner's two choices on an applicant | Accept / Reject |
-| Filled | A role with a mutual like (stored as application status `liked`) | Matched, taken |
+| Offer | An owner's like on an application (status `liked`). The role stays open | Match, invite |
+| Commit | The candidate takes the seat an offer is for. It can't be undone | Accept, join |
+| Filled | A role someone committed to | Matched, taken |
 | Team locks | Every role is filled, so the project becomes a team | Completes, closes |
 | Benched | Locked into a team until the term ends, so out of other decks | Retired (that's the data field `retired_until`) |
 | Match % | Share of the role's required skills the candidate has | Score, compatibility |

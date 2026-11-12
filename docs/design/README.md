@@ -43,7 +43,7 @@ The system is built in layers. Each layer only uses the ones above it.
 
 1. **Lime means yes.** `apply` is only for apply, matched skills, filled seats and progress. Nothing else is lime.
 2. **One CTA per view.** The primary button is a white pill on dark and an ink pill on light. Violet is never a button fill.
-3. **The safe choice is the primary button** in every confirmation, with one planned exception: the commit dialog ([DD-34](decisions.md)). Destructive actions are red text, never a filled red button.
+3. **The safe choice is the primary button** in every confirmation, with one exception: the commit dialog ([DD-34](decisions.md)). Destructive actions are red text, never a filled red button.
 4. **Every swipe has a button, and every button has a key.** Dragging is never the only way to do something.
 5. **Show the team filling up.** Anywhere a project appears, show how many seats are filled.
 6. **Use tokens.** No hex values, pixel values or durations in components that aren't in [tokens.json](tokens.json).
