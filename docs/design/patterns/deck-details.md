@@ -49,7 +49,7 @@ The PNGs for 47 to 53 also show a loading skeleton for each screen. Use those sh
 
 This replaces the scope UI-06 (#207) had before. The issue is rewritten to match.
 
-- The card gets a fixed height that fits a 390 × 844 phone with the tab bar. The pitch is clamped to three lines, and skills that don't fit on one row become "+2 more".
+- The card gets a fixed height that fits a 390 × 844 phone with the tab bar. The pitch is clamped to five lines, as on screen 47, and skills that don't fit on one row become "+2 more".
 - `NoteField` leaves the card in `feed.tsx`. Shift + → and a long press no longer open a note; the note is on the details page (F3-13).
 - Tapping the card, pressing ↑ or pressing Enter opens `/projects/<id>?role=<role id>`. Until F3-13 ships, that's the project page as it is.
 - Remove the `busy` state in `feed.tsx`. The buttons and keys send each decision right away, and `gone` already handles the deck.

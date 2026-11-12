@@ -5,6 +5,9 @@ import { afterEach, vi } from "vitest";
 import { setShortcutsEnabled } from "@/features/shell/preferences";
 import { Feed } from "./feed";
 
+const push = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+
 // Exit animations finish at once, so a decided card leaves the DOM straight away.
 MotionGlobalConfig.skipAnimations = true;
 
@@ -124,6 +127,7 @@ const deck = () => screen.findByRole("group", { name: "Deck of open roles" });
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  push.mockReset();
   document.cookie = "csrftoken=; max-age=0";
   localStorage.clear();
 });
@@ -146,26 +150,57 @@ test("says I'm all caught up when there are no open roles", async () => {
   expect(screen.getByRole("link", { name: "Browse projects" })).toHaveAttribute("href", "/projects");
 });
 
-test("applying with a note sends it and moves to the next card", async () => {
+test("applying moves to the next card, with no note", async () => {
   document.cookie = "csrftoken=test-token";
   const { applies } = mockApi({ roles: [role, nextRole] });
   renderFeed();
 
-  fireEvent.change(await screen.findByLabelText("Note to the owner (optional)"), {
-    target: { value: "  I know DRF " },
-  });
   fireEvent.click(await applyButton());
 
   expect(await screen.findByRole("article", { name: "Frontend dev" })).toBeInTheDocument();
   expect(screen.queryByText("Backend dev")).not.toBeInTheDocument();
-  // The note was for the card that left.
-  expect(screen.getByLabelText("Note to the owner (optional)")).toHaveValue("");
+  expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   await waitFor(() =>
     expect(screen.getByRole("status")).toHaveTextContent("Applied to Backend dev at TeamMatch."),
   );
   expect(applies).toHaveLength(1);
-  expect(await applies[0].json()).toEqual({ role: 7, note: "I know DRF" });
+  expect(await applies[0].json()).toEqual({ role: 7 });
   expect(applies[0].headers.get("X-CSRFToken")).toBe("test-token");
+});
+
+test("an applied role leaves the cached feed, so it doesn't come back", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  mockApi({ roles: [role, nextRole] });
+  renderFeed(client);
+
+  fireEvent.click(await applyButton());
+
+  await waitFor(() =>
+    expect(client.getQueryData<{ id: number }[]>(["feed"])?.map((r) => r.id)).toEqual([8]),
+  );
+});
+
+test("tapping the card, ↑ or Enter opens the role on its project page", async () => {
+  mockApi({ roles: [role, nextRole] });
+  renderFeed();
+
+  fireEvent.click(await screen.findByText("Find a team"));
+  const stack = await deck();
+  fireEvent.keyDown(stack, { key: "ArrowUp" });
+  fireEvent.keyDown(stack, { key: "Enter" });
+
+  expect(push.mock.calls).toEqual([
+    ["/projects/3?role=7"],
+    ["/projects/3?role=7"],
+    ["/projects/3?role=7"],
+  ]);
+  // Enter on a button presses the button instead.
+  fireEvent.keyDown(await passButton(), { key: "Enter" });
+  expect(push).toHaveBeenCalledTimes(3);
+  expect(screen.getByRole("link", { name: "View details for Backend dev" })).toHaveAttribute(
+    "href",
+    "/projects/3?role=7",
+  );
 });
 
 test("passing the last card leaves me all caught up", async () => {
@@ -248,7 +283,7 @@ test("dragging right applies", async () => {
 
   expect(await screen.findByRole("article", { name: "Frontend dev" })).toBeInTheDocument();
   expect(applies).toHaveLength(1);
-  expect(await applies[0].json()).toEqual({ role: 7, note: "" });
+  expect(await applies[0].json()).toEqual({ role: 7 });
   expect(dismisses).toHaveLength(0);
 });
 
@@ -263,12 +298,12 @@ test("dragging left passes", async () => {
   expect(applies).toHaveLength(0);
 });
 
-// Otherwise selecting text in the note would swipe the card away.
-test("a drag that starts in the note field doesn't swipe", async () => {
+// Otherwise pressing View details could swipe the card away.
+test("a drag that starts on View details doesn't swipe", async () => {
   const { applies } = mockApi();
   renderFeed();
 
-  drag(await screen.findByLabelText("Note to the owner (optional)"), 200);
+  drag(await screen.findByRole("link", { name: "View details for Backend dev" }), 200);
   // Motion ends a drag on a later frame.
   await act(() => new Promise((resolve) => setTimeout(resolve, 100)));
 
@@ -286,18 +321,14 @@ test("a filled role stays gone and I'm told why", async () => {
   expect(screen.queryByRole("article")).not.toBeInTheDocument();
 });
 
-test("the card and my note come back when applying fails", async () => {
+test("the card comes back when applying fails", async () => {
   mockApi({ apply: { status: 500, body: {} } });
   renderFeed();
 
-  fireEvent.change(await screen.findByLabelText("Note to the owner (optional)"), {
-    target: { value: "I know DRF" },
-  });
   fireEvent.click(await applyButton());
 
   expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't apply. Please try again.");
   expect(await screen.findByRole("article", { name: "Backend dev" })).toBeInTheDocument();
-  expect(screen.getByLabelText("Note to the owner (optional)")).toHaveValue("I know DRF");
 });
 
 test("the card comes back when passing fails", async () => {
@@ -320,16 +351,10 @@ test("→ applies and ← passes when the deck has focus", async () => {
   fireEvent.keyDown(stack, { key: "ArrowRight" });
   expect(await screen.findByRole("article", { name: "Frontend dev" })).toBeInTheDocument();
   await waitFor(() => expect(applies).toHaveLength(1));
-  expect(await applies[0].json()).toEqual({ role: 7, note: "" });
+  expect(await applies[0].json()).toEqual({ role: 7 });
 
   // Still on the deck, so the next key works too.
   await waitFor(() => expect(stack).toHaveFocus());
-  await waitFor(() =>
-    expect(screen.getByRole("button", { name: "Pass on Frontend dev" })).toHaveAttribute(
-      "aria-disabled",
-      "false",
-    ),
-  );
   fireEvent.keyDown(stack, { key: "ArrowLeft" });
   expect(await screen.findByRole("article", { name: "Designer" })).toBeInTheDocument();
   expect(dismisses).toHaveLength(1);
@@ -349,16 +374,14 @@ test("arrow keys on a deck button move focus back to the deck", async () => {
   expect(dismisses).toHaveLength(1);
 });
 
-test("arrow keys move the caret in the note field instead of deciding", async () => {
+test("modified or held arrow keys don't decide", async () => {
   const { applies, dismisses } = mockApi();
   renderFeed();
 
-  const field = await screen.findByLabelText("Note to the owner (optional)");
-  fireEvent.keyDown(field, { key: "ArrowRight" });
-  fireEvent.keyDown(field, { key: "ArrowLeft" });
   // Alt+← is the browser's Back, and a held key repeats.
   fireEvent.keyDown(await deck(), { key: "ArrowLeft", altKey: true });
   fireEvent.keyDown(await deck(), { key: "ArrowRight", repeat: true });
+  fireEvent.keyDown(await deck(), { key: "ArrowRight", shiftKey: true });
 
   await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
   expect(applies).toHaveLength(0);
@@ -375,39 +398,36 @@ test("arrow keys do nothing with keyboard shortcuts turned off", async () => {
   expect(stack).not.toHaveAttribute("aria-keyshortcuts");
   fireEvent.keyDown(stack, { key: "ArrowRight" });
   fireEvent.keyDown(stack, { key: "ArrowLeft" });
+  fireEvent.keyDown(stack, { key: "ArrowUp" });
 
   await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
   expect(applies).toHaveLength(0);
   expect(dismisses).toHaveLength(0);
+  expect(push).not.toHaveBeenCalled();
   // The buttons still work.
   fireEvent.click(await passButton());
   await waitFor(() => expect(dismisses).toHaveLength(1));
 });
 
-test("the buttons and keys wait while a decision is being sent", async () => {
+test("the next card can be decided while the last one is still sending", async () => {
   let answer = () => {};
   const wait = new Promise<void>((resolve) => (answer = resolve));
-  const { applies, dismisses } = mockApi({ roles: [role, nextRole], wait });
+  const third = { ...nextRole, id: 9, title: "Designer" };
+  const { applies, dismisses } = mockApi({ roles: [role, nextRole, third], wait });
   renderFeed();
 
   fireEvent.click(await applyButton());
-
   const pass = await passButton("Pass on Frontend dev");
-  const apply = await applyButton("Apply to Frontend dev on CampusEats");
-  // Disabled for screen readers but still focusable, so a keyboard user keeps their place.
-  expect(pass).toHaveAttribute("aria-disabled", "true");
-  expect(apply).toHaveAttribute("aria-disabled", "true");
-  expect(apply).toBeEnabled();
+  expect(pass).not.toHaveAttribute("aria-disabled");
   fireEvent.click(pass);
-  fireEvent.click(apply);
-  fireEvent.keyDown(await deck(), { key: "ArrowLeft" });
 
-  answer();
-  await waitFor(() => expect(pass).toHaveAttribute("aria-disabled", "false"));
-  expect(apply).toHaveAttribute("aria-disabled", "false");
+  expect(await screen.findByRole("article", { name: "Designer" })).toBeInTheDocument();
   expect(applies).toHaveLength(1);
-  expect(dismisses).toHaveLength(0);
-  expect(screen.getByRole("article", { name: "Frontend dev" })).toBeInTheDocument();
+  expect(dismisses).toHaveLength(1);
+  answer();
+  await waitFor(() => expect(screen.getByRole("status")).not.toBeEmptyDOMElement());
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(screen.getByRole("article", { name: "Designer" })).toBeInTheDocument();
 });
 
 test("a benched member sees their team instead of the deck", async () => {

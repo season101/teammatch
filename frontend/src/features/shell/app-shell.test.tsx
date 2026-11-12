@@ -110,7 +110,7 @@ test("the deck shows its keyboard legend, and Hide collapses it", () => {
   renderShell("/feed");
   const legend = screen.getByRole("complementary", { name: "Keyboard shortcuts" });
 
-  expect(legend).toHaveTextContent("Apply with note");
+  expect(legend).toHaveTextContent("Details");
   fireEvent.click(within(legend).getByRole("button", { name: "Hide" }));
   expect(screen.queryByRole("complementary", { name: "Keyboard shortcuts" })).toBeNull();
 });

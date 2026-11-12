@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import type { FeedRole } from "./queries";
 import { RoleCard } from "./role-card";
 
@@ -42,19 +42,35 @@ test("marks the required skills I have", () => {
   expect(screen.getAllByText("(you have this skill)")).toHaveLength(1);
 });
 
-test("truncates a long pitch and expands it with more", () => {
-  const pitch = "word ".repeat(60).trim();
-  render(<RoleCard role={makeRole({ pitch })} mySkillIds={[]} />);
+test("past three skills shows +N more, and screen readers still get all of them", () => {
+  const role = {
+    ...makeRole(),
+    required_skills: ["Python", "React", "Django", "Figma", "SQL"].map((name, i) => ({
+      id: i + 1,
+      name,
+      slug: name.toLowerCase(),
+    })),
+  };
+  render(<RoleCard role={role} mySkillIds={[]} />);
 
-  expect(screen.queryByText(pitch)).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "more" }));
-  expect(screen.getByText(pitch, { exact: false })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "less" })).toHaveAttribute("aria-expanded", "true");
+  const skills = screen.getByRole("list", { name: "Required skills" });
+  expect(within(skills).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+    "Python",
+    "React",
+    "Django",
+    "Figma",
+    "SQL",
+  ]);
+  expect(within(skills).getByText("Figma")).toHaveClass("sr-only");
+  expect(within(skills).getByText("+2 more")).toHaveAttribute("aria-hidden", "true");
 });
 
-test("a short pitch has no more button", () => {
+test("links to the role on its project page", () => {
   render(<RoleCard role={makeRole()} mySkillIds={[]} />);
-  expect(screen.queryByRole("button", { name: "more" })).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "View details for Backend dev" })).toHaveAttribute(
+    "href",
+    "/projects/3?role=7",
+  );
 });
 
 test("falls back when the owner has no display name", () => {

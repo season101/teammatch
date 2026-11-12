@@ -9,10 +9,9 @@ Open roles on open projects that the candidate hasn't applied to or passed, that
 | Action | Touch | Mouse | Keyboard | Button |
 |---|---|---|---|---|
 | Apply | Swipe right | Drag right | → | ✓ Apply |
-| Apply with a note | Long-press ✓ | Shift-click ✓ | ⇧ → | |
 | Pass | Swipe left | Drag left | ← | ✕ Pass |
 | Undo the last pass | | | Z | ↺ Undo |
-| Open details | Tap ⓘ | Click ⓘ | ↑ | ⓘ Details |
+| Open details | Tap the card | Click the card | ↑, or Enter on the deck | View details |
 | Close details | Swipe down / tap ✕ | Click ✕ | ↓ or Esc | |
 | Next or previous card page | Tap right or left half | Click right or left half | Space | |
 
@@ -21,7 +20,7 @@ Open roles on open projects that the candidate hasn't applied to or passed, that
 - **A swipe commits** when the card has moved 30% of its width, or on a fling faster than 0.6 px/ms with at least 40px of movement.
 - **On release short of that,** the card springs back over 320ms.
 - **On commit,** the card flies off in that direction over 200ms, and the next card scales from 0.96 to 1.
-- **A tap** (under 4px of movement) changes the card page instead of swiping.
+- **A tap** that doesn't turn into a drag opens the role on its project page (`/projects/<id>?role=<role id>`).
 
 ### Stamps
 While dragging, an outlined word appears at the top corner on the side the card is heading to:
@@ -33,17 +32,16 @@ The opacity is the drag distance ÷ the commit distance. Stamps are decorative (
 ## Undo
 **Undo only brings back the last pass.** You can't re-apply to a role you've applied to, so an apply can't be undone from the deck. The candidate withdraws from My applications instead. The Undo button is disabled unless the last decision was a pass. The pass toast also offers Undo for 4 seconds.
 
-## Apply with a note
-Planned: the note leaves the deck and moves to the role details page ([DD-40](../decisions.md), not agreed yet). See [deck details](deck-details.md).
+## Card size
+Every card is the same height, so ✕ and ✓ stay in one place, just above the phone tab bar. The height is the viewport minus the page header, padding, buttons and tab bar, kept between 22rem and 38rem. The title and project take one line each, skills one row with "+N more", and the pitch five lines. Longer text ends in an ellipsis, and nothing scrolls inside the card.
 
-- Opens a bottom sheet on phone, a modal on desktop, or the right panel at 1440px and up.
-- One textarea: "Add a note for the owner", 300 characters max, with a counter.
-- CTA "Send application"; ghost "Apply without a note".
+## The note
+There's no note on the deck: a swipe right applies without one ([DD-40](../decisions.md), not agreed yet). The note moves to the role details page with F3-13. See [deck details](deck-details.md).
 
 ## Keyboard legend
 On desktop, a row pinned to the bottom of the stage:
 
-`Hide` · ← Pass · → Apply · ↑ Details · ↓ Close · Z Undo pass · Space Next page · ⇧→ Apply with note
+`Hide` · ← Pass · → Apply · ↑ Details · ↓ Close · Z Undo pass · Space Next page
 
 - Key caps are 24px `surface-2` boxes, Geist 12px semibold.
 - `Hide` collapses the row until the next visit.
@@ -54,7 +52,7 @@ On desktop, a row pinned to the bottom of the stage:
 Three coach marks over the live deck. Each has Skip, and they're shown once:
 1. "Swipe right to apply."
 2. "Swipe left to pass. Your skills decide what you see first."
-3. "There's more": Undo a pass, Details, Apply with a note.
+3. "There's more": Undo a pass and Details.
 
 ## Announcements
 Results are announced in the page's live region, as listed in [accessibility.md](../foundations/accessibility.md#announcements).

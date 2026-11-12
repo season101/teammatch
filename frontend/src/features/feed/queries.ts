@@ -28,11 +28,11 @@ export function useFeed() {
   });
 }
 
-// The deck takes the card out itself, so the feed isn't refetched on success.
-// My applications is, so the sidebar lists the new one straight away.
+// Drops the role from the cached feed, so it doesn't come back when the deck
+// mounts again. My applications is refetched, so the sidebar lists the new one.
 export function useApply() {
   const queryClient = useQueryClient();
-  return useMutation<Application, ApiError, { role: number; note: string }>({
+  return useMutation<Application, ApiError, { role: number; note?: string }>({
     mutationFn: async (body) => {
       const { data, error, response } = await api.POST("/api/v1/applications/", {
         body,
@@ -45,7 +45,12 @@ export function useApply() {
         typeof detail === "string" ? detail : "Couldn't apply. Please try again.",
       );
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["my-applications"] }),
+    onSuccess: (_, { role: id }) => {
+      queryClient.setQueryData<FeedRole[]>(["feed"], (roles) =>
+        roles?.filter((role) => role.id !== id),
+      );
+      return queryClient.invalidateQueries({ queryKey: ["my-applications"] });
+    },
     // 403: my team just locked, so the deck turns into the benched state, and the
     // lock liked one of my applications and withdrew the rest.
     onError: (error) => {

@@ -3,7 +3,7 @@
 // Same limit as Application.note.
 const NOTE_MAX = 300;
 
-// The deck owns the note, so a right swipe, ✓ or → sends whatever is typed here.
+// Left the deck in UI-06 (DD-40). The role details page (F3-13) owns the note next.
 export function NoteField({
   roleId,
   note,
