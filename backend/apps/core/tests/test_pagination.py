@@ -16,4 +16,4 @@ def test_forged_cursor_position_is_a_404_not_a_500():
     cursor = b64encode(urlencode({"p": "not-a-date"}).encode("ascii")).decode("ascii")
     response = client.get("/api/v1/projects/", {"cursor": cursor})
     assert response.status_code == 404
-    assert response.json() == {"detail": "Invalid cursor"}
+    assert response.json() == {"detail": "Invalid cursor", "code": "not_found"}

@@ -210,7 +210,10 @@ def test_like_fails_if_the_applicant_is_already_on_a_team(owner, project, term):
     response = like(owner, application)
 
     assert response.status_code == 409
-    assert response.json() == {"detail": "This person just joined another team."}
+    assert response.json() == {
+        "detail": "This person just joined another team.",
+        "code": "applicant_retired",
+    }
     assert status_of(application) == ApplicationStatus.PENDING
     role.refresh_from_db()
     assert role.status == RoleStatus.OPEN
@@ -354,7 +357,10 @@ def test_like_fails_if_the_applicant_already_committed_to_an_open_project(owner,
     response = like(owner, here)
 
     assert response.status_code == 409
-    assert response.json() == {"detail": "This person already has a spot on an open project."}
+    assert response.json() == {
+        "detail": "This person already has a spot on an open project.",
+        "code": "applicant_committed",
+    }
     assert status_of(here) == WITHDRAWN  # the commit closed it
     mine.refresh_from_db()
     assert mine.status == RoleStatus.OPEN
@@ -632,3 +638,12 @@ def test_a_pass_that_commits_while_a_lock_waits_stays_passed(project, other):
 
     assert team == Team.objects.get()
     assert status_of(elsewhere) == PASSED
+
+
+def test_field_errors_keep_their_shape(owner):
+    # Only single-message errors gain a code; a validation error stays {field: [...]}.
+    client = APIClient()
+    client.force_authenticate(owner)
+    response = client.post("/api/v1/applications/", {"role": 999999}, format="json")
+    assert response.status_code == 400
+    assert "code" not in response.json()
