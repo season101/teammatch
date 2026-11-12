@@ -440,7 +440,10 @@ test("a benched member sees their team instead of the deck", async () => {
   expect(
     screen.getByText("You're on a team until Nov 20. Your other applications were withdrawn."),
   ).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "See your team" })).toHaveAttribute("href", "/teams");
+  expect(screen.getByRole("link", { name: "Open team chat" })).toHaveAttribute(
+    "href",
+    "/teams/5/chat",
+  );
   expect(screen.queryByRole("group", { name: "Deck of open roles" })).not.toBeInTheDocument();
 });
 

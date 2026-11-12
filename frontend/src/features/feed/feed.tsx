@@ -48,9 +48,8 @@ export function Feed() {
           You&apos;re on a team until {termEnd(team.data)}. Your other applications were
           withdrawn.
         </p>
-        {/* Becomes Open team chat once chat ships. */}
-        <Link href="/teams" className={`${buttonClasses()} mt-3`}>
-          See your team
+        <Link href={`/teams/${team.data.id}/chat`} className={`${buttonClasses()} mt-3`}>
+          Open team chat
         </Link>
       </div>
     );

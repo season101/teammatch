@@ -96,11 +96,10 @@ export function ItsATeam({ team, onClose }: { team: MyTeam; onClose: () => void 
             </motion.li>
           ))}
         </ul>
-        {/* Team chat is F4-08, so both go to the team for now. */}
         <div className="flex w-full max-w-xs flex-col items-center gap-3">
           <Link
             ref={ctaRef}
-            href="/teams"
+            href={`/teams/${team.id}/chat`}
             onClick={onClose}
             className={`${buttonClasses("cta")} w-full focus-visible:outline-on-primary`}
           >
