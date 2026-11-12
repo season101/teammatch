@@ -39,17 +39,24 @@ export function swipeDirection(
 const stampClass =
   "pointer-events-none absolute top-6 z-10 rounded-input border-4 border-current px-3 font-display text-3xl font-extrabold tracking-wider";
 
-// Drag, stamps and fly-off for one card. What a commit does is up to the deck.
+// Presses on these stay presses, never drags or taps on the card.
+const CONTROLS = "a, button, input, label, select, textarea";
+
+// Drag, stamps and fly-off for one card. What a commit or a tap does is up to the deck.
 export function SwipeCard({
   isTop,
   onCommit,
+  onTap,
   children,
 }: {
   isTop: boolean;
   onCommit: (direction: Direction) => void;
+  onTap: () => void;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  // Set once a drag starts, so the click that ends it isn't a tap.
+  const dragged = useRef(false);
   const controls = useDragControls();
   // False while the card flies off, so it can't be dragged or clicked again.
   const isPresent = useIsPresent();
@@ -100,11 +107,14 @@ export function SwipeCard({
       dragElastic={0.25}
       dragMomentum={false}
       onPointerDown={(event) => {
-        // Presses on the card's buttons and fields stay presses, never drags.
-        const target = event.target as Element;
-        if (active && !target.closest("a, button, input, label, select, textarea")) {
-          controls.start(event);
-        }
+        dragged.current = false;
+        if (active && !(event.target as Element).closest(CONTROLS)) controls.start(event);
+      }}
+      onDragStart={() => {
+        dragged.current = true;
+      }}
+      onClick={(event) => {
+        if (active && !dragged.current && !(event.target as Element).closest(CONTROLS)) onTap();
       }}
       onDragEnd={onDragEnd}
     >

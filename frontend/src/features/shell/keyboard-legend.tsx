@@ -13,7 +13,6 @@ export const DECK_KEYS: LegendKey[] = [
   ["↓", "Close"],
   ["Z", "Undo pass"],
   ["Space", "Next page"],
-  ["⇧→", "Apply with note"],
 ];
 
 export const REVIEW_KEYS: LegendKey[] = [

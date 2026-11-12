@@ -6,6 +6,9 @@ The core object in TeamMatch: one role on one project, shown as a card the candi
 - Ratio 3:4.6, `rounded-card`, `surface`, 1px `border`, `shadow-card`.
 - Desktop: 380 × 640px, centred on the stage.
 - Phone: full width minus 32px.
+- Height: the same on every card in the deck. See [swipe-deck.md](../patterns/swipe-deck.md#card-size).
+
+UI-06 built a simpler card first: title, project and owner, one row of skills, a five-line pitch, and a **View details** row at the bottom (ⓘ, "View details", "Role, project and team", ›) that links to the role on its project page. The cover, pages and team strip below are still to build.
 
 ## Anatomy, top to bottom
 

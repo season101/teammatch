@@ -2,6 +2,7 @@
 
 import { AnimatePresence } from "motion/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef, useState, type KeyboardEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { buttonClasses } from "@/components/ui/button";
@@ -9,12 +10,12 @@ import { useMyProfile } from "@/features/profiles/queries";
 import { useShortcutsEnabled } from "@/features/shell/preferences";
 import { termEnd } from "@/features/teams/my-team";
 import { useMyTeam } from "@/features/teams/queries";
-import { NoteField } from "./note-field";
 import { useApply, useDismiss, useFeed, useResetPasses, type ApiError } from "./queries";
-import { RoleCard } from "./role-card";
+import { RoleCard, roleHref } from "./role-card";
 import { SwipeCard, type Direction } from "./swipe-card";
 
 export function Feed() {
+  const router = useRouter();
   const feed = useFeed();
   // A seat on a team this term means I'm benched (BR-09). The shell loads it too.
   const team = useMyTeam();
@@ -29,11 +30,8 @@ export function Feed() {
   // Roles decided here. They leave the deck at once and come back if the request fails.
   const [gone, setGone] = useState<number[]>([]);
   const [direction, setDirection] = useState<Direction>("right");
-  const [note, setNote] = useState("");
   const [announcement, setAnnouncement] = useState("");
   const [error, setError] = useState("");
-  // True while a decision is being sent. The buttons and keys wait for it.
-  const [busy, setBusy] = useState(false);
   const shortcuts = useShortcutsEnabled();
   const stack = useRef<HTMLDivElement>(null);
 
@@ -68,21 +66,18 @@ export function Feed() {
   const deck = feed.data.filter((role) => !gone.includes(role.id));
   const top = deck[0];
 
-  // Right applies with the typed note, left passes. Drags, the ✕/✓ buttons and
-  // the arrow keys all end up here.
+  // Right applies, left passes. Drags, the ✕/✓ buttons and the arrow keys all end
+  // up here. Nothing waits for the request, so the next card can be decided at once.
   async function commit(to: Direction) {
     if (!top) return;
     const role = top;
-    const sent = note.trim();
-    setBusy(true);
     setDirection(to);
     setGone((ids) => [...ids, role.id]);
-    setNote("");
     setError("");
     try {
       let message;
       if (to === "right") {
-        await apply.mutateAsync({ role: role.id, note: sent });
+        await apply.mutateAsync({ role: role.id });
         message = `Applied to ${role.title} at ${role.project.title}.`;
       } else {
         await dismiss.mutateAsync(role.id);
@@ -98,12 +93,7 @@ export function Feed() {
       const { status, message } = err as ApiError;
       setError(message);
       // 409: the role was filled or closed, or I already applied. Nothing to bring back.
-      if (status !== 409) {
-        setGone((ids) => ids.filter((id) => id !== role.id));
-        setNote((current) => current || sent);
-      }
-    } finally {
-      setBusy(false);
+      if (status !== 409) setGone((ids) => ids.filter((id) => id !== role.id));
     }
   }
 
@@ -127,14 +117,22 @@ export function Feed() {
     }
   }
 
-  // ← and → anywhere in the deck, but not while typing the note. Modifiers are
-  // left alone (Alt+← is Back), and a held key doesn't keep deciding.
+  // ←, → and ↑ anywhere in the deck. Modifiers are left alone (Alt+← is Back), and a
+  // held key doesn't keep deciding. Enter opens details only from the deck itself, so
+  // it still presses a focused button.
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    const to = event.key === "ArrowRight" ? "right" : event.key === "ArrowLeft" ? "left" : null;
-    const target = event.target as Element;
-    if (!to || !top || !shortcuts || busy || event.repeat) return;
+    if (!top || event.repeat) return;
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-    if (target.matches("input, textarea, select")) return;
+    const open =
+      (event.key === "Enter" && event.target === stack.current) ||
+      (shortcuts && event.key === "ArrowUp");
+    if (open) {
+      event.preventDefault();
+      router.push(roleHref(top));
+      return;
+    }
+    const to = event.key === "ArrowRight" ? "right" : event.key === "ArrowLeft" ? "left" : null;
+    if (!to || !shortcuts) return;
     event.preventDefault();
     // Focus inside the leaving card would drop to the page. The stack stays put.
     stack.current?.focus();
@@ -155,18 +153,19 @@ export function Feed() {
         ref={stack}
         role="group"
         aria-label="Deck of open roles"
-        aria-keyshortcuts={shortcuts ? "ArrowLeft ArrowRight" : undefined}
+        aria-keyshortcuts={shortcuts ? "ArrowLeft ArrowRight ArrowUp" : undefined}
         tabIndex={top ? 0 : -1}
-        className="isolate grid rounded-card"
+        className="isolate grid grid-cols-1 rounded-card"
       >
         <AnimatePresence initial={false} custom={direction}>
           {deck.slice(0, 2).map((role) => (
-            <SwipeCard key={role.id} isTop={role === top} onCommit={commit}>
-              <RoleCard role={role} mySkillIds={mySkillIds}>
-                {role === top && (
-                  <NoteField roleId={role.id} note={note} onNoteChange={setNote} />
-                )}
-              </RoleCard>
+            <SwipeCard
+              key={role.id}
+              isTop={role === top}
+              onCommit={commit}
+              onTap={() => router.push(roleHref(role))}
+            >
+              <RoleCard role={role} mySkillIds={mySkillIds} />
             </SwipeCard>
           ))}
         </AnimatePresence>
@@ -200,20 +199,13 @@ export function Feed() {
             </div>
           ))}
       </div>
-      {/* aria-disabled, not disabled: Chrome drops focus from a button that gets disabled. */}
       {top && (
         <div className="flex items-center justify-center gap-3">
-          <ActionButton
-            kind="pass"
-            label={`Pass on ${top.title}`}
-            aria-disabled={busy}
-            onClick={() => !busy && commit("left")}
-          />
+          <ActionButton kind="pass" label={`Pass on ${top.title}`} onClick={() => commit("left")} />
           <ActionButton
             kind="apply"
             label={`Apply to ${top.title} on ${top.project.title}`}
-            aria-disabled={busy}
-            onClick={() => !busy && commit("right")}
+            onClick={() => commit("right")}
           />
         </div>
       )}
