@@ -194,6 +194,8 @@ export function usePublishProject(projectId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["my-projects"] });
+      // The nav badges count open roles and their applicants.
+      queryClient.invalidateQueries({ queryKey: ["my-summary"] });
     },
   });
 }
@@ -211,6 +213,8 @@ export function useDeleteRole(projectId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["my-projects"] });
+      // The nav badges count open roles and their applicants.
+      queryClient.invalidateQueries({ queryKey: ["my-summary"] });
     },
   });
 }
@@ -254,6 +258,8 @@ export function useCloseProject(projectId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["my-projects"] });
+      // The nav badges count open roles and their applicants.
+      queryClient.invalidateQueries({ queryKey: ["my-summary"] });
     },
   });
 }
