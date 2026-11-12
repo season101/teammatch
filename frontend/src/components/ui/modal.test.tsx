@@ -76,3 +76,40 @@ test("turning open off closes the dialog", () => {
   );
   expect(onClose).toHaveBeenCalledOnce();
 });
+
+test("focusEscape starts on the escape, so Enter can't press the CTA (DD-34)", () => {
+  render(
+    <Modal
+      open
+      onClose={vi.fn()}
+      title="Commit to Campus Eats?"
+      ctaLabel="Commit to Campus Eats"
+      onCta={vi.fn()}
+      escapeLabel="Keep my options"
+      escapeVariant="ghost"
+      focusEscape
+    />,
+  );
+  expect(screen.getByRole("button", { name: "Keep my options" })).toHaveFocus();
+});
+
+test("escapeHref makes the escape a link", () => {
+  const onClose = vi.fn();
+  render(
+    <Modal
+      open
+      onClose={onClose}
+      title="Close your project first?"
+      ctaLabel="Keep this offer"
+      onCta={onClose}
+      escapeLabel="Go to Trail Finder"
+      escapeHref="/projects/8"
+      escapeVariant="ghost"
+    />,
+  );
+  expect(screen.getByRole("button", { name: "Keep this offer" })).toHaveFocus();
+  expect(screen.getByRole("link", { name: "Go to Trail Finder" })).toHaveAttribute(
+    "href",
+    "/projects/8",
+  );
+});

@@ -4,7 +4,7 @@ const variants = {
   default: "border-border bg-surface-2 text-muted",
   // Lime means "yes": a skill you have that the role wants.
   matched: "border-apply bg-apply text-on-apply",
-  // Pickers only.
+  // Pickers, and the Offer status chip (commit-flow.md).
   selected: "border-primary bg-primary/16 text-text",
 };
 

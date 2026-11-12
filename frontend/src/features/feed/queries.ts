@@ -58,6 +58,10 @@ export function useApply() {
       queryClient.invalidateQueries({ queryKey: ["my-team"] });
       queryClient.invalidateQueries({ queryKey: ["my-applications"] });
     },
+    // Not returned, so the deck doesn't wait for it. A 409 can mean I committed elsewhere.
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-summary"] });
+    },
   });
 }
 

@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, type KeyboardEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { buttonClasses } from "@/components/ui/button";
+import { useMyApplications } from "@/features/applications/queries";
 import { useMyProfile } from "@/features/profiles/queries";
 import { useShortcutsEnabled } from "@/features/shell/preferences";
+import { useMySummary } from "@/features/shell/queries";
 import { termEnd } from "@/features/teams/my-team";
 import { useMyTeam } from "@/features/teams/queries";
 import { useApply, useDismiss, useFeed, useResetPasses, type ApiError } from "./queries";
@@ -19,6 +21,11 @@ export function Feed() {
   const feed = useFeed();
   // A seat on a team this term means I'm benched (BR-09). The shell loads it too.
   const team = useMyTeam();
+  // My offers, and whether a commit closed my deck (F4-11). The shell loads it too.
+  const summary = useMySummary().data;
+  const committed = summary?.deck === "committed";
+  // Only to name the project I committed to.
+  const seat = useMyApplications(committed).data?.find((a) => a.status === "committed");
   // Only used to highlight matching skills, so the feed doesn't wait for it.
   const profile = useMyProfile();
   const mySkillIds = profile.data?.skills.map((skill) => skill.id) ?? [];
@@ -54,6 +61,23 @@ export function Feed() {
       </div>
     );
   }
+  // Not benched yet: the team locks, and chat opens, when the last role fills.
+  if (committed) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-12 text-center">
+        <h2 className="font-display text-3xl font-extrabold">
+          You&apos;re committed to {seat?.role.project.title ?? "a project"}
+        </h2>
+        <p className="text-muted">
+          Your deck stays closed while you hold this seat. Team chat opens when the last role
+          fills.
+        </p>
+        <Link href="/applications" className={`${buttonClasses()} mt-3`}>
+          See your commitment
+        </Link>
+      </div>
+    );
+  }
   if (feed.isError) {
     return (
       <p role="alert" className="text-pass">
@@ -62,6 +86,7 @@ export function Feed() {
     );
   }
 
+  const offers = summary?.offers ?? 0;
   const deck = feed.data.filter((role) => !gone.includes(role.id));
   const top = deck[0];
 
@@ -143,6 +168,30 @@ export function Feed() {
       <p role="status" className="sr-only">
         {announcement}
       </p>
+      {offers > 0 && (
+        <Link
+          href="/applications"
+          className="flex min-h-11 items-center gap-3 rounded-row border border-primary bg-surface-2 px-4 py-3 hover:bg-surface"
+        >
+          <span
+            aria-hidden="true"
+            className="grid size-8 shrink-0 place-items-center rounded-full bg-apply font-bold text-on-apply"
+          >
+            {offers}
+          </span>
+          <span className="flex-1">
+            <span className="block font-semibold">
+              {offers === 1 ? "1 project wants you." : `${offers} projects want you.`}
+            </span>
+            <span className="block text-sm text-muted">
+              Pick the one you want before it fills.
+            </span>
+          </span>
+          <span aria-hidden="true" className="text-muted">
+            ›
+          </span>
+        </Link>
+      )}
       {error && (
         <p role="alert" className="text-sm text-pass">
           {error}

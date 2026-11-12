@@ -31,15 +31,20 @@ export function useMyProjects(enabled = true) {
   });
 }
 
+// Waiting applicants by default. "liked" lists the offers out, and "passed" and
+// "declined" the people a filled role closed on.
 // shortcut: first page (20) of a role's applicants; the review queue (F4-04) pages through the cursor.
-export function useApplicants(roleId: number) {
+export function useApplicants(
+  roleId: number,
+  status: "pending" | "liked" | "passed" | "declined" = "pending",
+) {
   return useQuery({
-    queryKey: ["applicants", roleId],
+    queryKey: ["applicants", roleId, status],
     queryFn: async () => {
       const { data, response } = await api.GET(
         "/api/v1/roles/{id}/applications/",
         {
-          params: { path: { id: roleId } },
+          params: { path: { id: roleId }, query: { status } },
         },
       );
       if (!data)
@@ -69,15 +74,16 @@ export function useDecide(roleId: number) {
           : "Couldn't save your decision. Please try again.",
       );
     },
-    // A like that locks the team: the app shell refetches my team and shows "It's a Team!".
-    // Any like fills the role, so my projects (tabs, sidebar counts) refetch too.
-    onSuccess: (decided, { like }) => {
+    // A like is an offer now (F4-10), so team_locked stays false; kept in case it ever isn't.
+    onSuccess: (decided) => {
       if (decided.team_locked)
         queryClient.invalidateQueries({ queryKey: ["my-team"] });
-      if (like) queryClient.invalidateQueries({ queryKey: ["my-projects"] });
     },
-    // The decided applicant is no longer pending, so the list drops them.
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: ["applicants", roleId] }),
+    // The decided applicant leaves the queue, a liked one joins Offers out, and the
+    // Review badge counts one fewer.
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-summary"] });
+      return queryClient.invalidateQueries({ queryKey: ["applicants", roleId] });
+    },
   });
 }

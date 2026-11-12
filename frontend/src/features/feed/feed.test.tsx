@@ -55,6 +55,7 @@ function mockApi({
   reset = { status: 204, body: null as unknown },
   wait = Promise.resolve(),
   team = (): unknown => null,
+  summary = (): unknown => ({ offers: 0, applicants_waiting: 0, deck: "open" }),
 } = {}) {
   let open = [...roles];
   let passed: typeof roles = [];
@@ -71,6 +72,16 @@ function mockApi({
       if (path === "/api/v1/feed/") body = { next: null, previous: null, results: open };
       else if (path === "/api/v1/me/profile/") body = profile;
       else if (path === "/api/v1/teams/mine/") body = { team: team() };
+      else if (path === "/api/v1/me/summary/") body = summary();
+      else if (path === "/api/v1/applications/mine/")
+        body = {
+          next: null,
+          previous: null,
+          results: [
+            { id: 1, status: "withdrawn", role: { id: 7, title: "Backend dev", project: role.project } },
+            { id: 2, status: "committed", role: { id: 8, title: "Frontend dev", project: nextRole.project } },
+          ],
+        };
       else if (path === "/api/v1/applications/" && request.method === "POST") {
         applies.push(request.clone());
         await wait;
@@ -469,4 +480,81 @@ test("applying after my team locked shows the benched state and reloads my appli
   ).toBeInTheDocument();
   // The lock liked one of them and withdrew the rest, so the sidebar list is stale.
   expect(client.getQueryState(["my-applications"])?.isInvalidated).toBe(true);
+});
+
+const offersBanner = () => screen.queryByRole("link", { name: /want you|wants you/ });
+
+test("with offers, a banner above the deck links to my applications", async () => {
+  mockApi({ summary: () => ({ offers: 3, applicants_waiting: 0, deck: "open" }) });
+  renderFeed();
+
+  const banner = await screen.findByRole("link", { name: /3 projects want you\./ });
+  expect(banner).toHaveTextContent("Pick the one you want before it fills.");
+  expect(banner).toHaveAttribute("href", "/applications");
+  // The deck is still there under it.
+  expect(await applyButton()).toBeInTheDocument();
+});
+
+test("one offer reads in the singular, and no offers means no banner", async () => {
+  mockApi({ summary: () => ({ offers: 1, applicants_waiting: 0, deck: "open" }) });
+  const { unmount } = renderFeed();
+  expect(await screen.findByRole("link", { name: /1 project wants you\./ })).toBeInTheDocument();
+  unmount();
+
+  mockApi();
+  renderFeed();
+  await applyButton();
+  expect(offersBanner()).not.toBeInTheDocument();
+});
+
+test("after a commit the deck is closed, which isn't benched or caught up", async () => {
+  mockApi({ roles: [], summary: () => ({ offers: 0, applicants_waiting: 0, deck: "committed" }) });
+  renderFeed();
+
+  expect(
+    await screen.findByRole("heading", { name: "You're committed to CampusEats" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "Your deck stays closed while you hold this seat. Team chat opens when the last role fills.",
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "See your commitment" })).toHaveAttribute(
+    "href",
+    "/applications",
+  );
+  expect(screen.queryByRole("group", { name: "Deck of open roles" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: /You're on/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "You're all caught up" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "Open team chat" })).not.toBeInTheDocument();
+});
+
+test("an open deck with nothing left is caught up, not closed", async () => {
+  mockApi({ roles: [] });
+  renderFeed();
+
+  expect(await screen.findByRole("heading", { name: "You're all caught up" })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: /You're committed/ })).not.toBeInTheDocument();
+});
+
+test("once the team locks, benched wins over committed", async () => {
+  mockApi({
+    team: () => myTeam,
+    summary: () => ({ offers: 0, applicants_waiting: 0, deck: "benched" }),
+  });
+  renderFeed();
+
+  expect(await screen.findByRole("heading", { name: "You're on CampusEats" })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: /You're committed/ })).not.toBeInTheDocument();
+});
+
+test("applying reloads the summary, so the nav counts and deck state stay right", async () => {
+  mockApi();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const invalidate = vi.spyOn(client, "invalidateQueries");
+  renderFeed(client);
+
+  fireEvent.click(await applyButton());
+
+  await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ["my-summary"] }));
 });
