@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
   // packages/api-client lives outside frontend/
   outputFileTracingRoot: path.join(__dirname, ".."),
   turbopack: { root: path.join(__dirname, "..") },
+  async headers() {
+    // A new deploy's service worker must not sit behind a cached copy.
+    return [{ source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache" }] }];
+  },
   async rewrites() {
     return [
       { source: "/api/:path*/", destination: `${apiUrl}/api/:path*/` },

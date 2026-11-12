@@ -86,6 +86,13 @@ You can also run either side on the host while the rest stays in Docker: `cd bac
 
 Health checks: `/healthz` (process is up, no dependencies), `/readyz` (db + redis, 503 if either is down), and `/api/v1/health/` (same report as `/readyz`, always 200, shown on the `/status` page).
 
+## Install on your phone
+
+TeamMatch installs to the home screen from https://teammatch.sijancodes.com and opens full screen like an app. Settings has the same steps under App.
+
+- Android: open the site in Chrome, tap the menu (⋮), then Install app.
+- iPhone: open the site in Safari, tap Share, then Add to Home Screen.
+
 ## Ground rules
 
 - **Contract first.** If you change a serializer or view, regenerate `backend/schema.yml` and the client in the same PR:
