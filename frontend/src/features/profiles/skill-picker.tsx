@@ -86,7 +86,7 @@ export function SkillPicker({
             <li key={skill.id}>
               <button
                 type="button"
-                className="rounded-pill border border-border px-3 py-1 text-sm text-text hover:border-muted"
+                className="min-h-11 rounded-pill border border-border px-3 py-1 text-sm text-text hover:border-muted"
                 onClick={() => {
                   onChange([...selected, skill.id]);
                   setQuery("");

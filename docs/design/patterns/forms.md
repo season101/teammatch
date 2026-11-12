@@ -8,15 +8,23 @@ Sign-up, profile setup and project creation. Fields follow [form-fields.md](../c
 2. **Verify email** (email sign-ups only).
    - "Check your inbox" screen with a resend link.
    - Links last 3 days. An expired link says so and offers a new one.
-3. **Team rules** (everyone, including Google sign-ups). Four short rules, then "I agree":
+
+Then four steps, one question per screen on every screen size (DD-47). Each screen has four progress pills, "Step N of 4" and one full-width button. A step that's already done is skipped, so someone who comes back lands on the first one left.
+
+1. **Team rules** at `/welcome/rules` (everyone, including Google sign-ups and accounts made before this). Four short rules, then "I agree":
    - Be honest about your skills.
    - Show up.
    - Respect people's time.
    - Speak up early.
-4. **Profile setup:**
-   - Required: name, major and at least one skill.
-   - Optional: bio and avatar.
-5. **First deck** with coach marks ([swipe-deck.md](swipe-deck.md#first-visit)).
+2. **Confirm your info** at `/welcome/profile`:
+   - Required: name and major.
+   - Optional: bio. It can be added later from the profile.
+3. **Pick your skills** at `/welcome/skills`:
+   - At least one skill. The profile strength meter moves as skills are picked.
+   - Saving opens the deck.
+4. **First deck** with coach marks ([swipe-deck.md](swipe-deck.md#first-visit)): a bottom sheet with "Swipe right to apply", "Swipe left to pass", "Tap the card for details" and "Got it". It's shown once per browser.
+
+Any signed-in screen sends an account that hasn't agreed to the rules to step 1. After that, a "Finish setup" card in the desktop nav column lists what's left: agree to team rules, add your skills, apply to your first role.
 
 ## Phone vs desktop
 | | Phone | Desktop |
