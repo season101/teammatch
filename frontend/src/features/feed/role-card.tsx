@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MatchBadge } from "@/components/ui/match-badge";
 import type { FeedRole } from "./queries";
 
 // The rest go behind "+N more" so the chips stay on one row.
@@ -19,9 +20,17 @@ export function RoleCard({ role, mySkillIds }: { role: FeedRole; mySkillIds: num
       className="flex h-[clamp(22rem,calc(100svh-14.25rem-env(safe-area-inset-bottom)),38rem)] flex-col gap-3 overflow-hidden rounded-card border border-border bg-surface p-5 sm:h-[clamp(22rem,calc(100svh-18.5rem),38rem)]"
     >
       <header>
-        <h2 id={headingId} className="truncate text-lg font-semibold">
-          {role.title}
-        </h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 id={headingId} className="truncate text-lg font-semibold">
+            {role.title}
+          </h2>
+          {/* Null when the role asks for no skills, so there's nothing to match (DD-20). */}
+          {role.match_percent !== null && (
+            <span className="shrink-0">
+              <MatchBadge percent={role.match_percent} />
+            </span>
+          )}
+        </div>
         <p className="truncate text-sm text-muted">
           {role.project.title} · by {role.project.owner_name || "a classmate"}
         </p>
@@ -61,10 +70,25 @@ export function RoleCard({ role, mySkillIds }: { role: FeedRole; mySkillIds: num
 
       <p className="line-clamp-5 text-text">{role.project.pitch}</p>
 
+      {/* How close the team is to locking (principle 2), and the term (DD-21). */}
+      <div className="mt-auto flex flex-col gap-1.5">
+        <div aria-hidden="true" className="flex gap-1">
+          {Array.from({ length: role.roles_total }, (_, i) => (
+            <span
+              key={i}
+              className={`h-1.5 flex-1 rounded-pill ${i < role.roles_filled ? "bg-apply-text" : "bg-surface-2"}`}
+            />
+          ))}
+        </div>
+        <p className="text-xs text-muted">
+          {role.roles_filled} of {role.roles_total} roles filled · {role.term}
+        </p>
+      </div>
+
       <Link
         href={roleHref(role)}
         aria-label={`View details for ${role.title}`}
-        className="mt-auto flex min-h-11 items-center gap-3 rounded-row border border-border px-3 py-2 hover:bg-surface-2"
+        className="flex min-h-11 items-center gap-3 rounded-row border border-border px-3 py-2 hover:bg-surface-2"
       >
         <span
           aria-hidden="true"
