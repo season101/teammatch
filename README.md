@@ -17,7 +17,7 @@ CSC 5323 (Advanced Software Engineering), Louisiana Tech, Fall 2026. Three devel
 1. An **owner** posts a project and the roles it needs (for example "Backend Developer" with Django and Postgres as skills).
 2. A **candidate** gets a deck of role cards ranked by how well their skills match. Swipe right to apply, left to pass.
 3. The owner goes through applicants role by role and likes or passes each one.
-4. A mutual like fills the role. When **every** role is filled, the team locks.
+4. A like is an offer. The candidate commits to one offer, and that fills the role. When **every** role is filled, the team locks.
 5. Once the team locks, its members retire for the rest of the term. Their other applications get withdrawn and they drop out of other decks, so nobody ends up on two teams.
 6. Team chat opens for the locked team.
 

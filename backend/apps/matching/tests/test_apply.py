@@ -7,8 +7,8 @@ from rest_framework.test import APIClient
 
 from apps.core.models import Term
 from apps.matching.models import Application, ApplicationStatus
-from apps.matching.services import decide
-from apps.matching.tests.test_fill_and_lock import committed, needs_postgres, race
+from apps.matching.services import commit
+from apps.matching.tests.test_fill_and_lock import committed, needs_postgres, offer, race
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 from apps.projects.services import close_project
 
@@ -164,7 +164,7 @@ def test_apply_waits_for_a_lock_that_retires_the_candidate(candidate, role):
         role=Role.objects.create(project=other, title="Designer"), applicant=candidate
     )
 
-    outcome = race(lambda: decide(seat, ApplicationStatus.LIKED), lambda: apply(candidate, role))
+    outcome = race(lambda: commit(offer(seat)), lambda: apply(candidate, role))
 
     assert outcome.status_code == 403
     assert not Application.objects.filter(role=role).exists()

@@ -15,6 +15,7 @@ from .models import Application, ApplicationStatus, Membership
 from .serializers import (
     ApplicationDecisionSerializer,
     ApplySerializer,
+    CommitSerializer,
     FeedRoleSerializer,
     MyApplicationSerializer,
     MyTeamResponseSerializer,
@@ -33,9 +34,15 @@ class FeedView(generics.ListAPIView):
         return services.feed_roles(self.request.user)
 
 
-@extend_schema(tags=["matching"])
+@extend_schema(
+    tags=["matching"],
+    parameters=[OpenApiParameter("status", str, enum=ApplicationStatus.values)],
+)
 class RoleApplicationsView(generics.ListAPIView):
-    """Pending applicants for one of my roles, minus retired ones (BR-09). Not my project: 403."""
+    """Applicants for one of my roles. Not my project: 403.
+
+    Pending by default, minus retired ones (BR-09). ?status=liked lists my offers out (F4-10).
+    """
 
     serializer_class = RoleApplicationSerializer
     pagination_class = DefaultCursorPagination
@@ -44,14 +51,17 @@ class RoleApplicationsView(generics.ListAPIView):
         role = get_object_or_404(Role.objects.select_related("project"), pk=self.kwargs["pk"])
         if role.project.owner_id != self.request.user.id:
             raise PermissionDenied()
-        return services.pending_applications(role)
+        status = self.request.query_params.get("status")
+        if status not in ApplicationStatus.values:
+            status = ApplicationStatus.PENDING
+        return services.role_applications(role, status)
 
 
 @extend_schema(tags=["matching"], request=None, responses=ApplicationDecisionSerializer)
 class ApplicationDecisionView(APIView):
-    """Like or pass a pending applicant on my role.
+    """Like or pass a pending applicant on my role. A like is an offer (F4-10).
 
-    Not pending, or the applicant is on another team or has a spot on an open project: 409.
+    Not pending, the role is filled, or the applicant is on a team or committed: 409.
     """
 
     decision = None  # set per URL
@@ -127,6 +137,35 @@ class WithdrawApplicationView(APIView):
     def post(self, request, pk):
         application = get_object_or_404(Application, pk=pk, applicant=request.user)
         application = services.withdraw(application)
+        return Response(MyApplicationSerializer(application).data)
+
+
+def my_offer(request, pk):
+    """The application, if it's mine. Someone else's: 403 (F4-10). Missing: 404."""
+    application = get_object_or_404(Application, pk=pk)
+    if application.applicant_id != request.user.id:
+        raise PermissionDenied()
+    return application
+
+
+@extend_schema(tags=["matching"], request=None, responses=CommitSerializer)
+class CommitView(APIView):
+    """Take the seat this offer is for (F4-10). Closes my other applications this term.
+
+    409: offer_not_open, role_not_open, owns_open_project or applicant_committed.
+    """
+
+    def post(self, request, pk):
+        application, team = services.commit(my_offer(request, pk))
+        return Response(CommitSerializer(application, context={"team": team}).data)
+
+
+@extend_schema(tags=["matching"], request=None, responses=MyApplicationSerializer)
+class DeclineView(APIView):
+    """Turn this offer down (F4-10). The role stays open. Not an open offer: 409."""
+
+    def post(self, request, pk):
+        application = services.decline(my_offer(request, pk))
         return Response(MyApplicationSerializer(application).data)
 
 

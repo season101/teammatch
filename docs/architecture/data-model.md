@@ -82,7 +82,7 @@ erDiagram
         bigint id PK
         bigint role_id FK
         bigint applicant_id FK
-        string status "pending, liked, passed, withdrawn"
+        string status "pending, liked, committed, declined, passed, withdrawn"
         text note
     }
     ROLE_DISMISSAL {
@@ -126,24 +126,29 @@ Notes:
 ```mermaid
 stateDiagram-v2
     [*] --> pending : candidate swipes apply
-    pending --> liked : owner likes
+    pending --> liked : owner likes (an offer)
     pending --> passed : owner passes
     pending --> withdrawn : candidate withdraws
-    pending --> withdrawn : auto, candidate locked into another team
-    pending --> withdrawn : auto, role filled by someone else
-    liked --> [*]
+    pending --> withdrawn : auto, candidate committed elsewhere or locked into a team
+    pending --> passed : auto, someone else committed to the role
+    liked --> committed : candidate commits (fills the role)
+    liked --> declined : candidate declines
+    liked --> passed : auto, someone else committed to the role
+    liked --> withdrawn : auto, candidate committed elsewhere, or the project closed
+    committed --> [*]
+    declined --> [*]
     passed --> [*]
     withdrawn --> [*]
 ```
 
-A like fills the role immediately, so `liked` is final. Only `pending` rows can change.
+A like is an offer: the role stays open, and an owner can like several people for one role (F4-10). The seat fills when the candidate commits, and the first commit wins. `committed` is final, and one person holds one seat per term.
 
 ### Role
 
 ```mermaid
 stateDiagram-v2
     [*] --> open : owner creates role
-    open --> filled : owner likes an application
+    open --> filled : candidate commits to an offer
     open --> [*] : owner deletes role, project not locked
     filled --> [*]
 ```
@@ -154,7 +159,7 @@ stateDiagram-v2
 stateDiagram-v2
     [*] --> draft : owner creates
     draft --> open : owner publishes, at least 1 role
-    open --> draft : owner unpublishes, no liked apps yet
+    open --> draft : owner unpublishes, no committed apps yet
     open --> locked : last open role filled
     locked --> archived : term ends
     open --> archived : owner closes or term ends
@@ -183,7 +188,7 @@ Rules enforced in the service layer (not expressible as simple constraints):
 
 - Owner cannot apply to roles in their own project.
 - A user with `retired_until >= today` cannot apply.
-- A user can be a member of at most one team per term. A like can't be undone, so it is refused while the applicant owns or fills a role on another open project that term, and publishing is refused while the owner fills a role on an open project or is on a team that term. Both checks hold the user's row lock.
+- A user can be a member of at most one team per term. A commit can't be undone, so it is refused while the applicant owns an open project (`owns_open_project`) or fills a role on another open project that term (`applicant_committed`), and publishing is refused while the owner fills a role on an open project or is on a team that term. Both checks hold the user's row lock.
 - Project can only be `locked` when every role is `filled`.
 
 ## Indexes

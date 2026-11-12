@@ -12,11 +12,11 @@ Forming project teams in a class is slow and awkward. People with ideas post in 
 
 **TeamMatch is Tinder for project teams - you swipe on roles, not people.**
 
-A project owner posts an idea and the roles it needs. Candidates get a deck of role cards ranked by how well their skills fit. Swipe right to apply, left to pass. The owner reviews applicants role by role and likes or passes. When a role has a mutual like, it is filled. When every role is filled, the team forms.
+A project owner posts an idea and the roles it needs. Candidates get a deck of role cards ranked by how well their skills fit. Swipe right to apply, left to pass. The owner reviews applicants role by role and likes or passes. A like is an offer, and the role fills when the candidate commits to it. When every role is filled, the team forms.
 
 ## 3. The twist
 
-- The match unit is the **team**, not a pair. A project only locks when **every** role has a mutual like.
+- The match unit is the **team**, not a pair. A project only locks when **every** role has a committed candidate.
 - Matching is **role by role**. You apply to "Backend Developer on Project X", not to Project X.
 - Once a team locks, its members **retire** until the end of the term: their other pending applications are withdrawn and they drop out of other decks. No double-booking.
 - Team chat only unlocks when the team is locked.
@@ -56,7 +56,7 @@ A user can be both an owner and a candidate in the same term, but not on their o
 | F1 | Accounts & Profiles | Email/password and Google sign-in, email domain allowlist, profile with bio, major, skills, avatar (uploaded through the API), retire and term reset | Member A (Weibo Zhang) |
 | F2 | Projects & Roles | Create/edit/close a project, define roles with required skills, delete an unfillable role, browse and search, installable PWA, responsive pass | Member B (Shree Krishna Shrestha) |
 | F3 | Swipe Feed & Applications | Role card deck ranked by skill overlap, swipe to apply or pass, undo last pass, my applications, withdraw | Member C (Sijan Malla; Pavan Kumar Yadav Kolusu until Oct 16) |
-| F4 | Review, Match & Team Chat | Review queue per role, like/pass applicants, fill role on mutual like, auto team-lock, auto-withdraw and retire, real-time team chat | Member D (Sijan Malla) |
+| F4 | Review, Match & Team Chat | Review queue per role, like/pass applicants, offers and commit, auto team-lock, auto-withdraw and retire, real-time team chat | Member D (Sijan Malla) |
 | Platform | Platform & DevOps | Repo scaffold, CI, contract (OpenAPI) by the lead before S1; deploys, releases, seed data, e2e test, docs as rotating 1 h chores; admin moderation (Member A) | Lead / rotating |
 
 Capacity: 4 members x 10 h per sprint x 3 sprints = 120 h. Each member does 8 h of stories + 1 h code review + 1 h rotating chore per sprint.
@@ -73,20 +73,20 @@ These are enforced in the backend and each one has a test.
 | BR-02 | One application per (user, role). Re-applying to the same role is rejected. |
 | BR-03 | A user can apply to many roles across many projects at the same time. |
 | BR-04 | An owner cannot apply to roles on their own project. |
-| BR-05 | A role is filled when the owner likes an applicant who has a pending application for it (mutual like). A filled role stores `filled_by`. The applicant's other pending applications on that project are set to `withdrawn`, since a person takes one seat per team. |
+| BR-05 | An owner's like is an offer; the role stays open. A role is filled when the applicant commits to that offer, and the first commit wins. A filled role stores `filled_by`. The role's other applications and offers are set to `passed`, and the applicant's other pending applications and offers that term are set to `withdrawn`, since a person takes one seat per term (F4-10). |
 | BR-06 | A project locks only when **all** of its roles are filled. A project with zero roles cannot be opened. |
 | BR-07 | The owner can delete an open role that cannot be filled. Deleting the last unfilled role triggers the lock check. |
-| BR-08 | When a team locks, every member's other pending applications for that term are set to `withdrawn`, and their profile gets `retired_until = term.end`. |
+| BR-08 | When a team locks, every member's other pending applications and offers for that term are set to `withdrawn`, and their profile gets `retired_until = term.end`. |
 | BR-09 | Retired users do not appear to owners as applicants and cannot apply until their retirement ends. |
 | BR-10 | A candidate "pass" hides that role from their deck (`RoleDismissal`); it does not notify the owner. |
-| BR-11 | A candidate can withdraw a pending application. Liked (filled) applications cannot be withdrawn by the candidate. |
+| BR-11 | A candidate can withdraw a pending application, and decline an offer. A committed seat cannot be undone. |
 | BR-12 | A chat room exists only for a locked team. Only team members (owner + filled roles) can read or post. |
 | BR-13 | Locked projects are read-only except for archiving by the owner or admin. |
 | BR-14 | An owner can have only one `open` project per term. Publishing a second is rejected until the first is closed. Once it locks, the owner is on that team (BR-08), so they can't open another that term, and neither can someone who fills a role on another open project. |
 
 ## 8. Data model (summary)
 
-`User` 1:1 `Profile` (bio, major, avatar_key, retired_until) M:N `Skill`. `Term` (name, start, end). `Project` (owner, term, title, pitch, status draft/open/locked/archived) 1:N `Role` (title, description, required_skills, status open/filled, filled_by). `Application` (role, applicant, status pending/liked/passed/withdrawn, note, unique role+applicant). `RoleDismissal` (user, role). `Team` (project 1:1, formed_at) 1:N `Membership`. `ChatMessage` (team, sender, body, created_at).
+`User` 1:1 `Profile` (bio, major, avatar_key, retired_until) M:N `Skill`. `Term` (name, start, end). `Project` (owner, term, title, pitch, status draft/open/locked/archived) 1:N `Role` (title, description, required_skills, status open/filled, filled_by). `Application` (role, applicant, status pending/liked/committed/declined/passed/withdrawn, note, unique role+applicant). `RoleDismissal` (user, role). `Team` (project 1:1, formed_at) 1:N `Membership`. `ChatMessage` (team, sender, body, created_at).
 
 The full ERD is in [../architecture/data-model.md](../architecture/data-model.md).
 
@@ -185,7 +185,7 @@ mindmap
     F4 Review Match and Chat
       Applicants per role
       Like or pass applicant
-      Mutual like fills role and locks team
+      Commit to one offer fills role and locks team
       Auto withdraw and retire
       Team chat over WebSocket
     Technical Requirements
@@ -209,7 +209,7 @@ mindmap
 
 | Metric | Target at final build (11/19) |
 |---|---|
-| Golden path (sign up, create project, apply, like, team locks, chat) works end to end on the deployed site | Yes, covered by a Playwright test |
+| Golden path (sign up, create project, apply, like, commit, team locks, chat) works end to end on the deployed site | Yes, covered by a Playwright test |
 | Time for a new user to sign up and apply to a role | Under 3 minutes |
 | Double-booking (user on two locked teams in one term) | 0, enforced by tests |
 | Feed and review API response time at seed scale (200 users, 50 projects) | p95 under 300 ms |
@@ -230,7 +230,7 @@ mindmap
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Team-lock logic has race conditions (two likes at once) | Wrong team state | Do the lock check in one DB transaction with row locks; test concurrent likes |
+| Team-lock logic has race conditions (two commits at once) | Wrong team state | Do the lock check in one DB transaction with row locks; test concurrent commits |
 | WebSocket chat is harder to deploy than HTTP | Chat slips from S3 | Channels is configured in the scaffold before S1 and checked by the first prod deploy |
 | Google OAuth setup blocked by redirect/domain config | F1-05 slips | Email/password ships first in S1; Google is S2 |
 | Uneven workload between epics | Some members idle, grading is per student | Every member has exactly 8 h of stories + 2 h team tax per sprint; chores rotate; buffers absorb slips |

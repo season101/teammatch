@@ -87,7 +87,7 @@ def publish_project(project):
     """Draft to open. A project with no roles cannot be opened (BR-06).
 
     Nor can it while the owner is on a team or fills a role on an open project this term.
-    Their user row is locked first, as a like locks its applicant's, so a like can't give
+    Their user row is locked first, as a commit locks its applicant's, so a commit can't give
     them a role between the check and the publish.
     """
     get_user_model().objects.select_for_update().get(pk=project.owner_id)
@@ -156,8 +156,8 @@ def delete_role(role):
     Its applications go with it. If every remaining role is already filled,
     the project locks now (BR-06).
 
-    Locks the role, then the project, the order a like uses (matching.services.decide),
-    so a like or a close committing at the same moment is seen, not overwritten.
+    Locks the role, then the project, the order a commit uses (matching.services.commit),
+    so a commit or a close landing at the same moment is seen, not overwritten.
     """
     role = Role.objects.select_for_update().get(pk=role.pk)
     project = role.project = Project.objects.select_for_update().get(pk=role.project_id)
@@ -180,12 +180,13 @@ def ensure_project_editable(project):
 
 @transaction.atomic
 def close_project(project):
-    """Archive a project: it leaves the feeds and its pending applications are withdrawn (F2-05).
+    """Archive a project: it leaves the feeds, and its pending applications and offers
+    are withdrawn (F2-05, F4-10).
 
-    Locks its roles, then the project, then its applications. A like locks its role
-    first and the project last (matching.services.decide), so the two queue on the role.
-    Locking the project first would deadlock with a like holding its application row.
-    no_key: a like that locks the team still takes KEY SHARE on filled roles for its seats.
+    Locks its roles, then the project, then its applications. A commit locks its role
+    first and the project last (matching.services.commit), so the two queue on the role.
+    Locking the project first would deadlock with a commit holding its application row.
+    no_key: a commit that locks the team still takes KEY SHARE on filled roles for its seats.
     """
     list(Role.objects.filter(project=project).order_by("pk").select_for_update(no_key=True))
     project = Project.objects.select_for_update().get(pk=project.pk)
@@ -193,9 +194,9 @@ def close_project(project):
 
     from apps.matching.models import Application, ApplicationStatus  # matching imports projects
 
-    Application.objects.filter(role__project=project, status=ApplicationStatus.PENDING).update(
-        status=ApplicationStatus.WITHDRAWN
-    )
+    Application.objects.filter(
+        role__project=project, status__in=[ApplicationStatus.PENDING, ApplicationStatus.LIKED]
+    ).update(status=ApplicationStatus.WITHDRAWN)
     project.status = ProjectStatus.ARCHIVED
     project.save()
     return project

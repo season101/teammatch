@@ -18,6 +18,7 @@ Business rules (BR-xx) are defined in [prd.md](prd.md#7-business-rules). Backlog
 | UC-12 | Team chat | Team member | F4 | F4-08, F4-09 |
 | UC-13 | Delete unfillable role | Owner | F2 | F2-06 |
 | UC-14 | Moderate content | Admin | Platform | PL-07 |
+| UC-15 | Commit to one offer | Candidate | F4 | F4-10, F4-11 |
 
 ---
 
@@ -154,7 +155,7 @@ Business rules (BR-xx) are defined in [prd.md](prd.md#7-business-rules). Backlog
   2. Candidate clicks "Withdraw" on a pending application and confirms.
   3. System sets status to `withdrawn`; it disappears from the owner's queue.
 - **Alternate flows:**
-  - 2a. Application already liked: withdraw button not shown; API rejects (BR-11).
+  - 2a. Application already liked (an offer): decline it instead (UC-15). Committed: can't be undone (BR-11).
   - 2b. Application already passed or withdrawn: nothing to do.
 - **Postconditions:** Application is `withdrawn`. The candidate cannot re-apply to the same role (BR-02).
 
@@ -166,28 +167,27 @@ Business rules (BR-xx) are defined in [prd.md](prd.md#7-business-rules). Backlog
   1. Owner opens the review queue and picks a role.
   2. System shows pending applicants one at a time: name, avatar, major, skills (with matches highlighted), note.
   3. Owner likes an applicant.
-  4. System sets the application to `liked`, sets the role to `filled` with `filled_by`, and sets the other pending applications for that role to `passed`, and sets the applicant's other pending applications on the project to `withdrawn`.
-  5. System runs the team-lock check (UC-11).
-  6. Applicant sees the application as `liked` in My applications. (Live notification is future, F3-07.)
+  4. System sets the application to `liked`. This is an offer: the role stays `open`, and the owner can like other applicants for it too.
+  5. Applicant sees the offer in My applications and can commit to it or decline it (UC-15). (Live notification is future, F3-07.)
 - **Alternate flows:**
   - 3a. Owner passes: application set to `passed`, next applicant shown.
-  - 4a. Applicant got retired by another team a moment ago: like rejected with "this person just joined another team"; applicant removed from queue.
+  - 4a. Applicant got retired by another team or committed elsewhere a moment ago: like rejected with a 409; applicant removed from queue.
   - 2a. No pending applicants for the role: empty state.
-- **Postconditions:** Role filled or applicant passed. Lock check has run.
+- **Postconditions:** Applicant has an offer or was passed. The role is still open.
 
 ## UC-11 Team auto-lock, auto-withdraw, retire
 
-- **Actor:** System (triggered by UC-10 like, or UC-13 role delete)
+- **Actor:** System (triggered by UC-15 commit, or UC-13 role delete)
 - **Preconditions:** A role on an `open` project just changed.
 - **Main flow:**
   1. In one transaction, system locks the project row and checks that every role is `filled`.
   2. System sets the project to `locked`, creates a `Team` and a `Membership` for the owner and each `filled_by` user.
-  3. For each member, system sets all other `pending` applications in the term to `withdrawn` (BR-08).
+  3. For each member, system sets all other `pending` and `liked` applications in the term to `withdrawn` (BR-08).
   4. For each member, system sets `profile.retired_until = term.end`.
   5. System opens the team chat room; members see the team on their next page load. (Live "team formed" notification is future, F3-07.)
 - **Alternate flows:**
   - 1a. Some roles still open: nothing happens.
-  - 1b. Two likes commit at the same time: the row lock makes the second one see the updated state; only one `Team` is created.
+  - 1b. Two commits land at the same time: the row lock makes the second one see the updated state; only one `Team` is created.
 - **Postconditions:** Project `locked`, `Team` exists, members retired, no pending applications left for members.
 
 ## UC-12 Team chat
@@ -232,3 +232,20 @@ Business rules (BR-xx) are defined in [prd.md](prd.md#7-business-rules). Backlog
 - **Alternate flows:**
   - 3a. Deactivated user is in a locked team: team stays, user can no longer sign in.
 - **Postconditions:** Content hidden from the app; action recorded in the admin log.
+
+## UC-15 Commit to one offer
+
+- **Actor:** Candidate
+- **Preconditions:** Candidate has at least one `liked` application (an offer).
+- **Main flow:**
+  1. Candidate opens My applications and compares their offers.
+  2. Candidate commits to one offer and confirms. A commit is final (BR-11).
+  3. In one transaction, system sets the application to `committed`, sets the role to `filled` with `filled_by`, sets the role's other `pending` and `liked` applications to `passed`, and sets the candidate's other `pending` and `liked` applications that term to `withdrawn` (BR-05).
+  4. System runs the team-lock check (UC-11).
+  5. The candidate's deck closes and they can't apply anywhere else while they hold the seat.
+- **Alternate flows:**
+  - 2a. Candidate declines an offer instead: it becomes `declined` and the role stays `open`.
+  - 3a. Someone else committed to the role first: 409 `role_not_open`, and the offer is closed.
+  - 3b. Candidate owns an open project: 409 `owns_open_project`; they close it first, and the offer stays.
+  - 3c. Candidate already holds a seat on another open project: 409 `applicant_committed`.
+- **Postconditions:** Role filled by the candidate, their other offers and applications closed. Lock check has run.

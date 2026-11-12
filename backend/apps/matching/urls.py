@@ -29,6 +29,8 @@ urlpatterns = [
         views.ApplicationDecisionView.as_view(decision=ApplicationStatus.PASSED),
         name="application-pass",
     ),
+    path("applications/<int:pk>/commit/", views.CommitView.as_view(), name="application-commit"),
+    path("applications/<int:pk>/decline/", views.DeclineView.as_view(), name="application-decline"),
     path("teams/mine/", views.MyTeamView.as_view(), name="my-team"),
     path("teams/<int:pk>/seen/", views.TeamSeenView.as_view(), name="team-seen"),
 ]
