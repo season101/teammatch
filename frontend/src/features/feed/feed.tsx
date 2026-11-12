@@ -3,7 +3,7 @@
 import { AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { buttonClasses } from "@/components/ui/button";
 import { useMyApplications } from "@/features/applications/queries";
@@ -164,7 +164,12 @@ export function Feed() {
   }
 
   return (
-    <div className="flex flex-col gap-4" onKeyDown={onKeyDown}>
+    <div
+      className="flex flex-col gap-4"
+      onKeyDown={onKeyDown}
+      // The banner's height plus the gap under it; RoleCard takes it off its own height.
+      style={offers > 0 ? ({ "--deck-banner": "5.25rem" } as CSSProperties) : undefined}
+    >
       <p role="status" className="sr-only">
         {announcement}
       </p>
