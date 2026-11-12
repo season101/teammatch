@@ -35,7 +35,7 @@ Wireframes for every screen at phone (375px) and desktop (1440px), with their ke
 ## Owner
 | # | Screen | Wireframe | Pattern |
 |---|---|---|---|
-| 15 | My projects | [15-my-projects.png](img/15-my-projects.png) | [navigation](../patterns/navigation.md#desktop-sidebar-modes) |
+| 15 | My projects | [15-my-projects.png](img/15-my-projects.png) | [navigation](../patterns/navigation.md#desktop-nav-column-and-list-column) |
 | 16 | Create or edit a project | [16-create-or-edit-a-project.png](img/16-create-or-edit-a-project.png) | [forms](../patterns/forms.md#project-creation) |
 | 17 | Review queue | [17-review-queue.png](img/17-review-queue.png) | [review queue](../patterns/review-queue.md) |
 | 18 | Role filled toast | [18-role-filled-toast.png](img/18-role-filled-toast.png) | [feedback states](../patterns/feedback-states.md#role-filled) |
@@ -53,7 +53,7 @@ Wireframes for every screen at phone (375px) and desktop (1440px), with their ke
 | # | Screen | Wireframe | Pattern |
 |---|---|---|---|
 | 24 | Profile | [24-profile.png](img/24-profile.png) | [profile strength](../components/profile-strength.md), [forms](../patterns/forms.md) |
-| 25 | Settings | [25-settings.png](img/25-settings.png) | [navigation](../patterns/navigation.md#desktop-sidebar-modes), [confirmations](../patterns/confirmations.md) |
+| 25 | Settings | [25-settings.png](img/25-settings.png) | [navigation](../patterns/navigation.md#desktop-nav-column-and-list-column), [confirmations](../patterns/confirmations.md) |
 
 ## Commit flow (planned)
 Full-colour mockups for [F4-10](../../product/backlog.md#f4-10-commit-to-one-offer-api) and [F4-11](../../product/backlog.md#f4-11-commit-to-one-offer-screens), unlike the greyscale wireframes above. Phone is 390px wide and desktop is 1280px. To build them, read the [commit flow](../patterns/commit-flow.md) guide.

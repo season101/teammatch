@@ -22,7 +22,7 @@ Lay out siblings with `flex` or `grid` and `gap`, not margins on each child.
 |---|---|---|---|
 | Phone | under 640px | (none) | Bottom tab bar, single column |
 | Tablet | 640–1023px | `sm:` | Top bar with tabs, single column, card max 420px |
-| Desktop | 1024px and up | `lg:` | 320px sidebar plus stage |
+| Desktop | 1024px and up | `lg:` | 208px nav column, 320px list column, then the stage |
 | Wide | 1440px and up | `2xl:` (set to 1440px) | Desktop plus a 400px right panel |
 
 Design phone first, then add the larger layouts.
@@ -48,17 +48,19 @@ Design phone first, then add the larger layouts.
 
 ### Desktop
 ```
-┌──────────────┬───────────────────────────────────────┐
-│ [You] ◉ ▣ ⚙  │                                       │
-│ Applications │          ┌─────────────┐              │
-│ | Teams      │          │  role card  │ 380 × 640    │
-│              │          │             │              │
-│  rows…       │          │  ↺ ✕ ⓘ ✓    │              │
-│              │          └─────────────┘              │
-│   320px      │  ← Pass  → Apply  ↑ Details  Z Undo   │ legend
-└──────────────┴───────────────────────────────────────┘
+┌──────────┬──────────────┬──────────────────────────────┐
+│ TeamMatch│ Applications │                              │
+│ Discover │ | Teams      │       ┌─────────────┐        │
+│ Projects │              │       │  role card  │ 380×640│
+│ Review  3│  rows…       │       │             │        │
+│ Teams    │              │       │  ↺ ✕ ⓘ ✓    │        │
+│ ──────── │              │       └─────────────┘        │
+│ Profile  │              │                              │
+│ Settings │   320px      │ ← Pass → Apply ↑ Details     │ legend
+└──────────┴──────────────┴──────────────────────────────┘
+   208px
 ```
-- The **sidebar** (320px, `surface`) has a `primary-strong` header strip with the avatar and "You", then three icon buttons: Discover, Projects and Settings. Each one switches the sidebar's mode (see [patterns/navigation.md](../patterns/navigation.md)).
+- The **nav column** (208px, `surface`) has the logo and one labelled row per place. The **list column** (320px, `surface`) beside it lists what belongs to that place (see [patterns/navigation.md](../patterns/navigation.md)).
 - The **stage** (`bg`) holds the one thing you're deciding on, centred: the role card at 380×640, the applicant card, a chat or a settings page.
 - The **keyboard legend** is pinned to the bottom of the stage.
 
