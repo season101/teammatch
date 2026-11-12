@@ -1,6 +1,6 @@
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
@@ -28,13 +28,27 @@ def owned_project(request, pk):
 
 
 @extend_schema(tags=["projects"])
+@extend_schema_view(
+    get=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "q",
+                str,
+                description="Search title, pitch, open role titles and their required skills, "
+                "ignoring case.",
+            )
+        ]
+    )
+)
 class ProjectListCreateView(generics.ListCreateAPIView):
-    """GET: open projects in the current term, newest first. POST: create a draft."""
+    """GET: open projects in the current term, newest first. ?q= searches them (F2-07).
+    POST: create a draft.
+    """
 
     pagination_class = DefaultCursorPagination
 
     def get_queryset(self):
-        return services.open_projects()
+        return services.open_projects(q=self.request.query_params.get("q", ""))
 
     def get_serializer_class(self):
         if self.request.method == "POST":

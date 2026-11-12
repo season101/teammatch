@@ -7,6 +7,13 @@ from apps.projects.models import Project, Role
 from .models import Application, Membership
 
 
+def match_percent(obj) -> int | None:
+    """Share of the required skills someone has (DD-20). Null when the role asks for none."""
+    if not obj.skills_total:
+        return None
+    return int(100 * obj.skills_matched / obj.skills_total + 0.5)
+
+
 class FeedProjectSerializer(serializers.ModelSerializer):
     # display name only, never the owner's email
     owner_name = serializers.CharField(source="owner.profile.display_name", read_only=True)
@@ -40,10 +47,7 @@ class FeedRoleSerializer(serializers.ModelSerializer):
         ]
 
     def get_match_percent(self, role) -> int | None:
-        # Share of the required skills I have (DD-20). Null when the role asks for none.
-        if not role.skills_total:
-            return None
-        return int(100 * role.skills_matched / role.skills_total + 0.5)
+        return match_percent(role)
 
 
 class MySummarySerializer(serializers.Serializer):
@@ -55,10 +59,14 @@ class MySummarySerializer(serializers.Serializer):
 class RoleApplicationSerializer(serializers.ModelSerializer):
     # Public profile only (name, major, skills), never the applicant's email.
     applicant = ProfileSerializer(source="applicant.profile", read_only=True)
+    match_percent = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
-        fields = ["id", "applicant", "note", "status", "created_at"]
+        fields = ["id", "applicant", "note", "status", "created_at", "match_percent"]
+
+    def get_match_percent(self, application) -> int | None:
+        return match_percent(application)
 
 
 class ApplicationRoleSerializer(serializers.ModelSerializer):
@@ -103,11 +111,12 @@ class ApplySerializer(serializers.ModelSerializer):
 class ApplicationDecisionSerializer(RoleApplicationSerializer):
     """A like or pass. A like no longer locks a team (F4-10), so team_locked is false."""
 
+    match_percent = None  # only the list query works it out
     team_locked = serializers.SerializerMethodField()
     team_id = serializers.SerializerMethodField()
 
     class Meta(RoleApplicationSerializer.Meta):
-        fields = [*RoleApplicationSerializer.Meta.fields, "team_locked", "team_id"]
+        fields = ["id", "applicant", "note", "status", "created_at", "team_locked", "team_id"]
 
     def get_team_locked(self, application) -> bool:
         return self.context["team"] is not None

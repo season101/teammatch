@@ -1,5 +1,7 @@
+from base64 import b64encode
 from datetime import timedelta
 from unittest import mock
+from urllib.parse import urlencode
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -201,17 +203,76 @@ def test_feed_excludes_other_terms(api, owner):
     assert feed_ids(api) == []
 
 
-def test_feed_pages_20_at_a_time_newest_first(api, project):
+def page_ids(api, url=FEED_URL):
+    page = api.get(url).json()
+    return [r["id"] for r in page["results"]], page["next"]
+
+
+def test_feed_pages_20_at_a_time_newest_first_when_matches_tie(api, project):
     roles = [make_role(project, title=f"Role {i}") for i in range(25)]
     newest_first = [role.id for role in reversed(roles)]
 
-    first = api.get(FEED_URL).json()
-    assert [r["id"] for r in first["results"]] == newest_first[:20]
-    assert first["next"] is not None
+    first, next_url = page_ids(api)
+    assert first == newest_first[:20]
+    assert next_url is not None
 
-    second = api.get(first["next"]).json()
-    assert [r["id"] for r in second["results"]] == newest_first[20:]
-    assert second["next"] is None
+    second, next_url = page_ids(api, next_url)
+    assert second == newest_first[20:]
+    assert next_url is None
+
+
+# F3-04: best match first, then newest
+
+
+def make_skills(count):
+    return [Skill.objects.create(name=f"Test {i}", slug=f"test-{i}") for i in range(count)]
+
+
+def test_feed_ranks_by_share_of_required_skills_then_newest(api, candidate, project):
+    skills = make_skills(4)
+    candidate.profile.skills.set(skills[:2])
+    wanted = {
+        "none required": [],
+        "half": skills[1:3],
+        "all": skills[:2],
+        "no overlap": skills[2:],
+        "half, newer": skills[:4],
+        # one of one beats two of four: it is the share that counts, not the number
+        "all, newer": skills[:1],
+    }
+    ids = {}
+    for title, required in wanted.items():
+        role = make_role(project, title=title)
+        role.required_skills.set(required)
+        ids[title] = role.id
+
+    order = ["all, newer", "all", "half, newer", "half", "no overlap", "none required"]
+    assert feed_ids(api) == [ids[title] for title in order]
+
+
+def test_feed_pages_across_a_rank_boundary(api, candidate, project):
+    skills = make_skills(2)
+    candidate.profile.skills.set(skills[:1])
+    # oldest roles match best, so rank order is the reverse of newest first
+    groups = [(skills[:1], 15), (skills, 10), ([], 5)]
+    expected = []
+    for required, count in groups:
+        made = [make_role(project, title=f"Role {len(required)}-{i}") for i in range(count)]
+        for role in made:
+            role.required_skills.set(required)
+        expected += [role.id for role in reversed(made)]
+
+    first, next_url = page_ids(api)
+    second, next_url = page_ids(api, next_url)
+    assert first + second == expected
+    assert len(first) == 20
+    assert next_url is None
+
+
+def test_feed_rejects_a_forged_cursor(api, project):
+    make_role(project)
+    cursor = b64encode(urlencode({"p": "not-a-number"}).encode("ascii")).decode("ascii")
+    assert api.get(FEED_URL, {"cursor": cursor}).status_code == 404
 
 
 # F1-08: a retired candidate's deck is empty (BR-09)

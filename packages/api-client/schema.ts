@@ -142,7 +142,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Open roles I can still apply to. Empty while I'm retired (BR-09). */
+        /** @description Open roles I can still apply to, best match first. Empty while I'm retired (BR-09). */
         get: operations["feed_list"];
         put?: never;
         post?: never;
@@ -266,10 +266,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description GET: open projects in the current term, newest first. POST: create a draft. */
+        /**
+         * @description GET: open projects in the current term, newest first. ?q= searches them (F2-07).
+         *     POST: create a draft.
+         */
         get: operations["projects_list"];
         put?: never;
-        /** @description GET: open projects in the current term, newest first. POST: create a draft. */
+        /**
+         * @description GET: open projects in the current term, newest first. ?q= searches them (F2-07).
+         *     POST: create a draft.
+         */
         post: operations["projects_create"];
         delete?: never;
         options?: never;
@@ -401,7 +407,8 @@ export interface paths {
         /**
          * @description Applicants for one of my roles. Not my project: 403.
          *
-         *     Pending by default, minus retired ones (BR-09). ?status=liked lists my offers out (F4-10).
+         *     Pending by default, minus retired ones (BR-09), best match first then oldest.
+         *     ?status=liked lists my offers out (F4-10), newest first.
          */
         get: operations["roles_applications_list"];
         put?: never;
@@ -818,6 +825,7 @@ export interface components {
             status?: components["schemas"]["ApplicationStatusEnum"];
             /** Format: date-time */
             readonly created_at: string;
+            readonly match_percent: number | null;
         };
         RoleDetail: {
             readonly id: number;
@@ -1224,6 +1232,8 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
+                /** @description Search title, pitch, open role titles and their required skills, ignoring case. */
+                q?: string;
             };
             header?: never;
             path?: never;

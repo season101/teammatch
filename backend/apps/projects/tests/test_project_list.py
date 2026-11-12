@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.core.models import Term
+from apps.profiles.models import Skill
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 
 pytestmark = pytest.mark.django_db
@@ -100,6 +101,58 @@ def test_list_is_paginated_20_per_page(client, owner, term):
     assert first.data["next"] is not None
     second = client.get(first.data["next"])
     assert len(second.data["results"]) == 1
+
+
+# F2-07: search with ?q=
+
+
+def search(client, q):
+    response = client.get(URL, {"q": q})
+    assert response.status_code == 200
+    return [p["title"] for p in response.data["results"]]
+
+
+@pytest.fixture
+def searchable(owner, term):
+    make_project(owner, term, "Study Buddy", pitch="Find a group for finals")
+    rides = make_project(owner, term, "Ride Board", pitch="Share rides home")
+    skill = Skill.objects.create(name="Test Fortran", slug="test-fortran")
+    for title in ["Map developer", "Map designer"]:
+        Role.objects.create(project=rides, title=title).required_skills.add(skill)
+    return rides
+
+
+@pytest.mark.parametrize(
+    ("q", "titles"),
+    [
+        ("buddy", ["Study Buddy"]),  # project title
+        ("FINALS", ["Study Buddy"]),  # pitch, any case
+        ("map", ["Ride Board"]),  # role title: two roles match, one row
+        ("fortran", ["Ride Board"]),  # required skill: two roles match, one row
+        ("  ride ", ["Ride Board"]),
+        ("", ["Ride Board", "Study Buddy"]),
+        ("nothing like this", []),
+    ],
+)
+def test_search_matches_title_pitch_role_and_skill(client, searchable, q, titles):
+    assert search(client, q) == titles
+
+
+def test_search_keeps_the_open_role_count(client, owner, searchable):
+    Role.objects.create(
+        project=searchable, title="Tester", status=RoleStatus.FILLED, filled_by=owner
+    )
+    item = client.get(URL, {"q": "map"}).data["results"][0]
+    assert item["open_role_count"] == 2
+
+
+def test_search_skips_filled_roles_and_projects_that_are_not_open(client, owner, term, searchable):
+    Role.objects.create(
+        project=searchable, title="Cobol porter", status=RoleStatus.FILLED, filled_by=owner
+    )
+    make_project(owner, term, "Draft ride app", status=ProjectStatus.DRAFT)
+    assert search(client, "cobol") == []
+    assert search(client, "ride") == ["Ride Board"]
 
 
 def test_anonymous_user_cannot_list(owner, term):

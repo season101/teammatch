@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Count, F, Prefetch, Q
+from django.db.models import BigIntegerField, Count, ExpressionWrapper, F, Prefetch, Q, Value
+from django.db.models.functions import Cast, Coalesce, Extract, NullIf
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 
@@ -9,18 +10,27 @@ from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 
 from .models import Application, ApplicationStatus, Membership, RoleDismissal, Team
 
+# Match % in SQL, rounded half up like serializers.match_percent. 0 when nothing is required.
+MATCH_PERCENT = Coalesce(
+    (F("skills_matched") * 200 + F("skills_total")) / NullIf(F("skills_total") * 2, Value(0)),
+    Value(0),
+)
+CREATED_MICROS = Cast(Extract("created_at", "epoch") * 1_000_000, BigIntegerField())
+# Match % and created_at packed into one number, so a cursor page starts at an exact row.
+# DRF's cursor only remembers the first ordering field; a bare match % would tie on most rows.
+FEED_ORDERING = ("-rank_key", "-id")  # best match first, then newest
+QUEUE_ORDERING = ("queue_key", "id")  # best match first, then oldest
+
 
 def feed_roles(user, today=None):
-    """Open roles in the current term the user can still act on.
+    """Open roles in the current term the user can still act on, best match first (F3-04).
 
     Skips the user's own projects (BR-04) and roles they already applied to
     (any status, since an application is one per user per role) or passed.
     Empty while they're retired (BR-09) or hold a seat they committed to (F4-10).
     """
     today = today or timezone.localdate()
-    if is_retired(user, today) or holds_seat(user, today=today):
-        return Role.objects.none()
-    return (
+    roles = (
         Role.objects.filter(
             status=RoleStatus.OPEN,
             project__status=ProjectStatus.OPEN,
@@ -47,7 +57,16 @@ def feed_roles(user, today=None):
                 distinct=True,
             ),
         )
+        .annotate(
+            rank_key=ExpressionWrapper(
+                MATCH_PERCENT * 10**16 + CREATED_MICROS, output_field=BigIntegerField()
+            )
+        )
     )
+    # none() on the annotated queryset, so the view can still order it by rank_key
+    if is_retired(user, today) or holds_seat(user, today=today):
+        return roles.none()
+    return roles
 
 
 def my_summary(user, today=None):
@@ -78,14 +97,29 @@ def role_applications(role, status=ApplicationStatus.PENDING):
 
     The queue leaves out retired applicants (BR-09). Other statuses don't, so the owner
     still sees offers out and who committed after the team locks (F4-10).
+    Each comes with the applicant's match for this role; queue_key sorts by it (QUEUE_ORDERING).
     """
     applications = role.applications.filter(status=status)
     if status == ApplicationStatus.PENDING:
         applications = applications.exclude(
             applicant__profile__retired_until__gte=timezone.localdate()
         )
-    return applications.select_related("applicant__profile").prefetch_related(
-        "applicant__profile__skills"
+    return (
+        applications.select_related("applicant__profile")
+        .prefetch_related("applicant__profile__skills")
+        .annotate(
+            skills_total=Count("role__required_skills", distinct=True),
+            skills_matched=Count(
+                "role__required_skills",
+                filter=Q(role__required_skills__profiles__user=F("applicant")),
+                distinct=True,
+            ),
+        )
+        .annotate(
+            queue_key=ExpressionWrapper(
+                (100 - MATCH_PERCENT) * 10**16 + CREATED_MICROS, output_field=BigIntegerField()
+            )
+        )
     )
 
 

@@ -101,6 +101,91 @@ def test_status_lists_offers_out_and_the_seat_even_once_retired(owner, role):
     assert ids("nonsense") == [pending.id]
 
 
+# Review queue order: match % first, then the oldest application
+
+
+def queue(owner, role, **params):
+    response = as_user(owner).get(url(role), params)
+    assert response.status_code == 200
+    return response.json()
+
+
+def apply_with_skills(role, email, skills):
+    application = apply(role, email)
+    application.applicant.profile.skills.set(skills)
+    return application
+
+
+def test_queue_is_best_match_first_then_oldest(owner, role):
+    skills = list(Skill.objects.order_by("id")[:3])
+    role.required_skills.set(skills)
+    none = apply_with_skills(role, "none@latech.edu", [])
+    two = apply_with_skills(role, "two@latech.edu", skills[:2])
+    all_older = apply_with_skills(role, "all-older@latech.edu", skills)
+    all_newer = apply_with_skills(role, "all-newer@latech.edu", skills)
+
+    results = queue(owner, role)["results"]
+
+    assert [a["id"] for a in results] == [all_older.id, all_newer.id, two.id, none.id]
+    assert [a["match_percent"] for a in results] == [100, 100, 67, 0]
+
+
+def test_match_percent_counts_only_this_roles_skills(owner, role):
+    wanted, other = Skill.objects.order_by("id")[:2]
+    role.required_skills.set([wanted])
+    other_role = Role.objects.create(project=role.project, title="Designer")
+    other_role.required_skills.set([other])
+    application = apply_with_skills(role, "sam@latech.edu", [other])
+    # someone else has the wanted skill, and Sam also applied to the role he does fit
+    apply_with_skills(other_role, "pat@latech.edu", [wanted])
+    Application.objects.create(role=other_role, applicant=application.applicant)
+
+    [result] = queue(owner, role)["results"]
+    assert result["match_percent"] == 0
+
+
+def test_match_percent_is_null_when_the_role_asks_for_nothing(owner, role):
+    apply_with_skills(role, "sam@latech.edu", list(Skill.objects.all()[:1]))
+
+    [result] = queue(owner, role)["results"]
+    assert result["match_percent"] is None
+
+
+def test_queue_pages_across_a_match_boundary(owner, role):
+    skill = Skill.objects.first()
+    role.required_skills.set([skill])
+    # the weaker matches applied first, so match order is not application order
+    weak = [apply(role, f"weak{i}@latech.edu") for i in range(15)]
+    strong = [apply_with_skills(role, f"strong{i}@latech.edu", [skill]) for i in range(10)]
+
+    first = queue(owner, role)
+    second = as_user(owner).get(first["next"]).json()
+
+    ids = [a["id"] for a in first["results"] + second["results"]]
+    assert ids == [a.id for a in strong + weak]
+    assert len(first["results"]) == 20
+    assert second["next"] is None
+
+
+def test_other_statuses_stay_newest_first(owner, role):
+    older = apply(role, "a@latech.edu", status=ApplicationStatus.LIKED)
+    newer = apply(role, "b@latech.edu", status=ApplicationStatus.LIKED)
+
+    results = queue(owner, role, status="liked")["results"]
+    assert [a["id"] for a in results] == [newer.id, older.id]
+
+
+def test_queue_query_count_does_not_grow_with_applicants(
+    owner, role, django_assert_max_num_queries
+):
+    for i in range(5):
+        apply(role, f"user{i}@latech.edu")
+
+    # role, applications page, applicant skills
+    with django_assert_max_num_queries(4):
+        assert len(queue(owner, role)["results"]) == 5
+
+
 def test_someone_elses_role_returns_403(role):
     stranger = User.objects.create_user(email="stranger@latech.edu", password="pw")
     assert as_user(stranger).get(url(role)).status_code == 403
