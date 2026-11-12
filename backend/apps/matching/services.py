@@ -164,6 +164,8 @@ def commit(application):
 
     Locks role, applicant, application, then project (in try_lock), like decide.
     Two commits on one role queue on the role row, and the second sees it filled.
+    Two commits that each pass the other's application on their own role can still
+    deadlock; Postgres then rolls one back.
     """
     role = Role.objects.select_for_update().get(pk=application.role_id)
     get_user_model().objects.select_for_update().get(pk=application.applicant_id)
@@ -242,7 +244,7 @@ def try_lock(project):
     members' other applications and profiles. The membership inserts wait for any
     commit holding a member's user row, so we never hold an application that commit
     needs next. Two teams locking at the same moment with crossed applicants can
-    still deadlock; Postgres then rolls one like back.
+    still deadlock; Postgres then rolls one commit back.
     """
     project = (
         Project.objects.select_related("term").select_for_update(of=("self",)).get(pk=project.pk)

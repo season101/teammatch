@@ -105,50 +105,59 @@ sequenceDiagram
     W-->>C: next card
 ```
 
-## 4. Owner like, role filled, team lock
+## 4. Like an offer, commit, team lock
 
-The whole like runs in one DB transaction. Row locks stop two owners of different projects from grabbing the same candidate at the same time, and stop two likes in the same project from both thinking they filled the last role.
+A like is an offer and fills nothing. The seat fills when the candidate commits, and the first commit wins (F4-10). Each call runs in one DB transaction. Row locks stop two people from committing to the same role, stop one person from taking two seats, and stop two commits in the same project from both thinking they filled the last role.
 
 ```mermaid
 sequenceDiagram
     actor O as Owner
+    actor C as Candidate
     participant W as web
     participant A as api - matching.services
     participant DB as Postgres
 
     O->>W: like applicant for role
     W->>A: POST /api/v1/applications/{id}/like/
-    A->>DB: BEGIN
-    A->>DB: SELECT project FOR UPDATE
-    A->>DB: SELECT role FOR UPDATE
-    A->>DB: SELECT application FOR UPDATE
-    A->>DB: SELECT candidate profile FOR UPDATE
-    alt role not open, app not pending, or candidate already on a team this term
-        A->>DB: ROLLBACK
+    A->>DB: SELECT role, then applicant user, then application FOR UPDATE
+    alt app not pending, role filled, or candidate on a team or committed this term
         A-->>W: 409 conflict with code
     else ok
         A->>DB: application.status = liked
+        A-->>W: 200 offer sent, role stays open
+    end
+
+    C->>W: commit to the offer
+    W->>A: POST /api/v1/applications/{id}/commit/
+    A->>DB: BEGIN
+    A->>DB: SELECT role, then candidate user, then application FOR UPDATE
+    alt offer not open, role or project not open, candidate holds a seat, or owns an open project
+        A->>DB: ROLLBACK
+        A-->>W: 409 conflict with code
+    else ok
+        A->>DB: application.status = committed
         A->>DB: role.status = filled, filled_by = candidate
-        A->>DB: other pending apps for this role = passed
-        A->>DB: candidate's other pending apps on this project = withdrawn
-        A->>DB: count open roles in project
+        A->>DB: other pending and liked apps for this role = passed
+        A->>DB: candidate's other pending and liked apps this term = withdrawn
+        A->>DB: SELECT project FOR UPDATE, count open roles
         alt open roles remain
             A->>DB: COMMIT
-            A-->>W: 200 role filled
+            A-->>W: 200 seat taken, team_locked false
         else all roles filled
             A->>DB: project.status = locked
             A->>DB: insert Team, Membership for owner and each filled_by
-            A->>DB: other pending apps of all members this term = withdrawn
+            A->>DB: other pending and liked apps of all members this term = withdrawn
             A->>DB: member profiles retired_until = term end_date
             A->>DB: COMMIT
-            A-->>W: 200 team formed
+            A-->>W: 200 team formed, team_locked true
         end
     end
 ```
 
 Notes:
 
-- Locks are always taken in the same order (project, role, application, profile) to avoid deadlocks.
+- Locks are always taken in the same order (role, user, application, project) to avoid deadlocks. Two commits that cross over each other's applications on two roles can still deadlock; Postgres then rolls one back.
+- Declining an offer only locks the application: it becomes `declined` and the role stays open.
 - Live notifications over `/ws/notifications/` (`application.liked`, `team.formed`) are future (F3-07). In the MVP the candidate sees the new status in My applications and the team page on the next load. When notifications are added, they will be sent with `transaction.on_commit` so nobody gets an event for a rolled back change.
 - The owner is a member of their own team, so owners are also blocked from other teams that term.
 

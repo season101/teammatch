@@ -87,7 +87,7 @@ def publish_project(project):
     """Draft to open. A project with no roles cannot be opened (BR-06).
 
     Nor can it while the owner is on a team or fills a role on an open project this term.
-    Their user row is locked first, as a like locks its applicant's, so a like can't give
+    Their user row is locked first, as a commit locks its applicant's, so a commit can't give
     them a role between the check and the publish.
     """
     get_user_model().objects.select_for_update().get(pk=project.owner_id)
@@ -156,8 +156,8 @@ def delete_role(role):
     Its applications go with it. If every remaining role is already filled,
     the project locks now (BR-06).
 
-    Locks the role, then the project, the order a like uses (matching.services.decide),
-    so a like or a close committing at the same moment is seen, not overwritten.
+    Locks the role, then the project, the order a commit uses (matching.services.commit),
+    so a commit or a close landing at the same moment is seen, not overwritten.
     """
     role = Role.objects.select_for_update().get(pk=role.pk)
     project = role.project = Project.objects.select_for_update().get(pk=role.project_id)

@@ -148,7 +148,7 @@ A like is an offer: the role stays open, and an owner can like several people fo
 ```mermaid
 stateDiagram-v2
     [*] --> open : owner creates role
-    open --> filled : owner likes an application
+    open --> filled : candidate commits to an offer
     open --> [*] : owner deletes role, project not locked
     filled --> [*]
 ```
@@ -159,7 +159,7 @@ stateDiagram-v2
 stateDiagram-v2
     [*] --> draft : owner creates
     draft --> open : owner publishes, at least 1 role
-    open --> draft : owner unpublishes, no liked apps yet
+    open --> draft : owner unpublishes, no committed apps yet
     open --> locked : last open role filled
     locked --> archived : term ends
     open --> archived : owner closes or term ends
@@ -188,7 +188,7 @@ Rules enforced in the service layer (not expressible as simple constraints):
 
 - Owner cannot apply to roles in their own project.
 - A user with `retired_until >= today` cannot apply.
-- A user can be a member of at most one team per term. A like can't be undone, so it is refused while the applicant owns or fills a role on another open project that term, and publishing is refused while the owner fills a role on an open project or is on a team that term. Both checks hold the user's row lock.
+- A user can be a member of at most one team per term. A commit can't be undone, so it is refused while the applicant owns an open project (`owns_open_project`) or fills a role on another open project that term (`applicant_committed`), and publishing is refused while the owner fills a role on an open project or is on a team that term. Both checks hold the user's row lock.
 - Project can only be `locked` when every role is `filled`.
 
 ## Indexes
