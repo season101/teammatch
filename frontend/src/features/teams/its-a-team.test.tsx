@@ -105,7 +105,7 @@ test("shows once when my seen_at is empty, and marks it seen", async () => {
   ).toEqual(["MRMarco RossiOwner", "AAvaBackend developer"]);
   const cta = within(dialog).getByRole("link", { name: "Open team chat" });
   expect(cta).toHaveFocus();
-  expect(cta).toHaveAttribute("href", "/teams");
+  expect(cta).toHaveAttribute("href", "/teams/3/chat");
   expect(
     within(dialog).getByRole("link", { name: "See the team" }),
   ).toHaveAttribute("href", "/teams");
