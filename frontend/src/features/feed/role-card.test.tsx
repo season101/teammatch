@@ -81,3 +81,16 @@ test("falls back when the owner has no display name", () => {
   render(<RoleCard role={makeRole({ owner_name: "" })} mySkillIds={[]} />);
   expect(screen.getByText("TeamMatch · by a classmate")).toBeInTheDocument();
 });
+
+test("shows the match, how full the team is and the term", () => {
+  render(<RoleCard role={makeRole()} mySkillIds={[]} />);
+
+  const card = screen.getByRole("article", { name: "Backend dev" });
+  expect(within(card).getByText("50% match")).toBeInTheDocument();
+  expect(within(card).getByText("1 of 3 roles filled · Fall 2026")).toBeInTheDocument();
+});
+
+test("no match badge when the role asks for no skills", () => {
+  render(<RoleCard role={{ ...makeRole(), required_skills: [], match_percent: null }} mySkillIds={[]} />);
+  expect(screen.queryByText(/% match/)).toBeNull();
+});
