@@ -214,7 +214,7 @@ mindmap
 | Double-booking (user on two locked teams in one term) | 0, enforced by tests |
 | Feed and review API response time at seed scale (200 users, 50 projects) | p95 under 300 ms |
 | Chat message delivery between two members | Under 1 second |
-| Lighthouse PWA installable; accessibility basics (keyboard-usable, labeled inputs, AA contrast) | Installable; basics met on every screen |
+| PWA installs on Android and iPhone with no Chrome DevTools errors; accessibility basics (keyboard-usable, labeled inputs, AA contrast) | Installable; basics met on every screen |
 | Each member merges work in their epic every sprint | 4 of 4 members, 3 of 3 sprints |
 | Stories planned vs done per sprint | 80% or better |
 

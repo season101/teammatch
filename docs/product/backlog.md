@@ -356,7 +356,10 @@ Sprint S2 | 1 h | Must | UC-05
 ### F2-08 Installable PWA
 As a student on my phone, I want to install TeamMatch to my home screen so that it feels like an app.
 - Given a supported browser, then the app has a valid manifest, icons, and a basic service worker, and can be installed.
-- Given Lighthouse, then the PWA installable check passes.
+- Given Chrome DevTools (Application > Manifest), then it shows no installability errors, and the app installs on one Android phone and one iPhone.
+- Given a phone, then Settings has an Install the app row with the steps for that phone.
+
+Test on a real iPhone first. Google sign-in leaves the app, and iPhone home-screen apps keep cookies apart from Safari, so sign-in may not make it back to the app.
 
 Sprint S3 | 3 h | Must
 
