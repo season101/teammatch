@@ -11,6 +11,7 @@ import { SignOutButton } from "@/features/accounts/sign-out-button";
 import { ApplicationsPanel } from "@/features/applications/my-applications";
 import { MyProjectsList } from "@/features/projects/my-projects-list";
 import { Logo } from "@/features/landing/logo";
+import { FinishSetup } from "@/features/onboarding/finish-setup";
 import { useMyProjects, type MyProject } from "@/features/review/queries";
 import { TeamCelebration } from "@/features/teams/its-a-team";
 import { useMyTeam, type MyTeam } from "@/features/teams/queries";
@@ -195,9 +196,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span aria-hidden="true" className="mx-3 my-1 h-px bg-border" />
             {ACCOUNT.map(navRow)}
           </nav>
-          <p className="mt-auto truncate px-3 text-xs text-muted">
-            {user?.email}
-          </p>
+          <div className="mt-auto flex flex-col gap-3">
+            <FinishSetup />
+            <p className="truncate px-3 text-xs text-muted">{user?.email}</p>
+          </div>
         </div>
         <div className="flex w-80 shrink-0 flex-col overflow-y-auto pt-3">
           <SidebarMode pathname={pathname} owned={owned} team={team} />

@@ -56,3 +56,18 @@ export function setTheme(theme: Theme) {
   else document.documentElement.dataset.theme = theme;
   savePreference(THEME, theme === "system" ? null : theme);
 }
+
+// First-deck coach marks (DD-47). Counts as seen on the server, so the sheet doesn't flash before hydration.
+const COACH = "teammatch:coach-seen";
+
+export function useCoachSeen() {
+  return useSyncExternalStore(
+    subscribe,
+    () => read(COACH) !== null,
+    () => true,
+  );
+}
+
+export function setCoachSeen() {
+  savePreference(COACH, "1");
+}

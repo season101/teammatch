@@ -39,9 +39,11 @@ function readFieldErrors(body: unknown): FieldErrors {
   return fields;
 }
 
-export function useMyProfile() {
+// enabled: false skips the request for a signed-out visitor.
+export function useMyProfile(enabled = true) {
   return useQuery({
     queryKey: ["my-profile"],
+    enabled,
     queryFn: async () => {
       const { data, response } = await api.GET("/api/v1/me/profile/");
       if (!data)
@@ -77,5 +79,29 @@ export function useSaveProfile() {
       throw new SaveProfileError(response.status, readFieldErrors(error));
     },
     onSuccess: (profile) => queryClient.setQueryData(["my-profile"], profile),
+  });
+}
+
+// "I agree" on Team rules (DD-47). The API answers 204, so the time is filled in here.
+export function useAcceptRules() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { response } = await api.POST("/api/v1/me/rules/accept/", {
+        headers: { "X-CSRFToken": csrfToken() },
+      });
+      if (!response.ok)
+        throw new Error(`Could not save the rules (${response.status}).`);
+    },
+    onSuccess: () =>
+      queryClient.setQueryData<MyProfile>(
+        ["my-profile"],
+        (profile) =>
+          profile && {
+            ...profile,
+            rules_accepted_at:
+              profile.rules_accepted_at ?? new Date().toISOString(),
+          },
+      ),
   });
 }

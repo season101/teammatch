@@ -21,6 +21,8 @@ function renderShell(
     projects = [project] as unknown[],
     team = null as unknown,
     summary = undefined as unknown,
+    profile = { rules_accepted_at: "2026-11-11T10:00:00Z", skills: [{ id: 1 }] } as unknown,
+    applications = [] as unknown[],
     children = <p>Stage</p> as ReactNode,
   } = {},
 ) {
@@ -30,7 +32,8 @@ function renderShell(
   });
   client.setQueryData(["session"], { id: 1, email: "sam@latech.edu" });
   client.setQueryData(["my-projects"], projects);
-  client.setQueryData(["my-applications"], []);
+  client.setQueryData(["my-applications"], applications);
+  if (profile) client.setQueryData(["my-profile"], profile);
   client.setQueryData(["my-team"], team);
   if (summary) client.setQueryData(["my-summary"], summary);
   render(
@@ -41,6 +44,7 @@ function renderShell(
 }
 
 afterEach(() => {
+  vi.unstubAllGlobals();
   localStorage.clear();
   delete document.documentElement.dataset.theme;
 });
@@ -229,4 +233,31 @@ test("the sidebar's Teams tab links to my team once I have one", () => {
     "/teams",
   );
   expect(within(sidebar).queryByText(/once every role is filled/)).not.toBeInTheDocument();
+});
+
+test("the nav column lists what's left to set up, above the email", () => {
+  renderShell("/feed");
+  const card = screen.getByRole("region", { name: "Finish setup" });
+
+  expect(card).toHaveTextContent("2 of 3");
+  expect(within(card).getByRole("link", { name: "Apply to your first role" })).toHaveAttribute(
+    "href",
+    "/feed",
+  );
+  expect(card.closest("aside")).toHaveClass("hidden", "lg:flex");
+  expect(card.nextElementSibling).toHaveTextContent("sam@latech.edu");
+});
+
+test("no setup card once all three are done", () => {
+  // On /projects the sidebar doesn't list applications, so a bare one is enough.
+  renderShell("/projects", { applications: [{ id: 9 }] });
+  expect(screen.queryByRole("region", { name: "Finish setup" })).toBeNull();
+});
+
+test("no setup card before the profile loads", () => {
+  // The profile request never answers.
+  vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
+  renderShell("/feed", { profile: null });
+  expect(screen.queryByRole("region", { name: "Finish setup" })).toBeNull();
+  expect(screen.getAllByRole("link", { name: "Discover" })).toHaveLength(3);
 });

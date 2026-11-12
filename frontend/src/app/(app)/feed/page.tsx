@@ -5,6 +5,7 @@ import Link from "next/link";
 import { buttonClasses } from "@/components/ui/button";
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
 import { Feed } from "@/features/feed/feed";
+import { CoachMarks } from "@/features/onboarding/coach-marks";
 
 export default function FeedPage() {
   return (
@@ -26,6 +27,7 @@ export default function FeedPage() {
                 </Link>
               </div>
               <Feed />
+              <CoachMarks />
             </>
           )}
         </RequireSignIn>

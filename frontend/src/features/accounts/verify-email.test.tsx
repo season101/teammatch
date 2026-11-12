@@ -23,6 +23,11 @@ test("decodes the key from the link before sending it to allauth", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Verify my email" }));
 
   expect(await screen.findByText("You're verified")).toBeInTheDocument();
+  // The deck's gate sends a new account on to Team rules.
+  expect(screen.getByRole("link", { name: "Continue" })).toHaveAttribute(
+    "href",
+    "/feed",
+  );
   const [url, init] = fetchMock.mock.calls[0];
   expect(url).toBe("/_allauth/browser/v1/auth/email/verify");
   expect(JSON.parse(init?.body as string)).toEqual({

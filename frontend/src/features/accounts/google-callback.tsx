@@ -35,7 +35,7 @@ export function GoogleCallback({
       const user = await queryClient
         .fetchQuery({ queryKey: ["session"], queryFn: getSessionUser })
         .catch(() => null);
-      // shortcut: Team rules (DD-12) doesn't exist yet, so new users go to the deck too.
+      // New accounts go to the deck too; the gate there sends them to Team rules (DD-47).
       router.replace(user ? safeNext(next) : signInUrl("unknown", next));
     }
     void finish();

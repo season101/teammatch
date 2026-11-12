@@ -37,9 +37,10 @@ export function VerifyEmail({ verificationKey }: { verificationKey: string }) {
           You&apos;re verified
         </h1>
         <p role="status" className="text-muted">
-          Welcome! Set up your profile and you&apos;re ready to swipe.
+          Welcome! A few quick steps and you&apos;re ready to swipe.
         </p>
-        <Link href="/profile" className={`${buttonClasses("cta")} w-full`}>
+        {/* The gate on /feed sends a new account to Team rules (DD-47). */}
+        <Link href="/feed" className={`${buttonClasses("cta")} w-full`}>
           Continue
         </Link>
       </section>
