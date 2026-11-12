@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useId, useRef, type ReactNode } from "react";
-import { Button } from "./button";
+import { Button, buttonClasses } from "./button";
 
 type Props = {
   open: boolean;
@@ -16,6 +17,10 @@ type Props = {
   onEscape?: () => void;
   // Danger text by default. Logout uses ghost: leaving loses nothing (modal.md).
   escapeVariant?: "danger" | "ghost";
+  // First focus goes to the escape: the final confirm, where the CTA commits (DD-34).
+  focusEscape?: boolean;
+  // The escape goes to another page, so it's a link.
+  escapeHref?: string;
 };
 
 // A gate: one CTA (the safe choice) plus a danger text button as the escape.
@@ -31,9 +36,12 @@ export function Modal({
   escapeLabel,
   onEscape = onClose,
   escapeVariant = "danger",
+  focusEscape = false,
+  escapeHref,
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const ctaRef = useRef<HTMLButtonElement>(null);
+  const escapeRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
 
   useEffect(() => {
@@ -41,11 +49,11 @@ export function Modal({
     if (!dialog) return;
     if (open && !dialog.open) {
       dialog.showModal();
-      ctaRef.current?.focus();
+      (focusEscape ? escapeRef : ctaRef).current?.focus();
     } else if (!open && dialog.open) {
       dialog.close();
     }
-  }, [open]);
+  }, [open, focusEscape]);
 
   return (
     <dialog
@@ -62,9 +70,15 @@ export function Modal({
         <Button ref={ctaRef} onClick={onCta} className="w-full">
           {ctaLabel}
         </Button>
-        <Button variant={escapeVariant} onClick={onEscape}>
-          {escapeLabel}
-        </Button>
+        {escapeHref ? (
+          <Link href={escapeHref} onClick={onEscape} className={buttonClasses(escapeVariant)}>
+            {escapeLabel}
+          </Link>
+        ) : (
+          <Button ref={escapeRef} variant={escapeVariant} onClick={onEscape}>
+            {escapeLabel}
+          </Button>
+        )}
       </div>
     </dialog>
   );

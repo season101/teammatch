@@ -142,7 +142,6 @@ test("the owner sees it right after the like that locks the team", async () => {
         role={{ id: 2, title: "Frontend developer", status: "open" }}
         projectId={4}
         rolesToGo={0}
-        onFilled={() => {}}
       />
       <TeamCelebration />
     </>,

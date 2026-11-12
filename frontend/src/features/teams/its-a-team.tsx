@@ -21,7 +21,7 @@ const CONFETTI = Array.from({ length: 28 }, (_, i) => ({
 }));
 
 // Shows "It's a Team!" once when my team's seen_at is empty, and marks it seen (DD-27).
-// The owner gets here too: a locking like refetches my team.
+// The commit that fills the last role refetches my team, so that candidate sees it at once.
 export function TeamCelebration() {
   const { data: team } = useMyTeam();
   const { mutate: markSeen } = useMarkSeen();

@@ -1,6 +1,6 @@
 # User flows
 
-The three journeys every screen serves, plus six that are planned. Numbers in brackets are screen numbers from [README.md](README.md). For the API calls behind each step, see [../../architecture/flows.md](../../architecture/flows.md).
+The four journeys every screen serves, plus five that are planned. Numbers in brackets are screen numbers from [README.md](README.md). For the API calls behind each step, see [../../architecture/flows.md](../../architecture/flows.md).
 
 The diagrams below render on GitHub. Image versions for slides or offline reading: [sign-up](img/flow-signup.png), [apply](img/flow-apply.png), [owner](img/flow-owner.png). The planned deck details flows, as drawn in the proposal: [deck to details](img/flow-deck-details.png), [repository](img/flow-repo-link.png), [links and resume](img/flow-profile-links.png), [reading a resume](img/flow-resume-viewer.png).
 
@@ -67,9 +67,9 @@ flowchart LR
 - A project needs at least one role before it can open.
 - When a role fills, its other pending applicants become passed.
 
-## 4. Planned: candidate commits to one offer
+## 4. Candidate commits to one offer
 
-Planned for F4-10 and F4-11. It replaces the "owner likes" step in flows 2 and 3 when it ships. See the [commit flow](../patterns/commit-flow.md) guide.
+Built in F4-10 and F4-11. It replaces the "owner likes" step in flows 2 and 3. See the [commit flow](../patterns/commit-flow.md) guide.
 
 ```mermaid
 flowchart LR

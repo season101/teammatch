@@ -626,7 +626,7 @@ API sketch:
 
 Update the docs listed in the [commit flow](../design/patterns/commit-flow.md#docs-to-update-with-the-code) guide in the same pull request.
 
-Design: [commit flow](../design/patterns/commit-flow.md), [flow 4](../design/screens/flows.md#4-planned-candidate-commits-to-one-offer)
+Design: [commit flow](../design/patterns/commit-flow.md), [flow 4](../design/screens/flows.md#4-candidate-commits-to-one-offer)
 
 Sprint S3 | 4.5 h | Must | UC-10, UC-11
 
@@ -644,7 +644,7 @@ As a student with offers, I want to compare them and commit to one so that I can
 
 Depends on F4-10.
 
-Design: [commit flow](../design/patterns/commit-flow.md), [screens 26 to 34](../design/screens/README.md#commit-flow-planned)
+Design: [commit flow](../design/patterns/commit-flow.md), [screens 26 to 34](../design/screens/README.md#commit-flow)
 
 Sprint S3 | 2.5 h | Must | UC-10, UC-11
 

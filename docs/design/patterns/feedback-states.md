@@ -14,12 +14,14 @@ How every screen handles loading, empty, error and success, plus the landing spl
 | Status | Chip | Shown as |
 |---|---|---|
 | `pending` | default chip | Pending |
-| `liked` | matched (lime) chip | Filled |
-| `passed` | default chip, muted | Passed |
-| `withdrawn` | default chip, muted, struck through | Withdrawn |
+| `liked` | selected (violet) chip | Offer |
+| `committed` | matched (lime) chip | Committed |
+| `declined`, `passed`, `withdrawn` | default chip, muted | Closed |
+
+The line under a closed application says why: the owner picked someone else, you declined, you withdrew, or it closed when you committed.
 
 ## Toasts
-See [toast.md](../components/toast.md). Use them for results that don't change the screen, like "Photo updated" or "Backend Developer filled".
+See [toast.md](../components/toast.md). Use them for results that don't change the screen, like "Photo updated".
 
 ## Splash
 The landing page (`/`) opens with the TeamMatch logo, large, on the dark stage. It's a brand moment that lasts about 1.7 seconds and never holds content back.
@@ -31,20 +33,23 @@ The landing page (`/`) opens with the TeamMatch logo, large, on the dark stage. 
 - **Accessibility:** the splash is `aria-hidden` and doesn't take clicks, so screen readers and keyboard focus start on the page.
 - **Code:** `frontend/src/features/landing/splash.tsx`. An inline script in the root layout decides before the first paint, so a return visit never flashes it.
 
-## Role filled
-For an owner's like that fills one role: a toast, "Backend Developer filled. 2 roles to go.", plus the team strip updating.
+## Offer sent and role filled
+A like sends an offer and fills nothing. The queue shows a status line, "Offer sent to Riley Chen. The role stays open until someone commits.", and Riley is listed under Offers out. When someone commits, the role tab gets a tick and the role shows "Riley Chen committed". See the [commit flow](commit-flow.md).
 
 ## It's a Team!
 Shown when the last role fills and the project locks.
 - **Who sees it:**
-  - The owner sees it straight away, from the like that locked the team.
-  - Each member sees it the next time they open TeamMatch, once per team. `Membership.seen_at` tracks this on the server, so it shows once across devices. Live notifications are out of scope for now.
+  - The candidate whose commit fills the last role sees it straight away.
+  - The owner and each other member see it the next time they open TeamMatch, once per team. `Membership.seen_at` tracks this on the server, so it shows once across devices. Live notifications are out of scope for now.
 - **Layout:** full screen on the `spark` gradient.
   - The members' avatars slide into a row with their role names.
   - The title "It's a *Team!*" in Fraunces 44–64px.
   - One line naming the project and the term.
 - **Actions:** CTA "Open team chat"; ghost "See the team".
 - **Motion:** avatars 80ms apart, then the title, then confetti for 1.2 seconds. With reduced motion, everything appears in place.
+
+## Deck closed
+After a commit, until the team locks: the deck shows "You're committed to **CampusEats**. Your deck stays closed while you hold this seat. Team chat opens when the last role fills." with See your commitment. The other offers and pending applications are closed.
 
 ## Benched
 After a team locks, its members are benched until the term ends:

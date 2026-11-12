@@ -5,7 +5,7 @@ import { MyApplications } from "@/features/applications/my-applications";
 
 export default function ApplicationsPage() {
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-col gap-6 px-4 py-12">
+    <main className="mx-auto flex w-full max-w-xl flex-col lg:max-w-5xl gap-6 px-4 py-12">
       <RequireSignIn>
         {() => (
           <>

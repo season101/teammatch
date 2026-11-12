@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import { ReviewApplicants } from "./review-applicants";
 
@@ -56,7 +62,7 @@ const projectDetail = {
       status: "open",
       required_skills: [],
       created_at: "2026-10-16T00:00:00Z",
-      filled_by_name: "",
+      filled_by_name: "Riley Chen",
     },
   ],
 };
@@ -70,6 +76,7 @@ function mockApi({
 } = {}) {
   const requests: Request[] = [];
   let pending = [sam];
+  let liked: unknown[] = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(async (request: Request) => {
@@ -80,19 +87,46 @@ function mockApi({
         reply = { status: 200, body: projects };
       else if (path === "/api/v1/projects/4/")
         reply = { status: 200, body: projectDetail };
-      else if (path === "/api/v1/roles/2/applications/")
+      else if (path === "/api/v1/roles/2/applications/") {
+        // Like the API: waiting applicants unless ?status= asks for another list.
+        const status = new URL(request.url).searchParams.get("status");
         reply = {
           status: 200,
-          body: { next: null, previous: null, results: pending },
+          body: {
+            next: null,
+            previous: null,
+            results:
+              status === "liked" ? liked : status === "pending" ? pending : [],
+          },
         };
-      else if (path === "/api/v1/roles/1/applications/")
+      } else if (path === "/api/v1/roles/1/applications/") {
+        const status = new URL(request.url).searchParams.get("status");
         reply = {
           status: 200,
-          body: { next: null, previous: null, results: [] },
+          body: {
+            next: null,
+            previous: null,
+            results:
+              status === "passed"
+                ? [{ ...sam, id: 21, status: "passed" }]
+                : status === "declined"
+                  ? [
+                      {
+                        ...sam,
+                        id: 22,
+                        status: "declined",
+                        applicant: { ...sam.applicant, display_name: "Eli Park" },
+                      },
+                    ]
+                  : [],
+          },
         };
-      else if (/^\/api\/v1\/applications\/9\/(like|pass)\/$/.test(path)) {
+      } else if (/^\/api\/v1\/applications\/9\/(like|pass)\/$/.test(path)) {
         reply = decision;
-        if (decision.status === 200) pending = [];
+        if (decision.status === 200) {
+          pending = [];
+          if (path.endsWith("/like/")) liked = [decision.body];
+        }
       }
       return new Response(JSON.stringify(reply.body), {
         status: reply.status,
@@ -156,8 +190,8 @@ test("a role with no one waiting says so", async () => {
   ).toBeInTheDocument();
 });
 
-test("a filled role shows a tick and does not load applicants", async () => {
-  const requests = mockApi({
+test("a filled role shows a tick, who committed and what happened to the others", async () => {
+  mockApi({
     projects: [
       {
         ...openProject,
@@ -175,11 +209,30 @@ test("a filled role shows a tick and does not load applicants", async () => {
   );
 
   expect(
-    await screen.findByText("Backend developer is filled."),
+    screen.getByRole("tab", { name: /Backend developer/ }),
+  ).toHaveTextContent("✓");
+  expect(
+    await screen.findByRole("heading", { name: "Riley Chen committed" }),
   ).toBeInTheDocument();
-  expect(requests.some((r) => r.url.includes("/roles/1/applications/"))).toBe(
-    false,
+  expect(
+    screen.getByText(
+      "Backend developer is filled. Your team locks when the other role fills.",
+    ),
+  ).toBeInTheDocument();
+  const others = await screen.findByRole("region", {
+    name: "Other people on this role",
+  });
+  await waitFor(() =>
+    expect(
+      within(others)
+        .getAllByRole("listitem")
+        .map((row) => row.textContent),
+    ).toEqual(["SCSam CandidateClosed", "EPEli ParkDeclined"]),
   );
+  // No Pass or Like on a filled role.
+  expect(
+    within(screen.getByRole("tabpanel")).queryByRole("button"),
+  ).not.toBeInTheDocument();
 });
 
 test("liking sends the like with the CSRF token and moves on", async () => {
@@ -191,16 +244,50 @@ test("liking sends the like with the CSRF token and moves on", async () => {
     await screen.findByRole("button", { name: "Like Sam Candidate" }),
   );
 
-  expect(
-    await screen.findByText("Frontend developer filled"),
-  ).toBeInTheDocument();
-  expect(screen.getByText("1 role to go.")).toBeInTheDocument();
+  expect(await screen.findByRole("status")).toHaveTextContent(
+    "Offer sent to Sam Candidate. The role stays open until someone commits.",
+  );
   const like = requests.find((r) => r.method === "POST");
   expect(new URL(like!.url).pathname).toBe("/api/v1/applications/9/like/");
   expect(like!.headers.get("X-CSRFToken")).toBe("test-token");
   expect(
     await screen.findByText("No one's waiting for Frontend developer."),
   ).toBeInTheDocument();
+  // The role stays open: no tick, and nothing says it's filled.
+  expect(
+    screen.getByRole("tab", { name: /Frontend developer/ }),
+  ).not.toHaveTextContent("✓");
+  expect(screen.queryByText(/filled/)).not.toBeInTheDocument();
+});
+
+test("a liked applicant shows under Offers out, and the badge count reloads", async () => {
+  mockApi();
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  client.setQueryData(["my-summary"], { applicants_waiting: 1 });
+  render(
+    <QueryClientProvider client={client}>
+      <ReviewApplicants />
+    </QueryClientProvider>,
+  );
+  const like = await screen.findByRole("button", { name: "Like Sam Candidate" });
+  expect(
+    screen.queryByRole("region", { name: "Offers out" }),
+  ).not.toBeInTheDocument();
+
+  fireEvent.click(like);
+
+  const offers = await screen.findByRole("region", { name: "Offers out" });
+  expect(
+    within(offers)
+      .getAllByRole("listitem")
+      .map((row) => row.textContent),
+  ).toEqual(["SCSam CandidateWaiting"]);
+  expect(offers).toHaveTextContent(
+    "If Sam Candidate takes another offer or declines, you can like someone else. The first person to commit gets the seat.",
+  );
+  expect(client.getQueryState(["my-summary"])?.isInvalidated).toBe(true);
 });
 
 test("passing sends the pass", async () => {
@@ -269,9 +356,9 @@ test("the right arrow likes the first applicant", async () => {
 
   fireEvent.keyDown(document.body, { key: "ArrowRight" });
 
-  expect(
-    await screen.findByText("Frontend developer filled"),
-  ).toBeInTheDocument();
+  expect(await screen.findByRole("status")).toHaveTextContent(
+    "Offer sent to Sam Candidate.",
+  );
   const like = requests.find((r) => r.method === "POST");
   expect(new URL(like!.url).pathname).toBe("/api/v1/applications/9/like/");
 });
@@ -335,24 +422,6 @@ test("an empty role offers Edit role", async () => {
   expect(
     await screen.findByRole("link", { name: "Edit role" }),
   ).toHaveAttribute("href", "/projects/4");
-});
-
-test("a like that fills the last role says the team is locked", async () => {
-  mockApi({
-    decision: {
-      status: 200,
-      body: { ...sam, status: "liked", team_locked: true, team_id: 3 },
-    },
-  });
-  renderPage();
-
-  fireEvent.click(
-    await screen.findByRole("button", { name: "Like Sam Candidate" }),
-  );
-
-  expect(
-    await screen.findByText("That was the last role. Your team is locked."),
-  ).toBeInTheDocument();
 });
 
 test("the card shows how many required skills the applicant has, matched ones first", async () => {

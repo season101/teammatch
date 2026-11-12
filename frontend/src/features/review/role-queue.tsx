@@ -3,21 +3,123 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { buttonClasses } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { useProject } from "@/features/projects/queries";
+import { initials } from "@/features/teams/my-team";
 import { ApplicantCard } from "./applicant-card";
-import { useApplicants, useDecide, type MyProject } from "./queries";
+import {
+  useApplicants,
+  useDecide,
+  type Applicant,
+  type MyProject,
+} from "./queries";
 
 type Role = MyProject["roles"][number];
-
-export type FilledNotice = { title: string; detail: string };
 
 type QueueProps = {
   role: Role;
   projectId: number;
-  // Open roles in the project besides this one, for "2 roles to go".
+  // Open roles in the project besides this one, for "the other 2 roles".
   rolesToGo: number;
-  onFilled: (notice: FilledNotice) => void;
 };
+
+const nameOf = (application: Applicant) =>
+  application.applicant.display_name || "Unnamed applicant";
+
+// People with an offer out, or the ones a filled role closed on.
+function People({ rows }: { rows: { application: Applicant; chip: string }[] }) {
+  return (
+    <ul className="flex flex-col divide-y divide-border">
+      {rows.map(({ application, chip }) => (
+        <li key={application.id} className="flex min-h-11 items-center gap-3 py-2">
+          <span
+            aria-hidden="true"
+            className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-2 text-sm font-bold"
+          >
+            {initials(nameOf(application))}
+          </span>
+          <span className="flex-1 font-semibold">{nameOf(application)}</span>
+          <Chip>{chip}</Chip>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// Who I'm waiting on for this role (screen 33). The role stays open until one commits.
+function OffersOut({ roleId }: { roleId: number }) {
+  const offers = useApplicants(roleId, "liked");
+  if (!offers.data?.length) return null;
+  const one = offers.data.length === 1;
+  return (
+    <section
+      aria-labelledby={`offers-out-${roleId}`}
+      className="flex flex-col gap-2 rounded-row border border-border bg-surface p-4"
+    >
+      <h3
+        id={`offers-out-${roleId}`}
+        className="text-xs font-semibold uppercase tracking-wider text-muted"
+      >
+        Offers out
+      </h3>
+      <People
+        rows={offers.data.map((application) => ({ application, chip: "Waiting" }))}
+      />
+      <p className="text-sm text-muted">
+        {one
+          ? `If ${nameOf(offers.data[0])} takes another offer or declines`
+          : "If they take other offers or decline"}
+        , you can like someone else. The first person to commit gets the seat.
+      </p>
+    </section>
+  );
+}
+
+// A filled role: who took the seat and what happened to the others (screen 34).
+function FilledRole({ role, projectId, rolesToGo }: QueueProps) {
+  const project = useProject(projectId);
+  const passed = useApplicants(role.id, "passed");
+  const declined = useApplicants(role.id, "declined");
+  const name = project.data?.roles.find((other) => other.id === role.id)
+    ?.filled_by_name;
+  const others = [
+    ...(passed.data ?? []).map((application) => ({ application, chip: "Closed" })),
+    ...(declined.data ?? []).map((application) => ({ application, chip: "Declined" })),
+  ];
+  return (
+    <div className="flex flex-col gap-4 pt-4">
+      <div className="flex flex-col items-center gap-2 rounded-card border border-border bg-surface p-6 text-center">
+        {name && (
+          <span
+            aria-hidden="true"
+            className="grid size-14 place-items-center rounded-full bg-apply text-lg font-bold text-on-apply"
+          >
+            {initials(name)}
+          </span>
+        )}
+        {name && (
+          <h3 className="font-display text-2xl font-extrabold">{name} committed</h3>
+        )}
+        <p className="text-muted">
+          {role.title} is filled.
+          {rolesToGo > 0 &&
+            ` Your team locks when the other ${rolesToGo === 1 ? "role fills" : `${rolesToGo} roles fill`}.`}
+        </p>
+      </div>
+      {others.length > 0 && (
+        <section
+          aria-labelledby={`others-${role.id}`}
+          className="flex flex-col gap-2"
+        >
+          <h3 id={`others-${role.id}`} className="text-sm font-semibold text-muted">
+            Other people on this role
+          </h3>
+          <People rows={others} />
+        </section>
+      )}
+    </div>
+  );
+}
 
 // What goes in the role tab: "Frontend developer 3", or a tick once the role is filled.
 export function RoleTabLabel({ role }: { role: Role }) {
@@ -47,13 +149,13 @@ function OpenRoleLabel({ role }: { role: Role }) {
 // One role's queue: the first waiting applicant as a card, with Pass and Like.
 export function RoleQueue(props: QueueProps) {
   return props.role.status === "filled" ? (
-    <p className="py-6 text-center text-muted">{props.role.title} is filled.</p>
+    <FilledRole {...props} />
   ) : (
     <OpenRoleQueue {...props} />
   );
 }
 
-function OpenRoleQueue({ role, projectId, rolesToGo, onFilled }: QueueProps) {
+function OpenRoleQueue({ role, projectId }: QueueProps) {
   const applicants = useApplicants(role.id);
   const decide = useDecide(role.id);
   const project = useProject(projectId);
@@ -66,20 +168,7 @@ function OpenRoleQueue({ role, projectId, rolesToGo, onFilled }: QueueProps) {
 
   function decideOn(like: boolean) {
     if (!current || decide.isPending) return;
-    decide.mutate(
-      { id: current.id, name, like },
-      {
-        onSuccess: (decided) => {
-          if (!like) return;
-          onFilled({
-            title: `${role.title} filled`,
-            detail: decided.team_locked
-              ? "That was the last role. Your team is locked."
-              : `${rolesToGo} ${rolesToGo === 1 ? "role" : "roles"} to go.`,
-          });
-        },
-      },
-    );
+    decide.mutate({ id: current.id, name, like });
   }
 
   // ← Pass and → Like (docs/design/patterns/review-queue.md). Skipped while typing, on a
@@ -115,9 +204,11 @@ function OpenRoleQueue({ role, projectId, rolesToGo, onFilled }: QueueProps) {
 
   return (
     <div ref={rootRef} className="flex flex-col gap-4 pt-4">
-      {decide.isSuccess && !decide.variables.like && (
+      {decide.isSuccess && (
         <p role="status" className="text-sm text-success">
-          Passed on {decide.variables.name}.
+          {decide.variables.like
+            ? `Offer sent to ${decide.variables.name}. The role stays open until someone commits.`
+            : `Passed on ${decide.variables.name}.`}
         </p>
       )}
       {decide.isError && (
@@ -152,6 +243,7 @@ function OpenRoleQueue({ role, projectId, rolesToGo, onFilled }: QueueProps) {
           </Link>
         </div>
       )}
+      <OffersOut roleId={role.id} />
     </div>
   );
 }

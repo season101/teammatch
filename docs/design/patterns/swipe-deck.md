@@ -3,7 +3,7 @@
 The candidate's main screen: a stack of [RoleCards](../components/role-card.md), ranked by match %, best first. One decision at a time: apply or pass.
 
 ## What's in the deck
-Open roles on open projects that the candidate hasn't applied to or passed, that aren't on their own project, ranked by match % (then newest). Benched candidates see the benched state instead.
+Open roles on open projects that the candidate hasn't applied to or passed, that aren't on their own project, ranked by match % (then newest). Benched candidates see the benched state instead, and someone who committed to an offer sees the closed deck. With offers waiting, a banner above the deck links to My applications ([commit flow](commit-flow.md)).
 
 ## Ways to decide
 | Action | Touch | Mouse | Keyboard | Button |
@@ -64,5 +64,6 @@ Results are announced in the page's live region, as listed in [accessibility.md]
 | Default | The top card, with the next one peeking under it |
 | Dragging | Tilt and stamp |
 | Out of roles | [EmptyState](../components/empty-state.md): "You've seen every role. *For now.*" |
+| Deck closed | After a commit: "You're committed to **CampusEats**", with See your commitment |
 | Benched | EmptyState: "You're on **CampusEats**", with Open team chat |
 | Error | EmptyState: "Couldn't load your deck", with Retry |
