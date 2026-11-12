@@ -15,26 +15,39 @@ How people move around TeamMatch at each screen size. Shells and sizes are in [f
 - **Labels:** always visible under the icons.
 - **Size and safe area:** the bar is 56px plus the safe area, on `surface` with a top hairline.
 
-## Desktop: sidebar modes
-The 320px sidebar has a `primary-strong` header strip holding:
-- **Avatar and "You":** opens your profile on the stage.
-- **Three icon buttons:** Discover, Projects and Settings.
+## Desktop: nav column and list column
+Two columns sit left of the stage (DD-46).
 
-Each icon switches what the sidebar lists. The stage follows.
+**Nav column (208px).** The logo, then one labelled row per place:
 
-| Mode | Sidebar | Stage |
+| Row | Opens | Badge |
 |---|---|---|
-| **Discover** (default) | Tabs **Applications \| Teams**. Application rows show a status chip (Pending, Filled, Passed, Withdrawn). Team rows show the latest message. | The deck. A team row opens that team's chat on the stage. |
-| **Projects** | Tabs **Browse \| Mine**. Browse has a search field and the project list. Mine lists your project with each role and how many are waiting. | Browse: the selected project's details. Mine: the selected role's review queue ([review-queue.md](review-queue.md)). |
-| **Settings** | The settings list: Theme, Keyboard shortcuts, Account, Log out | The selected setting |
+| Discover | The deck | Offers waiting for you |
+| Projects | Browse \| Mine | |
+| Review | Review queues for your project's roles. Only shown if you own a project. | Applicants waiting |
+| Teams | Your team and its chat | |
+| Profile | Your profile | |
+| Settings | Theme, keyboard shortcuts, account, log out | |
 
-- The icon for the current mode has a `surface` circle behind it. The others are transparent.
+- A hairline separates the four places from Profile and Settings.
+- **The current row:** `surface-2` fill, `text`, and a `primary` icon. The others are `text-muted`.
+- **Badges** are `cta` pills. They show a count only when it's above zero. The same badges sit on the phone and tablet tabs.
+- Up and Down move focus along the rows, as Left and Right do along the tabs.
+
+**List column (320px).** What it lists follows the place:
+
+| Place | List column | Stage |
+|---|---|---|
+| **Discover**, **Teams** | Tabs **Applications \| Teams**. Application rows show a status chip. Team rows show the latest message. | The deck, or the team's chat. |
+| **Projects**, **Review** | Tabs **Browse \| Mine**. Mine lists your project with each role and how many are waiting. | Browse: the selected project's details. Review: the selected role's queue ([review-queue.md](review-queue.md)). |
+| **Profile**, **Settings** | The settings list: Appearance, Keyboard shortcuts, Log out | The profile form, or the selected setting |
+
 - At 1440px and up, details open in a 400px right panel instead of over the stage.
 
 ## Tablet
 A top bar with the logo and the same five tabs as phone, as text. Content is one column, and the card is at most 420px wide.
 
 ## Rules
-- **Back on phone** is a chevron at top left. On desktop, switching modes never loses what you were doing on the stage.
+- **Back on phone** is a chevron at top left. On desktop, switching places never loses what you were doing on the stage.
 - **One owner project:** an owner can have one open project at a time (BR-14). While it's open, "New project" in Projects → Mine stays enabled, with a note under it that a new project stays a draft until the open one is closed or locks. The server blocks the second publish, not the draft.
 - **Benched users** still see every tab. The deck shows the benched state instead of cards ([feedback-states.md](feedback-states.md)).

@@ -23,21 +23,28 @@ import {
   TeamIcon,
 } from "./icons";
 import { DECK_KEYS, KeyboardLegend, REVIEW_KEYS } from "./keyboard-legend";
+import { useMySummary } from "./queries";
+
+type Counts = { offers: number; applicants_waiting: number };
 
 type NavItem = {
   href: string;
   label: string;
   icon: () => ReactNode;
   paths: string[];
+  // Which count shows as a badge, and the words a screen reader hears after it.
+  badge?: { count: keyof Counts; label: string };
+  ownerOnly?: boolean;
 };
 
-// Phone and tablet tabs. Review is only for students who own a project.
-const TABS: (NavItem & { ownerOnly?: boolean })[] = [
+// The four places everyone goes. Review is only for students who own a project.
+const PLACES: NavItem[] = [
   {
     href: "/feed",
     label: "Discover",
     icon: DeckIcon,
     paths: ["/feed", "/applications"],
+    badge: { count: "offers", label: "offers" },
   },
   {
     href: "/projects",
@@ -50,9 +57,15 @@ const TABS: (NavItem & { ownerOnly?: boolean })[] = [
     label: "Review",
     icon: ReviewIcon,
     paths: ["/applicants"],
+    badge: { count: "applicants_waiting", label: "applicants waiting" },
     ownerOnly: true,
   },
   { href: "/teams", label: "Teams", icon: TeamIcon, paths: ["/teams"] },
+];
+
+// Phone and tablet tabs: Me holds Profile and Settings.
+const TABS: NavItem[] = [
+  ...PLACES,
   {
     href: "/settings",
     label: "Me",
@@ -61,25 +74,14 @@ const TABS: (NavItem & { ownerOnly?: boolean })[] = [
   },
 ];
 
-// Desktop sidebar modes. Each one switches what the sidebar lists, and the stage follows.
-const MODES: NavItem[] = [
-  {
-    href: "/feed",
-    label: "Discover",
-    icon: DeckIcon,
-    paths: ["/feed", "/teams", "/applications"],
-  },
-  {
-    href: "/projects",
-    label: "Projects",
-    icon: FolderIcon,
-    paths: ["/projects", "/applicants"],
-  },
+// Desktop nav column: the same places, with Profile and Settings as their own rows (DD-46).
+const ACCOUNT: NavItem[] = [
+  { href: "/profile", label: "Profile", icon: PersonIcon, paths: ["/profile"] },
   {
     href: "/settings",
     label: "Settings",
     icon: SettingsIcon,
-    paths: ["/settings", "/profile"],
+    paths: ["/settings"],
   },
 ];
 
@@ -94,14 +96,30 @@ function isIn(pathname: string, paths: string[]) {
   );
 }
 
-// Arrow keys, Home and End move focus along a row of links, like the Tabs component.
+// A count on a nav item. Nothing when it's zero or not loaded yet.
+function Badge({ item, counts }: { item: NavItem; counts?: Counts }) {
+  const count = item.badge && counts?.[item.badge.count];
+  if (!count) return null;
+  return (
+    <span className="grid h-5 min-w-5 place-items-center rounded-pill bg-cta px-1.5 text-xs font-bold text-on-cta">
+      <span aria-hidden="true">{count}</span>
+      <span className="sr-only">
+        , {count} {item.badge!.label}
+      </span>
+    </span>
+  );
+}
+
+// Arrow keys, Home and End move focus along a row or column of links, like the Tabs component.
 function moveFocus(event: KeyboardEvent<HTMLElement>) {
   const links = [...event.currentTarget.querySelectorAll<HTMLElement>("a")];
   const index = links.indexOf(document.activeElement as HTMLElement);
   const last = links.length - 1;
   const next = {
     ArrowRight: index === last ? 0 : index + 1,
+    ArrowDown: index === last ? 0 : index + 1,
     ArrowLeft: index <= 0 ? last : index - 1,
+    ArrowUp: index <= 0 ? last : index - 1,
     Home: 0,
     End: last,
   }[event.key];
@@ -116,9 +134,29 @@ export function AppShell({ children }: { children: ReactNode }) {
   const projects = useMyProjects(Boolean(user));
   const owned =
     projects.data?.filter((project) => project.status !== "archived") ?? [];
-  const tabs = TABS.filter((tab) => !tab.ownerOnly || owned.length > 0);
+  const shown = (item: NavItem) => !item.ownerOnly || owned.length > 0;
+  const tabs = TABS.filter(shown);
+  const counts = useMySummary(Boolean(user)).data;
   const team = useMyTeam(Boolean(user)).data;
   const legend = LEGENDS[pathname];
+
+  const navRow = (item: NavItem) => {
+    const Icon = item.icon;
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        aria-current={isIn(pathname, item.paths) ? "page" : undefined}
+        className="group flex min-h-11 items-center gap-3 rounded-row px-3 text-sm font-medium text-muted transition-colors duration-fast hover:bg-surface-2 hover:text-text aria-[current=page]:bg-surface-2 aria-[current=page]:font-semibold aria-[current=page]:text-text"
+      >
+        <span className="group-aria-[current=page]:text-primary">
+          <Icon />
+        </span>
+        <span className="flex-1">{item.label}</span>
+        <Badge item={item} counts={counts} />
+      </Link>
+    );
+  };
 
   return (
     <div className="flex flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] sm:pb-0 lg:flex-row">
@@ -130,47 +168,40 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={tab.href}
               href={tab.href}
               aria-current={isIn(pathname, tab.paths) ? "page" : undefined}
-              className="relative flex min-h-14 items-center px-3 text-sm font-semibold text-muted transition-colors duration-fast after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:scale-x-0 after:rounded-pill after:bg-primary hover:text-text aria-[current=page]:text-text aria-[current=page]:after:scale-x-100"
+              className="relative flex min-h-14 items-center gap-1.5 px-3 text-sm font-semibold text-muted transition-colors duration-fast after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:scale-x-0 after:rounded-pill after:bg-primary hover:text-text aria-[current=page]:text-text aria-[current=page]:after:scale-x-100"
             >
               {tab.label}
+              <Badge item={tab} counts={counts} />
             </Link>
           ))}
         </nav>
       </header>
 
-      <aside className="hidden border-r border-border bg-surface lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-80 lg:shrink-0 lg:flex-col lg:overflow-y-auto">
-        <div className="flex items-center justify-between gap-2 bg-primary-strong px-4 py-3 text-on-primary">
+      <aside className="hidden border-r border-border bg-surface lg:sticky lg:top-0 lg:flex lg:h-dvh lg:shrink-0">
+        <div className="flex w-52 shrink-0 flex-col gap-1 border-r border-border p-3">
           <Link
             href="/feed"
-            aria-label="You, go to Discover"
-            className="flex min-h-11 items-center gap-2 rounded-pill pr-2 font-semibold focus-visible:outline-on-primary"
+            aria-label="TeamMatch, go to Discover"
+            className="flex min-h-11 items-center px-3 pb-2"
           >
-            <span
-              aria-hidden="true"
-              className="grid size-8 place-items-center rounded-full bg-surface text-xs font-bold text-text uppercase"
-            >
-              {user?.email[0] ?? "?"}
-            </span>
-            You
+            <Logo className="text-lg" />
           </Link>
-          <nav aria-label="Modes" onKeyDown={moveFocus} className="flex gap-1">
-            {MODES.map((mode) => {
-              const Icon = mode.icon;
-              return (
-                <Link
-                  key={mode.href}
-                  href={mode.href}
-                  aria-label={mode.label}
-                  aria-current={isIn(pathname, mode.paths) ? "page" : undefined}
-                  className="grid size-11 place-items-center rounded-full text-on-primary transition-colors duration-fast hover:bg-on-primary/15 focus-visible:outline-on-primary aria-[current=page]:bg-surface aria-[current=page]:text-text"
-                >
-                  <Icon />
-                </Link>
-              );
-            })}
+          <nav
+            aria-label="Main"
+            onKeyDown={moveFocus}
+            className="flex flex-col gap-1"
+          >
+            {PLACES.filter(shown).map(navRow)}
+            <span aria-hidden="true" className="mx-3 my-1 h-px bg-border" />
+            {ACCOUNT.map(navRow)}
           </nav>
+          <p className="mt-auto truncate px-3 text-xs text-muted">
+            {user?.email}
+          </p>
         </div>
-        <SidebarMode pathname={pathname} owned={owned} team={team} />
+        <div className="flex w-80 shrink-0 flex-col overflow-y-auto pt-3">
+          <SidebarMode pathname={pathname} owned={owned} team={team} />
+        </div>
       </aside>
 
       <div className="flex flex-1 flex-col">
@@ -192,12 +223,16 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={tab.href}
               href={tab.href}
               aria-current={isIn(pathname, tab.paths) ? "page" : undefined}
-              className="group flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs text-muted aria-[current=page]:font-semibold aria-[current=page]:text-text"
+              className="group relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs text-muted aria-[current=page]:font-semibold aria-[current=page]:text-text"
             >
               <span className="group-aria-[current=page]:text-primary">
                 <Icon />
               </span>
               {tab.label}
+              {/* After the label so it reads "Discover, 2 offers"; drawn at the icon's corner. */}
+              <span className="absolute top-1 left-1/2 ml-1.5">
+                <Badge item={tab} counts={counts} />
+              </span>
             </Link>
           );
         })}
@@ -223,13 +258,6 @@ function SidebarMode({
     return (
       <div className="flex flex-col gap-2 p-4">
         <h2 className="px-3 text-lg font-bold">Settings</h2>
-        <Link
-          href="/profile"
-          aria-current={pathname === "/profile" ? "page" : undefined}
-          className={`${rowLink} font-semibold aria-[current=page]:bg-surface-2`}
-        >
-          Profile
-        </Link>
         <Link
           href="/settings#appearance"
           className={`${rowLink} font-semibold`}

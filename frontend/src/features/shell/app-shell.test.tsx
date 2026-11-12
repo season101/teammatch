@@ -20,6 +20,7 @@ function renderShell(
   {
     projects = [project] as unknown[],
     team = null as unknown,
+    summary = undefined as unknown,
     children = <p>Stage</p> as ReactNode,
   } = {},
 ) {
@@ -31,6 +32,7 @@ function renderShell(
   client.setQueryData(["my-projects"], projects);
   client.setQueryData(["my-applications"], []);
   client.setQueryData(["my-team"], team);
+  if (summary) client.setQueryData(["my-summary"], summary);
   render(
     <QueryClientProvider client={client}>
       <AppShell>{children}</AppShell>
@@ -45,15 +47,19 @@ afterEach(() => {
 
 test("bottom bar on phones, top bar on tablets, sidebar on desktop", () => {
   renderShell("/feed");
-  const [topBar, bottomBar] = screen.getAllByRole("navigation", { name: "Main" });
+  const [topBar, sideNav, bottomBar] = screen.getAllByRole("navigation", { name: "Main" });
 
   expect(bottomBar).toHaveClass("sm:hidden");
   expect(topBar.parentElement).toHaveClass("hidden", "sm:flex", "lg:hidden");
-  expect(screen.getByRole("navigation", { name: "Modes" }).closest("aside")).toHaveClass(
-    "hidden",
-    "lg:flex",
-    "lg:w-80",
-  );
+  expect(sideNav.closest("aside")).toHaveClass("hidden", "lg:flex");
+  expect(within(sideNav).getAllByRole("link").map((link) => link.textContent)).toEqual([
+    "Discover",
+    "Projects",
+    "Review",
+    "Teams",
+    "Profile",
+    "Settings",
+  ]);
   expect(within(bottomBar).getAllByRole("link").map((link) => link.textContent)).toEqual([
     "Discover",
     "Projects",
@@ -63,10 +69,9 @@ test("bottom bar on phones, top bar on tablets, sidebar on desktop", () => {
   ]);
 });
 
-test("marks the current tab and mode", () => {
+test("marks the current place in every layout", () => {
   renderShell("/applicants");
-  const [, bottomBar] = screen.getAllByRole("navigation", { name: "Main" });
-  const modes = screen.getByRole("navigation", { name: "Modes" });
+  const [, sideNav, bottomBar] = screen.getAllByRole("navigation", { name: "Main" });
 
   expect(within(bottomBar).getByRole("link", { name: "Review" })).toHaveAttribute(
     "aria-current",
@@ -75,7 +80,7 @@ test("marks the current tab and mode", () => {
   expect(within(bottomBar).getByRole("link", { name: "Discover" })).not.toHaveAttribute(
     "aria-current",
   );
-  expect(within(modes).getByRole("link", { name: "Projects" })).toHaveAttribute(
+  expect(within(sideNav).getByRole("link", { name: "Review" })).toHaveAttribute(
     "aria-current",
     "page",
   );
@@ -84,12 +89,12 @@ test("marks the current tab and mode", () => {
 test("Review is only for students who own a project", () => {
   renderShell("/feed", { projects: [{ ...project, status: "archived" }] });
   expect(screen.queryByRole("link", { name: "Review" })).not.toBeInTheDocument();
-  expect(screen.getAllByRole("link", { name: "Teams" })).toHaveLength(2);
+  expect(screen.getAllByRole("link", { name: "Teams" })).toHaveLength(3);
 });
 
-test("arrow keys move focus along the tabs and the modes, wrapping at the ends", () => {
+test("arrow keys move focus along the tabs and the side nav, wrapping at the ends", () => {
   renderShell("/feed");
-  const [, bottomBar] = screen.getAllByRole("navigation", { name: "Main" });
+  const [, sideNav, bottomBar] = screen.getAllByRole("navigation", { name: "Main" });
   const discover = within(bottomBar).getByRole("link", { name: "Discover" });
 
   discover.focus();
@@ -100,10 +105,11 @@ test("arrow keys move focus along the tabs and the modes, wrapping at the ends",
   fireEvent.keyDown(document.activeElement!, { key: "ArrowLeft" });
   expect(within(bottomBar).getByRole("link", { name: "Me" })).toHaveFocus();
 
-  const modes = screen.getByRole("navigation", { name: "Modes" });
-  within(modes).getByRole("link", { name: "Settings" }).focus();
+  within(sideNav).getByRole("link", { name: "Settings" }).focus();
   fireEvent.keyDown(document.activeElement!, { key: "ArrowRight" });
-  expect(within(modes).getByRole("link", { name: "Discover" })).toHaveFocus();
+  expect(within(sideNav).getByRole("link", { name: "Discover" })).toHaveFocus();
+  fireEvent.keyDown(document.activeElement!, { key: "ArrowDown" });
+  expect(within(sideNav).getByRole("link", { name: "Projects" })).toHaveFocus();
 });
 
 test("the deck shows its keyboard legend, and Hide collapses it", () => {
@@ -162,18 +168,42 @@ test("the saved theme applies before the first paint", () => {
   expect(document.documentElement.dataset.theme).toBe("dark");
 });
 
-test("the avatar goes to Discover, and Profile sits under Settings", () => {
+test("the logo goes to Discover, and Profile and Settings are their own rows on desktop", () => {
   renderShell("/profile");
-  const modes = screen.getByRole("navigation", { name: "Modes" });
+  const [, sideNav, bottomBar] = screen.getAllByRole("navigation", { name: "Main" });
 
-  expect(screen.getByRole("link", { name: "You, go to Discover" })).toHaveAttribute("href", "/feed");
-  expect(within(modes).getByRole("link", { name: "Settings" })).toHaveAttribute("aria-current", "page");
-  expect(screen.getByRole("link", { name: "Profile" })).toHaveAttribute("aria-current", "page");
+  expect(screen.getByRole("link", { name: "TeamMatch, go to Discover" })).toHaveAttribute(
+    "href",
+    "/feed",
+  );
+  expect(within(sideNav).getByRole("link", { name: "Profile" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  expect(within(sideNav).getByRole("link", { name: "Settings" })).not.toHaveAttribute(
+    "aria-current",
+  );
 
-  // Phones and tablets have no sidebar, so Me opens Settings, which links to Profile.
-  const [, bottomBar] = screen.getAllByRole("navigation", { name: "Main" });
+  // Phones and tablets have no side nav, so Me opens Settings, which links to Profile.
   expect(within(bottomBar).getByRole("link", { name: "Me" })).toHaveAttribute("href", "/settings");
   expect(within(bottomBar).getByRole("link", { name: "Me" })).toHaveAttribute("aria-current", "page");
+});
+
+test("badges count my offers and the applicants waiting, in every layout", () => {
+  renderShell("/feed", { summary: { offers: 2, applicants_waiting: 3, deck: "open" } });
+
+  for (const nav of screen.getAllByRole("navigation", { name: "Main" })) {
+    expect(within(nav).getByRole("link", { name: /^Discover, 2 offers$/ })).toBeInTheDocument();
+    expect(
+      within(nav).getByRole("link", { name: /^Review, 3 applicants waiting$/ }),
+    ).toBeInTheDocument();
+    expect(within(nav).getByRole("link", { name: "Projects" })).toBeInTheDocument();
+  }
+});
+
+test("no badge at zero or before the counts load", () => {
+  renderShell("/feed", { summary: { offers: 0, applicants_waiting: 0, deck: "open" } });
+  expect(screen.getAllByRole("link", { name: "Discover" })).toHaveLength(3);
 });
 
 test("an owner with an open project can still start a draft, with a note why it can't publish", () => {
@@ -192,7 +222,7 @@ test("the sidebar's Teams tab links to my team once I have one", () => {
   renderShell("/teams", {
     team: { id: 3, project: { id: 4, title: "Bulldog Bites" }, members: [], seen_at: "x" },
   });
-  const sidebar = screen.getByRole("navigation", { name: "Modes" }).closest("aside")!;
+  const sidebar = screen.getAllByRole("navigation", { name: "Main" })[1].closest("aside")!;
 
   expect(within(sidebar).getByRole("link", { name: "Bulldog Bites" })).toHaveAttribute(
     "href",
