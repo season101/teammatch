@@ -360,7 +360,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Pending applicants for one of my roles, minus retired ones (BR-09). Not my project: 403. */
+        /**
+         * @description Applicants for one of my roles. Not my project: 403.
+         *
+         *     Pending by default, minus retired ones (BR-09). ?status=liked lists my offers out (F4-10).
+         */
         get: operations["roles_applications_list"];
         put?: never;
         post?: never;
@@ -1359,6 +1363,7 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
+                status?: "committed" | "declined" | "liked" | "passed" | "pending" | "withdrawn";
             };
             header?: never;
             path: {

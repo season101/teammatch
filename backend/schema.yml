@@ -595,8 +595,10 @@ paths:
   /api/v1/roles/{id}/applications/:
     get:
       operationId: roles_applications_list
-      description: 'Pending applicants for one of my roles, minus retired ones (BR-09).
-        Not my project: 403.'
+      description: |-
+        Applicants for one of my roles. Not my project: 403.
+
+        Pending by default, minus retired ones (BR-09). ?status=liked lists my offers out (F4-10).
       parameters:
       - name: cursor
         required: false
@@ -615,6 +617,17 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - committed
+          - declined
+          - liked
+          - passed
+          - pending
+          - withdrawn
       tags:
       - matching
       security:

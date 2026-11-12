@@ -132,7 +132,7 @@ Login, signup, logout, password and Google live under allauth (below).
 | POST | `/api/v1/applications/` | user | apply to a role `{role, note}`. Retired: `403` `profile_retired`. Committed this term: `409` `applicant_committed` |
 | GET | `/api/v1/applications/mine/?status=` | user | my applications |
 | POST | `/api/v1/applications/{id}/withdraw/` | applicant | withdraw pending application |
-| GET | `/api/v1/roles/{id}/applications/` | owner | pending applicants for a role, minus retired ones (`403` if it's not your project) |
+| GET | `/api/v1/roles/{id}/applications/?status=` | owner | pending applicants for a role, minus retired ones (`403` if it's not your project). `?status=liked` lists offers out, `?status=committed` who took the seat |
 | POST | `/api/v1/applications/{id}/like/` | owner | like: sends an offer, the role stays open (F4-10). Applicant on a team or committed: `409` |
 | POST | `/api/v1/applications/{id}/commit/` | applicant | take the seat an offer is for: fills the role, closes my other applications this term, may lock the team. `409` `offer_not_open`, `role_not_open`, `owns_open_project` or `applicant_committed`; someone else's: `403` |
 | POST | `/api/v1/applications/{id}/decline/` | applicant | turn an offer down; the role stays open. Not an open offer: `409` |

@@ -86,6 +86,21 @@ def test_retired_applicants_are_left_out(owner, role):
     assert {a["id"] for a in response.json()["results"]} == {shown.id, ended.id}
 
 
+def test_status_lists_offers_out_and_the_seat_even_once_retired(owner, role):
+    pending = apply(role, "a@latech.edu")
+    offer = apply(role, "b@latech.edu", status=ApplicationStatus.LIKED)
+    seat = apply(role, "c@latech.edu", status=ApplicationStatus.COMMITTED)
+    Profile.objects.filter(user=seat.applicant).update(retired_until=timezone.localdate())
+
+    def ids(status):
+        response = as_user(owner).get(url(role), {"status": status})
+        return [a["id"] for a in response.json()["results"]]
+
+    assert ids("liked") == [offer.id]
+    assert ids("committed") == [seat.id]
+    assert ids("nonsense") == [pending.id]
+
+
 def test_someone_elses_role_returns_403(role):
     stranger = User.objects.create_user(email="stranger@latech.edu", password="pw")
     assert as_user(stranger).get(url(role)).status_code == 403

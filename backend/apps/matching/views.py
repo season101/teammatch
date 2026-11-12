@@ -34,9 +34,15 @@ class FeedView(generics.ListAPIView):
         return services.feed_roles(self.request.user)
 
 
-@extend_schema(tags=["matching"])
+@extend_schema(
+    tags=["matching"],
+    parameters=[OpenApiParameter("status", str, enum=ApplicationStatus.values)],
+)
 class RoleApplicationsView(generics.ListAPIView):
-    """Pending applicants for one of my roles, minus retired ones (BR-09). Not my project: 403."""
+    """Applicants for one of my roles. Not my project: 403.
+
+    Pending by default, minus retired ones (BR-09). ?status=liked lists my offers out (F4-10).
+    """
 
     serializer_class = RoleApplicationSerializer
     pagination_class = DefaultCursorPagination
@@ -45,7 +51,10 @@ class RoleApplicationsView(generics.ListAPIView):
         role = get_object_or_404(Role.objects.select_related("project"), pk=self.kwargs["pk"])
         if role.project.owner_id != self.request.user.id:
             raise PermissionDenied()
-        return services.pending_applications(role)
+        status = self.request.query_params.get("status")
+        if status not in ApplicationStatus.values:
+            status = ApplicationStatus.PENDING
+        return services.role_applications(role, status)
 
 
 @extend_schema(tags=["matching"], request=None, responses=ApplicationDecisionSerializer)

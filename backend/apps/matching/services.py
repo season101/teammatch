@@ -35,13 +35,19 @@ def feed_roles(user, today=None):
     )
 
 
-def pending_applications(role):
-    """The review queue for one role (F4-01). Retired applicants are left out (BR-09)."""
-    return (
-        role.applications.filter(status=ApplicationStatus.PENDING)
-        .exclude(applicant__profile__retired_until__gte=timezone.localdate())
-        .select_related("applicant__profile")
-        .prefetch_related("applicant__profile__skills")
+def role_applications(role, status=ApplicationStatus.PENDING):
+    """One role's applications with one status: the review queue by default (F4-01).
+
+    The queue leaves out retired applicants (BR-09). Other statuses don't, so the owner
+    still sees offers out and who committed after the team locks (F4-10).
+    """
+    applications = role.applications.filter(status=status)
+    if status == ApplicationStatus.PENDING:
+        applications = applications.exclude(
+            applicant__profile__retired_until__gte=timezone.localdate()
+        )
+    return applications.select_related("applicant__profile").prefetch_related(
+        "applicant__profile__skills"
     )
 
 
