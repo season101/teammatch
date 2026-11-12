@@ -30,7 +30,6 @@ flowchart LR
 ```mermaid
 flowchart LR
     DK["Discover deck [8]"] -->|"→ / swipe right"| A["Applied (pending)"]
-    DK -->|"⇧→ / long press"| N["Apply with note [10]"] --> A
     DK -->|"← / swipe left"| PS["Passed"]
     PS -->|"Z / Undo"| DK
     DK -->|"↑ / ⓘ"| RD["Role details [9]"] --> DK
@@ -42,6 +41,7 @@ flowchart LR
     DK -->|deck empty| E["Out of roles → Browse [13]"]
 ```
 
+- A swipe right applies with no note. The note goes on the role details page with F3-13 (DD-40).
 - Undo only brings back a pass.
 - Filled applications can't be withdrawn.
 - When a team locks, its members are benched, and the deck shows the benched state until the term ends.

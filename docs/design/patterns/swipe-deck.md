@@ -36,7 +36,7 @@ The opacity is the drag distance ÷ the commit distance. Stamps are decorative (
 Every card is the same height, so ✕ and ✓ stay in one place, just above the phone tab bar. The height is the viewport minus the page header, padding, buttons and tab bar, kept between 22rem and 38rem. The title and project take one line each, skills one row with "+N more", and the pitch five lines. Longer text ends in an ellipsis, and nothing scrolls inside the card.
 
 ## The note
-There's no note on the deck: a swipe right applies without one ([DD-40](../decisions.md), not agreed yet). The note moves to the role details page with F3-13. See [deck details](deck-details.md).
+There's no note on the deck: a swipe right applies without one ([DD-40](../decisions.md), agreed Nov 11, 2026). The note moves to the role details page with F3-13. See [deck details](deck-details.md).
 
 ## Keyboard legend
 On desktop, a row pinned to the bottom of the stage:
