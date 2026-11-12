@@ -18,6 +18,7 @@ from .serializers import (
     CommitSerializer,
     FeedRoleSerializer,
     MyApplicationSerializer,
+    MySummarySerializer,
     MyTeamResponseSerializer,
     RoleApplicationSerializer,
 )
@@ -167,6 +168,17 @@ class DeclineView(APIView):
     def post(self, request, pk):
         application = services.decline(my_offer(request, pk))
         return Response(MyApplicationSerializer(application).data)
+
+
+@extend_schema(tags=["matching"], responses=MySummarySerializer)
+class MySummaryView(APIView):
+    """Badge counts for the navigation: my offers and applicants waiting on my roles.
+
+    deck says whether my deck is open, or closed because I'm benched or committed.
+    """
+
+    def get(self, request):
+        return Response(MySummarySerializer(services.my_summary(request.user)).data)
 
 
 @extend_schema(tags=["teams"], responses=MyTeamResponseSerializer)

@@ -203,6 +203,44 @@ export interface paths {
         patch: operations["me_profile_partial_update"];
         trace?: never;
     };
+    "/api/v1/me/rules/accept/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description I agree to the Team rules (DD-12). Repeats keep the first time. */
+        post: operations["me_rules_accept_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/summary/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Badge counts for the navigation: my offers and applicants waiting on my roles.
+         *
+         *     deck says whether my deck is open, or closed because I'm benched or committed.
+         */
+        get: operations["me_summary_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/profiles/{id}/": {
         parameters: {
             query?: never;
@@ -537,6 +575,13 @@ export interface components {
             readonly team_locked: boolean;
             readonly team_id: number | null;
         };
+        /**
+         * @description * `open` - open
+         *     * `benched` - benched
+         *     * `committed` - committed
+         * @enum {string}
+         */
+        DeckEnum: "open" | "benched" | "committed";
         FeedProject: {
             readonly id: number;
             title: string;
@@ -551,6 +596,10 @@ export interface components {
             readonly required_skills: components["schemas"]["Skill"][];
             /** Format: date-time */
             readonly created_at: string;
+            readonly match_percent: number | null;
+            readonly roles_filled: number;
+            readonly roles_total: number;
+            readonly term: string;
         };
         Health: {
             status: components["schemas"]["HealthStatusEnum"];
@@ -581,6 +630,8 @@ export interface components {
             readonly skills: components["schemas"]["Skill"][];
             /** Format: email */
             readonly email: string;
+            /** Format: date-time */
+            readonly rules_accepted_at: string | null;
         };
         MyProject: {
             readonly id: number;
@@ -594,6 +645,11 @@ export interface components {
             readonly id: number;
             title: string;
             status?: components["schemas"]["RoleStatusEnum"];
+        };
+        MySummary: {
+            readonly offers: number;
+            readonly applicants_waiting: number;
+            readonly deck: components["schemas"]["DeckEnum"];
         };
         /** @description My team this term, from my seat on it (F4-05). */
         MyTeam: {
@@ -1072,6 +1128,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MyProfile"];
+                };
+            };
+        };
+    };
+    me_rules_accept_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    me_summary_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MySummary"];
                 };
             };
         };

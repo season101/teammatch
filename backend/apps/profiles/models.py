@@ -34,6 +34,8 @@ class Profile(TimeStampedModel):
     skills = models.ManyToManyField(Skill, blank=True, related_name="profiles")
     # Set by retire() when their team locks (BR-08). F1-08 adds the rest.
     retired_until = models.DateField(null=True, blank=True)
+    # When they agreed to the Team rules (DD-12). Empty until they do.
+    rules_accepted_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.display_name or self.user.email

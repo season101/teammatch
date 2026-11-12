@@ -281,6 +281,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/MyProfile'
           description: ''
+  /api/v1/me/rules/accept/:
+    post:
+      operationId: me_rules_accept_create
+      description: I agree to the Team rules (DD-12). Repeats keep the first time.
+      tags:
+      - me
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/me/summary/:
+    get:
+      operationId: me_summary_retrieve
+      description: |-
+        Badge counts for the navigation: my offers and applicants waiting on my roles.
+
+        deck says whether my deck is open, or closed because I'm benched or committed.
+      tags:
+      - matching
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MySummary'
+          description: ''
   /api/v1/profiles/{id}/:
     get:
       operationId: profiles_retrieve
@@ -960,6 +989,16 @@ components:
       - team_id
       - team_locked
       - updated_at
+    DeckEnum:
+      enum:
+      - open
+      - benched
+      - committed
+      type: string
+      description: |-
+        * `open` - open
+        * `benched` - benched
+        * `committed` - committed
     FeedProject:
       type: object
       properties:
@@ -1005,11 +1044,28 @@ components:
           type: string
           format: date-time
           readOnly: true
+        match_percent:
+          type: integer
+          nullable: true
+          readOnly: true
+        roles_filled:
+          type: integer
+          readOnly: true
+        roles_total:
+          type: integer
+          readOnly: true
+        term:
+          type: string
+          readOnly: true
       required:
       - created_at
       - id
+      - match_percent
       - project
       - required_skills
+      - roles_filled
+      - roles_total
+      - term
       - title
     Health:
       type: object
@@ -1084,9 +1140,15 @@ components:
           type: string
           format: email
           readOnly: true
+        rules_accepted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
       required:
       - email
       - id
+      - rules_accepted_at
       - skills
     MyProject:
       type: object
@@ -1127,6 +1189,23 @@ components:
       required:
       - id
       - title
+    MySummary:
+      type: object
+      properties:
+        offers:
+          type: integer
+          readOnly: true
+        applicants_waiting:
+          type: integer
+          readOnly: true
+        deck:
+          allOf:
+          - $ref: '#/components/schemas/DeckEnum'
+          readOnly: true
+      required:
+      - applicants_waiting
+      - deck
+      - offers
     MyTeam:
       type: object
       description: My team this term, from my seat on it (F4-05).

@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import F, Prefetch
+from django.db.models import Count, F, Prefetch, Q
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 
@@ -30,9 +30,47 @@ def feed_roles(user, today=None):
         .exclude(project__owner=user)
         .exclude(applications__applicant=user)
         .exclude(dismissals__user=user)
-        .select_related("project__owner__profile")
+        .select_related("project__owner__profile", "project__term")
         .prefetch_related("required_skills")
+        # For the deck card: match % (DD-20) and team progress. distinct, as the joins multiply.
+        .annotate(
+            skills_total=Count("required_skills", distinct=True),
+            skills_matched=Count(
+                "required_skills",
+                filter=Q(required_skills__profiles__user=user),
+                distinct=True,
+            ),
+            roles_total=Count("project__roles", distinct=True),
+            roles_filled=Count(
+                "project__roles",
+                filter=Q(project__roles__status=RoleStatus.FILLED),
+                distinct=True,
+            ),
+        )
     )
+
+
+def my_summary(user, today=None):
+    """Counts for the navigation badges, and whether my deck is open.
+
+    The deck is closed while I'm benched (BR-09) or hold a seat I committed to (F4-10).
+    applicants_waiting matches the review queue: pending, on my open roles, not benched.
+    """
+    today = today or timezone.localdate()
+    if is_retired(user, today):
+        deck = "benched"
+    elif holds_seat(user, today=today):
+        deck = "committed"
+    else:
+        deck = "open"
+    waiting = Application.objects.filter(
+        status=ApplicationStatus.PENDING,
+        role__status=RoleStatus.OPEN,
+        role__project__owner=user,
+        role__project__status=ProjectStatus.OPEN,
+    ).exclude(applicant__profile__retired_until__gte=today)
+    offers = Application.objects.filter(applicant=user, status=ApplicationStatus.LIKED)
+    return {"offers": offers.count(), "applicants_waiting": waiting.count(), "deck": deck}
 
 
 def role_applications(role, status=ApplicationStatus.PENDING):

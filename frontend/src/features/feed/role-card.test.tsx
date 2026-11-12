@@ -19,6 +19,10 @@ function makeRole(overrides: Partial<FeedRole["project"]> = {}): FeedRole {
       { id: 1, name: "Python", slug: "python" },
       { id: 2, name: "React", slug: "react" },
     ],
+    match_percent: 50,
+    roles_filled: 1,
+    roles_total: 3,
+    term: "Fall 2026",
   };
 }
 
