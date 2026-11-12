@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { buttonClasses } from "@/components/ui/button";
+import { Button, buttonClasses } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { useMyTeam, type MyTeam } from "./queries";
 
 export function initials(name: string) {
@@ -25,20 +27,30 @@ export function MyTeamView() {
   const team = useMyTeam();
 
   if (team.isPending) {
-    return <p className="text-muted">Loading your team…</p>;
+    return <SkeletonRows label="Loading your team" />;
   }
   if (team.isError) {
     return (
-      <p role="alert" className="text-pass">
-        Couldn&apos;t load your team. Refresh the page to try again.
-      </p>
+      <EmptyState
+        title="Couldn't load your team"
+        action={<Button onClick={() => team.refetch()}>Try again</Button>}
+      >
+        Check your connection and try again.
+      </EmptyState>
     );
   }
   if (!team.data) {
     return (
-      <p className="text-muted">
+      <EmptyState
+        title="No team yet"
+        action={
+          <Link href="/feed" className={buttonClasses()}>
+            Go to Discover
+          </Link>
+        }
+      >
         Your team shows up here once every role is filled. Team chat opens then.
-      </p>
+      </EmptyState>
     );
   }
   return (
