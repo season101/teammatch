@@ -9,7 +9,7 @@ export default function TeamChatPage() {
 
   return (
     // Fills the screen between the app's top and bottom bars, so only the messages scroll.
-    <main className="mx-auto flex h-[calc(100dvh-3.5rem-env(safe-area-inset-bottom))] w-full max-w-2xl flex-col sm:h-[calc(100dvh-3.5rem-1px)] lg:h-dvh">
+    <main className="mx-auto flex h-[calc(100dvh-3.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-2xl flex-col sm:h-[calc(100dvh-3.5rem-1px-env(safe-area-inset-top))] lg:h-[calc(100dvh-env(safe-area-inset-top))]">
       <RequireSignIn>
         {(user) => <TeamChat teamId={Number(params.id)} userId={user.id} />}
       </RequireSignIn>

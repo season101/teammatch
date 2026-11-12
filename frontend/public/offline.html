@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0B0A10" />
+    <title>Offline | TeamMatch</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        gap: 1.5rem;
+        padding: 1.5rem;
+        box-sizing: border-box;
+        background: #0b0a10;
+        color: #f6f4fb;
+        font: 1rem/1.5 system-ui, sans-serif;
+        text-align: center;
+      }
+      svg {
+        width: 4rem;
+      }
+      p {
+        margin: 0;
+        max-width: 22rem;
+      }
+      button {
+        min-height: 2.75rem;
+        padding: 0 1.25rem;
+        border: 0;
+        border-radius: 999px;
+        background: #fff;
+        color: #0b0a10;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:focus-visible {
+        outline: 2px solid #7c5cff;
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <svg viewBox="0 0 76 70" aria-hidden="true">
+      <defs>
+        <linearGradient id="spark" gradientUnits="userSpaceOnUse" x1="-12.5" y1="12.5" x2="32.5" y2="57.5">
+          <stop offset="0" stop-color="#7C5CFF" />
+          <stop offset="1" stop-color="#FF4FD8" />
+        </linearGradient>
+        <rect id="seat" width="20" height="70" rx="5" fill="url(#spark)" />
+      </defs>
+      <use href="#seat" />
+      <use href="#seat" x="28" />
+      <use href="#seat" x="56" />
+    </svg>
+    <h1 style="margin: 0; font-size: 1.5rem">You're offline.</h1>
+    <p>TeamMatch needs a connection to load roles and chat.</p>
+    <!-- The page is served at the address you asked for, so a reload tries it again. -->
+    <button type="button" onclick="location.reload()">Retry</button>
+  </body>
+</html>

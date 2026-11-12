@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
 import { SignOutButton } from "@/features/accounts/sign-out-button";
+import { InstallApp } from "@/features/install/install-app";
 import {
   setShortcutsEnabled,
   setTheme,
@@ -84,6 +85,13 @@ export default function SettingsPage() {
                   className="relative h-7 w-12 shrink-0 cursor-pointer appearance-none rounded-pill border border-border bg-surface-2 transition-colors duration-fast before:absolute before:top-0.5 before:left-0.5 before:size-5 before:rounded-full before:bg-muted checked:border-primary checked:bg-primary checked:before:translate-x-5 checked:before:bg-on-primary motion-safe:before:transition-transform"
                 />
               </label>
+            </section>
+
+            <section id="install" aria-labelledby="install-heading" className="flex flex-col gap-2">
+              <h2 id="install-heading" className={sectionHeading}>
+                App
+              </h2>
+              <InstallApp className={card} />
             </section>
 
             {/* Desktop has Profile and Sign out in the sidebar; phones and tablets have no sidebar. */}

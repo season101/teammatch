@@ -181,6 +181,21 @@
     background: var(--bg);
     color: var(--text);
     font-family: var(--font-sans), system-ui, sans-serif;
+    /* viewport-fit=cover: keep content clear of the status bar and the notch. */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  }
+
+  /*
+   * Home-screen app on iPhone: the status bar text is always white, so it gets a dark
+   * strip in both themes, and scrolled content passes under it. No height in a browser tab.
+   */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 60;
+    height: env(safe-area-inset-top);
+    background: #0b0a10;
   }
 
   /* Geist Mono has no arrow glyphs, so keys use the UI font. */
