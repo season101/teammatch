@@ -266,10 +266,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description GET: open projects in the current term, newest first. POST: create a draft. */
+        /**
+         * @description GET: open projects in the current term, newest first. ?q= searches them (F2-07).
+         *     POST: create a draft.
+         */
         get: operations["projects_list"];
         put?: never;
-        /** @description GET: open projects in the current term, newest first. POST: create a draft. */
+        /**
+         * @description GET: open projects in the current term, newest first. ?q= searches them (F2-07).
+         *     POST: create a draft.
+         */
         post: operations["projects_create"];
         delete?: never;
         options?: never;
@@ -1226,6 +1232,8 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
+                /** @description Search title, pitch, open role titles and their required skills, ignoring case. */
+                q?: string;
             };
             header?: never;
             path?: never;

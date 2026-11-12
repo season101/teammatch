@@ -110,7 +110,7 @@ Login, signup, logout, password and Google live under allauth (below).
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/v1/projects/` | user | open projects, cursor-paginated. The `term`, `skill`, `q` and `status` filters are **(planned)** (F2-07) |
+| GET | `/api/v1/projects/` | user | open projects, cursor-paginated. `?q=` searches title, pitch, open role titles and their required skills, ignoring case (F2-07). The `term`, `skill` and `status` filters are **(planned)** |
 | POST | `/api/v1/projects/` | user | create project (draft) |
 | GET | `/api/v1/projects/mine/` | user | projects I own |
 | GET | `/api/v1/projects/{id}/` | user | project detail with roles |

@@ -366,8 +366,9 @@ paths:
   /api/v1/projects/:
     get:
       operationId: projects_list
-      description: 'GET: open projects in the current term, newest first. POST: create
-        a draft.'
+      description: |-
+        GET: open projects in the current term, newest first. ?q= searches them (F2-07).
+        POST: create a draft.
       parameters:
       - name: cursor
         required: false
@@ -381,6 +382,12 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Search title, pitch, open role titles and their required skills,
+          ignoring case.
       tags:
       - projects
       security:
@@ -394,8 +401,9 @@ paths:
           description: ''
     post:
       operationId: projects_create
-      description: 'GET: open projects in the current term, newest first. POST: create
-        a draft.'
+      description: |-
+        GET: open projects in the current term, newest first. ?q= searches them (F2-07).
+        POST: create a draft.
       tags:
       - projects
       requestBody:

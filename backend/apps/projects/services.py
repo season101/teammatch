@@ -114,10 +114,14 @@ def publish_project(project):
     return project
 
 
-def open_projects(today=None):
-    """Open projects in the current term, with how many roles are still open (F2-03)."""
+def open_projects(today=None, q=""):
+    """Open projects in the current term, with how many roles are still open (F2-03).
+
+    q keeps the ones whose title, pitch, or an open role's title or required skill
+    contains it, ignoring case (F2-07).
+    """
     today = today or timezone.localdate()
-    return (
+    projects = (
         Project.objects.filter(
             status=ProjectStatus.OPEN,
             term__start_date__lte=today,
@@ -126,6 +130,17 @@ def open_projects(today=None):
         .select_related("owner__profile")
         .annotate(open_role_count=Count("roles", filter=Q(roles__status=RoleStatus.OPEN)))
     )
+    q = q.strip()
+    if q:
+        role_matches = Q(roles__title__icontains=q) | Q(roles__required_skills__name__icontains=q)
+        matches = Project.objects.filter(
+            Q(title__icontains=q)
+            | Q(pitch__icontains=q)
+            | (Q(roles__status=RoleStatus.OPEN) & role_matches)
+        )
+        # A subquery, so the role and skill joins can't repeat a project or bend the count.
+        projects = projects.filter(pk__in=matches.values("pk"))
+    return projects
 
 
 def my_projects(user):
