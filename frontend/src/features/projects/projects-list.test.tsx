@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import { ProjectsList } from "./projects-list";
 
@@ -58,10 +58,27 @@ test("shows each project with its owner, role count and pitch preview", async ()
   expect(screen.getByText("Pitch for TeamMatch")).toBeInTheDocument();
 });
 
-test("says so when there are no open projects", async () => {
+test("shows skeleton rows while the projects load", () => {
   mockFetch([{ next: null, previous: null, results: [] }, 200]);
   renderList();
-  expect(await screen.findByText(/no open projects yet/i)).toBeInTheDocument();
+  expect(
+    screen.getByRole("status", { name: "Loading projects" }),
+  ).toBeInTheDocument();
+});
+
+test("says so when there are no open projects and links to post one", async () => {
+  mockFetch([{ next: null, previous: null, results: [] }, 200]);
+  renderList();
+  expect(
+    await screen.findByRole("heading", { name: "No open projects yet" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("Be the first to post one this term."),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Post a project" })).toHaveAttribute(
+    "href",
+    "/projects/new",
+  );
 });
 
 test("loads the next page with the cursor", async () => {
@@ -86,74 +103,73 @@ test("loads the next page with the cursor", async () => {
   ).not.toBeInTheDocument();
 });
 
-test("shows a message when the list can't be loaded", async () => {
-  mockFetch([{}, 500]);
-  renderList();
-  expect(await screen.findByRole("alert")).toHaveTextContent(
-    /could not load projects/i,
+test("offers to try again when the list can't be loaded", async () => {
+  mockFetch(
+    [{}, 500],
+    [{ next: null, previous: null, results: [project(1, "TeamMatch")] }, 200],
   );
+  renderList();
+  expect(
+    await screen.findByRole("heading", { name: "Couldn't load projects" }),
+  ).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+  expect(await screen.findByText("TeamMatch")).toBeInTheDocument();
 });
 
-test("search narrows the list by title, owner or pitch", async () => {
-  mockFetch([
-    {
-      next: null,
-      previous: null,
-      results: [project(1, "Bulldog Bites"), project(2, "Thesis Tracker")],
-    },
-    200,
-  ]);
-  renderList();
-  expect(await screen.findByText("Bulldog Bites")).toBeInTheDocument();
-
+const search = (value: string) =>
   fireEvent.change(
     screen.getByRole("searchbox", { name: /search projects/i }),
-    {
-      target: { value: "thesis" },
-    },
+    { target: { value } },
+  );
+
+test("sends the trimmed search to the API and keeps the old results meanwhile", async () => {
+  const requests = mockFetch(
+    [
+      {
+        next: null,
+        previous: null,
+        results: [project(1, "Bulldog Bites"), project(2, "Thesis Tracker")],
+      },
+      200,
+    ],
+    [{ next: null, previous: null, results: [project(2, "Thesis Tracker")] }, 200],
+  );
+  renderList();
+  expect(await screen.findByText("Bulldog Bites")).toBeInTheDocument();
+  expect(new URL(requests[0].url).searchParams.has("q")).toBe(false);
+
+  search("  thesis ");
+  // Not sent yet (debounced), and nothing on screen changes while it loads.
+  expect(requests).toHaveLength(1);
+  expect(screen.getByText("Bulldog Bites")).toBeInTheDocument();
+
+  await waitFor(() =>
+    expect(screen.queryByText("Bulldog Bites")).not.toBeInTheDocument(),
   );
   expect(screen.getByText("Thesis Tracker")).toBeInTheDocument();
-  expect(screen.queryByText("Bulldog Bites")).not.toBeInTheDocument();
+  expect(requests).toHaveLength(2);
+  expect(new URL(requests[1].url).searchParams.get("q")).toBe("thesis");
+  expect(screen.queryByText(/loaded so far/i)).not.toBeInTheDocument();
 });
 
 test("says nothing matches and clears the search", async () => {
-  mockFetch([
-    { next: null, previous: null, results: [project(1, "Bulldog Bites")] },
-    200,
-  ]);
+  mockFetch(
+    [{ next: null, previous: null, results: [project(1, "Bulldog Bites")] }, 200],
+    [{ next: null, previous: null, results: [] }, 200],
+    [{ next: null, previous: null, results: [project(1, "Bulldog Bites")] }, 200],
+  );
   renderList();
   await screen.findByText("Bulldog Bites");
 
-  fireEvent.change(
-    screen.getByRole("searchbox", { name: /search projects/i }),
-    {
-      target: { value: "Unity" },
-    },
-  );
-  expect(screen.getByText(/No projects match/)).toBeInTheDocument();
+  search("rust");
+  expect(
+    await screen.findByRole("heading", { name: "Nothing matches \u201crust\u201d" }),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Try a skill or a project name.")).toBeInTheDocument();
   expect(screen.queryByText("Bulldog Bites")).not.toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole("button", { name: /clear search/i }));
-  expect(screen.getByText("Bulldog Bites")).toBeInTheDocument();
-});
-
-test("warns that search only covers the loaded projects while more pages exist", async () => {
-  mockFetch([
-    {
-      next: "http://localhost/api/v1/projects/?cursor=abc",
-      previous: null,
-      results: [project(1, "First")],
-    },
-    200,
-  ]);
-  renderList();
-  await screen.findByText("First");
-
-  fireEvent.change(
-    screen.getByRole("searchbox", { name: /search projects/i }),
-    {
-      target: { value: "first" },
-    },
-  );
-  expect(screen.getByText(/loaded so far/i)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+  expect(await screen.findByText("Bulldog Bites")).toBeInTheDocument();
+  expect(screen.getByRole("searchbox", { name: /search projects/i })).toHaveValue("");
 });

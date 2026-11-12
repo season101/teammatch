@@ -7,13 +7,25 @@ export type Application = components["schemas"]["Apply"];
 
 export class ApiError extends Error {
   status: number;
+  code?: string;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.code = code;
   }
 }
+
+// Single-message errors come as { detail, code }.
+const failed = (status: number, error: unknown, fallback: string) => {
+  const { detail, code } = (error ?? {}) as { detail?: unknown; code?: unknown };
+  return new ApiError(
+    status,
+    typeof detail === "string" ? detail : fallback,
+    typeof code === "string" ? code : undefined,
+  );
+};
 
 // First page only. Decided roles drop out of the feed, so the deck refetches
 // this page when it runs out instead of following the cursor.
@@ -39,11 +51,7 @@ export function useApply() {
         headers: { "X-CSRFToken": csrfToken() },
       });
       if (data) return data;
-      const detail = (error as { detail?: unknown } | undefined)?.detail;
-      throw new ApiError(
-        response.status,
-        typeof detail === "string" ? detail : "Couldn't apply. Please try again.",
-      );
+      throw failed(response.status, error, "Couldn't apply. Please try again.");
     },
     onSuccess: (_, { role: id }) => {
       queryClient.setQueryData<FeedRole[]>(["feed"], (roles) =>
@@ -76,11 +84,7 @@ export function useDismiss() {
         headers: { "X-CSRFToken": csrfToken() },
       });
       if (response.ok) return;
-      const detail = (error as { detail?: unknown } | undefined)?.detail;
-      throw new ApiError(
-        response.status,
-        typeof detail === "string" ? detail : "Couldn't pass. Please try again.",
-      );
+      throw failed(response.status, error, "Couldn't pass. Please try again.");
     },
     onSuccess: (_, id) =>
       queryClient.setQueryData<FeedRole[]>(["feed"], (roles) =>
@@ -97,11 +101,7 @@ export function useResetPasses() {
         headers: { "X-CSRFToken": csrfToken() },
       });
       if (response.ok) return;
-      const detail = (error as { detail?: unknown } | undefined)?.detail;
-      throw new ApiError(
-        response.status,
-        typeof detail === "string" ? detail : "Couldn't show passed roles. Please try again.",
-      );
+      throw failed(response.status, error, "Couldn't show passed roles. Please try again.");
     },
   });
 }

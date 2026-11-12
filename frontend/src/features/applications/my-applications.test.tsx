@@ -63,7 +63,10 @@ const AFTER_COMMIT = ALL.map((a) =>
 );
 
 type Reply = { status: number; body: unknown };
-const conflict = (detail: string): Reply => ({ status: 409, body: { detail } });
+const conflict = (detail: string, code: string): Reply => ({
+  status: 409,
+  body: { detail, code },
+});
 
 // A tiny fake API. Records every request; `after` is the list once a write succeeds
 // (or fails with a 409, when the server had already moved on).
@@ -334,7 +337,8 @@ test("a commit that locks the team reloads my team, so It's a Team! shows", asyn
 
 test("owning an open project blocks the commit and links to that project", async () => {
   mockApi({
-    write: conflict("Close your open project before you commit to another team."),
+    // Told apart by the code, so the sentence can change.
+    write: conflict("You still own an open project.", "owns_open_project"),
   });
   renderPage();
 
@@ -361,11 +365,11 @@ test.each([
   ["role_not_open", "This role was just filled."],
   ["applicant_committed", "You already have a spot on a team this term."],
   ["offer_not_open", "This offer is no longer open."],
-])("a %s conflict says why and reloads the list", async (_code, detail) => {
+])("a %s conflict says why and reloads the list", async (code, detail) => {
   // The server had already closed the offer.
   mockApi({
     after: ALL.map((a) => (a.id === 1 ? { ...a, status: "passed" } : a)),
-    write: conflict(detail),
+    write: conflict(detail, code),
   });
   const client = renderPage();
 
@@ -472,7 +476,7 @@ test("confirming withdraws with the CSRF token and the row moves to Closed", asy
 test("shows the server's message when it's no longer pending", async () => {
   mockApi({
     applications: REST,
-    write: conflict("This application is no longer pending."),
+    write: conflict("This application is no longer pending.", "application_not_pending"),
   });
   renderPage();
 

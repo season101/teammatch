@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -78,13 +79,16 @@ function cursorFrom(next: string | null | undefined): string | undefined {
   );
 }
 
-export function useOpenProjects() {
+// q searches title, pitch, open role titles and their skills on the server.
+// The last results stay up while a new search loads.
+export function useOpenProjects(q = "") {
   return useInfiniteQuery({
-    queryKey: ["projects", "open"],
+    queryKey: ["projects", "open", q],
     initialPageParam: undefined as string | undefined,
+    placeholderData: keepPreviousData,
     queryFn: async ({ pageParam }) => {
       const { data, response } = await api.GET("/api/v1/projects/", {
-        params: { query: { cursor: pageParam } },
+        params: { query: { cursor: pageParam, q: q || undefined } },
       });
       if (!data)
         throw new Error(`Could not load projects (${response.status})`);
@@ -190,6 +194,8 @@ export function usePublishProject(projectId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["my-projects"] });
+      // The nav badges count open roles and their applicants.
+      queryClient.invalidateQueries({ queryKey: ["my-summary"] });
     },
   });
 }
@@ -207,6 +213,8 @@ export function useDeleteRole(projectId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["my-projects"] });
+      // The nav badges count open roles and their applicants.
+      queryClient.invalidateQueries({ queryKey: ["my-summary"] });
     },
   });
 }
@@ -250,6 +258,8 @@ export function useCloseProject(projectId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
       queryClient.invalidateQueries({ queryKey: ["my-projects"] });
+      // The nav badges count open roles and their applicants.
+      queryClient.invalidateQueries({ queryKey: ["my-summary"] });
     },
   });
 }

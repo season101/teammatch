@@ -161,7 +161,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] sm:pb-0 lg:flex-row">
-      <header className="sticky top-0 z-10 hidden items-center gap-6 border-b border-border bg-surface px-6 sm:flex lg:hidden">
+      <header className="sticky top-[env(safe-area-inset-top)] z-10 hidden items-center gap-6 border-b border-border bg-surface px-6 sm:flex lg:hidden">
         <Logo className="text-lg" />
         <nav aria-label="Main" onKeyDown={moveFocus} className="flex">
           {tabs.map((tab) => (
@@ -178,7 +178,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
       </header>
 
-      <aside className="hidden border-r border-border bg-surface lg:sticky lg:top-0 lg:flex lg:h-dvh lg:shrink-0">
+      <aside className="hidden border-r border-border bg-surface lg:sticky lg:top-[env(safe-area-inset-top)] lg:flex lg:h-[calc(100dvh-env(safe-area-inset-top))] lg:shrink-0">
         <div className="flex w-52 shrink-0 flex-col gap-1 border-r border-border p-3">
           <Link
             href="/feed"

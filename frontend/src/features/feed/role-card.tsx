@@ -17,7 +17,8 @@ export function RoleCard({ role, mySkillIds }: { role: FeedRole; mySkillIds: num
       aria-labelledby={headingId}
       // Same height on every card, so Pass and Apply never move. The viewport minus the
       // page header, padding, buttons and phone tab bar puts them just above the tab bar.
-      className="flex h-[clamp(22rem,calc(100svh-14.25rem-env(safe-area-inset-bottom)),38rem)] flex-col gap-3 overflow-hidden rounded-card border border-border bg-surface p-5 sm:h-[clamp(22rem,calc(100svh-18.5rem),38rem)]"
+      // --deck-banner is the offers banner's height when the deck shows one.
+      className="flex h-[clamp(22rem,calc(100svh-14.25rem-var(--deck-banner,0rem)-env(safe-area-inset-top)-env(safe-area-inset-bottom)),38rem)] flex-col gap-3 overflow-hidden rounded-card border border-border bg-surface p-5 sm:h-[clamp(22rem,calc(100svh-18.5rem-var(--deck-banner,0rem)-env(safe-area-inset-top)),38rem)]"
     >
       <header>
         <div className="flex items-center justify-between gap-3">

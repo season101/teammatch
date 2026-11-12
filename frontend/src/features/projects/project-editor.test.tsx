@@ -28,10 +28,10 @@ function mockApi(handler: (method: string, path: string) => Reply) {
   return calls;
 }
 
-function renderEditor(userId = 1) {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
+function renderEditor(
+  userId = 1,
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
   return render(
     <QueryClientProvider client={client}>
       <ProjectEditor projectId={7} userId={userId} />
@@ -331,7 +331,11 @@ test("closes a project after the owner confirms", async () => {
     }
     return [project({ status, roles: [ROLE] }), 200];
   });
-  renderEditor();
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  client.setQueryData(["my-summary"], {});
+  renderEditor(1, client);
   fireEvent.click(await screen.findByRole("button", { name: "Close project" }));
   const dialog = screen.getByRole("dialog");
   expect(dialog).toHaveAccessibleName("Close this project?");
@@ -349,6 +353,8 @@ test("closes a project after the owner confirms", async () => {
       (c) => c.method === "POST" && c.path === "/api/v1/projects/7/close/",
     ),
   ).toBe(true);
+  // The nav badges read the summary.
+  expect(client.getQueryState(["my-summary"])?.isInvalidated).toBe(true);
 });
 
 test("keeping the project sends nothing to the API", async () => {
