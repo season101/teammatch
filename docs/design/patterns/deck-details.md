@@ -1,6 +1,6 @@
 # Deck details and profile links
 
-**Planned, not built yet.** This is the guide for UI-06 (#207), [F3-13](../../product/backlog.md#f3-13-role-details-page), [F2-12](../../product/backlog.md#f2-12-repository-link-and-more-details-on-projects), [F1-15](../../product/backlog.md#f1-15-github-and-linkedin-on-profiles), [F1-16](../../product/backlog.md#f1-16-upload-a-resume) and [F1-17](../../product/backlog.md#f1-17-read-a-resume-in-the-app). Its seven decisions, [DD-39 to DD-45](../decisions.md), are proposals the team hasn't agreed to yet. Confirm them before building, and update this page if any change.
+**Planned, not built yet.** This is the guide for UI-06 (#207), [F3-13](../../product/backlog.md#f3-13-role-details-page), [F2-12](../../product/backlog.md#f2-12-repository-link-and-more-details-on-projects), [F1-15](../../product/backlog.md#f1-15-github-and-linkedin-on-profiles), [F1-16](../../product/backlog.md#f1-16-upload-a-resume) and [F1-17](../../product/backlog.md#f1-17-read-a-resume-in-the-app). [DD-40](../decisions.md) was agreed on Nov 11, 2026. The other six, DD-39 and DD-41 to DD-45, are proposals the team hasn't agreed to yet. Confirm them before building, and update this page if any change.
 
 Every deck card is the same size and shows a summary. Tapping it opens a details page with everything else, and Back returns to the same card. Owners can add a GitHub repository and more details to a project. Students can add GitHub, LinkedIn and a resume to their profile, and owners they apply to can read the resume inside the app.
 
@@ -8,10 +8,11 @@ Screens are numbered 47 to 53 in [screens/README.md](../screens/README.md#deck-d
 
 ## Decisions to confirm
 
+DD-40 isn't in this list any more: it's agreed, so the note box moves to the details page and a swipe right applies with no note.
+
 | # | Proposal | Why |
 |---|---|---|
 | DD-39 | The details page is the existing project page, focused on the tapped role | It already has the project, roles and team, and it covers #172. A new page would repeat all of that. |
-| DD-40 | The note box moves from the card to the details page | A swipe right applies with no note, and the card stays clean. |
 | DD-41 | The repository link is optional on every project, with a hint | A separate "software project" switch adds a step and a field for no gain. |
 | DD-42 | A resume can be opened by its owner and by owners of projects the person applied to | Anything wider puts a student's personal details in front of the whole class. |
 | DD-43 | Profile strength adds GitHub +5%, LinkedIn +5% and resume +10% | It fills the 20% that's waiting on photo upload and still tops out at 100%. A student without GitHub can reach 95%. |
