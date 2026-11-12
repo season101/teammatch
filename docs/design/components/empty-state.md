@@ -1,6 +1,6 @@
 # EmptyState
 
-What a screen shows when there's nothing to show, or when the user can't act right now. **Status: specced, not built.**
+What a screen shows when there's nothing to show, or when the user can't act right now. Code: `frontend/src/components/ui/empty-state.tsx`. Loading uses `Skeleton` and `SkeletonRows` from `skeleton.tsx` beside it.
 
 ## Anatomy
 Centred in the space the content would take:
@@ -20,7 +20,7 @@ Centred in the space the content would take:
 | Search, no results | Nothing matches "rust" | Try a skill or a project name. | Clear search |
 | Error, couldn't load | Couldn't load your deck | Check your connection and try again. | Retry |
 
-## Props (planned)
+## Props
 | Prop | Type |
 |---|---|
 | `icon` | `ReactNode` |
