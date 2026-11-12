@@ -9,11 +9,13 @@ export type Decision = { id: number; name: string; like: boolean };
 
 export class DecideError extends Error {
   status: number;
+  code?: string;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.name = "DecideError";
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -66,12 +68,13 @@ export function useDecide(roleId: number) {
         ? await api.POST("/api/v1/applications/{id}/like/", init)
         : await api.POST("/api/v1/applications/{id}/pass/", init);
       if (data) return data;
-      const detail = (error as { detail?: unknown } | undefined)?.detail;
+      const { detail, code } = (error ?? {}) as { detail?: unknown; code?: unknown };
       throw new DecideError(
         response.status,
         typeof detail === "string"
           ? detail
           : "Couldn't save your decision. Please try again.",
+        typeof code === "string" ? code : undefined,
       );
     },
     // A like is an offer now (F4-10), so team_locked stays false; kept in case it ever isn't.

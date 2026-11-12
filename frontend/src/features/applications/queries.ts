@@ -12,11 +12,13 @@ type Committed = components["schemas"]["Commit"];
 
 export class ApplicationError extends Error {
   status: number;
+  code?: string;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.name = "ApplicationError";
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -38,9 +40,14 @@ export function useMyApplications(enabled = true) {
   });
 }
 
-const detailOr = (error: unknown, fallback: string) => {
-  const detail = (error as { detail?: unknown } | undefined)?.detail;
-  return typeof detail === "string" ? detail : fallback;
+// Single-message errors come as { detail, code }.
+const failed = (status: number, error: unknown, fallback: string) => {
+  const { detail, code } = (error ?? {}) as { detail?: unknown; code?: unknown };
+  return new ApplicationError(
+    status,
+    typeof detail === "string" ? detail : fallback,
+    typeof code === "string" ? code : undefined,
+  );
 };
 
 // Offers, counts and the deck state all move on a withdraw, commit or decline. A 409
@@ -62,22 +69,14 @@ export function useWithdraw() {
         },
       );
       if (data) return data;
-      throw new ApplicationError(
-        response.status,
-        detailOr(error, "Couldn't withdraw. Please try again."),
-      );
+      throw failed(response.status, error, "Couldn't withdraw. Please try again.");
     },
     onSettled: () => refresh(queryClient),
   });
 }
 
-// shortcut: a 409 body only has the sentence, not the error code, so the
-// owns_open_project case is matched on it. Read the code once the API sends one.
-const OWNS_OPEN_PROJECT =
-  "Close your open project before you commit to another team.";
-
 export const isBlocked = (error: ApplicationError | null) =>
-  error?.status === 409 && error.message === OWNS_OPEN_PROJECT;
+  error?.code === "owns_open_project";
 
 // Takes the seat. My other offers and pending applications close with it (F4-10).
 export function useCommit() {
@@ -92,10 +91,7 @@ export function useCommit() {
         },
       );
       if (data) return data;
-      throw new ApplicationError(
-        response.status,
-        detailOr(error, "Couldn't commit. Please try again."),
-      );
+      throw failed(response.status, error, "Couldn't commit. Please try again.");
     },
     onSuccess: (committed) => {
       // The last role: the app shell refetches my team and shows "It's a Team!".
@@ -119,10 +115,7 @@ export function useDecline() {
         },
       );
       if (data) return data;
-      throw new ApplicationError(
-        response.status,
-        detailOr(error, "Couldn't decline. Please try again."),
-      );
+      throw failed(response.status, error, "Couldn't decline. Please try again.");
     },
     onSettled: () => refresh(queryClient),
   });
