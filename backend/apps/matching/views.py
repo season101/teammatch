@@ -24,12 +24,16 @@ from .serializers import (
 )
 
 
+class FeedPagination(DefaultCursorPagination):
+    ordering = services.FEED_ORDERING
+
+
 @extend_schema(tags=["feed"])
 class FeedView(generics.ListAPIView):
-    """Open roles I can still apply to. Empty while I'm retired (BR-09)."""
+    """Open roles I can still apply to, best match first. Empty while I'm retired (BR-09)."""
 
     serializer_class = FeedRoleSerializer
-    pagination_class = DefaultCursorPagination
+    pagination_class = FeedPagination
 
     def get_queryset(self):
         return services.feed_roles(self.request.user)
@@ -42,7 +46,8 @@ class FeedView(generics.ListAPIView):
 class RoleApplicationsView(generics.ListAPIView):
     """Applicants for one of my roles. Not my project: 403.
 
-    Pending by default, minus retired ones (BR-09). ?status=liked lists my offers out (F4-10).
+    Pending by default, minus retired ones (BR-09), best match first then oldest.
+    ?status=liked lists my offers out (F4-10), newest first.
     """
 
     serializer_class = RoleApplicationSerializer
@@ -55,6 +60,8 @@ class RoleApplicationsView(generics.ListAPIView):
         status = self.request.query_params.get("status")
         if status not in ApplicationStatus.values:
             status = ApplicationStatus.PENDING
+        if status == ApplicationStatus.PENDING:
+            self.paginator.ordering = services.QUEUE_ORDERING
         return services.role_applications(role, status)
 
 

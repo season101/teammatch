@@ -12,6 +12,6 @@ class DefaultCursorPagination(CursorPagination):
     def paginate_queryset(self, queryset, request, view=None):
         try:
             return super().paginate_queryset(queryset, request, view)
-        except ValidationError:
-            # DRF decodes a forged cursor fine, then the ORM rejects its position
+        except (ValidationError, ValueError):
+            # DRF decodes a forged cursor fine, then the ORM rejects its position (date or number)
             raise NotFound(self.invalid_cursor_message) from None

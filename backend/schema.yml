@@ -190,7 +190,8 @@ paths:
   /api/v1/feed/:
     get:
       operationId: feed_list
-      description: Open roles I can still apply to. Empty while I'm retired (BR-09).
+      description: Open roles I can still apply to, best match first. Empty while
+        I'm retired (BR-09).
       parameters:
       - name: cursor
         required: false
@@ -627,7 +628,8 @@ paths:
       description: |-
         Applicants for one of my roles. Not my project: 403.
 
-        Pending by default, minus retired ones (BR-09). ?status=liked lists my offers out (F4-10).
+        Pending by default, minus retired ones (BR-09), best match first then oldest.
+        ?status=liked lists my offers out (F4-10), newest first.
       parameters:
       - name: cursor
         required: false
@@ -1614,10 +1616,15 @@ components:
           type: string
           format: date-time
           readOnly: true
+        match_percent:
+          type: integer
+          nullable: true
+          readOnly: true
       required:
       - applicant
       - created_at
       - id
+      - match_percent
     RoleDetail:
       type: object
       properties:

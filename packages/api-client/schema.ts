@@ -142,7 +142,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Open roles I can still apply to. Empty while I'm retired (BR-09). */
+        /** @description Open roles I can still apply to, best match first. Empty while I'm retired (BR-09). */
         get: operations["feed_list"];
         put?: never;
         post?: never;
@@ -401,7 +401,8 @@ export interface paths {
         /**
          * @description Applicants for one of my roles. Not my project: 403.
          *
-         *     Pending by default, minus retired ones (BR-09). ?status=liked lists my offers out (F4-10).
+         *     Pending by default, minus retired ones (BR-09), best match first then oldest.
+         *     ?status=liked lists my offers out (F4-10), newest first.
          */
         get: operations["roles_applications_list"];
         put?: never;
@@ -818,6 +819,7 @@ export interface components {
             status?: components["schemas"]["ApplicationStatusEnum"];
             /** Format: date-time */
             readonly created_at: string;
+            readonly match_percent: number | null;
         };
         RoleDetail: {
             readonly id: number;
