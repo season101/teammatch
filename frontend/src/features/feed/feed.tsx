@@ -1,10 +1,11 @@
 "use client";
 
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, useMotionValue } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
+import { useBump } from "@/components/ui/bump";
 import { buttonClasses } from "@/components/ui/button";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { useMyApplications } from "@/features/applications/queries";
@@ -33,6 +34,9 @@ export function Feed() {
   // My offers, and whether a commit closed my deck (F4-11). The shell loads it too.
   const summary = useMySummary().data;
   const committed = summary?.deck === "committed";
+  const offersBump = useBump(summary?.offers);
+  // How far the top card is dragged; the card under it grows with it.
+  const follow = useMotionValue(0);
   // Only to name the project I committed to.
   const seat = useMyApplications(committed).data?.find((a) => a.status === "committed");
   // Only used to highlight matching skills, so the feed doesn't wait for it.
@@ -228,7 +232,8 @@ export function Feed() {
         >
           <span
             aria-hidden="true"
-            className="grid size-8 shrink-0 place-items-center rounded-full bg-apply font-bold text-on-apply"
+            key={offersBump.key}
+            className={`grid size-8 shrink-0 place-items-center rounded-full bg-apply font-bold text-on-apply ${offersBump.className}`}
           >
             {offers}
           </span>
@@ -264,6 +269,7 @@ export function Feed() {
               key={role.id}
               isTop={role === top}
               returning={role.id === returning}
+              follow={follow}
               onCommit={commit}
               onTap={() => router.push(roleHref(role))}
             >

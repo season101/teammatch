@@ -22,6 +22,9 @@ export function ProjectsList() {
     return () => clearTimeout(timer);
   }, [query]);
   const projects = useOpenProjects(search);
+  // Rows fade up in order only when the list arrives from a load. A list that was
+  // already cached is just there, and search results never stagger.
+  const [arrived] = useState(projects.isPending);
   const clear = () => {
     setQuery("");
     setSearch("");
@@ -69,10 +72,12 @@ export function ProjectsList() {
   } else {
     content = (
       <ul className="flex flex-col gap-4">
-        {items.map((project) => (
+        {items.map((project, i) => (
           <li
             key={project.id}
-            className="rounded-card border border-border bg-surface p-5"
+            // The first six are 40ms apart; the rest come in with the sixth.
+            style={arrived && !search ? { animationDelay: `${Math.min(i, 5) * 40}ms` } : undefined}
+            className={`rounded-card border border-border bg-surface p-5 ${arrived && !search ? "motion-safe:animate-row-in" : ""}`}
           >
             <h2 className="text-lg font-semibold">
               <Link

@@ -6,6 +6,7 @@ import type { KeyboardEvent, ReactNode } from "react";
 
 import { buttonClasses } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
+import { useBump } from "@/components/ui/bump";
 import { useSession } from "@/features/accounts/require-sign-in";
 import { SignOutButton } from "@/features/accounts/sign-out-button";
 import { ApplicationsPanel } from "@/features/applications/my-applications";
@@ -99,10 +100,14 @@ function isIn(pathname: string, paths: string[]) {
 
 // A count on a nav item. Nothing when it's zero or not loaded yet.
 function Badge({ item, counts }: { item: NavItem; counts?: Counts }) {
-  const count = item.badge && counts?.[item.badge.count];
+  const count = item.badge ? counts?.[item.badge.count] : undefined;
+  const bump = useBump(count);
   if (!count) return null;
   return (
-    <span className="grid h-5 min-w-5 place-items-center rounded-pill bg-cta px-1.5 text-xs font-bold text-on-cta">
+    <span
+      key={bump.key}
+      className={`grid h-5 min-w-5 place-items-center rounded-pill bg-cta px-1.5 text-xs font-bold text-on-cta ${bump.className}`}
+    >
       <span aria-hidden="true">{count}</span>
       <span className="sr-only">
         , {count} {item.badge!.label}

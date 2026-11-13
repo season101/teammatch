@@ -6,8 +6,10 @@ import {
   useDragControls,
   useIsPresent,
   useMotionValue,
+  useMotionValueEvent,
   useReducedMotion,
   useTransform,
+  type MotionValue,
   type PanInfo,
 } from "motion/react";
 import { useEffect, useRef, type ReactNode } from "react";
@@ -48,6 +50,7 @@ const CONTROLS = "a, button, input, label, select, textarea";
 export function SwipeCard({
   isTop,
   returning = false,
+  follow,
   onCommit,
   onTap,
   children,
@@ -55,6 +58,8 @@ export function SwipeCard({
   isTop: boolean;
   // An undone pass: the card comes back in from the left, the way it went.
   returning?: boolean;
+  // Shared by the deck's cards: how far the top card is dragged, 0 to 1 at the commit distance.
+  follow: MotionValue<number>;
   onCommit: (direction: Direction) => void;
   onTap: () => void;
   children: ReactNode;
@@ -78,6 +83,21 @@ export function SwipeCard({
   const applyOpacity = useTransform(x, (v) => v / commitDistance());
   const passOpacity = useTransform(x, (v) => -v / commitDistance());
   const active = isTop && isPresent;
+
+  // The card underneath comes forward as the top one is dragged away. Its outer scale
+  // stays at 0.96 (the `animate` below), so this inner one runs from 1 to 1/0.96 and
+  // the two meet at full size. When this card becomes the top one, the inner scale
+  // eases back to 1 while the outer eases up, so the hand-over doesn't jump.
+  const lift = useMotionValue(1);
+  useMotionValueEvent(x, "change", (v) => {
+    if (active && !reduce) follow.set(Math.min(1, Math.abs(v) / commitDistance()));
+  });
+  useMotionValueEvent(follow, "change", (v) => {
+    if (!isTop && isPresent) lift.set(1 + (1 / 0.96 - 1) * v);
+  });
+  useEffect(() => {
+    if (isTop) animate(lift, 1, { duration: 0.2, ease: STANDARD });
+  }, [isTop, lift]);
 
   function onDragEnd(_: unknown, info: PanInfo) {
     const direction = swipeDirection(
@@ -152,7 +172,7 @@ export function SwipeCard({
       >
         PASS
       </motion.span>
-      {children}
+      <motion.div style={{ scale: lift }}>{children}</motion.div>
     </motion.div>
   );
 }

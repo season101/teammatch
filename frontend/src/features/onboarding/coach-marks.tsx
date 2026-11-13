@@ -18,6 +18,8 @@ export function CoachMarks() {
   const seen = useCoachSeen();
   // Closes the sheet even when storage is blocked and "seen" can't be saved.
   const [closed, setClosed] = useState(false);
+  // The swipe hint stops the moment it's touched.
+  const [touched, setTouched] = useState(false);
   const open = !seen && !closed;
   const dialogRef = useRef<HTMLDialogElement>(null);
   const ctaRef = useRef<HTMLButtonElement>(null);
@@ -50,6 +52,21 @@ export function CoachMarks() {
       <h2 id={titleId} className="font-display text-2xl font-extrabold">
         One role at a time
       </h2>
+      {/* Shows the gesture instead of only describing it. Hidden with reduced motion; the rows below say the same. */}
+      <div
+        aria-hidden="true"
+        onPointerDown={() => setTouched(true)}
+        className={`grid place-items-center py-1 motion-reduce:hidden ${touched ? "[&_*]:[animation-play-state:paused]" : ""}`}
+      >
+        <div className="relative h-20 w-28 rounded-row border border-border bg-surface-2 animate-coach-swipe">
+          <span className="absolute top-2 left-2 -rotate-12 rounded-chip border-2 border-current px-1 text-[10px] font-extrabold tracking-wider text-apply-text opacity-0 animate-coach-apply">
+            APPLY
+          </span>
+          <span className="absolute top-2 right-2 rotate-12 rounded-chip border-2 border-current px-1 text-[10px] font-extrabold tracking-wider text-pass opacity-0 animate-coach-pass">
+            PASS
+          </span>
+        </div>
+      </div>
       <ul className="flex flex-col gap-2">
         {MARKS.map(([icon, label]) => (
           <li

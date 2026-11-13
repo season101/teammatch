@@ -19,8 +19,11 @@ const sizes = {
 export function buttonClasses(
   variant: keyof typeof variants = "cta",
   size: keyof typeof sizes = "md",
+  // A wide button dims on press instead of scaling: 4% of a full-width pill is a jump at the edges.
+  wide = false,
 ) {
-  return `inline-flex items-center justify-center gap-2 rounded-pill font-semibold transition duration-fast ease-standard disabled:cursor-not-allowed disabled:opacity-50 motion-safe:active:scale-[0.98] ${variants[variant]} ${sizes[size]}`;
+  const press = wide ? "active:opacity-80" : "motion-safe:active:scale-[0.96]";
+  return `inline-flex items-center justify-center gap-2 rounded-pill font-semibold transition duration-fast ease-standard disabled:cursor-not-allowed disabled:opacity-50 ${press} ${variants[variant]} ${sizes[size]}`;
 }
 
 type Props = ComponentProps<"button"> & {
@@ -38,7 +41,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={`${buttonClasses(variant, size)} ${className}`}
+      className={`${buttonClasses(variant, size, /(^|\s)(w-full|flex-1)(\s|$)/.test(className))} ${className}`}
       {...props}
     />
   );

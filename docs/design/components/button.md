@@ -29,7 +29,7 @@ A pill (`rounded-pill`) with a label and an optional leading icon, semibold Geis
 
 ## States
 - **Hover:** cta at 90% opacity; secondary moves to `surface`; ghost underlines; danger gets a `surface-2` fill.
-- **Pressed:** scales to 0.98.
+- **Pressed:** scales to 0.96. A full-width button (`w-full` or `flex-1`) dims to 80% instead, because 4% of a wide pill is a jump at the edges.
 - **Focus:** global violet ring.
 - **Disabled:** 50% opacity and a not-allowed cursor. Show the reason nearby in helper text.
 - **Loading:** the button disables on the press. A spinner replaces the label only if the wait passes 300ms, and then stays at least 500ms, so a quick reply never flashes it. The button keeps its width. Wrap the label in `PendingLabel` (`components/ui/pending-label.tsx`).
