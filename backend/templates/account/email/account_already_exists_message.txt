@@ -1,0 +1,8 @@
+{% extends "account/email/base_message.txt" %}
+
+{% block content %}{% autoescape off %}Someone, hopefully you, tried to sign up for TeamMatch with {{ email }}, but there's already an account with this address. You may have made it with Continue with Google.
+
+To get in, use Continue with Google, or set a password with this link:
+{{ password_reset_url }}
+
+If you didn't try to sign up, you can ignore this email.{% endautoescape %}{% endblock content %}

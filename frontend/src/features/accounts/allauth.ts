@@ -98,3 +98,18 @@ export async function continueWith(provider: string, next?: string) {
   document.body.append(form);
   form.submit();
 }
+
+// Is the password reset key from the email still good? A GET only checks it;
+// it doesn't use it up. Only a 400 means expired or used. Anything else (a 500,
+// a 429) is "unknown": show the form and let saving the password decide.
+export async function checkResetKey(
+  key: string,
+): Promise<"valid" | "expired" | "unknown"> {
+  const response = await fetch(`${BASE}/auth/password/reset`, {
+    credentials: "same-origin",
+    headers: { "X-Password-Reset-Key": key },
+  });
+  if (response.status === 200) return "valid";
+  if (response.status === 400) return "expired";
+  return "unknown";
+}

@@ -69,7 +69,7 @@ One email is always one account (`ACCOUNT_UNIQUE_EMAIL`). With `SOCIALACCOUNT_EM
 | Google | Sign up with email and password, same address | No second account. allauth answers as for a new signup and emails a "you already have an account" message with a reset link | Google |
 | Google | Reset the password, then sign in with it | allauth sends reset emails to Google-only accounts too | Password and Google |
 
-Known gap: there are no reset-password pages yet, although emails already link to `/reset-password` and `/reset-password/<key>` (`HEADLESS_FRONTEND_URLS`). Until they exist, a Google-only account can't add a password. Tracked as F1-10 (#135).
+Setting a password: the emails link to `/reset-password` and `/reset-password/<key>` (`HEADLESS_FRONTEND_URLS`). The first page asks for the school email and sends the link; the second checks the key and saves the password (F1-10, #135). A Google-only account uses the same pages to add a password, and Google keeps working. The two emails, `password_reset_key_message.txt` and `account_already_exists_message.txt` in `backend/templates/account/email/`, say so.
 
 ## Where the sign-in comes back
 

@@ -160,3 +160,63 @@ def test_config_lists_google_for_the_frontend(client):
             "client_id": "test-client",
         }
     ]
+
+
+def emailed_reset_key(body):
+    link = next(word for word in body.split() if "/reset-password/" in word)
+    return link.rsplit("/", 1)[1]
+
+
+def test_google_only_account_can_add_a_password_and_keep_google(client):
+    google_returns(client, STUDENT)
+    user = get_user_model().objects.get(email=STUDENT["email"])
+    assert not user.has_usable_password()
+    client.logout()
+
+    response = client.post(
+        "/_allauth/browser/v1/auth/password/request",
+        {"email": STUDENT["email"]},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    body = mail.outbox[-1].body
+    assert "signed up with Google" in body  # F1-10: the email covers adding a password
+    key = emailed_reset_key(body)
+
+    response = client.post(
+        "/_allauth/browser/v1/auth/password/reset",
+        {"key": key, "password": "a-new-long-password-7"},
+        content_type="application/json",
+    )
+    assert response.status_code == 401  # saved; a reset doesn't sign you in
+
+    response = client.post(
+        "/_allauth/browser/v1/auth/login",
+        {"email": STUDENT["email"], "password": "a-new-long-password-7"},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    client.logout()
+
+    assert error_of(google_returns(client, STUDENT)) is None
+    assert client.session["_auth_user_id"] == str(user.pk)
+    assert get_user_model().objects.count() == 1
+
+
+def test_signing_up_over_a_google_account_emails_a_working_reset_link(client, settings):
+    # another address: allauth rate-limits these emails per address across tests
+    claims = {**STUDENT, "sub": "222", "email": "s222@email.latech.edu"}
+    google_returns(client, claims)
+    client.logout()
+
+    response = client.post(
+        "/_allauth/browser/v1/auth/signup",
+        {"email": claims["email"], "password": "a-new-long-password-7"},
+        content_type="application/json",
+    )
+
+    assert response.status_code == 401  # answers like a new sign-up (no enumeration)
+    assert get_user_model().objects.count() == 1
+    body = mail.outbox[-1].body
+    assert "Continue with Google" in body
+    assert f"{settings.FRONTEND_URL}/reset-password" in body  # the page that sends a reset link
