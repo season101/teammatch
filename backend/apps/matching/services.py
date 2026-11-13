@@ -406,6 +406,11 @@ def dismiss(role, user):
     RoleDismissal.objects.get_or_create(user=user, role=role)
 
 
+def undo_dismiss(role, user):
+    """Take back my pass on one role, so it's in my feed again (F3-10). No pass: nothing to do."""
+    RoleDismissal.objects.filter(user=user, role=role).delete()
+
+
 def reset_passes(user):
     """Bring every role I passed on back into my feed. Applied roles stay out."""
     RoleDismissal.objects.filter(user=user).delete()

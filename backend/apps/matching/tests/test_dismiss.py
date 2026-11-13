@@ -112,6 +112,37 @@ def test_requires_sign_in(role):
     assert not RoleDismissal.objects.exists()
 
 
+def undo(user, role):
+    return as_user(user).delete(f"/api/v1/roles/{role.id}/dismiss/")
+
+
+def test_undo_brings_the_passed_role_back(candidate, role):
+    dismiss(candidate, role)
+
+    assert undo(candidate, role).status_code == 204
+    assert feed_ids(candidate) == [role.id]
+
+
+def test_undo_with_no_pass_is_fine(candidate, role):
+    assert undo(candidate, role).status_code == 204
+
+
+def test_undo_leaves_other_peoples_passes_alone(candidate, role):
+    other = User.objects.create_user(email="riley@latech.edu", password="pw")
+    dismiss(other, role)
+
+    assert undo(candidate, role).status_code == 204
+    assert RoleDismissal.objects.filter(user=other, role=role).exists()
+
+
+def test_undo_unknown_role_404(candidate):
+    assert as_user(candidate).delete("/api/v1/roles/999999/dismiss/").status_code == 404
+
+
+def test_undo_needs_sign_in(role):
+    assert APIClient().delete(f"/api/v1/roles/{role.id}/dismiss/").status_code in (401, 403)
+
+
 def reset(user):
     return as_user(user).post("/api/v1/feed/reset/")
 

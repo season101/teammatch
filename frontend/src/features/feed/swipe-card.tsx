@@ -10,7 +10,7 @@ import {
   useTransform,
   type PanInfo,
 } from "motion/react";
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 export type Direction = "left" | "right";
 
@@ -47,11 +47,14 @@ const CONTROLS = "a, button, input, label, select, textarea";
 // Drag, stamps and fly-off for one card. What a commit or a tap does is up to the deck.
 export function SwipeCard({
   isTop,
+  returning = false,
   onCommit,
   onTap,
   children,
 }: {
   isTop: boolean;
+  // An undone pass: the card comes back in from the left, the way it went.
+  returning?: boolean;
   onCommit: (direction: Direction) => void;
   onTap: () => void;
   children: ReactNode;
@@ -63,7 +66,10 @@ export function SwipeCard({
   // False while the card flies off, so it can't be dragged or clicked again.
   const isPresent = useIsPresent();
   const reduce = useReducedMotion();
-  const x = useMotionValue(0);
+  const x = useMotionValue(returning && !reduce ? -600 : 0);
+  useEffect(() => {
+    if (x.get() !== 0) animate(x, 0, SPRING);
+  }, [x]);
   const y = useMotionValue(0);
   // distance / 20 degrees, capped at 15.
   const rotate = useTransform(x, [-300, 0, 300], [-15, 0, 15]);
@@ -95,16 +101,17 @@ export function SwipeCard({
       aria-hidden={!active}
       inert={!active}
       className={`relative col-start-1 row-start-1 touch-pan-y select-none rounded-card shadow-card ${
-        isPresent ? (isTop ? "z-10" : "") : "z-20"
+        isPresent ? (isTop ? "z-10" : "") : isTop ? "z-20" : ""
       }`}
       style={{ x, y, rotate: reduce ? 0 : rotate }}
       animate={{ scale: isTop || reduce ? 1 : 0.96, opacity: isTop ? 1 : 0.7 }}
       transition={{ duration: 0.2, ease: STANDARD }}
       exit="gone"
       variants={{
-        // Reduced motion: a 200ms cross-fade instead of the fly-off.
+        // Reduced motion: a 200ms cross-fade instead of the fly-off. So does the card
+        // underneath when an undone one pushes it out of the two on show.
         gone: (direction: Direction) =>
-          reduce
+          reduce || !isTop
             ? { opacity: 0 }
             : {
                 x: direction === "right" ? 600 : -600,

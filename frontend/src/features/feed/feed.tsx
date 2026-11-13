@@ -13,7 +13,15 @@ import { useShortcutsEnabled } from "@/features/shell/preferences";
 import { useMySummary } from "@/features/shell/queries";
 import { termEnd } from "@/features/teams/my-team";
 import { useMyTeam } from "@/features/teams/queries";
-import { useApply, useDismiss, useFeed, useResetPasses, type ApiError } from "./queries";
+import {
+  useApply,
+  useDismiss,
+  useFeed,
+  useResetPasses,
+  useUndoPass,
+  type ApiError,
+  type FeedRole,
+} from "./queries";
 import { deckCardHeight, RoleCard, roleHref } from "./role-card";
 import { SwipeCard, type Direction } from "./swipe-card";
 
@@ -33,6 +41,12 @@ export function Feed() {
   const apply = useApply();
   const dismiss = useDismiss();
   const reset = useResetPasses();
+  const undoPass = useUndoPass();
+  // The role I passed on, while that pass is still my last decision here. Undo brings
+  // back this one only (F3-10). `sent` is its request, which an undo has to wait for.
+  const [lastPass, setLastPass] = useState<{ role: FeedRole; sent: Promise<void> } | null>(null);
+  // The undone role, so its card flies back in from the left.
+  const [returning, setReturning] = useState<number | null>(null);
   // Set when a reset brought nothing back.
   const [noPasses, setNoPasses] = useState(false);
   // Roles decided here. They leave the deck at once and come back if the request fails.
@@ -102,10 +116,14 @@ export function Feed() {
     try {
       let message;
       if (to === "right") {
+        // An apply can't be undone from the deck (BR-02), and it ends the last pass's turn.
+        setLastPass(null);
         await apply.mutateAsync({ role: role.id });
         message = `Applied to ${role.title} at ${role.project.title}.`;
       } else {
-        await dismiss.mutateAsync(role.id);
+        const sent = dismiss.mutateAsync(role.id);
+        setLastPass({ role, sent });
+        await sent;
         setNoPasses(false);
         message = `Passed on ${role.title}.`;
       }
@@ -119,6 +137,28 @@ export function Feed() {
       setError(message);
       // 409: the role was filled or closed, or I already applied. Nothing to bring back.
       if (status !== 409) setGone((ids) => ids.filter((id) => id !== role.id));
+      // A pass that didn't happen can't be undone.
+      setLastPass((last) => (last?.role.id === role.id ? null : last));
+    }
+  }
+
+  // Undo the last pass: the card comes back on top. Only that one (DD-17).
+  async function undo() {
+    if (!lastPass) return;
+    const { role, sent } = lastPass;
+    // The Undo button turns off, so focus waits on the deck for the card.
+    stack.current?.focus();
+    setLastPass(null);
+    setError("");
+    // The pass may still be on its way; taking it back has to land after it.
+    await sent.catch(() => {});
+    setReturning(role.id);
+    setGone((ids) => ids.filter((id) => id !== role.id));
+    try {
+      await undoPass.mutateAsync(role);
+      setAnnouncement(`${role.title} is back.`);
+    } catch (err) {
+      setError((err as ApiError).message);
     }
   }
 
@@ -146,8 +186,15 @@ export function Feed() {
   // held key doesn't keep deciding. Enter opens details only from the deck itself, so
   // it still presses a focused button.
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (!top || event.repeat) return;
+    if (event.repeat) return;
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    // Z works on an empty deck too: the last card may be the one to bring back.
+    if (shortcuts && event.key.toLowerCase() === "z") {
+      event.preventDefault();
+      undo();
+      return;
+    }
+    if (!top) return;
     const open =
       (event.key === "Enter" && event.target === stack.current) ||
       (shortcuts && event.key === "ArrowUp");
@@ -207,7 +254,7 @@ export function Feed() {
         ref={stack}
         role="group"
         aria-label="Deck of open roles"
-        aria-keyshortcuts={shortcuts ? "ArrowLeft ArrowRight ArrowUp" : undefined}
+        aria-keyshortcuts={shortcuts ? "ArrowLeft ArrowRight ArrowUp Z" : undefined}
         tabIndex={top ? 0 : -1}
         className="isolate grid grid-cols-1 rounded-card"
       >
@@ -216,6 +263,7 @@ export function Feed() {
             <SwipeCard
               key={role.id}
               isTop={role === top}
+              returning={role.id === returning}
               onCommit={commit}
               onTap={() => router.push(roleHref(role))}
             >
@@ -253,14 +301,28 @@ export function Feed() {
             </div>
           ))}
       </div>
-      {top && (
+      {(top || lastPass) && (
         <div className="flex items-center justify-center gap-3">
-          <ActionButton kind="pass" label={`Pass on ${top.title}`} onClick={() => commit("left")} />
           <ActionButton
-            kind="apply"
-            label={`Apply to ${top.title} on ${top.project.title}`}
-            onClick={() => commit("right")}
+            kind="undo"
+            label="Undo your last pass"
+            disabled={!lastPass}
+            onClick={undo}
           />
+          {top && (
+            <>
+              <ActionButton
+                kind="pass"
+                label={`Pass on ${top.title}`}
+                onClick={() => commit("left")}
+              />
+              <ActionButton
+                kind="apply"
+                label={`Apply to ${top.title} on ${top.project.title}`}
+                onClick={() => commit("right")}
+              />
+            </>
+          )}
         </div>
       )}
     </div>
