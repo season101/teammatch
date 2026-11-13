@@ -37,12 +37,18 @@ Rows, panels and inputs have no shadow.
 | `splash` easing | `cubic-bezier(.65, 0, .35, 1)` | `var(--ease-splash)` (landing splash only) |
 | `standard` easing | `cubic-bezier(.2, .8, .2, 1)` | `ease-standard` |
 | `exit` easing | `cubic-bezier(.55, 0, 1, .45)` | `ease-exit` (anything leaving) |
+| `move` easing | `cubic-bezier(.77, 0, .175, 1)` | `ease-move` (moving or resizing in place) |
 
 | Moment | Motion |
 |---|---|
-| Hover, press | Scale to 1.06 on hover and focus, 0.95 to 0.98 on press, `fast` |
+| Hover, press | Scale to 1.06 on hover and focus, 0.95 to 0.96 on press, `fast`. A full-width button dims on press instead of scaling. |
+| A count goes up | Nav badges and the offers banner pop once (scale to 1.15 and back, `base`). Not on first load, not when the count drops. |
+| A number changes | Profile strength rolls up when it grows and down when it shrinks, `base`. The bar grows with `scaleX` on `move`. |
+| Onboarding step | The pill for the step just reached fills from the left, 300ms on `move`. |
+| A list arrives | Project rows fade up 40ms apart for the first six; the rest come with the sixth. Only after a load, never for search results or a cached list. |
+| Pick a skill | The chip travels to My skills and the others close the gap, 240ms on `move`. Typing in the search doesn't animate. |
 | Drag a card | Follows the pointer 1:1 and tilts `distance / 20` degrees, capped at 15°. The stamp fades in with distance. |
-| Commit a swipe | At 30% of card width, or a fling faster than 0.6 px/ms. The card flies off on the swipe spring and fades in `base`; the next card scales from 0.96 to 1. |
+| Commit a swipe | At 30% of card width, or a fling faster than 0.6 px/ms. The card flies off on the swipe spring and fades in `base`; the next card scales from 0.96 to 1, and grows with the drag before that. |
 | Cancel a swipe | Springs back on the swipe spring (0.5s, no bounce), starting at the release speed |
 | Undo a pass | The card flies back in from the left |
 | Change card page | Content swaps instantly; the page-tab underline slides in `fast` |

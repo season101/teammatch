@@ -11,10 +11,13 @@ const STANDARD = [0.2, 0.8, 0.2, 1] as const;
 const STAGGER = 0.08;
 const SLOW = 0.32;
 const CONFETTI_FOR = 1.2;
+const EXIT = [0.55, 0, 1, 0.45] as const;
 
 // Fixed pieces so render stays pure. Every piece has landed by CONFETTI_FOR.
+// Each one is thrown up from behind the title and falls where `x` says (vw from the middle).
 const CONFETTI = Array.from({ length: 28 }, (_, i) => ({
-  left: (i * 37) % 100,
+  x: ((i * 37) % 100) - 50,
+  peak: 16 + (i % 5) * 5,
   delay: (i % 7) * 0.05,
   spin: i % 2 ? 360 : -360,
   color: ["bg-apply", "bg-on-primary", "bg-info", "bg-undo"][i % 4],
@@ -82,7 +85,8 @@ export function ItsATeam({ team, onClose }: { team: MyTeam; onClose: () => void 
               key={index}
               initial={reduce ? false : { opacity: 0, x: -24 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * STAGGER, duration: SLOW, ease: STANDARD }}
+              // A soft spring, so each avatar settles instead of stopping dead.
+              transition={{ delay: index * STAGGER, type: "spring", duration: 0.5, bounce: 0.25 }}
               className="flex w-20 flex-col items-center gap-1"
             >
               <span
@@ -124,10 +128,21 @@ function Confetti({ at }: { at: number }) {
       {CONFETTI.map((piece, index) => (
         <motion.span
           key={index}
-          className={`absolute -top-4 h-3 w-1.5 rounded-sm ${piece.color}`}
-          style={{ left: `${piece.left}%` }}
-          animate={{ y: "110vh", rotate: piece.spin }}
-          transition={{ delay: at + piece.delay, duration: CONFETTI_FOR - piece.delay, ease: "easeIn" }}
+          className={`absolute top-[42%] left-1/2 h-3 w-1.5 rounded-sm ${piece.color}`}
+          initial={{ opacity: 0 }}
+          animate={{
+            opacity: [0, 1, 1],
+            x: ["0vw", `${piece.x * 0.6}vw`, `${piece.x}vw`],
+            y: ["0vh", `-${piece.peak}vh`, "70vh"],
+            rotate: piece.spin,
+          }}
+          // Up fast, then down: an arc, not a straight fall.
+          transition={{
+            delay: at + piece.delay,
+            duration: CONFETTI_FOR - piece.delay,
+            times: [0, 0.3, 1],
+            ease: [STANDARD, EXIT],
+          }}
         />
       ))}
     </div>

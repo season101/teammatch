@@ -39,6 +39,7 @@ On desktop the left column holds the fields and the right column the avatar and 
 
 ## Skill picker
 - A search field above a grid of pill chips. Selected chips use the `selected` variant.
+- A picked skill travels to "My skills" and the rest close the gap. Profile strength rolls to its new number.
 - The CTA counts picks: "Continue · 3 skills".
 - Popular skills for the term show first.
 

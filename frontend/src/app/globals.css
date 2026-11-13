@@ -162,11 +162,24 @@
   /* Leaving is shorter than entering, on a curve that starts slow. */
   --transition-duration-exit: 160ms;
   --ease-exit: cubic-bezier(0.55, 0, 1, 0.45);
+  /* Moving or resizing in place: slow at both ends. */
+  --ease-move: cubic-bezier(0.77, 0, 0.175, 1);
 
   --animate-toast-in: toast-in var(--transition-duration-slow) var(--ease-standard);
   --animate-fade-in: fade-in var(--transition-duration-base) var(--ease-standard);
   /* One shake for a failed attempt (wrong password). Never on blur. */
   --animate-shake: shake 360ms linear;
+  /* A progress pill filling, a count going up, a number changing, a list arriving. */
+  --animate-fill-in: fill-in 300ms var(--ease-move) backwards;
+  --animate-bump: bump var(--transition-duration-base) var(--ease-standard);
+  --animate-roll-up: roll-up var(--transition-duration-base) var(--ease-standard);
+  --animate-roll-down: roll-down var(--transition-duration-base) var(--ease-standard);
+  --animate-row-in: row-in var(--transition-duration-base) var(--ease-standard) backwards;
+  /* Ambient loops: the landing card, and the swipe hint on the coach marks. */
+  --animate-drift: drift 5s ease-in-out infinite;
+  --animate-coach-swipe: coach-swipe 4.4s var(--ease-move) infinite;
+  --animate-coach-apply: coach-apply 4.4s linear infinite;
+  --animate-coach-pass: coach-pass 4.4s linear infinite;
 
   @keyframes toast-in {
     from {
@@ -178,6 +191,37 @@
     from {
       opacity: 0;
     }
+  }
+  @keyframes fill-in {
+    from { transform: scaleX(0); }
+  }
+  @keyframes bump {
+    50% { transform: scale(1.15); }
+  }
+  @keyframes roll-up {
+    from { opacity: 0; transform: translateY(60%); }
+  }
+  @keyframes roll-down {
+    from { opacity: 0; transform: translateY(-60%); }
+  }
+  @keyframes row-in {
+    from { opacity: 0; transform: translateY(8px); }
+  }
+  @keyframes drift {
+    50% { translate: 0 -6px; }
+  }
+  @keyframes coach-swipe {
+    0%, 12%, 46%, 58%, 92%, 100% { transform: none; }
+    28%, 34% { transform: translateX(40px) rotate(7deg); }
+    74%, 80% { transform: translateX(-40px) rotate(-7deg); }
+  }
+  @keyframes coach-apply {
+    0%, 14%, 44%, 100% { opacity: 0; }
+    28%, 34% { opacity: 1; }
+  }
+  @keyframes coach-pass {
+    0%, 60%, 90%, 100% { opacity: 0; }
+    74%, 80% { opacity: 1; }
   }
   @keyframes shake {
     17% { transform: translateX(-10px); }

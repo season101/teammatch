@@ -18,7 +18,8 @@ export function RoleCardPreview() {
     >
       {/* The next card in the deck, peeking out behind; no x shift on phone, so 320 px never scrolls sideways. */}
       <div className="absolute inset-0 translate-y-3 rotate-3 lg:translate-x-3 rounded-card border border-border bg-surface shadow-card" />
-      <div className="relative flex -rotate-2 flex-col overflow-hidden rounded-card border border-border bg-surface shadow-card lg:aspect-[3/4.6]">
+      {/* A slow drift, so the sample card reads as something you can pick up. */}
+      <div className="relative flex -rotate-2 flex-col motion-safe:animate-drift overflow-hidden rounded-card border border-border bg-surface shadow-card lg:aspect-[3/4.6]">
         <div className="flex flex-col gap-10 bg-linear-to-br from-cover-indigo to-[color-mix(in_oklab,var(--color-cover-indigo)_62%,black)] p-5 lg:h-[42%] lg:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex-1">

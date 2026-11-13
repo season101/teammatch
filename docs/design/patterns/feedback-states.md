@@ -54,7 +54,7 @@ Shown when the last role fills and the project locks.
   - The title "It's a *Team!*" in Fraunces 44–64px.
   - One line naming the project and the term.
 - **Actions:** CTA "Open team chat"; ghost "See the team".
-- **Motion:** avatars 80ms apart, then the title, then confetti for 1.2 seconds. With reduced motion, everything appears in place.
+- **Motion:** avatars 80ms apart, each settling on a soft spring, then the title, then confetti for 1.2 seconds. The confetti is thrown up from behind the title and falls in arcs. With reduced motion, everything appears in place.
 
 ## Deck closed
 After a commit, until the team locks: the deck shows "You're committed to **CampusEats**. Your deck stays closed while you hold this seat. Team chat opens when the last role fills." with See your commitment. The other offers and pending applications are closed.
