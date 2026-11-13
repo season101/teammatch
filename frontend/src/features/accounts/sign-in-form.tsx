@@ -3,10 +3,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { allauthPost, getSessionUser, signOut } from "./allauth";
 import { googleErrorText } from "./google-button";
 import { buttonClasses } from "@/components/ui/button";
+import { PendingLabel } from "@/components/ui/pending-label";
 
 // Only follow ?next= to a page on this site, never to another website. Default: the Discover deck.
 // Checks the address the browser would build from it, not the raw text: browsers
@@ -46,6 +47,14 @@ export function SignInForm({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  // A refused sign-in: the password field is marked, takes focus and shakes once.
+  // `attempt` only restarts the shake; typing clears the mark.
+  const [attempt, setAttempt] = useState(0);
+  const [refused, setRefused] = useState(false);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (attempt) passwordRef.current?.focus();
+  }, [attempt]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); // stop the browser from reloading the page
@@ -83,6 +92,10 @@ export function SignInForm({
         );
         // Same message for a wrong email or a wrong password (F1-02).
         setError(domainError?.message ?? "Email or password is incorrect.");
+        if (!domainError) {
+          setRefused(true);
+          setAttempt((n) => n + 1);
+        }
       }
     } catch {
       setError("Can't reach the server. Try again.");
@@ -124,7 +137,10 @@ export function SignInForm({
         />
       </div>
 
-      <div className="flex flex-col gap-1">
+      <div
+        key={attempt}
+        className={`flex flex-col gap-1 ${attempt ? "motion-safe:animate-shake" : ""}`}
+      >
         <label htmlFor="password" className="text-sm font-medium">
           Password
         </label>
@@ -133,9 +149,14 @@ export function SignInForm({
           type="password"
           required
           autoComplete="current-password"
+          ref={passwordRef}
+          aria-invalid={refused}
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setRefused(false);
+          }}
+          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass"
         />
       </div>
 
@@ -146,7 +167,7 @@ export function SignInForm({
       )}
 
       <button type="submit" disabled={sending} className={buttonClasses("cta")}>
-        {sending ? "Signing in…" : "Sign in"}
+        <PendingLabel pending={sending} label="Signing in">Sign in</PendingLabel>
       </button>
 
       <p className="text-center text-sm text-muted">

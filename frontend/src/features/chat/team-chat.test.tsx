@@ -175,6 +175,41 @@ test("Enter sends the message and clears the box", () => {
   expect(box()).toHaveValue("");
 });
 
+test("a sent message shows at once, and settles when the server echoes it", () => {
+  renderChat();
+  socket().open();
+  fireEvent.change(box(), { target: { value: "On my way" } });
+  fireEvent.keyDown(box(), { key: "Enter" });
+
+  expect(screen.getByText("On my way")).toHaveClass("opacity-60");
+
+  const { client_id } = (socket().sent[0] as { data: { client_id: string } }).data;
+  socket().receive({
+    type: "chat.message",
+    data: { ...message(9, me, "On my way"), client_id },
+  });
+  expect(screen.getAllByText("On my way")).toHaveLength(1);
+  expect(screen.getByText("On my way")).not.toHaveClass("opacity-60");
+});
+
+test("a message the server refuses stays in the log with Retry", () => {
+  renderChat();
+  socket().open();
+  fireEvent.change(box(), { target: { value: "On my way" } });
+  fireEvent.keyDown(box(), { key: "Enter" });
+  const { client_id } = (socket().sent[0] as { data: { client_id: string } }).data;
+  socket().receive({
+    type: "chat.error",
+    data: { code: "throttled", message: "Slow down a little.", client_id },
+  });
+
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+  expect(socket().sent).toHaveLength(2);
+  expect(screen.getAllByText("On my way")).toHaveLength(1);
+  expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+});
+
 test("Shift+Enter and blank messages don't send", () => {
   renderChat();
   socket().open();

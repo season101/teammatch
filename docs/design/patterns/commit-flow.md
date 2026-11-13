@@ -64,7 +64,7 @@ Reuse what's in `frontend/src/components/ui/`. Nothing new is needed.
 | Final confirm (28) | **Commit to {project}?** You take the {role} seat. Your {n} other offers and {m} pending applications close, and you can't undo this. |
 | Decline (29) | **Decline this offer?** {owner} can offer {role} to someone else. You can't get this offer back. |
 | Blocked (30) | **Close your project first?** You own {project}, which is still open. You can only hold one spot this term, so close it before you commit to {other project}. |
-| After committing (31) | You're in. Team chat opens when the last role fills. |
+| After committing (31) | You're in. Team chat opens when the last role fills. The Commit button on the offer shows the delayed spinner while the request runs, and the committed seat rises in once when it lands. |
 | Deck closed (32) | **You're committed to {project}.** Your deck stays closed while you hold this seat. Team chat opens when the last role fills. |
 | Offer sent (33) | Offer sent to {name}. The role stays open until someone commits. |
 | Offers out (33) | If {name} takes another offer or declines, you can like someone else. The first person to commit gets the seat. |

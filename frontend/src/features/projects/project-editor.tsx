@@ -18,6 +18,8 @@ import { Chip } from "@/components/ui/chip";
 import { TeamStrip, type Segment } from "@/components/ui/team-strip";
 import { buttonClasses } from "@/components/ui/button";
 import { noticeClass, successClass } from "@/components/ui/form-classes";
+import { SkeletonRows } from "@/components/ui/skeleton";
+import { PendingLabel } from "@/components/ui/pending-label";
 
 const buttonClass =
   "rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-surface-2";
@@ -43,11 +45,7 @@ export function ProjectEditor({
   const [editingDetails, setEditingDetails] = useState(false);
 
   if (project.isPending || skills.isPending) {
-    return (
-      <p role="status" className="text-sm text-muted">
-        Loading project…
-      </p>
-    );
+    return <SkeletonRows label="Loading project" />;
   }
   if (project.isError || skills.isError) {
     const notFound = project.error?.status === 404;
@@ -259,6 +257,7 @@ export function ProjectEditor({
         ctaLabel="Keep role"
         onCta={() => setDeleting(null)}
         escapeLabel="Delete role"
+        busy={deleteRole.isPending}
         onEscape={() => {
           if (deleting !== null)
             deleteRole.mutate(deleting, { onSettled: () => setDeleting(null) });
@@ -275,6 +274,7 @@ export function ProjectEditor({
         ctaLabel="Keep project"
         onCta={() => setClosing(false)}
         escapeLabel="Close project"
+        busy={closeProject.isPending}
         onEscape={() =>
           closeProject.mutate(undefined, { onSettled: () => setClosing(false) })
         }
@@ -291,7 +291,7 @@ export function ProjectEditor({
             className={`${buttonClasses("cta")} self-start`}
             onClick={() => publish.mutate()}
           >
-            {publish.isPending ? "Publishing…" : "Publish project"}
+            <PendingLabel pending={publish.isPending} label="Publishing">Publish project</PendingLabel>
           </button>
           {publish.isError && (
             <p role="alert" className={noticeClass}>

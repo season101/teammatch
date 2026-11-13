@@ -10,6 +10,9 @@ export type SocketStatus =
   | { state: "reconnecting" }
   | { state: "closed"; code: number };
 
+// A message I sent that the server hasn't echoed back yet.
+export type Outgoing = { client_id: string; body: string; failed: boolean };
+
 // The team's chat socket (F4-08, F4-09): its status, the messages that came in over it
 // or in a catch-up after it opened, and the last error. Close codes are in ws.ts.
 // Any other close retries after 1 s, 2 s, 4 s... up to 30 s.
@@ -19,6 +22,8 @@ export function useTeamSocket(teamId: number) {
   const [status, setStatus] = useState<SocketStatus>({ state: "connecting" });
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Shown in the log at once, and dropped when the echo with the same client_id lands.
+  const [sending, setSending] = useState<Outgoing[]>([]);
 
   useEffect(() => {
     const scheme = location.protocol === "https:" ? "wss:" : "ws:";
@@ -33,6 +38,19 @@ export function useTeamSocket(teamId: number) {
       if (!live || !list.length) return;
       for (const message of list) newest = Math.max(newest, message.id);
       setMessages((all) => [...all, ...list]);
+      // A catch-up message has no client_id, so a failed one of mine that did get
+      // through is matched by its text.
+      setSending((waiting) => {
+        const left = [...waiting];
+        for (const message of list) {
+          const id = "client_id" in message ? message.client_id : null;
+          const at = left.findIndex((out) =>
+            id ? out.client_id === id : out.failed && out.body === message.body,
+          );
+          if (at >= 0) left.splice(at, 1);
+        }
+        return left.length === waiting.length ? waiting : left;
+      });
     }
 
     // Everything after the newest message we have, page by page. Waits for the
@@ -70,13 +88,22 @@ export function useTeamSocket(teamId: number) {
           return;
         }
         setStatus({ state: "reconnecting" });
+        // No echo is coming on this socket. Keep the text so it can be sent again.
+        setSending((waiting) => waiting.map((out) => ({ ...out, failed: true })));
         retry = setTimeout(connect, delay);
         delay = Math.min(delay * 2, 30_000);
       };
       ws.onmessage = (event) => {
         const frame = JSON.parse(event.data) as ServerFrame;
         if (frame.type === "chat.message") add([frame.data]);
-        if (frame.type === "chat.error") setError(frame.data.message);
+        if (frame.type === "chat.error") {
+          setError(frame.data.message);
+          // An error without a client_id (throttled) could be about any of them.
+          const id = frame.data.client_id;
+          setSending((waiting) =>
+            waiting.map((out) => (!id || out.client_id === id ? { ...out, failed: true } : out)),
+          );
+        }
       };
     }
 
@@ -89,14 +116,19 @@ export function useTeamSocket(teamId: number) {
     };
   }, [queryClient, teamId]);
 
-  const send = useCallback((body: string) => {
+  // retry: the client_id of a failed message to send again in place.
+  const send = useCallback((body: string, retry?: string) => {
     const frame: ChatSend = {
       type: "chat.send",
       data: { body, client_id: crypto.randomUUID() },
     };
     setError(null);
+    setSending((waiting) => [
+      ...waiting.filter((out) => out.client_id !== retry),
+      { ...frame.data, failed: false },
+    ]);
     socket.current?.send(JSON.stringify(frame));
   }, []);
 
-  return { status, messages, error, send };
+  return { status, messages, error, send, sending };
 }

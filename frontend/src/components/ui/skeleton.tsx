@@ -23,3 +23,20 @@ export function SkeletonRows({ label, rows = 3 }: { label: string; rows?: number
     </div>
   );
 }
+
+// One card loading: the deck and the review queue.
+export function SkeletonCard({ label, className = "" }: { label: string; className?: string }) {
+  return (
+    <div
+      role="status"
+      aria-label={label}
+      className={`flex w-full flex-col gap-3 rounded-card border border-border bg-surface p-5 ${className}`}
+    >
+      <Skeleton className="h-6 w-2/3" />
+      <Skeleton className="h-4 w-1/3" />
+      <Skeleton className="h-7 w-1/2 rounded-pill" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-4/5" />
+    </div>
+  );
+}

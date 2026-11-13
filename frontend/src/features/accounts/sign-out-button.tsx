@@ -6,6 +6,7 @@ import { useState } from "react";
 import { signOut } from "./allauth";
 import { buttonClasses } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { PendingLabel } from "@/components/ui/pending-label";
 
 // Settings → Log out (UI-04). It asks first, then ends the session and goes to the landing page.
 export function SignOutButton() {
@@ -32,7 +33,7 @@ export function SignOutButton() {
         disabled={sending}
         className={buttonClasses("secondary")}
       >
-        {sending ? "Logging out…" : "Log out"}
+        <PendingLabel pending={sending} label="Logging out">Log out</PendingLabel>
       </button>
       <Modal
         open={asking}

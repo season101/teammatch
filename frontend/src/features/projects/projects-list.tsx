@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { inputClass, noticeClass } from "@/components/ui/form-classes";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { Tabs } from "@/components/ui/tabs";
+import { PendingLabel } from "@/components/ui/pending-label";
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
 import { useMyProjects } from "@/features/review/queries";
 import { MyProjectsList } from "./my-projects-list";
@@ -118,7 +119,7 @@ export function ProjectsList() {
           className={`${buttonClasses("secondary", "sm")} self-center`}
           onClick={() => projects.fetchNextPage()}
         >
-          {projects.isFetchingNextPage ? "Loading…" : "Load more"}
+          <PendingLabel pending={projects.isFetchingNextPage} label="Loading">Load more</PendingLabel>
         </button>
       )}
     </div>

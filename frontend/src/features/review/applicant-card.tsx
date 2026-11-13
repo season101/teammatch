@@ -9,7 +9,6 @@ export function ApplicantCard({
   application,
   roleTitle,
   requiredSkillIds,
-  disabled,
   onLike,
   onPass,
 }: {
@@ -17,7 +16,6 @@ export function ApplicantCard({
   roleTitle: string;
   // The skills the role asks for. The ones the applicant has are shown first, in lime.
   requiredSkillIds: number[];
-  disabled: boolean;
   onLike: () => void;
   onPass: () => void;
 }) {
@@ -88,7 +86,6 @@ export function ApplicantCard({
         <button
           type="button"
           aria-label={`Pass on ${name}`}
-          disabled={disabled}
           className={`${buttonClasses("secondary")} flex-1 hover:border-pass hover:text-pass active:border-pass active:text-pass`}
           onClick={onPass}
         >
@@ -97,7 +94,6 @@ export function ApplicantCard({
         <button
           type="button"
           aria-label={`Like ${name}`}
-          disabled={disabled}
           className={`${buttonClasses("cta")} flex-1 hover:bg-apply hover:text-on-apply active:bg-apply active:text-on-apply`}
           onClick={onLike}
         >

@@ -18,8 +18,8 @@ Open roles on open projects that the candidate hasn't applied to or passed, that
 ## Gesture
 - **While dragging,** the card follows the pointer 1:1 and tilts `distance / 20` degrees, up to 15°. Vertical movement is damped to a quarter.
 - **A swipe commits** when the card has moved 30% of its width, or on a fling faster than 0.6 px/ms with at least 40px of movement.
-- **On release short of that,** the card springs back over 320ms.
-- **On commit,** the card flies off in that direction over 200ms, and the next card scales from 0.96 to 1.
+- **On release short of that,** the card springs back (0.5s, no bounce), starting at the speed it was let go.
+- **On commit,** the card flies off in that direction on the same spring, so a flick leaves at the speed it was thrown. It fades over 200ms, and the next card scales from 0.96 to 1.
 - **A tap** that doesn't turn into a drag opens the role on its project page (`/projects/<id>?role=<role id>`).
 
 ### Stamps

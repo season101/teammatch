@@ -44,7 +44,7 @@ export function CoachMarks() {
       ref={dialogRef}
       aria-labelledby={titleId}
       onClose={close}
-      className="mx-auto mt-auto w-full max-w-md rounded-t-sheet border border-border bg-surface p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-text shadow-modal backdrop:bg-scrim open:flex open:flex-col open:gap-4 open:motion-safe:animate-toast-in open:motion-reduce:animate-fade-in"
+      className="sheet mx-auto mt-auto w-full max-w-md rounded-t-sheet border border-border bg-surface p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-text shadow-modal backdrop:bg-scrim open:flex open:flex-col open:gap-4"
     >
       <StepProgress step={4} />
       <h2 id={titleId} className="font-display text-2xl font-extrabold">

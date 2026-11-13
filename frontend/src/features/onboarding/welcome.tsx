@@ -9,6 +9,8 @@ import {
   inputClass,
 } from "@/components/ui/form-classes";
 import { ProfileStrength } from "@/components/ui/profile-strength";
+import { SkeletonRows } from "@/components/ui/skeleton";
+import { PendingLabel } from "@/components/ui/pending-label";
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
 import { Logo } from "@/features/landing/logo";
 import { profileStrength } from "@/features/profiles/profile-tabs";
@@ -90,7 +92,7 @@ function CurrentStep({
     );
   }
   if (!profile.data || next !== path) {
-    return <p className="text-muted">Loading…</p>;
+    return <SkeletonRows label="Loading" rows={2} />;
   }
   return <>{children(profile.data)}</>;
 }
@@ -139,7 +141,7 @@ function StepForm({
           </p>
         )}
         <Button type="submit" disabled={disabled || pending} className="w-full">
-          {pending ? "Saving…" : cta}
+          <PendingLabel pending={pending} label="Saving">{cta}</PendingLabel>
         </Button>
       </div>
     </form>
@@ -317,7 +319,7 @@ function Skills({ profile }: { profile: MyProfile }) {
       onSubmit={() => save.mutate({ skill_ids: skillIds })}
     >
       {skills.isPending ? (
-        <p className="text-muted">Loading skills…</p>
+        <SkeletonRows label="Loading skills" rows={2} />
       ) : skills.isError ? (
         <p role="alert" className={errorClass}>
           Couldn&apos;t load the skill list. Refresh the page to try again.

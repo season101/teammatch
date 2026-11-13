@@ -5,6 +5,7 @@ import { useState } from "react";
 import { allauthPost } from "./allauth";
 import { StatusIcon } from "./auth-layout";
 import { buttonClasses } from "@/components/ui/button";
+import { PendingLabel } from "@/components/ui/pending-label";
 
 type Status = "idle" | "sending" | "verified" | "failed";
 
@@ -81,7 +82,7 @@ export function VerifyEmail({ verificationKey }: { verificationKey: string }) {
         disabled={status === "sending"}
         className={`${buttonClasses("cta")} w-full`}
       >
-        {status === "sending" ? "Verifying…" : "Verify my email"}
+        <PendingLabel pending={status === "sending"} label="Verifying">Verify my email</PendingLabel>
       </button>
     </section>
   );

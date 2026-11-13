@@ -159,9 +159,14 @@
   --transition-duration-base: 200ms;
   --transition-duration-slow: 320ms;
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Leaving is shorter than entering, on a curve that starts slow. */
+  --transition-duration-exit: 160ms;
+  --ease-exit: cubic-bezier(0.55, 0, 1, 0.45);
 
   --animate-toast-in: toast-in var(--transition-duration-slow) var(--ease-standard);
   --animate-fade-in: fade-in var(--transition-duration-base) var(--ease-standard);
+  /* One shake for a failed attempt (wrong password). Never on blur. */
+  --animate-shake: shake 360ms linear;
 
   @keyframes toast-in {
     from {
@@ -173,6 +178,13 @@
     from {
       opacity: 0;
     }
+  }
+  @keyframes shake {
+    17% { transform: translateX(-10px); }
+    33% { transform: translateX(10px); }
+    50% { transform: translateX(-6px); }
+    67% { transform: translateX(6px); }
+    83% { transform: translateX(-3px); }
   }
 }
 
@@ -227,6 +239,58 @@
     transform-origin: bottom;
     animation: seat-fill var(--transition-duration-fast) var(--ease-standard)
       calc(var(--transition-duration-fast) + var(--i) * var(--stagger)) backwards;
+  }
+
+  /*
+   * Dialog motion (shape-depth-motion.md). A dialog and its scrim enter together
+   * in `base` and leave together in `exit`. .gate scales up from 96%; .sheet
+   * slides up from the bottom edge and leaves the same way. overlay and display
+   * keep the dialog in the top layer until the exit ends.
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    dialog.gate,
+    dialog.sheet,
+    dialog.gate::backdrop,
+    dialog.sheet::backdrop {
+      transition-property: opacity, scale, translate, overlay, display;
+      transition-behavior: allow-discrete;
+      transition-duration: var(--transition-duration-exit);
+      transition-timing-function: var(--ease-exit);
+    }
+    dialog.gate,
+    dialog.gate::backdrop,
+    dialog.sheet::backdrop {
+      opacity: 0;
+    }
+    dialog.gate {
+      scale: 0.96;
+    }
+    dialog.sheet {
+      translate: 0 100%;
+    }
+    dialog.gate[open],
+    dialog.sheet[open],
+    dialog.gate[open]::backdrop,
+    dialog.sheet[open]::backdrop {
+      opacity: 1;
+      scale: 1;
+      translate: 0 0;
+      transition-duration: var(--transition-duration-base);
+      transition-timing-function: var(--ease-standard);
+    }
+    @starting-style {
+      dialog.gate[open],
+      dialog.gate[open]::backdrop,
+      dialog.sheet[open]::backdrop {
+        opacity: 0;
+      }
+      dialog.gate[open] {
+        scale: 0.96;
+      }
+      dialog.sheet[open] {
+        translate: 0 100%;
+      }
+    }
   }
 }
 

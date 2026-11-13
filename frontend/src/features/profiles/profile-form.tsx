@@ -6,6 +6,8 @@ import {
   helperClass,
   inputClass,
 } from "@/components/ui/form-classes";
+import { SkeletonRows } from "@/components/ui/skeleton";
+import { PendingLabel } from "@/components/ui/pending-label";
 import { useState, type FormEvent } from "react";
 import { SkillPicker } from "./skill-picker";
 import {
@@ -28,7 +30,7 @@ export function ProfileForm() {
   // Wait for a fresh copy: the fields are filled once, and a cached profile can
   // belong to someone else who used this browser. Saving would copy it over.
   if (profile.isPending || !profile.isFetchedAfterMount || skills.isPending) {
-    return <p className="text-muted">Loading your profile…</p>;
+    return <SkeletonRows label="Loading your profile" />;
   }
   if (profile.isError || skills.isError) {
     return (
@@ -175,7 +177,7 @@ function ProfileFields({
         disabled={save.isPending}
         className={`${buttonClasses("cta")} self-start`}
       >
-        {save.isPending ? "Saving…" : "Save profile"}
+        <PendingLabel pending={save.isPending} label="Saving">Save profile</PendingLabel>
       </button>
     </form>
   );

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Button, buttonClasses } from "./button";
+import { PendingLabel } from "./pending-label";
 
 type Props = {
   open: boolean;
@@ -21,6 +22,8 @@ type Props = {
   focusEscape?: boolean;
   // The escape goes to another page, so it's a link.
   escapeHref?: string;
+  // The escape's request is running: both buttons lock, so it can't be sent twice.
+  busy?: boolean;
 };
 
 // A gate: one CTA (the safe choice) plus a danger text button as the escape.
@@ -38,6 +41,7 @@ export function Modal({
   escapeVariant = "danger",
   focusEscape = false,
   escapeHref,
+  busy = false,
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const ctaRef = useRef<HTMLButtonElement>(null);
@@ -60,14 +64,14 @@ export function Modal({
       ref={dialogRef}
       aria-labelledby={titleId}
       onClose={onClose}
-      className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-sheet border border-border bg-surface p-6 text-center text-text shadow-modal backdrop:bg-scrim open:motion-safe:animate-toast-in open:motion-reduce:animate-fade-in"
+      className="gate m-auto w-[calc(100%-2rem)] max-w-sm rounded-sheet border border-border bg-surface p-6 text-center text-text shadow-modal backdrop:bg-scrim"
     >
       <h2 id={titleId} className="font-display text-2xl font-extrabold">
         {title}
       </h2>
       {children && <div className="mt-2 text-muted">{children}</div>}
       <div className="mt-6 flex flex-col items-center gap-3">
-        <Button ref={ctaRef} onClick={onCta} className="w-full">
+        <Button ref={ctaRef} onClick={onCta} disabled={busy} className="w-full">
           {ctaLabel}
         </Button>
         {escapeHref ? (
@@ -75,8 +79,10 @@ export function Modal({
             {escapeLabel}
           </Link>
         ) : (
-          <Button ref={escapeRef} variant={escapeVariant} onClick={onEscape}>
-            {escapeLabel}
+          <Button ref={escapeRef} variant={escapeVariant} onClick={onEscape} disabled={busy}>
+            <PendingLabel pending={busy} label="Working">
+              {escapeLabel}
+            </PendingLabel>
           </Button>
         )}
       </div>

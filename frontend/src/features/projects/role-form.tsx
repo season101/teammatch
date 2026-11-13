@@ -10,6 +10,7 @@ import {
   inputClass,
   noticeClass,
 } from "@/components/ui/form-classes";
+import { PendingLabel } from "@/components/ui/pending-label";
 
 const TITLE_MAX = 100;
 const DESCRIPTION_MAX = 1000;
@@ -129,7 +130,7 @@ export function RoleForm({
           disabled={pending}
           className={buttonClasses("cta", "sm")}
         >
-          {pending ? "Saving…" : submitLabel}
+          <PendingLabel pending={pending} label="Saving">{submitLabel}</PendingLabel>
         </button>
         <button
           type="button"

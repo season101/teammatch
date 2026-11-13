@@ -27,7 +27,7 @@ Any variant can be **removable**: it gets a × button.
 
 ## Accessibility
 - Matched chips add hidden text "(matched)", so the ✓ isn't the only signal.
-- The × button is a real `<button>` with "Remove <skill>" as its name.
+- The × button is a real `<button>` with "Remove <skill>" as its name. It looks 24px but its touch zone is 44px wide and one chip row (36px) tall, so zones on neighbouring rows don't overlap.
 - In a picker, each chip is a toggle button with `aria-pressed`, wrapping the Chip.
 
 ## Do and don't

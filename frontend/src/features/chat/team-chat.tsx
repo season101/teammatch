@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { buttonClasses } from "@/components/ui/button";
 import { inputClass, noticeClass } from "@/components/ui/form-classes";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { BackIcon, SendIcon } from "@/features/shell/icons";
 import { useMyTeam, type MyTeam } from "@/features/teams/queries";
 import { useTeamMessages, type ChatMessage } from "./queries";
@@ -14,7 +15,11 @@ export function TeamChat({ teamId, userId }: { teamId: number; userId: number })
   const team = useMyTeam();
 
   if (team.isPending) {
-    return <p className="p-4 text-muted">Loading your team…</p>;
+    return (
+      <div className="p-4">
+        <SkeletonRows label="Loading your team" />
+      </div>
+    );
   }
   if (team.isError) {
     return (
@@ -48,6 +53,11 @@ function ChatRoom({ team, userId }: { team: MyTeam; userId: number }) {
   const socket = useTeamSocket(team.id);
   const [draft, setDraft] = useState("");
   const log = useRef<HTMLDivElement>(null);
+  // Whether the log is scrolled to (about) the bottom. Someone reading older
+  // messages stays where they are and gets the "New messages" button instead.
+  const atBottom = useRef(true);
+  // The newest message id the last time the log was at the bottom.
+  const [seen, setSeen] = useState<number>();
 
   // A message can be in both the history and the socket, so merge by id.
   const byId = new Map<number, ChatMessage>();
@@ -57,10 +67,17 @@ function ChatRoom({ team, userId }: { team: MyTeam; userId: number }) {
   const messages = [...byId.values()].sort((a, b) => a.id - b.id);
   const newest = messages.at(-1)?.id;
 
-  // shortcut: always jumps to the newest message, even if you scrolled up to read.
-  useEffect(() => {
+  const unseen = seen !== undefined && newest !== undefined && newest > seen;
+  // Scrolling fires onScroll below, which is what marks the newest message seen.
+  const toBottom = () => {
     if (log.current) log.current.scrollTop = log.current.scrollHeight;
+    atBottom.current = true;
+  };
+  useEffect(() => {
+    if (atBottom.current) toBottom();
   }, [newest]);
+  // My own message always shows.
+  useEffect(toBottom, [socket.sending.length]);
 
   const closed = socket.status.state === "closed" ? socket.status.code : null;
   useEffect(() => {
@@ -116,6 +133,11 @@ function ChatRoom({ team, userId }: { team: MyTeam; userId: number }) {
         aria-live="polite"
         aria-label="Messages"
         tabIndex={0}
+        onScroll={(event) => {
+          const el = event.currentTarget;
+          atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+          if (atBottom.current) setSeen(newest);
+        }}
         className="flex flex-1 flex-col gap-3 overflow-y-auto p-4"
       >
         <p className="mt-auto text-center text-xs text-muted">
@@ -147,8 +169,47 @@ function ChatRoom({ team, userId }: { team: MyTeam; userId: number }) {
               </li>
             ),
           )}
+          {/* Mine, not echoed yet: in the log on the same frame as the send, a little faded. */}
+          {socket.sending.map((out) => (
+            <li
+              key={out.client_id}
+              className="flex max-w-[80%] flex-col items-end gap-1 self-end motion-safe:animate-toast-in"
+            >
+              <p
+                className={`rounded-row bg-cta px-3 py-2 text-sm whitespace-pre-wrap wrap-break-word text-on-cta ${out.failed ? "" : "opacity-60"}`}
+              >
+                <span className="sr-only">You: </span>
+                {out.body}
+              </p>
+              {out.failed && (
+                <p className="text-xs text-pass">
+                  Not sent.{" "}
+                  <button
+                    type="button"
+                    disabled={!open}
+                    onClick={() => socket.send(out.body, out.client_id)}
+                    className="min-h-11 px-1 font-semibold underline disabled:opacity-50"
+                  >
+                    Retry
+                  </button>
+                </p>
+              )}
+            </li>
+          ))}
         </ol>
       </div>
+      {unseen && (
+        <button
+          type="button"
+          onClick={() => {
+            toBottom();
+            setSeen(newest);
+          }}
+          className={`${buttonClasses("secondary", "sm")} mx-auto -mt-12 mb-3 shadow-card`}
+        >
+          New messages
+        </button>
+      )}
 
       {socket.error && (
         <p role="alert" className="px-4 pb-2 text-sm text-pass">

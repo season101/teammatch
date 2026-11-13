@@ -15,7 +15,7 @@ The candidate's Apply doesn't need a toast. The card flying off is the feedback,
 ## Anatomy
 - `surface` panel, `rounded-row`, 1px `border`, `shadow-card`, max 384px wide.
 - A leading icon: lime check for success, rose for errors, info blue for notices.
-- A semibold title, an optional muted detail line, an optional action, and an optional × to dismiss.
+- A semibold title, an optional muted detail line, an optional action, and an optional × to dismiss. The × looks 32px and has a 44px touch zone.
 
 ## Props (current)
 | Prop | Type | Notes |

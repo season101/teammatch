@@ -6,8 +6,10 @@ import { useState, type ReactNode } from "react";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Modal } from "@/components/ui/modal";
+import { PendingLabel } from "@/components/ui/pending-label";
 import { Tabs } from "@/components/ui/tabs";
 import { TeamStrip } from "@/components/ui/team-strip";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { useSession } from "@/features/accounts/require-sign-in";
 import { useProject } from "@/features/projects/queries";
 import { useMyProjects } from "@/features/review/queries";
@@ -172,7 +174,7 @@ export function MyApplications() {
   const [blocked, setBlocked] = useState<MyApplication | null>(null);
 
   if (applications.isPending)
-    return <p className="text-muted">Loading your applications…</p>;
+    return <SkeletonRows label="Loading your applications" />;
   if (applications.isError) {
     return (
       <p role="alert" className="text-danger">
@@ -280,7 +282,12 @@ export function MyApplications() {
                                     aria-label={`Commit to ${role} on ${project}`}
                                     onClick={() => setCommitting(offer)}
                                   >
-                                    Commit
+                                    <PendingLabel
+                                      pending={commit.isPending && commit.variables === offer.id}
+                                      label="Committing"
+                                    >
+                                      Commit
+                                    </PendingLabel>
                                   </Button>
                                 </div>
                               </>
@@ -320,7 +327,11 @@ export function MyApplications() {
               ) : (
                 <div className="flex flex-col gap-6">
                   {committed.map((application) => (
-                    <div key={application.id} className="max-w-xl">
+                    // Right after a commit the seat rises in once; on a later visit it's just there.
+                    <div
+                      key={application.id}
+                      className={`max-w-xl ${commit.isSuccess ? "motion-safe:animate-toast-in" : ""}`}
+                    >
                       <Seat application={application}>
                         {(roles) => {
                           const left = roles?.filter((r) => r.open) ?? [];

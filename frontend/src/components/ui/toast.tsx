@@ -25,7 +25,8 @@ export function Toast({
           type="button"
           aria-label="Dismiss"
           onClick={onDismiss}
-          className="grid size-8 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-text"
+          // 32px to look at, 44px to hit.
+          className="grid size-8 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-text relative after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:content-[''] after:size-11"
         >
           <span aria-hidden="true">×</span>
         </button>
