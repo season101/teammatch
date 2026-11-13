@@ -108,13 +108,20 @@ class ResetPassesView(APIView):
 
 @extend_schema(tags=["matching"], request=None, responses={204: None})
 class DismissRoleView(APIView):
-    """Pass on a role so it leaves my feed (BR-10). My own project: 403. Not open: 409."""
+    """Pass on a role so it leaves my feed (BR-10). My own project: 403. Not open: 409.
+
+    DELETE takes my pass back (F3-10). It only ever touches my own pass.
+    """
 
     def post(self, request, pk):
         role = get_object_or_404(Role.objects.select_related("project"), pk=pk)
         if role.project.owner_id == request.user.id:
             raise PermissionDenied()
         services.dismiss(role, request.user)
+        return Response(status=204)
+
+    def delete(self, request, pk):
+        services.undo_dismiss(get_object_or_404(Role, pk=pk), request.user)
         return Response(status=204)
 
 

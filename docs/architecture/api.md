@@ -129,6 +129,7 @@ Login, signup, logout, password and Google live under allauth (below).
 | GET | `/api/v1/feed/` | user | swipe deck, open roles ranked by match % (share of the role's required skills I have), then newest. Empty while I'm retired |
 | POST | `/api/v1/feed/reset/` | user | clear my passes so those roles come back into my feed, `204`. Applied roles stay out |
 | POST | `/api/v1/roles/{id}/dismiss/` | user | candidate pass on a role, `204`; repeats are fine. My own project: `403`; role or project not open: `409` |
+| DELETE | `/api/v1/roles/{id}/dismiss/` | user | take back my pass on a role, `204`, also when there was none. Only my own pass |
 | POST | `/api/v1/applications/` | user | apply to a role `{role, note}`. Retired: `403` `profile_retired`. Committed this term: `409` `applicant_committed` |
 | GET | `/api/v1/applications/mine/?status=` | user | my applications |
 | POST | `/api/v1/applications/{id}/withdraw/` | applicant | withdraw pending application |

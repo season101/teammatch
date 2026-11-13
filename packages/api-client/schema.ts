@@ -428,9 +428,18 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Pass on a role so it leaves my feed (BR-10). My own project: 403. Not open: 409. */
+        /**
+         * @description Pass on a role so it leaves my feed (BR-10). My own project: 403. Not open: 409.
+         *
+         *     DELETE takes my pass back (F3-10). It only ever touches my own pass.
+         */
         post: operations["roles_dismiss_create"];
-        delete?: never;
+        /**
+         * @description Pass on a role so it leaves my feed (BR-10). My own project: 403. Not open: 409.
+         *
+         *     DELETE takes my pass back (F3-10). It only ever touches my own pass.
+         */
+        delete: operations["roles_dismiss_destroy"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1487,6 +1496,26 @@ export interface operations {
         };
     };
     roles_dismiss_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    roles_dismiss_destroy: {
         parameters: {
             query?: never;
             header?: never;

@@ -53,6 +53,7 @@ function mockApi({
   apply = { status: 201, body: {} as unknown },
   dismiss = { status: 204, body: null as unknown },
   reset = { status: 204, body: null as unknown },
+  undo = { status: 204, body: null as unknown },
   wait = Promise.resolve(),
   team = (): unknown => null,
   summary = (): unknown => ({ offers: 0, applicants_waiting: 0, deck: "open" }),
@@ -62,6 +63,7 @@ function mockApi({
   const applies: Request[] = [];
   const dismisses: Request[] = [];
   const resets: Request[] = [];
+  const undos: Request[] = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(async (request: Request) => {
@@ -98,6 +100,13 @@ function mockApi({
           passed = [...passed, ...open.filter((r) => r.id === dismissId)];
           open = open.filter((r) => r.id !== dismissId);
         }
+      } else if (dismissId && request.method === "DELETE") {
+        undos.push(request.clone());
+        ({ status, body } = undo);
+        if (status === 204) {
+          open = [...passed.filter((r) => r.id === dismissId), ...open];
+          passed = passed.filter((r) => r.id !== dismissId);
+        }
       } else if (path === "/api/v1/feed/reset/" && request.method === "POST") {
         resets.push(request.clone());
         ({ status, body } = reset);
@@ -109,7 +118,7 @@ function mockApi({
       });
     }),
   );
-  return { applies, dismisses, resets };
+  return { applies, dismisses, resets, undos };
 }
 
 function renderFeed(
@@ -307,6 +316,61 @@ test("dragging left passes", async () => {
   expect(await screen.findByRole("article", { name: "Frontend dev" })).toBeInTheDocument();
   expect(dismisses).toHaveLength(1);
   expect(applies).toHaveLength(0);
+});
+
+const undoButton = () => screen.findByRole("button", { name: "Undo your last pass" });
+
+test("Undo brings back the last pass, and only that one", async () => {
+  const third = { ...nextRole, id: 9, title: "Designer" };
+  const { undos } = mockApi({ roles: [role, nextRole, third] });
+  renderFeed();
+  expect(await undoButton()).toBeDisabled();
+
+  fireEvent.click(await passButton());
+  fireEvent.click(await passButton("Pass on Frontend dev"));
+  await screen.findByRole("article", { name: "Designer" });
+  fireEvent.click(await undoButton());
+
+  expect(await passButton("Pass on Frontend dev")).toBeInTheDocument();
+  await waitFor(() => expect(undos).toHaveLength(1));
+  expect(undos[0].method).toBe("DELETE");
+  expect(new URL(undos[0].url).pathname).toBe("/api/v1/roles/8/dismiss/");
+  expect(await undoButton()).toBeDisabled();
+});
+
+test("an apply can't be undone, and it ends the last pass's turn", async () => {
+  mockApi({ roles: [role, nextRole, { ...nextRole, id: 9, title: "Designer" }] });
+  renderFeed();
+
+  fireEvent.click(await passButton());
+  expect(await undoButton()).toBeEnabled();
+  fireEvent.click(await applyButton("Apply to Frontend dev on CampusEats"));
+
+  await waitFor(async () => expect(await undoButton()).toBeDisabled());
+});
+
+test("Z undoes the pass that emptied the deck", async () => {
+  const { undos } = mockApi();
+  renderFeed();
+  const stack = await deck();
+
+  fireEvent.click(await passButton());
+  await screen.findByText("You're all caught up");
+  fireEvent.keyDown(stack, { key: "z" });
+
+  expect(await screen.findByRole("article", { name: "Backend dev" })).toBeInTheDocument();
+  expect(undos).toHaveLength(1);
+});
+
+test("the card leaves again when the undo fails", async () => {
+  mockApi({ roles: [role, nextRole], undo: { status: 500, body: {} } });
+  renderFeed();
+
+  fireEvent.click(await passButton());
+  fireEvent.click(await undoButton());
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't undo your pass.");
+  expect(await passButton("Pass on Frontend dev")).toBeInTheDocument();
 });
 
 // Otherwise pressing View details could swipe the card away.

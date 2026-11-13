@@ -681,8 +681,29 @@ paths:
   /api/v1/roles/{id}/dismiss/:
     post:
       operationId: roles_dismiss_create
-      description: 'Pass on a role so it leaves my feed (BR-10). My own project: 403.
-        Not open: 409.'
+      description: |-
+        Pass on a role so it leaves my feed (BR-10). My own project: 403. Not open: 409.
+
+        DELETE takes my pass back (F3-10). It only ever touches my own pass.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - matching
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+    delete:
+      operationId: roles_dismiss_destroy
+      description: |-
+        Pass on a role so it leaves my feed (BR-10). My own project: 403. Not open: 409.
+
+        DELETE takes my pass back (F3-10). It only ever touches my own pass.
       parameters:
       - in: path
         name: id

@@ -93,6 +93,32 @@ export function useDismiss() {
   });
 }
 
+// Takes back one pass (F3-10). The role goes back on top of the cached feed at
+// once, and leaves again if the server says no.
+export function useUndoPass() {
+  const queryClient = useQueryClient();
+  return useMutation<void, ApiError, FeedRole>({
+    onMutate: (role) => {
+      queryClient.setQueryData<FeedRole[]>(["feed"], (roles) => [
+        role,
+        ...(roles ?? []).filter((other) => other.id !== role.id),
+      ]);
+    },
+    mutationFn: async (role) => {
+      const { error, response } = await api.DELETE("/api/v1/roles/{id}/dismiss/", {
+        params: { path: { id: role.id } },
+        headers: { "X-CSRFToken": csrfToken() },
+      });
+      if (response.ok) return;
+      throw failed(response.status, error, "Couldn't undo your pass. Please try again.");
+    },
+    onError: (_error, role) =>
+      queryClient.setQueryData<FeedRole[]>(["feed"], (roles) =>
+        roles?.filter((other) => other.id !== role.id),
+      ),
+  });
+}
+
 // Brings back every role I passed on. The deck refetches the feed itself.
 export function useResetPasses() {
   return useMutation<void, ApiError>({
