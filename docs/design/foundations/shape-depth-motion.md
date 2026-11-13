@@ -30,21 +30,23 @@ Rows, panels and inputs have no shadow.
 | `fast` | 120ms | `duration-fast` |
 | `base` | 200ms | `duration-base` |
 | `slow` | 320ms | `duration-slow` |
+| `exit` | 160ms | `duration-exit` (dialogs and sheets leaving) |
 | `stagger` | 80ms | `var(--stagger)` (items entering in sequence) |
 | `splash-hold` | 1100ms | `var(--splash-hold)` (landing splash only) |
 | `splash-lift` | 600ms | `var(--splash-lift)` (landing splash only) |
 | `splash` easing | `cubic-bezier(.65, 0, .35, 1)` | `var(--ease-splash)` (landing splash only) |
 | `standard` easing | `cubic-bezier(.2, .8, .2, 1)` | `ease-standard` |
+| `exit` easing | `cubic-bezier(.55, 0, 1, .45)` | `ease-exit` (anything leaving) |
 
 | Moment | Motion |
 |---|---|
 | Hover, press | Scale to 1.06 on hover and focus, 0.95 to 0.98 on press, `fast` |
 | Drag a card | Follows the pointer 1:1 and tilts `distance / 20` degrees, capped at 15°. The stamp fades in with distance. |
-| Commit a swipe | At 30% of card width, or a fling faster than 0.6 px/ms. The card flies off in `base`; the next card scales from 0.96 to 1. |
-| Cancel a swipe | Springs back in `slow` with `standard` easing |
+| Commit a swipe | At 30% of card width, or a fling faster than 0.6 px/ms. The card flies off on the swipe spring and fades in `base`; the next card scales from 0.96 to 1. |
+| Cancel a swipe | Springs back on the swipe spring (0.5s, no bounce), starting at the release speed |
 | Undo a pass | The card flies back in from the left |
 | Change card page | Content swaps instantly; the page-tab underline slides in `fast` |
-| Modal | Fades and rises 12px in `slow`; the scrim fades in |
+| Modal | Scales up from 96% and fades in `base`, with the scrim on the same clock. Both leave in `exit` with `exit` easing. The coach sheet slides up from the bottom edge and back down. |
 | Toast | Rises in from the top on phone and top right on desktop, in `slow`. Stays 4 seconds and pauses on hover. |
 | Landing splash | The logo seats fill `stagger` apart, then the dark stage rolls up at `splash-hold` over `splash-lift` with `splash` easing. About 1.7 seconds, once per tab. See [feedback-states.md](../patterns/feedback-states.md#splash). |
 | It's a Team! | Avatars slide into a row 80ms apart, the title scales in, and confetti runs for 1.2 seconds |

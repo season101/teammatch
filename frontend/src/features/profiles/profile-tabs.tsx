@@ -4,6 +4,7 @@ import { Chip } from "@/components/ui/chip";
 import { errorClass } from "@/components/ui/form-classes";
 import { ProfileStrength } from "@/components/ui/profile-strength";
 import { Tabs } from "@/components/ui/tabs";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { initials } from "@/features/teams/my-team";
 import { ProfileForm } from "./profile-form";
 import { useMyProfile, type MyProfile } from "./queries";
@@ -22,7 +23,7 @@ export function ProfileTabs() {
   const profile = useMyProfile();
 
   if (profile.isPending) {
-    return <p className="text-muted">Loading your profile…</p>;
+    return <SkeletonRows label="Loading your profile" />;
   }
   if (profile.isError) {
     return (

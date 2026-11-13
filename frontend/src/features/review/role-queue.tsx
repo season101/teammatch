@@ -1,9 +1,11 @@
 "use client";
 
+import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import { useProject } from "@/features/projects/queries";
 import { initials } from "@/features/teams/my-team";
 import { ApplicantCard } from "./applicant-card";
@@ -146,6 +148,17 @@ function OpenRoleLabel({ role }: { role: Role }) {
   );
 }
 
+const STANDARD = [0.2, 0.8, 0.2, 1] as const;
+// --transition-duration-exit and --ease-exit.
+const EXIT = { duration: 0.16, ease: [0.55, 0, 1, 0.45] } as const;
+// A second press this soon after a decision is a double tap, not a choice about the next person.
+const DOUBLE_TAP = 250;
+
+// The card that is leaving can't be pressed again.
+function Present({ children }: { children: ReactNode }) {
+  return <div inert={!useIsPresent()}>{children}</div>;
+}
+
 // One role's queue: the first waiting applicant as a card, with Pass and Like.
 export function RoleQueue(props: QueueProps) {
   return props.role.status === "filled" ? (
@@ -163,11 +176,14 @@ function OpenRoleQueue({ role, projectId }: QueueProps) {
     project.data?.roles.find((other) => other.id === role.id)
       ?.required_skills ?? [];
   const rootRef = useRef<HTMLDivElement>(null);
+  const decidedAt = useRef(0);
+  const reduce = useReducedMotion();
   const current = applicants.data?.[0];
   const name = current?.applicant.display_name || "Unnamed applicant";
 
   function decideOn(like: boolean) {
-    if (!current || decide.isPending) return;
+    if (!current || Date.now() - decidedAt.current < DOUBLE_TAP) return;
+    decidedAt.current = Date.now();
     decide.mutate({ id: current.id, name, like });
   }
 
@@ -192,7 +208,7 @@ function OpenRoleQueue({ role, projectId }: QueueProps) {
   });
 
   if (applicants.isPending) {
-    return <p className="pt-4 text-sm text-muted">Loading applicants…</p>;
+    return <SkeletonCard label="Loading applicants" className="mx-auto mt-4 max-w-md" />;
   }
   if (applicants.isError) {
     return (
@@ -204,7 +220,7 @@ function OpenRoleQueue({ role, projectId }: QueueProps) {
 
   return (
     <div ref={rootRef} className="flex flex-col gap-4 pt-4">
-      {decide.isSuccess && (
+      {decide.variables && !decide.isError && (
         <p role="status" className="text-sm text-success">
           {decide.variables.like
             ? `Offer sent to ${decide.variables.name}. The role stays open until someone commits.`
@@ -217,22 +233,44 @@ function OpenRoleQueue({ role, projectId }: QueueProps) {
         </p>
       )}
 
-      {current ? (
-        <>
-          <p className="text-sm text-muted">
-            {role.title} · 1 of {applicants.data.length} waiting
-          </p>
-          <ApplicantCard
-            key={current.id}
-            application={current}
-            roleTitle={role.title}
-            requiredSkillIds={requiredSkillIds}
-            disabled={decide.isPending}
-            onLike={() => decideOn(true)}
-            onPass={() => decideOn(false)}
-          />
-        </>
-      ) : (
+      {current && (
+        <p className="text-sm text-muted">
+          {role.title} · 1 of {applicants.data.length} waiting
+        </p>
+      )}
+      {/* The decided card leaves on the press (a like drops toward Offers out, a pass
+          goes left) while the next one comes in. popLayout takes it out of the flow. */}
+      <div className="relative">
+        <AnimatePresence mode="popLayout" initial={false} custom={decide.variables?.like}>
+          {current && (
+            <motion.div
+              key={current.id}
+              initial={reduce ? false : { opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1, transition: { duration: 0.2, ease: STANDARD } }}
+              exit="gone"
+              variants={{
+                gone: (liked: boolean) =>
+                  reduce
+                    ? { opacity: 0, transition: { duration: 0 } }
+                    : liked
+                      ? { opacity: 0, y: 48, scale: 0.9, transition: EXIT }
+                      : { opacity: 0, x: -120, rotate: -6, transition: EXIT },
+              }}
+            >
+              <Present>
+                <ApplicantCard
+                  application={current}
+                  roleTitle={role.title}
+                  requiredSkillIds={requiredSkillIds}
+                  onLike={() => decideOn(true)}
+                  onPass={() => decideOn(false)}
+                />
+              </Present>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+      {!current && (
         <div className="flex flex-col items-center gap-3 py-6 text-center">
           <p className="text-muted">No one&apos;s waiting for {role.title}.</p>
           <Link

@@ -5,6 +5,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { allauthPost, type AllauthError } from "./allauth";
 import { StatusIcon } from "./auth-layout";
 import { buttonClasses } from "@/components/ui/button";
+import { PendingLabel } from "@/components/ui/pending-label";
 
 type Status = "idle" | "sending" | "sent";
 
@@ -140,7 +141,7 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
         disabled={status === "sending"}
         className={buttonClasses("cta")}
       >
-        {status === "sending" ? "Creating account…" : "Create account"}
+        <PendingLabel pending={status === "sending"} label="Creating account">Create account</PendingLabel>
       </button>
 
       <p className="text-center text-sm text-muted">

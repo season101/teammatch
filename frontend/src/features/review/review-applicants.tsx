@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Tabs } from "@/components/ui/tabs";
+import { SkeletonRows } from "@/components/ui/skeleton";
 import { useMyProjects } from "./queries";
 import { RoleQueue, RoleTabLabel } from "./role-queue";
 
@@ -9,7 +10,7 @@ export function ReviewApplicants() {
   const projects = useMyProjects();
 
   if (projects.isPending) {
-    return <p className="text-muted">Loading your projects…</p>;
+    return <SkeletonRows label="Loading your projects" />;
   }
   if (projects.isError) {
     return (

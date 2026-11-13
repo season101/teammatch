@@ -8,6 +8,11 @@ const SKILLS_SHOWN = 3;
 // Until F3-13 adds the role details page, this is the project page as it is.
 export const roleHref = (role: FeedRole) => `/projects/${role.project.id}?role=${role.id}`;
 
+// The card fills the phone between the header and the action buttons. The loading
+// skeleton takes the same height, so nothing moves when the first role arrives.
+export const deckCardHeight =
+  "h-[clamp(22rem,calc(100svh-14.25rem-var(--deck-banner,0rem)-env(safe-area-inset-top)-env(safe-area-inset-bottom)),38rem)] sm:h-[clamp(22rem,calc(100svh-18.5rem-var(--deck-banner,0rem)-env(safe-area-inset-top)),38rem)]";
+
 export function RoleCard({ role, mySkillIds }: { role: FeedRole; mySkillIds: number[] }) {
   const headingId = `role-${role.id}`;
   const more = role.required_skills.length - SKILLS_SHOWN;
@@ -18,7 +23,7 @@ export function RoleCard({ role, mySkillIds }: { role: FeedRole; mySkillIds: num
       // Same height on every card, so Pass and Apply never move. The viewport minus the
       // page header, padding, buttons and phone tab bar puts them just above the tab bar.
       // --deck-banner is the offers banner's height when the deck shows one.
-      className="flex h-[clamp(22rem,calc(100svh-14.25rem-var(--deck-banner,0rem)-env(safe-area-inset-top)-env(safe-area-inset-bottom)),38rem)] flex-col gap-3 overflow-hidden rounded-card border border-border bg-surface p-5 sm:h-[clamp(22rem,calc(100svh-18.5rem-var(--deck-banner,0rem)-env(safe-area-inset-top)),38rem)]"
+      className={`flex flex-col gap-3 overflow-hidden rounded-card border border-border bg-surface p-5 ${deckCardHeight}`}
     >
       <header>
         <div className="flex items-center justify-between gap-3">

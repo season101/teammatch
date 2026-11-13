@@ -32,7 +32,7 @@ A pill (`rounded-pill`) with a label and an optional leading icon, semibold Geis
 - **Pressed:** scales to 0.98.
 - **Focus:** global violet ring.
 - **Disabled:** 50% opacity and a not-allowed cursor. Show the reason nearby in helper text.
-- **Loading:** a spinner replaces the label, and the button keeps its width and is disabled.
+- **Loading:** the button disables on the press. A spinner replaces the label only if the wait passes 300ms, and then stays at least 500ms, so a quick reply never flashes it. The button keeps its width. Wrap the label in `PendingLabel` (`components/ui/pending-label.tsx`).
 
 ## Behaviour
 - **In forms,** the CTA stays visible and disabled until the step is valid, then enables.

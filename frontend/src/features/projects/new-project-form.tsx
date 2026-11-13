@@ -9,6 +9,7 @@ import {
   inputClass,
   noticeClass,
 } from "@/components/ui/form-classes";
+import { PendingLabel } from "@/components/ui/pending-label";
 import { useCreateProject, type FieldErrors } from "./queries";
 
 const TITLE_MAX = 100;
@@ -153,7 +154,7 @@ export function NewProjectForm() {
         disabled={create.isPending || noTerm}
         className={`${buttonClasses("cta")} self-start`}
       >
-        {create.isPending ? "Creating…" : "Create project"}
+        <PendingLabel pending={create.isPending} label="Creating">Create project</PendingLabel>
       </button>
     </form>
   );

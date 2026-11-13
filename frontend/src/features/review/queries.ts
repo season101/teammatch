@@ -58,7 +58,32 @@ export function useApplicants(
 
 export function useDecide(roleId: number) {
   const queryClient = useQueryClient();
-  return useMutation<Decided, DecideError, Decision>({
+  const waiting = ["applicants", roleId, "pending"];
+  const offers = ["applicants", roleId, "liked"];
+  type Lists = { waiting?: Applicant[]; offers?: Applicant[] };
+  return useMutation<Decided, DecideError, Decision, Lists>({
+    mutationKey: ["decide", roleId],
+    // The applicant leaves the queue on the press, and a liked one joins Offers out.
+    // Nothing waits for the request, so the next applicant can be decided at once.
+    onMutate: async ({ id, like }) => {
+      await queryClient.cancelQueries({ queryKey: ["applicants", roleId] });
+      const before: Lists = {
+        waiting: queryClient.getQueryData<Applicant[]>(waiting),
+        offers: queryClient.getQueryData<Applicant[]>(offers),
+      };
+      const decided = before.waiting?.find((application) => application.id === id);
+      queryClient.setQueryData<Applicant[]>(waiting, (list) =>
+        list?.filter((application) => application.id !== id),
+      );
+      if (like && decided)
+        queryClient.setQueryData<Applicant[]>(offers, (list) => [...(list ?? []), decided]);
+      return before;
+    },
+    // The server said no: both lists go back, and the queue shows why.
+    onError: (_error, _decision, before) => {
+      queryClient.setQueryData(waiting, before?.waiting);
+      queryClient.setQueryData(offers, before?.offers);
+    },
     mutationFn: async ({ id, like }) => {
       const init = {
         params: { path: { id } },
@@ -84,8 +109,11 @@ export function useDecide(roleId: number) {
     },
     // The decided applicant leaves the queue, a liked one joins Offers out, and the
     // Review badge counts one fewer.
+    // Refetch once the last decision in a quick run lands; an earlier refetch
+    // would bring back people who are already decided.
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["my-summary"] });
+      if (queryClient.isMutating({ mutationKey: ["decide", roleId] }) > 1) return;
       return queryClient.invalidateQueries({ queryKey: ["applicants", roleId] });
     },
   });

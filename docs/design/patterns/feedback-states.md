@@ -20,6 +20,14 @@ How every screen handles loading, empty, error and success, plus the landing spl
 
 The line under a closed application says why: the owner picked someone else, you declined, you withdrew, or it closed when you committed.
 
+## Team chat
+- **Sending:** a message shows in the log on the same frame it's sent, a little faded, and turns solid when the server echoes it.
+- **Not sent:** if the server refuses it or the connection drops first, it stays in the log with "Not sent. Retry", so the text is never lost.
+- **Reading older messages:** a new message only scrolls the log when you're already at the bottom. Otherwise a "New messages" button appears and takes you there. Your own message always scrolls into view.
+
+## A refused sign-in
+A wrong email or password marks the password field, moves focus into it and shakes it once (360ms). The message sits under it. Nothing shakes on blur or while typing, and typing clears the mark.
+
 ## Toasts
 See [toast.md](../components/toast.md). Use them for results that don't change the screen, like "Photo updated".
 

@@ -32,6 +32,11 @@ The legend at the bottom shows these keys while the queue is on the stage.
 2. A status line: "Offer sent to Riley Chen. The role stays open until someone commits." The queue moves to the next applicant.
 3. Riley shows under **Offers out**, below the card, as Waiting.
 
+## Like and Pass don't wait for the server
+- The card leaves on the press: a like drops toward Offers out, a pass slides left, both in `exit`. The next applicant comes in at the same time, and the buttons and keys stay live.
+- If the server refuses (the applicant was already decided), the card and the Offers out list go back to how they were, and the reason shows above the card.
+- A second press within 250ms of a decision is ignored. It's a double tap, not a choice about the next person.
+
 ## What happens when someone commits
 1. The role is filled by the first person to commit, and its tab gets a tick.
 2. The role shows "Riley Chen committed", and the other people on it as Closed or Declined.

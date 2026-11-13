@@ -323,6 +323,23 @@ test("shows the API's message when the application was already decided", async (
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "This application is no longer pending.",
   );
+  // The card left on the press; a refused decision puts it back, with no offer listed.
+  expect(
+    await screen.findByRole("button", { name: "Like Sam Candidate" }),
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Offers out")).not.toBeInTheDocument();
+});
+
+test("a second press right after a decision is ignored", async () => {
+  const requests = mockApi();
+  renderPage();
+  const like = await screen.findByRole("button", { name: "Like Sam Candidate" });
+
+  fireEvent.click(like);
+  fireEvent.click(like);
+
+  await screen.findByText("No one's waiting for Frontend developer.");
+  expect(requests.filter((r) => r.method === "POST")).toHaveLength(1);
 });
 
 test("a draft project is not listed, and the page says there is nothing to review", async () => {

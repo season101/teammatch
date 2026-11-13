@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { buttonClasses } from "@/components/ui/button";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import { useMyApplications } from "@/features/applications/queries";
 import { useMyProfile } from "@/features/profiles/queries";
 import { useShortcutsEnabled } from "@/features/shell/preferences";
@@ -13,7 +14,7 @@ import { useMySummary } from "@/features/shell/queries";
 import { termEnd } from "@/features/teams/my-team";
 import { useMyTeam } from "@/features/teams/queries";
 import { useApply, useDismiss, useFeed, useResetPasses, type ApiError } from "./queries";
-import { RoleCard, roleHref } from "./role-card";
+import { deckCardHeight, RoleCard, roleHref } from "./role-card";
 import { SwipeCard, type Direction } from "./swipe-card";
 
 export function Feed() {
@@ -43,7 +44,7 @@ export function Feed() {
   const stack = useRef<HTMLDivElement>(null);
 
   if (feed.isPending || team.isPending) {
-    return <p className="text-muted">Loading open roles…</p>;
+    return <SkeletonCard label="Loading open roles" className={deckCardHeight} />;
   }
   if (team.data) {
     return (
@@ -224,7 +225,7 @@ export function Feed() {
         </AnimatePresence>
         {!top &&
           (feed.isFetching ? (
-            <p className="col-start-1 row-start-1 text-muted">Loading open roles…</p>
+            <SkeletonCard label="Loading open roles" className={`col-start-1 row-start-1 ${deckCardHeight}`} />
           ) : (
             <div className="col-start-1 row-start-1 flex flex-col items-center gap-3 py-12 text-center">
               <h2 className="font-display text-3xl font-extrabold">

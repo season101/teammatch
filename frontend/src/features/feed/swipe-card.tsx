@@ -19,6 +19,8 @@ const COMMIT_SHARE = 0.3;
 const FLING_SPEED = 600; // px/s, the spec's 0.6 px/ms
 const FLING_MIN = 40;
 const STANDARD = [0.2, 0.8, 0.2, 1] as const;
+// A released card starts at the speed the finger had: a flick leaves fast, a slow drag settles.
+const SPRING = { type: "spring", duration: 0.5, bounce: 0 } as const;
 
 // Where a released drag goes: past 30% of the width, or a fling the same way.
 export function swipeDirection(
@@ -78,9 +80,13 @@ export function SwipeCard({
       ref.current?.offsetWidth ?? 0,
     );
     if (direction) return onCommit(direction);
-    const back = reduce ? { duration: 0 } : { duration: 0.32, ease: STANDARD };
-    animate(x, 0, back);
-    animate(y, 0, back);
+    if (reduce) {
+      x.set(0);
+      y.set(0);
+      return;
+    }
+    animate(x, 0, { ...SPRING, velocity: info.velocity.x });
+    animate(y, 0, { ...SPRING, velocity: info.velocity.y });
   }
 
   return (
@@ -98,7 +104,14 @@ export function SwipeCard({
       variants={{
         // Reduced motion: a 200ms cross-fade instead of the fly-off.
         gone: (direction: Direction) =>
-          reduce ? { opacity: 0 } : { x: direction === "right" ? 600 : -600, opacity: 0 },
+          reduce
+            ? { opacity: 0 }
+            : {
+                x: direction === "right" ? 600 : -600,
+                opacity: 0,
+                // x picks up the drag's own speed; the fade keeps its 200ms.
+                transition: { x: SPRING, opacity: { duration: 0.2, ease: STANDARD } },
+              },
       }}
       drag={active}
       dragListener={false}

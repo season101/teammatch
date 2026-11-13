@@ -37,7 +37,9 @@ export function Chip({
           type="button"
           aria-label={`Remove ${removeLabel}`}
           onClick={onRemove}
-          className={`grid size-6 place-items-center opacity-70 hover:opacity-100 ${pill ? "rounded-pill" : "rounded-chip"}`}
+          // The × stays 24px; its touch zone is 44 wide and one chip row (36px) tall,
+          // so zones on neighbouring rows don't overlap.
+          className={`grid size-6 place-items-center opacity-70 hover:opacity-100 relative after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:content-[''] after:h-9 after:w-11 ${pill ? "rounded-pill" : "rounded-chip"}`}
         >
           <span aria-hidden="true">×</span>
         </button>

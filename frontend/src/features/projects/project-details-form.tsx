@@ -8,6 +8,7 @@ import {
   inputClass,
   noticeClass,
 } from "@/components/ui/form-classes";
+import { PendingLabel } from "@/components/ui/pending-label";
 
 const TITLE_MAX = 100;
 const PITCH_MAX = 2000;
@@ -110,7 +111,7 @@ export function ProjectDetailsForm({
           disabled={update.isPending}
           className={buttonClasses("cta", "sm")}
         >
-          {update.isPending ? "Saving…" : "Save changes"}
+          <PendingLabel pending={update.isPending} label="Saving">Save changes</PendingLabel>
         </button>
         <button
           type="button"
