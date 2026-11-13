@@ -40,6 +40,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # First, so it compresses the finished response: JSON is gzipped when the
+    # browser accepts it (PL-17). Responses under 200 bytes are left alone.
+    "django.middleware.gzip.GZipMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
