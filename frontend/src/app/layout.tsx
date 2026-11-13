@@ -12,9 +12,12 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+// Only Geist, the body text, is preloaded (PL-17): the other two load when a page
+// uses them, so they don't compete with the first paint on a slow connection.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 // Display face: variable, with italics and the optical-size axis for big headings.
@@ -23,6 +26,7 @@ const fraunces = Fraunces({
   subsets: ["latin"],
   style: ["normal", "italic"],
   axes: ["opsz"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
