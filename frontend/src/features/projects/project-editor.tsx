@@ -11,6 +11,7 @@ import {
   usePublishProject,
   useUpdateRole,
 } from "./queries";
+import { ApplyToRole } from "./apply-to-role";
 import { RoleForm } from "./role-form";
 import { Modal } from "@/components/ui/modal";
 import { ProjectDetailsForm } from "./project-details-form";
@@ -188,6 +189,11 @@ export function ProjectEditor({
                       </li>
                     ))}
                   </ul>
+                  {!isOwner &&
+                    data.status === "open" &&
+                    role.status === "open" && (
+                      <ApplyToRole roleId={role.id} roleTitle={role.title} />
+                    )}
                   {canEdit && role.status === "open" && (
                     <div className="mt-4 flex flex-wrap gap-3">
                       <button
