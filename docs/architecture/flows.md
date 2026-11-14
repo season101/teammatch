@@ -57,6 +57,7 @@ sequenceDiagram
     A->>G: exchange code for tokens
     G-->>A: id_token with email, email_verified, hd
     A->>AD: pre_social_login
+    Note over W,A: From Settings, Connect sends process connect and callback_url /settings,<br/>and a Google email that isn't the signed-in user's comes back as ?error=google_email_mismatch (F1-12)
     alt hd is not email.latech.edu, or email not verified
         AD-->>A: reject
         A-->>U: 302 /auth/callback?error=google_account_not_allowed
