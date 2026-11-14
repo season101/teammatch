@@ -39,6 +39,22 @@ test("waits while it's hovered or focused", () => {
   expect(onDone).toHaveBeenCalledTimes(1);
 });
 
+test("leaving with the pointer doesn't release a focused Undo", () => {
+  const onDone = vi.fn();
+  render(<PassToast role="Backend dev" onUndo={() => {}} onDone={onDone} />);
+  const undo = screen.getByRole("button", { name: "Undo" });
+
+  fireEvent.mouseEnter(undo);
+  fireEvent.focus(undo);
+  fireEvent.mouseLeave(undo);
+  act(() => vi.advanceTimersByTime(10_000));
+  expect(onDone).not.toHaveBeenCalled();
+
+  fireEvent.blur(undo);
+  act(() => vi.advanceTimersByTime(4000));
+  expect(onDone).toHaveBeenCalledTimes(1);
+});
+
 test("Undo and × call back", () => {
   const onUndo = vi.fn();
   const onDone = vi.fn();

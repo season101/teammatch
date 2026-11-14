@@ -18,7 +18,10 @@ export function PassToast({
   onUndo: () => void;
   onDone: () => void;
 }) {
-  const [held, setHeld] = useState(false);
+  // Either one holds the clock: a pointer leaving doesn't release a focused Undo.
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const held = hovered || focused;
   useEffect(() => {
     if (held) return;
     const timer = setTimeout(onDone, STAYS_FOR);
@@ -29,10 +32,10 @@ export function PassToast({
     <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+1rem)] z-40 flex justify-center px-4 lg:justify-end lg:px-6">
       <div
         className="pointer-events-auto w-full max-w-sm"
-        onMouseEnter={() => setHeld(true)}
-        onMouseLeave={() => setHeld(false)}
-        onFocus={() => setHeld(true)}
-        onBlur={() => setHeld(false)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
       >
         <Toast
           title={`Passed on ${role}`}
