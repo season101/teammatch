@@ -22,7 +22,9 @@ The candidate's Apply doesn't need a toast. The card flying off is the feedback,
 |---|---|---|
 | `title` | `string` | |
 | `children` | `ReactNode` | Detail line |
+| `action` | `{ label, onClick }` | One text button: "Undo", "Retry" |
 | `onDismiss` | `() => void` | Shows the × button |
+| `announce` | `boolean` | `true` by default. `false` drops `role="status"` when a live region nearby already says it |
 
 ## Behaviour
 - Top centre on phone, top right on desktop.
@@ -31,6 +33,9 @@ The candidate's Apply doesn't need a toast. The card flying off is the feedback,
 
 ## Accessibility
 `role="status"` (polite). Error toasts that need action use `role="alert"`.
+
+## The pass toast
+The deck shows "Passed on {role}" with Undo after every pass (`features/feed/pass-toast.tsx`). It holds the position and the 4-second clock itself, waits while hovered or focused, and goes on Undo, × or the next decision. A new pass replaces it and restarts the clock. The deck's live region announces the pass, so the toast sets `announce={false}`.
 
 ## Still to build
 The current component draws one toast. A small provider that queues, auto-dismisses and keeps one live region mounted is planned; see [process.md](../process.md#what-is-still-to-build). Until then, keep the region mounted and swap its text so screen readers hear it.

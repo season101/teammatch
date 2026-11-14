@@ -31,7 +31,7 @@ While dragging, an outlined word appears at the top corner on the side the card 
 The opacity is the drag distance ÷ the commit distance. Stamps are decorative (`aria-hidden`).
 
 ## Undo
-**Undo only brings back the last pass.** You can't re-apply to a role you've applied to, so an apply can't be undone from the deck. The candidate withdraws from My applications instead. The Undo button is disabled unless the last decision was a pass. The pass toast also offers Undo for 4 seconds (not built yet).
+**Undo only brings back the last pass.** You can't re-apply to a role you've applied to, so an apply can't be undone from the deck. The candidate withdraws from My applications instead. The Undo button is disabled unless the last decision was a pass. The pass toast also offers Undo for 4 seconds ([toast.md](../components/toast.md#the-pass-toast)).
 
 - The card flies back in from the left, the way it went, and sits on top.
 - Undo and Z also work when that pass emptied the deck: the Undo button stays under "You're all caught up" until the next decision.

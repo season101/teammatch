@@ -5,21 +5,36 @@ import type { ReactNode } from "react";
 export function Toast({
   title,
   children,
+  action,
   onDismiss,
+  announce = true,
 }: {
   title: string;
   children?: ReactNode;
+  // One thing to do about it: "Undo", "Retry".
+  action?: { label: string; onClick: () => void };
   onDismiss?: () => void;
+  // false when a live region nearby already says it, so it isn't read twice.
+  announce?: boolean;
 }) {
   return (
     <div
-      role="status"
+      role={announce ? "status" : undefined}
       className="flex w-full max-w-sm items-start gap-3 rounded-row border border-border bg-surface p-4 text-text shadow-card motion-safe:animate-toast-in motion-reduce:animate-fade-in"
     >
       <div className="flex-1">
         <p className="font-semibold">{title}</p>
         {children && <div className="mt-0.5 text-sm text-muted">{children}</div>}
       </div>
+      {action && (
+        <button
+          type="button"
+          onClick={action.onClick}
+          className="-my-1.5 min-h-11 rounded-pill px-3 font-semibold text-undo hover:bg-surface-2"
+        >
+          {action.label}
+        </button>
+      )}
       {onDismiss && (
         <button
           type="button"

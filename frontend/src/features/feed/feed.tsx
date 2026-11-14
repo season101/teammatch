@@ -3,7 +3,7 @@
 import { AnimatePresence, useMotionValue } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useCallback, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { useBump } from "@/components/ui/bump";
 import { buttonClasses } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
   type ApiError,
   type FeedRole,
 } from "./queries";
+import { PassToast } from "./pass-toast";
 import { deckCardHeight, RoleCard, roleHref } from "./role-card";
 import { SwipeCard, type Direction } from "./swipe-card";
 
@@ -49,6 +50,9 @@ export function Feed() {
   // The role I passed on, while that pass is still my last decision here. Undo brings
   // back this one only (F3-10). `sent` is its request, which an undo has to wait for.
   const [lastPass, setLastPass] = useState<{ role: FeedRole; sent: Promise<void> } | null>(null);
+  // The pass toast is up: from a pass until 4 seconds later, an undo or the next decision.
+  const [toastUp, setToastUp] = useState(false);
+  const hideToast = useCallback(() => setToastUp(false), []);
   // The undone role, so its card flies back in from the left.
   const [returning, setReturning] = useState<number | null>(null);
   // Set when a reset brought nothing back.
@@ -127,6 +131,7 @@ export function Feed() {
       } else {
         const sent = dismiss.mutateAsync(role.id);
         setLastPass({ role, sent });
+        setToastUp(true);
         await sent;
         setNoPasses(false);
         message = `Passed on ${role.title}.`;
@@ -225,6 +230,14 @@ export function Feed() {
       <p role="status" className="sr-only">
         {announcement}
       </p>
+      {toastUp && lastPass && (
+        <PassToast
+          key={lastPass.role.id}
+          role={lastPass.role.title}
+          onUndo={undo}
+          onDone={hideToast}
+        />
+      )}
       {offers > 0 && (
         <Link
           href="/applications"
