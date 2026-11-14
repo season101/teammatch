@@ -63,6 +63,9 @@ One email is always one account (`ACCOUNT_UNIQUE_EMAIL`). With `SOCIALACCOUNT_EM
 
 | You start with | Then you | What happens | Works afterward |
 |---|---|---|---|
+| Password | Connect Google in Settings, same email | Google is linked, the password stays (F1-12) | Password and Google |
+| Password | Connect a Google account with a different email | Refused: `/settings?error=google_email_mismatch`, nothing links (F1-12) | Password |
+| Google | Set a password in Settings | Saved directly with `account/password/change`, no current password or link (F1-12) | Password and Google |
 | Password, email verified | Continue with Google | Signed in to the same account, and Google is linked | Password and Google |
 | Password, email never verified | Continue with Google | Not signed in. allauth wipes the old password, in case someone else registered the student's address first, links Google and sends a verification email. F1-14 (#201) will sign them in and mark the email verified | Google, once the email is verified |
 | Google | Sign in with email and password | Fails as a wrong password: an account made through Google has none | Google |

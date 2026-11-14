@@ -54,6 +54,7 @@ Business rules (BR-xx) are defined in [prd.md](prd.md#7-business-rules). Backlog
 - **Alternate flows:**
   - 2a. User cancels at Google: return to sign-in page with a short message.
   - 4a. Domain not allowed: see UC-03.
+  - 7a. Signed in already: in Settings → Ways to sign in, the user connects Google (same email only) or sets a password, so both ways work (F1-12).
 - **Postconditions:** User has a session; Google account is linked.
 
 ## UC-03 Reject disallowed email domain

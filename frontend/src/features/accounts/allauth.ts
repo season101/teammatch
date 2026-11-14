@@ -9,7 +9,12 @@ export type AllauthResult = {
   errors: AllauthError[];
 };
 
-export type SessionUser = { id: number; email: string };
+export type SessionUser = {
+  id: number;
+  email: string;
+  // False for an account made through Google that never set a password (F1-12).
+  has_usable_password?: boolean;
+};
 
 // Django wants this token on every POST to prove the request came from our own site.
 function getCsrfToken(): string {
@@ -72,20 +77,61 @@ export async function getProviders(): Promise<string[]> {
   return providers.map((provider) => provider.id);
 }
 
+// Which ways to sign in this account has (Settings, F1-12): a password, and Google.
+export async function getSignInMethods(): Promise<{
+  email: string;
+  password: boolean;
+  google: boolean;
+  // False when this server has no Google keys (e.g. a laptop without them):
+  // then there's no Google row, as the sign-in page has no Google button.
+  googleAvailable: boolean;
+}> {
+  const [session, providers, available] = await Promise.all([
+    fetch(`${BASE}/auth/session`, { credentials: "same-origin" }),
+    fetch(`${BASE}/account/providers`, { credentials: "same-origin" }),
+    getProviders(),
+  ]);
+  const user = (await session.json().catch(() => ({}))).data?.user;
+  const linked: { provider: { id: string } }[] =
+    (await providers.json().catch(() => ({}))).data ?? [];
+  if (!user)
+    throw new Error(`Could not load your account (${session.status}).`);
+  return {
+    email: user.email,
+    password: user.has_usable_password !== false,
+    google: linked.some((account) => account.provider.id === "google"),
+    googleAvailable: available.includes("google"),
+  };
+}
+
+// Signed in with no password yet: save one directly, no current password or link.
+export function setPassword(newPassword: string) {
+  return allauthPost("/account/password/change", { new_password: newPassword });
+}
+
 // Sends the browser to Google. A real form POST, not fetch, so allauth can
 // redirect the whole page. Google then comes back to /auth/callback, with
 // ?next= passed along so the student lands where they were going.
-export async function continueWith(provider: string, next?: string) {
+// process "connect" links Google to the signed-in account from Settings (F1-12),
+// and Google sends the browser back to /settings, with ?error=<code> if refused.
+export async function continueWith(
+  provider: string,
+  next?: string,
+  process: "login" | "connect" = "login",
+) {
   await ensureCsrfToken();
   const form = document.createElement("form");
   form.method = "POST";
   form.action = `${BASE}/auth/provider/redirect`;
   const fields = {
     provider,
-    callback_url: next
-      ? `/auth/callback?${new URLSearchParams({ next })}`
-      : "/auth/callback",
-    process: "login",
+    callback_url:
+      process === "connect"
+        ? "/settings"
+        : next
+          ? `/auth/callback?${new URLSearchParams({ next })}`
+          : "/auth/callback",
+    process,
     csrfmiddlewaretoken: getCsrfToken(),
   };
   for (const [name, value] of Object.entries(fields)) {

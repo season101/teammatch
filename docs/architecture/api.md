@@ -180,6 +180,10 @@ Endpoints we use (same under both prefixes):
 | POST | `auth/password/reset` | set new password with key |
 | POST | `auth/provider/redirect` | start Google login (browser form POST) |
 | POST | `auth/provider/token` | Google id_token login (app client) |
+| GET | `account/providers` | linked sign-in providers (Settings, F1-12) |
+| POST | `account/password/change` | signed in: set a password; with no password yet, just `new_password` (F1-12) |
+
+`auth/provider/redirect` with `process: "connect"` and `callback_url: "/settings"` links Google to the signed-in account. The Google email has to match the account's, or it comes back as `/settings?error=google_email_mismatch` (F1-12, DD-36).
 
 Domain allowlist (`ALLOWED_EMAIL_DOMAINS`) is enforced in the account and social adapters for all of them. Google sign-ins must also come from LA Tech's Google Workspace, and Google's redirect returns to `/accounts/google/login/callback/`, outside `/_allauth` ([Google Sign-In](google-sign-in.md)).
 
