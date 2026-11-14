@@ -338,6 +338,32 @@ test("Undo brings back the last pass, and only that one", async () => {
   expect(await undoButton()).toBeDisabled();
 });
 
+test("a pass shows a toast whose Undo brings the card back", async () => {
+  const { undos } = mockApi({ roles: [role, nextRole] });
+  renderFeed();
+
+  fireEvent.click(await passButton());
+  expect(await screen.findByText("Passed on Backend dev")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+  expect(await passButton()).toBeInTheDocument();
+  await waitFor(() => expect(undos).toHaveLength(1));
+  expect(screen.queryByText("Passed on Backend dev")).not.toBeInTheDocument();
+});
+
+test("an apply takes the pass toast down", async () => {
+  mockApi({ roles: [role, nextRole, { ...nextRole, id: 9, title: "Designer" }] });
+  renderFeed();
+
+  fireEvent.click(await passButton());
+  await screen.findByText("Passed on Backend dev");
+  fireEvent.click(await applyButton("Apply to Frontend dev on CampusEats"));
+
+  await waitFor(() =>
+    expect(screen.queryByText("Passed on Backend dev")).not.toBeInTheDocument(),
+  );
+});
+
 test("an apply can't be undone, and it ends the last pass's turn", async () => {
   mockApi({ roles: [role, nextRole, { ...nextRole, id: 9, title: "Designer" }] });
   renderFeed();
