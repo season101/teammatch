@@ -8,7 +8,7 @@ from django.db.models import Q
 from apps.matching.models import Application, ApplicationStatus, RoleDismissal
 from apps.matching.services import holds_seat
 from apps.profiles.models import Profile, Skill
-from apps.profiles.services import is_retired
+from apps.profiles.services import accept_rules, is_retired
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 from apps.projects.services import get_active_term
 
@@ -414,10 +414,13 @@ class Command(BaseCommand):
             added += self._add_project(User, sample_owner, term, title, pitch, roles) is not None
         self.stdout.write(f"sample projects: {added} added, {len(PROJECTS) - added} already there")
 
+        # The seeded projects and applications are past the Team rules gate (DD-47).
         if owner:
+            accept_rules(owner)
             self._fill_profile(owner, OWNER_PROFILE, "owner")
             self._add_owner_project(User, owner, term)
         if candidate:
+            accept_rules(candidate)
             self._fill_profile(candidate, CANDIDATE_PROFILE, "candidate")
             self._add_candidate_applications(candidate)
 
@@ -426,6 +429,7 @@ class Command(BaseCommand):
             return
         user = User.objects.create_user(email)  # no password: can't sign in
         Profile.objects.filter(user=user).update(display_name=name, major=major, bio=bio)
+        accept_rules(user)
         user.profile.skills.set(Skill.objects.filter(name__in=skills))
 
     def _add_project(self, User, owner, term, title, pitch, roles):

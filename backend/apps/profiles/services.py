@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.core.files.base import ContentFile
 from django.db.models import Q
+from django.db.models.functions import Coalesce, Now
 from django.utils import timezone
 from PIL import Image, ImageOps
 from rest_framework.exceptions import APIException
@@ -150,3 +151,14 @@ def can_read_resume(user, profile):
             applicant_id=profile.user_id, role__project__owner=user
         ).exists()
     )
+
+
+def accept_rules(user):
+    """They agree to the Team rules (DD-12). Repeats keep the first time."""
+    Profile.objects.get_or_create(user=user)
+    Profile.objects.filter(user=user).update(rules_accepted_at=Coalesce("rules_accepted_at", Now()))
+
+
+def rules_accepted(user):
+    """Have they agreed to the Team rules (DD-12)? The app's gate asks first (DD-47)."""
+    return Profile.objects.filter(user=user, rules_accepted_at__isnull=False).exists()

@@ -5,10 +5,12 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.core.pagination import DefaultCursorPagination
+from apps.profiles.permissions import RulesAccepted
 from apps.projects.models import Role
 from apps.projects.services import visible_to
 
@@ -75,8 +77,10 @@ class ApplicationDecisionView(APIView):
 
     Not pending, the role is filled, or the applicant is on a team or committed: 409.
     My own application: 403. Someone else's on a role that isn't mine: 404.
+    Team rules not accepted: 403 rules_not_accepted.
     """
 
+    permission_classes = [IsAuthenticated, RulesAccepted]
     decision = None  # set per URL
 
     def post(self, request, pk):
@@ -101,6 +105,9 @@ class ApplyView(generics.CreateAPIView):
         serializer.instance = services.apply(
             role, self.request.user, serializer.validated_data.get("note", "")
         )
+
+    # Team rules not accepted: 403 rules_not_accepted.
+    permission_classes = [IsAuthenticated, RulesAccepted]
 
 
 @extend_schema(tags=["feed"], request=None, responses={204: None})
@@ -180,7 +187,10 @@ class CommitView(APIView):
     """Take the seat this offer is for (F4-10). Closes my other applications this term.
 
     409: offer_not_open, role_not_open, owns_open_project or applicant_committed.
+    Team rules not accepted: 403 rules_not_accepted.
     """
+
+    permission_classes = [IsAuthenticated, RulesAccepted]
 
     def post(self, request, pk):
         application, team = services.commit(my_offer(request, pk))

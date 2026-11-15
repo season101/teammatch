@@ -1,6 +1,5 @@
 import mimetypes
 
-from django.db.models.functions import Coalesce, Now
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
@@ -21,7 +20,14 @@ from .serializers import (
     ResumeUploadSerializer,
     SkillSerializer,
 )
-from .services import can_read_resume, remove_avatar, remove_resume, set_avatar, set_resume
+from .services import (
+    accept_rules,
+    can_read_resume,
+    remove_avatar,
+    remove_resume,
+    set_avatar,
+    set_resume,
+)
 
 
 def my_profile(user):
@@ -137,10 +143,7 @@ class AcceptRulesView(APIView):
     """I agree to the Team rules (DD-12). Repeats keep the first time."""
 
     def post(self, request):
-        Profile.objects.get_or_create(user=request.user)
-        Profile.objects.filter(user=request.user).update(
-            rules_accepted_at=Coalesce("rules_accepted_at", Now())
-        )
+        accept_rules(request.user)
         return Response(status=204)
 
 

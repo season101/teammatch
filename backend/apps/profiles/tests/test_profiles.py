@@ -91,11 +91,13 @@ def test_accept_rules_needs_sign_in(client):
     assert client.post(RULES_URL).status_code == 401
 
 
+@pytest.mark.rules_not_accepted
 def test_new_profile_has_not_accepted_the_rules(client, sam):
     client.force_login(sam)
     assert client.get("/api/v1/me/profile/").json()["rules_accepted_at"] is None
 
 
+@pytest.mark.rules_not_accepted
 def test_accept_rules_stamps_my_profile_only(client, sam, alex):
     client.force_login(sam)
 
@@ -105,6 +107,7 @@ def test_accept_rules_stamps_my_profile_only(client, sam, alex):
     assert Profile.objects.get(user=alex).rules_accepted_at is None
 
 
+@pytest.mark.rules_not_accepted
 def test_accepting_twice_keeps_the_first_time(client, sam):
     client.force_login(sam)
     client.post(RULES_URL)
@@ -114,6 +117,7 @@ def test_accepting_twice_keeps_the_first_time(client, sam):
     assert Profile.objects.get(user=sam).rules_accepted_at == first
 
 
+@pytest.mark.rules_not_accepted
 def test_rules_accepted_at_cannot_be_patched(client, sam):
     client.force_login(sam)
     client.patch(

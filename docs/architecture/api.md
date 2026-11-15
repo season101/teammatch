@@ -12,6 +12,7 @@ The source of truth is the OpenAPI schema, not this page. This page is the overv
 | Format | JSON, `snake_case` fields, ISO 8601 timestamps with their offset, in Central time (`2026-11-15T01:44:00-06:00`; stored in UTC). Dates such as a term's are Central calendar dates |
 | Auth | Session cookie from allauth headless (`browser` client). Unsafe methods need the `X-CSRFToken` header. Future mobile app sends `X-Session-Token` (`app` client). |
 | Authz | Every object endpoint checks ownership or membership. Objects the user cannot see return `404`. Acting on something you can see but don't own returns `403` (for example editing someone else's profile). |
+| Team rules | Applying, creating or publishing a project, like/pass, commit and sending a chat message need the Team rules accepted (`POST /api/v1/me/rules/accept/`, DD-12). Before that they answer `403` `rules_not_accepted` (chat: a `chat.error` with that code). Reading, withdrawing and declining don't. The app's onboarding asks first (DD-47); the API holds it for any client |
 | IDs | Integer ids in paths |
 | Trailing slash | Always (`/api/v1/projects/`) |
 | Past terms | Once a project's term has ended (its last day counts), publishing it, applying to its roles, like/pass and commit answer `409` `term_over`, even by id |
@@ -51,7 +52,7 @@ All `/api/v1/` errors use one shape (custom DRF exception handler in `core`):
 |---|---|---|
 | 400 | `validation_error`, `invalid_avatar`, `repo_url_not_github`, `resume_too_big`, `resume_not_pdf` | bad input |
 | 401 | `not_authenticated` | no session, sent with `WWW-Authenticate: Session`. A client treats `401` as signed out and `403` as not allowed; a write without the CSRF token is `403` too |
-| 403 | `permission_denied`, `profile_retired`, `own_project` | logged in but not allowed |
+| 403 | `permission_denied`, `profile_retired`, `own_project`, `rules_not_accepted` | logged in but not allowed |
 | 404 | `not_found` | missing or not visible to you |
 | 409 | `already_applied`, `role_not_open`, `already_on_team`, `project_locked`, `term_over` | state conflict |
 | 429 | `throttled` | rate limit |
@@ -99,6 +100,7 @@ Login, signup, logout, password and Google live under allauth (below).
 |---|---|---|---|
 | GET | `/api/v1/me/profile/` | user | own profile |
 | PATCH | `/api/v1/me/profile/` | user | update display name, bio, major, skills, `github_url` and `linkedin_url` (F1-15). Links must be `https://github.com/...` or `https://linkedin.com/...`, with or without `www.`, with a path and no port or user; blank clears one. Anything else is a `400` on the field, "Enter a link that starts with https://github.com/" (code `github_url_invalid`) or the LinkedIn one (`linkedin_url_invalid`) |
+| POST | `/api/v1/me/rules/accept/` | user | agree to the Team rules, `204`; repeats keep the first time. `rules_accepted_at` on my profile |
 | POST | `/api/v1/me/avatar/` | user | upload my avatar as `multipart/form-data`, field `avatar`: JPEG, PNG or WebP of 2 MB or less, checked from the file's bytes with Pillow. It's redrawn at most 512px (dropping EXIF such as location) and saved to SeaweedFS through django-storages; the old file is deleted. Anything else: `400` `invalid_avatar`, and the old avatar stays. Answers with my profile |
 | DELETE | `/api/v1/me/avatar/` | user | remove my avatar and delete its file. Answers with my profile |
 | GET | `/api/v1/profiles/{id}/avatar/` | user | avatar image, streamed by the API from SeaweedFS (`Cache-Control: private`). No avatar: `404`. Profiles give `avatar_url`, this address with `?v=` that changes on each upload, or `null` |
@@ -222,7 +224,7 @@ Every frame is JSON:
 | `type` | `data` |
 |---|---|
 | `chat.message` | `{ "id": 1, "team": 3, "sender": { "id": 7, "display_name": "..." }, "body": "...", "created_at": "2026-10-30T18:00:00Z", "client_id": "uuid or null" }` |
-| `chat.error` | `{ "code": "validation_error", "message": "...", "client_id": "uuid or null" }` |
+| `chat.error` | `{ "code": "validation_error", "message": "...", "client_id": "uuid or null" }`. `code` is `rules_not_accepted` when the sender hasn't accepted the Team rules |
 | `application.liked` | `{ "application": 12, "role": 4, "project": 2 }` (future, `/ws/notifications/`) |
 | `team.formed` | `{ "team": 3, "project": 2 }` (future, `/ws/notifications/`) |
 | `pong` | `{}` |

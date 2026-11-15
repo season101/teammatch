@@ -188,7 +188,7 @@ def test_a_locking_commit_runs_a_fixed_number_of_queries(
     offer(apply(role, "lee@latech.edu"))
     client = as_user(liked.applicant)
 
-    with django_assert_num_queries(28):  # same count however many roles or rivals
+    with django_assert_num_queries(29):  # same count however many roles or rivals
         response = client.post(f"/api/v1/applications/{liked.id}/commit/")
 
     assert response.json()["team_locked"] is True

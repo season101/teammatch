@@ -39,6 +39,7 @@ paths:
         Take the seat this offer is for (F4-10). Closes my other applications this term.
 
         409: offer_not_open, role_not_open, owns_open_project or applicant_committed.
+        Team rules not accepted: 403 rules_not_accepted.
       parameters:
       - in: path
         name: id
@@ -86,6 +87,7 @@ paths:
 
         Not pending, the role is filled, or the applicant is on a team or committed: 409.
         My own application: 403. Someone else's on a role that isn't mine: 404.
+        Team rules not accepted: 403 rules_not_accepted.
       parameters:
       - in: path
         name: id
@@ -111,6 +113,7 @@ paths:
 
         Not pending, the role is filled, or the applicant is on a team or committed: 409.
         My own application: 403. Someone else's on a role that isn't mine: 404.
+        Team rules not accepted: 403 rules_not_accepted.
       parameters:
       - in: path
         name: id
@@ -501,7 +504,7 @@ paths:
       operationId: projects_list
       description: |-
         GET: open projects in the current term, newest first. ?q= searches them (F2-07).
-        POST: create a draft.
+        POST: create a draft. Team rules not accepted: 403 rules_not_accepted.
       parameters:
       - name: cursor
         required: false
@@ -536,7 +539,7 @@ paths:
       operationId: projects_create
       description: |-
         GET: open projects in the current term, newest first. ?q= searches them (F2-07).
-        POST: create a draft.
+        POST: create a draft. Team rules not accepted: 403 rules_not_accepted.
       tags:
       - projects
       requestBody:
@@ -647,8 +650,9 @@ paths:
   /api/v1/projects/{id}/publish/:
     post:
       operationId: projects_publish_create
-      description: Open my draft project for applications. Blocked when it has no
-        roles.
+      description: |-
+        Open my draft project for applications. Blocked when it has no roles.
+        Team rules not accepted: 403 rules_not_accepted.
       parameters:
       - in: path
         name: id

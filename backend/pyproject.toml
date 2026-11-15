@@ -38,3 +38,4 @@ select = ["E", "F", "I", "UP", "B", "DJ"]
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["tests.py", "test_*.py"]
+markers = ["rules_not_accepted: profiles start without the Team rules accepted (see conftest.py)"]

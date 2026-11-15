@@ -266,3 +266,18 @@ def test_a_failed_broadcast_is_logged_and_the_message_kept(team, marco, caplog):
 
     assert ChatMessage.objects.filter(body="still saved").exists()
     assert "redis down" in caplog.text
+
+
+@pytest.mark.rules_not_accepted
+@run_async
+async def test_posting_needs_the_team_rules_accepted(team, marco):
+    socket = await joined(team.id, marco)
+
+    await socket.send_json_to({"type": "chat.send", "data": {"body": "hi", "client_id": "c-9"}})
+    frame = await socket.receive_json_from()
+
+    assert frame["type"] == "chat.error"
+    assert frame["data"]["code"] == "rules_not_accepted"
+    assert frame["data"]["client_id"] == "c-9"
+    assert await count_messages() == 0
+    await socket.disconnect()

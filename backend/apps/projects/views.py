@@ -3,10 +3,12 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.core.pagination import DefaultCursorPagination
+from apps.profiles.permissions import RulesAccepted
 
 from . import services
 from .models import Project, Role
@@ -43,10 +45,11 @@ def owned_project(request, pk):
 )
 class ProjectListCreateView(generics.ListCreateAPIView):
     """GET: open projects in the current term, newest first. ?q= searches them (F2-07).
-    POST: create a draft.
+    POST: create a draft. Team rules not accepted: 403 rules_not_accepted.
     """
 
     pagination_class = DefaultCursorPagination
+    permission_classes = [IsAuthenticated, RulesAccepted]
 
     def get_queryset(self):
         return services.open_projects(q=self.request.query_params.get("q", ""))
@@ -108,7 +111,10 @@ class RoleUpdateView(generics.UpdateAPIView):
 
 @extend_schema(tags=["projects"], request=None, responses=ProjectSerializer)
 class ProjectPublishView(APIView):
-    """Open my draft project for applications. Blocked when it has no roles."""
+    """Open my draft project for applications. Blocked when it has no roles.
+    Team rules not accepted: 403 rules_not_accepted."""
+
+    permission_classes = [IsAuthenticated, RulesAccepted]
 
     def post(self, request, pk):
         project = services.publish_project(owned_project(request, pk))

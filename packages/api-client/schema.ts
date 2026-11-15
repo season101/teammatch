@@ -34,6 +34,7 @@ export interface paths {
          * @description Take the seat this offer is for (F4-10). Closes my other applications this term.
          *
          *     409: offer_not_open, role_not_open, owns_open_project or applicant_committed.
+         *     Team rules not accepted: 403 rules_not_accepted.
          */
         post: operations["applications_commit_create"];
         delete?: never;
@@ -73,6 +74,7 @@ export interface paths {
          *
          *     Not pending, the role is filled, or the applicant is on a team or committed: 409.
          *     My own application: 403. Someone else's on a role that isn't mine: 404.
+         *     Team rules not accepted: 403 rules_not_accepted.
          */
         post: operations["applications_like_create"];
         delete?: never;
@@ -95,6 +97,7 @@ export interface paths {
          *
          *     Not pending, the role is filled, or the applicant is on a team or committed: 409.
          *     My own application: 403. Someone else's on a role that isn't mine: 404.
+         *     Team rules not accepted: 403 rules_not_accepted.
          */
         post: operations["applications_pass_create"];
         delete?: never;
@@ -345,13 +348,13 @@ export interface paths {
         };
         /**
          * @description GET: open projects in the current term, newest first. ?q= searches them (F2-07).
-         *     POST: create a draft.
+         *     POST: create a draft. Team rules not accepted: 403 rules_not_accepted.
          */
         get: operations["projects_list"];
         put?: never;
         /**
          * @description GET: open projects in the current term, newest first. ?q= searches them (F2-07).
-         *     POST: create a draft.
+         *     POST: create a draft. Team rules not accepted: 403 rules_not_accepted.
          */
         post: operations["projects_create"];
         delete?: never;
@@ -416,7 +419,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Open my draft project for applications. Blocked when it has no roles. */
+        /**
+         * @description Open my draft project for applications. Blocked when it has no roles.
+         *     Team rules not accepted: 403 rules_not_accepted.
+         */
         post: operations["projects_publish_create"];
         delete?: never;
         options?: never;

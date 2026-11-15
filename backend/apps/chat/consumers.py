@@ -4,6 +4,9 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from rest_framework.exceptions import ValidationError
 
+from apps.profiles.permissions import RulesAccepted
+from apps.profiles.services import rules_accepted
+
 from . import services
 
 
@@ -53,6 +56,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         # echoed to the whole team, so only a short string
         client_id = data.get("client_id")
         client_id = client_id[:64] if isinstance(client_id, str) else None
+        if not await database_sync_to_async(rules_accepted)(self.scope["user"]):
+            await self.send_error(RulesAccepted.message, client_id, RulesAccepted.code)
+            return
         try:
             await database_sync_to_async(services.post_message)(
                 self.team_id, self.scope["user"], data.get("body"), client_id
@@ -63,10 +69,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def chat_message(self, event):
         await self.send_json({"type": "chat.message", "data": event["data"]})
 
-    async def send_error(self, message, client_id=None):
+    async def send_error(self, message, client_id=None, code="validation_error"):
         await self.send_json(
             {
                 "type": "chat.error",
-                "data": {"code": "validation_error", "message": message, "client_id": client_id},
+                "data": {"code": code, "message": message, "client_id": client_id},
             }
         )
