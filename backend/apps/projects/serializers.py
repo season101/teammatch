@@ -6,12 +6,33 @@ from apps.profiles.models import Skill
 from . import services
 from .models import Project, Role
 
+GITHUB = "https://github.com/"
+NOT_GITHUB = f"Enter a link that starts with {GITHUB}"
+
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ["id", "title", "pitch", "status", "term", "owner", "created_at"]
+        fields = [
+            "id",
+            "title",
+            "pitch",
+            "repo_url",
+            "details",
+            "status",
+            "term",
+            "owner",
+            "created_at",
+        ]
         read_only_fields = ["id", "status", "term", "owner", "created_at"]
+        # Not a link at all gets the same message as a link that isn't to GitHub.
+        extra_kwargs = {"repo_url": {"error_messages": {"invalid": NOT_GITHUB}}}
+
+    def validate_repo_url(self, value):
+        # The trailing slash pins the host, so github.com.evil.io and user@ tricks fail.
+        if value and (not value.startswith(GITHUB) or value == GITHUB):
+            raise serializers.ValidationError(NOT_GITHUB, code="repo_url_not_github")
+        return value
 
     def create(self, validated_data):
         return services.create_project(owner=self.context["request"].user, **validated_data)
@@ -93,4 +114,15 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ["id", "title", "pitch", "status", "owner", "owner_name", "roles", "created_at"]
+        fields = [
+            "id",
+            "title",
+            "pitch",
+            "repo_url",
+            "details",
+            "status",
+            "owner",
+            "owner_name",
+            "roles",
+            "created_at",
+        ]

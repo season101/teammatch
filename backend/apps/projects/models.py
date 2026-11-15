@@ -20,6 +20,9 @@ class Project(TimeStampedModel):
     term = models.ForeignKey(Term, on_delete=models.PROTECT, related_name="projects")
     title = models.CharField(max_length=100)
     pitch = models.TextField(max_length=2000)
+    # Optional (F2-12, DD-41). Only https://github.com/ links; the serializer checks it.
+    repo_url = models.URLField(blank=True)
+    details = models.TextField(max_length=2000, blank=True)
     status = models.CharField(
         max_length=10,
         choices=ProjectStatus.choices,

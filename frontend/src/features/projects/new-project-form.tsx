@@ -12,6 +12,7 @@ import {
 import { PendingLabel } from "@/components/ui/pending-label";
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
 import { useCreateProject, type FieldErrors } from "./queries";
+import { RepoDetailsFields, type RepoDetails } from "./repo-details-fields";
 
 const TITLE_MAX = 100;
 const PITCH_MAX = 2000;
@@ -19,6 +20,7 @@ const PITCH_MAX = 2000;
 export function NewProjectForm() {
   const [title, setTitle] = useState("");
   const [pitch, setPitch] = useState("");
+  const [extra, setExtra] = useState<RepoDetails>({ repo_url: "", details: "" });
   const [clientErrors, setClientErrors] = useState<FieldErrors>({});
   const create = useCreateProject();
 
@@ -39,7 +41,12 @@ export function NewProjectForm() {
     if (!pitch.trim()) found.pitch = "Pitch is required.";
     setClientErrors(found);
     if (Object.keys(found).length > 0) return;
-    create.mutate({ title: title.trim(), pitch: pitch.trim() });
+    create.mutate({
+      title: title.trim(),
+      pitch: pitch.trim(),
+      repo_url: extra.repo_url.trim(),
+      details: extra.details.trim(),
+    });
   }
 
   if (create.isSuccess) {
@@ -66,6 +73,7 @@ export function NewProjectForm() {
             create.reset();
             setTitle("");
             setPitch("");
+            setExtra({ repo_url: "", details: "" });
           }}
         >
           Create another project
@@ -149,6 +157,14 @@ export function NewProjectForm() {
           </p>
         )}
       </div>
+
+      <RepoDetailsFields
+        idPrefix="project"
+        value={extra}
+        errors={errors}
+        disabled={create.isPending}
+        onChange={(change) => setExtra((prev) => ({ ...prev, ...change }))}
+      />
 
       <button
         type="submit"

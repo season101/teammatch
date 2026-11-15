@@ -288,7 +288,66 @@ test("edits the title and pitch of a draft project", async () => {
   expect(patch?.body).toEqual({
     title: "TeamMatch v2",
     pitch: "Find a team fast",
+    repo_url: "",
+    details: "",
   });
+});
+
+// F2-12: the repository link and more details
+const REPO = "https://github.com/olive/campus-eats";
+
+test("shows View the code and More from the owner when they're filled in", async () => {
+  mockApi((method, path) =>
+    path === "/api/v1/skills/"
+      ? [SKILLS, 200]
+      : [project({ owner: 2, repo_url: REPO, details: "We meet Tuesdays" }), 200],
+  );
+  renderEditor();
+  const link = await screen.findByRole("link", { name: /View the code/ });
+  expect(link).toHaveAttribute("href", REPO);
+  expect(link).toHaveAttribute("target", "_blank");
+  expect(link.getAttribute("rel")).toContain("noopener");
+  expect(link).toHaveTextContent("github.com/olive/campus-eats");
+  expect(link).toHaveTextContent("(opens in a new tab)");
+  expect(screen.getByRole("heading", { name: "More from the owner" })).toBeInTheDocument();
+  expect(screen.getByText("We meet Tuesdays")).toBeInTheDocument();
+});
+
+test("shows nothing extra when both are empty", async () => {
+  mockApi((method, path) =>
+    path === "/api/v1/skills/" ? [SKILLS, 200] : [project({ repo_url: "", details: "" }), 200],
+  );
+  renderEditor();
+  expect(await screen.findByText("TeamMatch")).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /View the code/ })).not.toBeInTheDocument();
+  expect(screen.queryByText("More from the owner")).not.toBeInTheDocument();
+});
+
+test("edits the repository, and a bad link shows on the field with the form kept", async () => {
+  const message = "Enter a link that starts with https://github.com/";
+  const calls = mockApi((method, path) => {
+    if (path === "/api/v1/skills/") return [SKILLS, 200];
+    if (method === "PATCH") return [{ repo_url: [message] }, 400];
+    return [project({ details: "We meet Tuesdays" }), 200];
+  });
+  renderEditor();
+  fireEvent.click(await screen.findByRole("button", { name: "Edit details" }));
+  const repo = screen.getByLabelText("GitHub repository (optional)");
+  expect(screen.getByLabelText("More details (optional)")).toHaveValue("We meet Tuesdays");
+  fireEvent.change(repo, { target: { value: "http://github.com/olive" } });
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "TeamMatch v2" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+  expect(await screen.findByText(message)).toBeInTheDocument();
+  expect(repo).toHaveAttribute("aria-invalid", "true");
+  expect(repo).toHaveValue("http://github.com/olive");
+  expect(screen.getByLabelText("Title")).toHaveValue("TeamMatch v2");
+  expect(calls.find((c) => c.method === "PATCH")?.body).toMatchObject({
+    repo_url: "http://github.com/olive",
+    details: "We meet Tuesdays",
+  });
+  // A field error, so no "Could not save" notice on top.
+  expect(screen.queryByText(/Could not save/)).not.toBeInTheDocument();
 });
 
 test("asks for a title and pitch without calling the API", async () => {

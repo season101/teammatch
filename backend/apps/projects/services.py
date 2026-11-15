@@ -63,11 +63,13 @@ def get_active_term(today=None):
     return Term.objects.filter(start_date__lte=today, end_date__gte=today).first()
 
 
-def create_project(*, owner, title, pitch):
+def create_project(*, owner, title, pitch, repo_url="", details=""):
     term = get_active_term()
     if term is None:
         raise NoActiveTerm()
-    return Project.objects.create(owner=owner, term=term, title=title, pitch=pitch)
+    return Project.objects.create(
+        owner=owner, term=term, title=title, pitch=pitch, repo_url=repo_url, details=details
+    )
 
 
 def ensure_roles_editable(project):

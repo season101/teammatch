@@ -129,7 +129,8 @@ class ProjectDetailView(generics.RetrieveUpdateAPIView):
     """GET: one project with its roles and their required skills.
     Owners see their own drafts. Everyone else sees open and locked projects only (404 otherwise).
 
-    PATCH: the owner edits the title or pitch of a draft or open project.
+    PATCH: the owner edits the title, pitch, repository link or more details of a draft or
+    open project.
     """
 
     http_method_names = ["get", "patch", "head", "options"]

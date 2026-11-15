@@ -294,7 +294,8 @@ export interface paths {
          * @description GET: one project with its roles and their required skills.
          *     Owners see their own drafts. Everyone else sees open and locked projects only (404 otherwise).
          *
-         *     PATCH: the owner edits the title or pitch of a draft or open project.
+         *     PATCH: the owner edits the title, pitch, repository link or more details of a draft or
+         *     open project.
          */
         get: operations["projects_retrieve"];
         put?: never;
@@ -306,7 +307,8 @@ export interface paths {
          * @description GET: one project with its roles and their required skills.
          *     Owners see their own drafts. Everyone else sees open and locked projects only (404 otherwise).
          *
-         *     PATCH: the owner edits the title or pitch of a draft or open project.
+         *     PATCH: the owner edits the title, pitch, repository link or more details of a draft or
+         *     open project.
          */
         patch: operations["projects_partial_update"];
         trace?: never;
@@ -761,6 +763,8 @@ export interface components {
         PatchedProjectRequest: {
             title?: string;
             pitch?: string;
+            repo_url?: string;
+            details?: string;
         };
         PatchedRoleRequest: {
             title?: string;
@@ -778,6 +782,8 @@ export interface components {
             readonly id: number;
             title: string;
             pitch: string;
+            repo_url?: string;
+            details?: string;
             readonly status: components["schemas"]["ProjectStatusEnum"];
             readonly term: number;
             readonly owner: number;
@@ -788,6 +794,8 @@ export interface components {
             readonly id: number;
             title: string;
             pitch: string;
+            repo_url?: string;
+            details?: string;
             status?: components["schemas"]["ProjectStatusEnum"];
             owner: number;
             readonly owner_name: string;
@@ -808,6 +816,8 @@ export interface components {
         ProjectRequest: {
             title: string;
             pitch: string;
+            repo_url?: string;
+            details?: string;
         };
         /**
          * @description * `draft` - Draft

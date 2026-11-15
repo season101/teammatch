@@ -42,7 +42,7 @@ function readErrors(body: unknown): { message: string; fields: FieldErrors } {
   const source = (nested.fields ?? record) as Record<string, unknown>;
 
   const fields: FieldErrors = {};
-  for (const key of ["title", "pitch"] as const) {
+  for (const key of ["title", "pitch", "repo_url", "details"] as const) {
     const value = source[key];
     if (Array.isArray(value) && value.length > 0)
       fields[key] = String(value[0]);
@@ -229,7 +229,7 @@ export function useDeleteRole(projectId: number) {
 
 export function useUpdateProject(projectId: number) {
   const queryClient = useQueryClient();
-  return useMutation<unknown, ApiError, { title: string; pitch: string }>({
+  return useMutation<unknown, ApiError, ProjectInput>({
     mutationFn: async (input) => {
       const { data, error, response } = await api.PATCH(
         "/api/v1/projects/{id}/",
