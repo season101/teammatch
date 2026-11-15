@@ -1,5 +1,6 @@
 """Projects: who can see and change what. Another user's draft, edit rights, signed-out redirects."""
 
+import os
 import re
 
 import pytest
@@ -16,7 +17,7 @@ from projects_support import (  # noqa: F401
     tag,
 )
 
-BASE = "http://localhost:3000"
+BASE = os.environ.get("E2E_BASE_URL", "http://localhost:3000").rstrip("/")
 
 
 @pytest.fixture(scope="module")

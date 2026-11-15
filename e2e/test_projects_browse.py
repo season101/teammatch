@@ -1,5 +1,6 @@
 """Projects list and search (F2-03, F2-07): keyword, skill, empty results and Clear search."""
 
+import os
 import re
 
 import pytest
@@ -14,6 +15,7 @@ from projects_support import (  # noqa: F401
     tag,
 )
 
+BASE = os.environ.get("E2E_BASE_URL", "http://localhost:3000").rstrip("/")
 T = tag()
 
 
@@ -58,6 +60,7 @@ def browser_context_args(browser_context_args, world):
 def projects(page: Page, world):
     page.goto("/projects")
     expect(page.get_by_role("searchbox", name="Search projects")).to_be_visible()
+    expect(page.get_by_role("link", name=world["alpha"]["title"])).to_be_visible()  # list loaded
     return page
 
 
@@ -119,9 +122,9 @@ def test_search_matches_a_required_skill_of_an_open_role(projects, world):
 
 def test_search_never_finds_drafts_or_archived(projects, world):
     search(projects, f"zqd{T}")
-    expect(projects.get_by_text(re.compile("Nothing matches"))).to_be_visible()
+    expect(projects.get_by_text(f"Nothing matches “zqd{T}”")).to_be_visible()
     search(projects, f"zqx{T}")
-    expect(projects.get_by_text(re.compile("Nothing matches"))).to_be_visible()
+    expect(projects.get_by_text(f"Nothing matches “zqx{T}”")).to_be_visible()
 
 
 def test_no_results_show_clear_search_which_restores_the_list(projects, world):
@@ -165,14 +168,14 @@ def test_api_search_and_filters(world):
 
 
 def test_projects_page_signed_out_redirects_to_login(browser):
-    page = browser.new_context(base_url="http://localhost:3000").new_page()
+    page = browser.new_context(base_url=BASE).new_page()
     page.goto("/projects")
     expect(page).to_have_url(re.compile(r"/login"))
 
 
 def test_mine_tab_on_a_phone_shows_only_my_own_projects(browser, world):
     context = browser.new_context(
-        base_url="http://localhost:3000",
+        base_url=BASE,
         viewport={"width": 390, "height": 844},
         storage_state=signed_in_state(world["viewer"][1]),
     )

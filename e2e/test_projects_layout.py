@@ -1,5 +1,6 @@
 """Projects at phone width (390 px), in dark and light themes, and a keyboard-only create flow."""
 
+import os
 import re
 
 import pytest
@@ -14,7 +15,7 @@ from projects_support import (  # noqa: F401
     tag,
 )
 
-BASE = "http://localhost:3000"
+BASE = os.environ.get("E2E_BASE_URL", "http://localhost:3000").rstrip("/")
 PHONE = {"width": 390, "height": 844}
 
 

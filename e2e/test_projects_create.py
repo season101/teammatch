@@ -1,5 +1,6 @@
 """Projects: create a draft, title/pitch limits, and the F2-12 repository link and More details."""
 
+import os
 import re
 
 import pytest
@@ -7,6 +8,7 @@ from playwright.sync_api import Page, expect
 
 from projects_support import PITCH, make_api_user, make_project, signed_in_state, tag  # noqa: F401
 
+BASE = os.environ.get("E2E_BASE_URL", "http://localhost:3000").rstrip("/")
 NOT_GITHUB = "Enter a link that starts with https://github.com/"
 
 
@@ -210,7 +212,7 @@ def test_repo_link_opens_in_new_tab(owner_page):
     submit(owner_page)
     owner_page.get_by_role("link", name="Add roles").click()
     # Don't load github.com: just check the click asks for a popup.
-    owner_page.route("https://github.com/**", lambda route: route.abort())
+    owner_page.context.route("https://github.com/**", lambda route: route.abort())
     with owner_page.expect_popup() as popup:
         owner_page.get_by_role("link", name="View the code").click()
     assert popup.value is not None
@@ -308,13 +310,13 @@ def test_edit_details_empty_title_is_refused(owner_page):
 
 
 def test_new_project_while_signed_out_redirects_to_login(browser):
-    page = browser.new_context(base_url="http://localhost:3000", storage_state=None).new_page()
+    page = browser.new_context(base_url=BASE, storage_state=None).new_page()
     page.goto("/projects/new")
     expect(page).to_have_url(re.compile(r"/login\?next=%2Fprojects%2Fnew"))
 
 
 def test_signing_in_after_redirect_returns_to_new_project(browser, owner, sign_in):
-    page = browser.new_context(base_url="http://localhost:3000", storage_state=None).new_page()
+    page = browser.new_context(base_url=BASE, storage_state=None).new_page()
     page.goto("/projects/new")
     expect(page).to_have_url(re.compile(r"/login"))
     sign_in(page, owner[0])
