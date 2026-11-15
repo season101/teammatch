@@ -81,7 +81,7 @@ def test_a_member_gets_their_team_with_seen_at_empty(team, fall, ava):
             {"display_name": "Marco", "role": "Owner"},
             {"display_name": "Ava", "role": "Backend developer"},
         ],
-        "formed_at": team.created_at.isoformat().replace("+00:00", "Z"),
+        "formed_at": timezone.localtime(team.created_at).isoformat(),  # Central, with its offset
         "seen_at": None,
     }
 

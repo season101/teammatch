@@ -95,15 +95,19 @@ function mockApi({
       else if (path === "/api/v1/projects/4/")
         reply = { status: 200, body: projectDetail };
       else if (path === "/api/v1/roles/2/applications/") {
-        // Like the API: waiting applicants unless ?status= asks for another list.
-        const status = new URL(request.url).searchParams.get("status");
+        // Like the API: waiting applicants unless ?status= asks for another list,
+        // 20 a page with a next cursor.
+        const params = new URL(request.url).searchParams;
+        const status = params.get("status");
+        const list = status === "liked" ? liked : status === "pending" ? pending : [];
+        const page = Number(params.get("cursor") ?? 0);
+        const more = list.length > (page + 1) * 20;
         reply = {
           status: 200,
           body: {
-            next: null,
+            next: more ? `http://localhost${path}?cursor=${page + 1}&status=${status}` : null,
             previous: null,
-            results:
-              status === "liked" ? liked : status === "pending" ? pending : [],
+            results: list.slice(page * 20, (page + 1) * 20),
           },
         };
       } else if (path === "/api/v1/roles/1/applications/") {
@@ -190,6 +194,19 @@ test("shows a tab per role with its count, and the first applicant as a card", a
   expect(within(card).getByText("I know React")).toBeInTheDocument();
   expect(
     screen.getByText("Frontend developer · 1 of 1 waiting"),
+  ).toBeInTheDocument();
+});
+
+test("counts every waiting applicant, past the first page of 20", async () => {
+  const many = Array.from({ length: 25 }, (_, i) => ({ ...sam, id: 100 + i }));
+  mockApi({ waiting: many });
+  renderPage();
+
+  expect(
+    await screen.findByRole("tab", { name: /Frontend developer\s*25/ }),
+  ).toBeInTheDocument();
+  expect(
+    await screen.findByText("Frontend developer · 1 of 25 waiting"),
   ).toBeInTheDocument();
 });
 

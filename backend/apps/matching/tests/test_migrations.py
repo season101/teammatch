@@ -21,11 +21,12 @@ def migrate(target=None):
 
 
 def status_of(application):
-    application.refresh_from_db()
-    return application.status
+    # Only the status column: back at 0004/0005 the table lacks withdrawn_reason (0006).
+    return Application.objects.values_list("status", flat=True).get(pk=application.pk)
 
 
-# Only matching moves back, and 0005 adds no columns, so today's models can write the rows.
+# Only matching moves back. Its rows are written with the 0004 model, which matches the
+# table there; the other apps' rows with today's.
 @pytest.mark.django_db(transaction=True, serialized_rollback=True)
 def test_0005_turns_old_likes_into_commits_and_back():
     """Before F4-10 a like took the seat, so existing teams must not change (F4-10)."""
@@ -41,8 +42,12 @@ def test_0005_turns_old_likes_into_commits_and_back():
     role = Role.objects.create(project=project, title="Backend")
     try:
         migrate(BEFORE)
-        seat = Application.objects.create(role=role, applicant=sam, status="liked")
-        passed = Application.objects.create(role=role, applicant=kim, status="passed")
+        old = MigrationExecutor(connection).loader.project_state(BEFORE).apps
+        OldApplication = old.get_model("matching", "Application")
+        seat = OldApplication.objects.create(role_id=role.id, applicant_id=sam.id, status="liked")
+        passed = OldApplication.objects.create(
+            role_id=role.id, applicant_id=kim.id, status="passed"
+        )
 
         migrate(AFTER)
         assert (status_of(seat), status_of(passed)) == ("committed", "passed")
@@ -53,3 +58,23 @@ def test_0005_turns_old_likes_into_commits_and_back():
         assert (status_of(seat), status_of(passed)) == ("liked", "passed")
     finally:
         migrate()
+
+
+@pytest.mark.django_db
+def test_0006_lets_the_previous_release_insert_applications():
+    """After a rollback, old code inserts rows without withdrawn_reason; the DB default fills it."""
+    today = timezone.localdate()
+    term = Term.objects.create(name="Now", start_date=today, end_date=today + timedelta(days=1))
+    owner, sam = (
+        get_user_model().objects.create_user(email=f"{name}@latech.edu", password="pw")
+        for name in ("owner", "sam")
+    )
+    project = Project.objects.create(owner=owner, term=term, title="T", pitch="p")
+    role = Role.objects.create(project=project, title="Backend")
+    old = MigrationExecutor(connection).loader.project_state(AFTER).apps
+
+    row = old.get_model("matching", "Application").objects.create(
+        role_id=role.id, applicant_id=sam.id
+    )
+
+    assert Application.objects.get(pk=row.pk).withdrawn_reason == ""

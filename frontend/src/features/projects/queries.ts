@@ -72,7 +72,7 @@ export function useCreateProject() {
 }
 
 // The API gives back a full "next" URL, and we only need its cursor.
-function cursorFrom(next: string | null | undefined): string | undefined {
+export function cursorFrom(next: string | null | undefined): string | undefined {
   if (!next) return undefined;
   return (
     new URL(next, "http://localhost").searchParams.get("cursor") ?? undefined

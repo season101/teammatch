@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { components } from "@teammatch/api-client";
 import { api, csrfToken } from "@/lib/api";
+import { cursorFrom } from "@/features/projects/queries";
 
 export type MyProject = components["schemas"]["MyProject"];
 export type Applicant = components["schemas"]["RoleApplication"];
@@ -35,7 +36,7 @@ export function useMyProjects(enabled = true) {
 
 // Waiting applicants by default. "liked" lists the offers out, and "passed" and
 // "declined" the people a filled role closed on.
-// shortcut: first page (20) of a role's applicants; the review queue (F4-04) pages through the cursor.
+// Every page, so the counts on Review don't stop at the first 20.
 export function useApplicants(
   roleId: number,
   status: "pending" | "liked" | "passed" | "declined" = "pending",
@@ -43,15 +44,24 @@ export function useApplicants(
   return useQuery({
     queryKey: ["applicants", roleId, status],
     queryFn: async () => {
-      const { data, response } = await api.GET(
-        "/api/v1/roles/{id}/applications/",
-        {
-          params: { path: { id: roleId }, query: { status } },
-        },
-      );
-      if (!data)
-        throw new Error(`Could not load applicants (${response.status}).`);
-      return data.results;
+      const all: Applicant[] = [];
+      let cursor: string | undefined;
+      do {
+        const { data, response } = await api.GET(
+          "/api/v1/roles/{id}/applications/",
+          {
+            params: {
+              path: { id: roleId },
+              query: { status, page_size: 50, cursor },
+            },
+          },
+        );
+        if (!data)
+          throw new Error(`Could not load applicants (${response.status}).`);
+        all.push(...data.results);
+        cursor = cursorFrom(data.next);
+      } while (cursor);
+      return all;
     },
   });
 }

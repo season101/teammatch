@@ -599,6 +599,8 @@ export interface components {
              */
             avatar: string;
         };
+        /** @enum {unknown} */
+        BlankEnum: "";
         /** @description Same shape as the chat.message socket event, minus client_id. */
         ChatMessage: {
             readonly id: number;
@@ -628,6 +630,7 @@ export interface components {
             readonly role: components["schemas"]["ApplicationRole"];
             note?: string;
             status?: components["schemas"]["ApplicationStatusEnum"];
+            withdrawn_reason?: components["schemas"]["WithdrawnReasonEnum"] | components["schemas"]["BlankEnum"];
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -677,6 +680,7 @@ export interface components {
             readonly role: components["schemas"]["ApplicationRole"];
             note?: string;
             status?: components["schemas"]["ApplicationStatusEnum"];
+            withdrawn_reason?: components["schemas"]["WithdrawnReasonEnum"] | components["schemas"]["BlankEnum"];
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -943,6 +947,14 @@ export interface components {
             /** Format: date */
             end_date: string;
         };
+        /**
+         * @description * `applicant` - They withdrew
+         *     * `committed` - They took a seat on another team
+         *     * `team_locked` - Their own team locked
+         *     * `project_closed` - The owner closed the project
+         * @enum {string}
+         */
+        WithdrawnReasonEnum: "applicant" | "committed" | "team_locked" | "project_closed";
     };
     responses: never;
     parameters: never;

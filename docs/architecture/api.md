@@ -9,11 +9,12 @@ The source of truth is the OpenAPI schema, not this page. This page is the overv
 | Topic | Rule |
 |---|---|
 | Base path | `/api/v1/` |
-| Format | JSON, `snake_case` fields, ISO 8601 UTC timestamps |
+| Format | JSON, `snake_case` fields, ISO 8601 timestamps with their offset, in Central time (`2026-11-15T01:44:00-06:00`; stored in UTC). Dates such as a term's are Central calendar dates |
 | Auth | Session cookie from allauth headless (`browser` client). Unsafe methods need the `X-CSRFToken` header. Future mobile app sends `X-Session-Token` (`app` client). |
 | Authz | Every object endpoint checks ownership or membership. Objects the user cannot see return `404`. Acting on something you can see but don't own returns `403` (for example editing someone else's profile). |
 | IDs | Integer ids in paths |
 | Trailing slash | Always (`/api/v1/projects/`) |
+| Past terms | Once a project's term has ended (its last day counts), publishing it, applying to its roles, like/pass and commit answer `409` `term_over`, even by id |
 
 ## Versioning
 
@@ -52,7 +53,7 @@ All `/api/v1/` errors use one shape (custom DRF exception handler in `core`):
 | 401 | `not_authenticated` | no session |
 | 403 | `permission_denied`, `profile_retired`, `own_project` | logged in but not allowed |
 | 404 | `not_found` | missing or not visible to you |
-| 409 | `already_applied`, `role_not_open`, `already_on_team`, `project_locked` | state conflict |
+| 409 | `already_applied`, `role_not_open`, `already_on_team`, `project_locked`, `term_over` | state conflict |
 | 429 | `throttled` | rate limit |
 | 500 | `server_error` | bug, no details leaked |
 
@@ -131,7 +132,7 @@ Login, signup, logout, password and Google live under allauth (below).
 | POST | `/api/v1/roles/{id}/dismiss/` | user | candidate pass on a role, `204`; repeats are fine. My own project: `403`; role or project not open: `409` |
 | DELETE | `/api/v1/roles/{id}/dismiss/` | user | take back my pass on a role, `204`, also when there was none. Only my own pass |
 | POST | `/api/v1/applications/` | user | apply to a role `{role, note}`. Retired: `403` `profile_retired`. Committed this term: `409` `applicant_committed` |
-| GET | `/api/v1/applications/mine/?status=` | user | my applications |
+| GET | `/api/v1/applications/mine/?status=` | user | my applications. A withdrawn one has `withdrawn_reason`: `applicant` (I withdrew), `committed` (I took a seat elsewhere), `team_locked` (my own team locked) or `project_closed` (the owner closed it); empty on rows withdrawn before it was recorded |
 | POST | `/api/v1/applications/{id}/withdraw/` | applicant | withdraw pending application |
 | GET | `/api/v1/roles/{id}/applications/?status=` | owner | pending applicants for a role, minus retired ones, best `match_percent` first then oldest (`403` if it's not your project). `?status=liked` lists offers out, `?status=committed` who took the seat. Each has `committed_elsewhere`: true when the applicant holds a seat on another open project this term, so a like would get `409` `applicant_committed` |
 | POST | `/api/v1/applications/{id}/like/` | owner | like: sends an offer, the role stays open (F4-10). Applicant on a team or committed: `409` |

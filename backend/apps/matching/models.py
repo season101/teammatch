@@ -17,6 +17,14 @@ class ApplicationStatus(models.TextChoices):
     WITHDRAWN = "withdrawn", "Withdrawn"
 
 
+# Why a withdrawn application closed, so the candidate isn't told "You withdrew" when they didn't.
+class WithdrawnReason(models.TextChoices):
+    APPLICANT = "applicant", "They withdrew"
+    COMMITTED = "committed", "They took a seat on another team"
+    TEAM_LOCKED = "team_locked", "Their own team locked"
+    PROJECT_CLOSED = "project_closed", "The owner closed the project"
+
+
 class Application(TimeStampedModel):
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name="applications")
     applicant = models.ForeignKey(
@@ -30,6 +38,11 @@ class Application(TimeStampedModel):
         default=ApplicationStatus.PENDING,
     )
     note = models.TextField(max_length=300, blank=True)
+    # Empty unless withdrawn, and on rows withdrawn before this was recorded. db_default
+    # keeps inserts from the previous release working after a rollback.
+    withdrawn_reason = models.CharField(
+        max_length=20, choices=WithdrawnReason.choices, blank=True, default="", db_default=""
+    )
 
     class Meta:
         ordering = ["-created_at"]

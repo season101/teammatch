@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count, Prefetch, Q
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 
@@ -57,6 +58,18 @@ class OwnerHasASpot(APIException):
     default_code = "owner_has_a_spot"
 
 
+class TermOver(APIException):
+    status_code = 409
+    default_detail = "This project's term is over."
+    default_code = "term_over"
+
+
+def ensure_term_not_over(term, today=None):
+    """A past term's projects take no new step: publish, apply, like, pass or commit."""
+    if term.end_date < (today or timezone.localdate()):
+        raise TermOver()
+
+
 def get_active_term(today=None):
     """The term whose dates include today, or None."""
     today = today or timezone.localdate()
@@ -95,6 +108,7 @@ def publish_project(project):
     get_user_model().objects.select_for_update().get(pk=project.owner_id)
     if project.status != ProjectStatus.DRAFT:
         raise ProjectNotDraft()
+    ensure_term_not_over(project.term)
     if not project.roles.exists():
         raise ProjectNeedsRoles()
     already_open = (
@@ -180,7 +194,8 @@ def delete_role(role):
     Locks the role, then the project, the order a commit uses (matching.services.commit),
     so a commit or a close landing at the same moment is seen, not overwritten.
     """
-    role = Role.objects.select_for_update().get(pk=role.pk)
+    # Deleted meanwhile (say, a double click): 404, not a 500.
+    role = get_object_or_404(Role.objects.select_for_update(), pk=role.pk)
     project = role.project = Project.objects.select_for_update().get(pk=role.project_id)
     ensure_role_editable(role)  # 409 if the project is locked/archived or the role is filled
     if project.status == ProjectStatus.OPEN and project.roles.count() == 1:
@@ -213,11 +228,19 @@ def close_project(project):
     project = Project.objects.select_for_update().get(pk=project.pk)
     ensure_project_editable(project)
 
-    from apps.matching.models import Application, ApplicationStatus  # matching imports projects
+    from apps.matching.models import (  # matching imports projects
+        Application,
+        ApplicationStatus,
+        WithdrawnReason,
+    )
 
     Application.objects.filter(
         role__project=project, status__in=[ApplicationStatus.PENDING, ApplicationStatus.LIKED]
-    ).update(status=ApplicationStatus.WITHDRAWN)
+    ).update(
+        status=ApplicationStatus.WITHDRAWN,
+        withdrawn_reason=WithdrawnReason.PROJECT_CLOSED,
+        updated_at=timezone.now(),  # .update() skips auto_now
+    )
     project.status = ProjectStatus.ARCHIVED
     project.save()
     return project

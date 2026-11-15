@@ -88,6 +88,7 @@ erDiagram
         bigint applicant_id FK
         string status "pending, liked, committed, declined, passed, withdrawn"
         text note
+        string withdrawn_reason "applicant, committed, team_locked, project_closed, or empty"
     }
     ROLE_DISMISSAL {
         bigint id PK
@@ -194,7 +195,7 @@ Rules enforced in the service layer (not expressible as simple constraints):
 - A user with `retired_until >= today` cannot apply.
 - A user can be a member of at most one team per term. A commit can't be undone, so it is refused while the applicant owns an open project (`owns_open_project`) or fills a role on another open project that term (`applicant_committed`), and publishing is refused while the owner fills a role on an open project or is on a team that term. Both checks hold the user's row lock.
 - Project can only be `locked` when every role is `filled`.
-
+- Terms don't overlap, so one term is current on any day. `Term.clean` checks it, which the admin runs. It isn't a database constraint, so `bootstrap`'s term list has to keep to it too.
 ## Indexes
 
 | Table | Index | Used by |

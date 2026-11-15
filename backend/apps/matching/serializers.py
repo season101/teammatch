@@ -92,7 +92,7 @@ class MyApplicationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Application
-        fields = ["id", "role", "note", "status", "created_at", "updated_at"]
+        fields = ["id", "role", "note", "status", "withdrawn_reason", "created_at", "updated_at"]
 
 
 class CommitSerializer(MyApplicationSerializer):
