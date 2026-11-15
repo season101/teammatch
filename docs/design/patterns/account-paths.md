@@ -1,6 +1,6 @@
 # Account paths
 
-**Planned, not built yet.** This is the guide for [F1-10](../../product/backlog.md#f1-10-reset-a-forgotten-password), [F1-12](../../product/backlog.md#f1-12-add-google-or-a-password-from-settings), [F1-13](../../product/backlog.md#f1-13-offer-a-password-to-google-only-accounts-at-sign-in) and [F1-14](../../product/backlog.md#f1-14-never-verified-account-can-sign-in-with-google). F1-10 is in review.
+This is the guide for [F1-10](../../product/backlog.md#f1-10-reset-a-forgotten-password), [F1-12](../../product/backlog.md#f1-12-add-google-or-a-password-from-settings), [F1-13](../../product/backlog.md#f1-13-offer-a-password-to-google-only-accounts-at-sign-in) and [F1-14](../../product/backlog.md#f1-14-never-verified-account-can-sign-in-with-google). All four are built.
 
 Someone who starts with email and password can add Google. Someone who starts with Google can add a password. Either one can reset a password they forgot.
 
