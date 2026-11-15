@@ -13,6 +13,7 @@ Text tabs with a violet underline on the active one. They switch between sibling
 | `tabs` | `{ id, label, panel }[]` | required | |
 | `label` | `string` | required | The tablist's accessible name |
 | `defaultTab` | `string` | first tab | |
+| `onSelect` | `(id) => void` | none | Called on every change. Profile and Review keep the choice, so coming back opens the same tab |
 
 ## Behaviour
 - **Mouse:** click selects.

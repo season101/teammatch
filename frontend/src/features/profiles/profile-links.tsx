@@ -6,7 +6,7 @@ import {
   LinkedInIcon,
   shortLink,
 } from "@/components/ui/link-card";
-import { resumeUrl } from "./queries";
+import { resumeViewerHref } from "./queries";
 
 type Profile = components["schemas"]["Profile"];
 
@@ -24,14 +24,20 @@ export function ProfileLinks({
     { title: "LinkedIn", href: profile.linkedin_url, icon: <LinkedInIcon /> },
   ]
     .filter((link) => link.href)
-    .map((link) => ({ ...link, href: link.href!, detail: shortLink(link.href!) }));
+    .map((link) => ({
+      ...link,
+      href: link.href!,
+      detail: shortLink(link.href!),
+      external: true,
+    }));
   if (profile.has_resume) {
-    // The API checks who's asking, so only the person and owners they applied to get it.
+    // Read inside the app (F1-17); the API checks who's asking.
     links.push({
       title: "Resume",
-      href: resumeUrl(profile.id),
+      href: resumeViewerHref(profile.id),
       icon: <FileIcon />,
       detail: "PDF. Read it here.",
+      external: false,
     });
   }
   if (links.length === 0) return null;
@@ -42,7 +48,7 @@ export function ProfileLinks({
     >
       {links.map((link) => (
         <li key={link.title} className={compact ? "flex flex-1" : undefined}>
-          <LinkCard external compact={compact} {...link} />
+          <LinkCard compact={compact} {...link} />
         </li>
       ))}
     </ul>

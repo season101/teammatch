@@ -9,12 +9,19 @@ export function Tabs({
   tabs,
   label,
   defaultTab = tabs[0]?.id,
+  onSelect,
 }: {
   tabs: Tab[];
   label: string;
   defaultTab?: string;
+  // Told about every change, e.g. to come back to the same tab later.
+  onSelect?: (id: string) => void;
 }) {
-  const [selected, setSelected] = useState(defaultTab);
+  const [selected, setSelectedState] = useState(defaultTab);
+  function setSelected(id: string) {
+    setSelectedState(id);
+    onSelect?.(id);
+  }
   const base = useId();
 
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {

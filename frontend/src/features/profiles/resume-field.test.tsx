@@ -117,7 +117,8 @@ test("an added resume shows its name, who can open it, Replace and Remove", asyn
   renderField(ADDED);
 
   const card = screen.getByRole("link", { name: /sam-resume\.pdf/ });
-  expect(card).toHaveAttribute("href", "/api/v1/profiles/7/resume/");
+  expect(card).toHaveAttribute("href", "/profiles/7/resume");
+  expect(card).not.toHaveAttribute("target"); // the in-app viewer, not a new tab
   expect(card).toHaveTextContent("Only owners you apply to can open it.");
   expect(screen.getByRole("button", { name: "Replace" })).toBeEnabled();
 

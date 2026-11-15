@@ -88,7 +88,7 @@ test("Preview shows GitHub and LinkedIn as cards that open in a new tab", async 
   // Through the API's permission check, never a storage address.
   expect(screen.getByRole("link", { name: /^Resume/ })).toHaveAttribute(
     "href",
-    "/api/v1/profiles/7/resume/",
+    "/profiles/7/resume",
   );
   expect(screen.getByRole("meter")).toHaveAttribute("aria-valuenow", "100");
 });

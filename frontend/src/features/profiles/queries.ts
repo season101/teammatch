@@ -154,6 +154,9 @@ export const RESUME_NOT_PDF = "Only PDF files can be uploaded.";
 // Never a storage address: the API streams it after checking who's asking (DD-42).
 export const resumeUrl = (profileId: number) =>
   `/api/v1/profiles/${profileId}/resume/`;
+// The in-app viewer (F1-17), which reads resumeUrl.
+export const resumeViewerHref = (profileId: number) =>
+  `/profiles/${profileId}/resume`;
 
 // A file uploads or replaces my resume; null removes it. The API answers with my profile.
 export function useSetResume() {

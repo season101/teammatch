@@ -45,11 +45,11 @@ test("shows a small card for each link the applicant added, opening in a new tab
   expect(links[0]).toHaveAttribute("rel", "noopener noreferrer");
 });
 
-test("an applicant's resume is a third tile, through the API's permission check", () => {
+test("an applicant's resume is a third tile that opens the in-app viewer", () => {
   renderCard({ ...APPLICATION, applicant: { ...APPLICATION.applicant, has_resume: true } });
 
   const resume = screen.getByRole("link", { name: /^Resume/ });
-  expect(resume).toHaveAttribute("href", "/api/v1/profiles/3/resume/");
+  expect(resume).toHaveAttribute("href", "/profiles/3/resume");
 });
 
 test("no link cards when the applicant added none", () => {

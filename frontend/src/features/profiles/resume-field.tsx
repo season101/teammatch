@@ -9,7 +9,7 @@ import {
   RESUME_MAX_BYTES,
   RESUME_NOT_PDF,
   RESUME_TOO_BIG,
-  resumeUrl,
+  resumeViewerHref,
   useSetResume,
   type MyProfile,
 } from "./queries";
@@ -48,8 +48,8 @@ export function ResumeField({ profile }: { profile: MyProfile }) {
       {profile.has_resume ? (
         <>
           <LinkCard
-            external
-            href={resumeUrl(profile.id)}
+            external={false}
+            href={resumeViewerHref(profile.id)}
             icon={<FileIcon />}
             title={profile.resume_name || "Resume"}
             detail="Tap to read. Only owners you apply to can open it."
