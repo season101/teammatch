@@ -1,9 +1,38 @@
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from django.urls import reverse
 from rest_framework import serializers
 
 from .models import Profile, Skill
+
+
+def https_link(site, code):
+    """A field for a link to one site (F1-15): https, that host with or without www., a path.
+
+    One message for anything else, so the form can show it as it is. Blank clears the link.
+    """
+    message = f"Enter a link that starts with https://{site}/"
+
+    def check(value):
+        if not value:
+            return
+        try:
+            parts = urlsplit(value)
+        except ValueError:  # e.g. an unclosed [ in the host
+            parts = None
+        # The whole netloc, so a user, password or port is refused too.
+        if (
+            parts is None
+            or parts.scheme != "https"
+            or parts.netloc.lower() not in (site, f"www.{site}")
+            or parts.path in ("", "/")
+        ):
+            raise serializers.ValidationError(message, code=code)
+
+    return serializers.CharField(
+        max_length=200, allow_blank=True, required=False, validators=[check]
+    )
 
 
 class SkillSerializer(serializers.ModelSerializer):
@@ -25,10 +54,22 @@ class ProfileSerializer(serializers.ModelSerializer):
         required=False,
     )
     avatar_url = serializers.SerializerMethodField()
+    github_url = https_link("github.com", "github_url_invalid")
+    linkedin_url = https_link("linkedin.com", "linkedin_url_invalid")
 
     class Meta:
         model = Profile
-        fields = ["id", "display_name", "bio", "major", "skills", "skill_ids", "avatar_url"]
+        fields = [
+            "id",
+            "display_name",
+            "bio",
+            "major",
+            "skills",
+            "skill_ids",
+            "avatar_url",
+            "github_url",
+            "linkedin_url",
+        ]
         read_only_fields = ["id"]
 
     def validate_skill_ids(self, ids):

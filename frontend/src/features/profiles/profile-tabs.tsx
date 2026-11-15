@@ -7,15 +7,19 @@ import { Tabs } from "@/components/ui/tabs";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { Avatar } from "./avatar";
 import { ProfileForm } from "./profile-form";
+import { ProfileLinks } from "./profile-links";
 import { useMyProfile, type MyProfile } from "./queries";
 
-// DD-10 weights: major 20, skills 40, bio 20, photo 20.
+// DD-10 and DD-43: major 20, skills 40, bio 20, GitHub 5, LinkedIn 5. The photo keeps
+// 10 of its 20 until the resume (F1-16) takes it, so the total stays 100.
 export function profileStrength(profile: MyProfile) {
   return (
     (profile.major ? 20 : 0) +
     (profile.skills.length > 0 ? 40 : 0) +
     (profile.bio ? 20 : 0) +
-    (profile.avatar_url ? 20 : 0)
+    (profile.avatar_url ? 10 : 0) +
+    (profile.github_url ? 5 : 0) +
+    (profile.linkedin_url ? 5 : 0)
   );
 }
 
@@ -96,6 +100,7 @@ function ProfilePreview({ profile }: { profile: MyProfile }) {
               {profile.bio || "No bio yet."}
             </p>
           </section>
+          <ProfileLinks profile={profile} />
         </div>
       </article>
     </div>

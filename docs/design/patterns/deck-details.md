@@ -84,6 +84,8 @@ Regenerate `backend/schema.yml` and `packages/api-client` in the same pull reque
 
 If photo upload ships too, the team picks new weights so the total stays at 100. Update [profile strength](../components/profile-strength.md) when this lands.
 
+Photo upload (F1-07) shipped before F1-15, so as built the photo keeps 10% from F1-15 until F1-16 adds the resume, and then counts 0 as in the table. The total is 100 at every step. Change it if the team picks other weights.
+
 ## Resume viewer
 
 - Load `pdfjs-dist` with a dynamic import inside the viewer, so no other page pays for it. Bundle its worker; don't load it from a CDN.

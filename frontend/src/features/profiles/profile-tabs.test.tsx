@@ -15,17 +15,26 @@ const PROFILE = {
   major: "Computer Science",
   skills: [SKILLS[1]],
   avatar_url: null as string | null,
+  github_url: "",
+  linkedin_url: "",
   email: "sam@latech.edu",
   rules_accepted_at: null,
 };
 
 const EMPTY = { ...PROFILE, bio: "", major: "", skills: [] };
+const PHOTO = "/api/v1/profiles/7/avatar/?v=1";
+const FULL = {
+  ...PROFILE,
+  avatar_url: PHOTO,
+  github_url: "https://github.com/sam",
+  linkedin_url: "https://www.linkedin.com/in/sam/",
+};
 
-function renderTabs() {
+function renderTabs(profile: typeof PROFILE = PROFILE) {
   vi.stubGlobal(
     "fetch",
     vi.fn(async (request: Request) => {
-      const body = request.url.includes("/api/v1/skills/") ? SKILLS : PROFILE;
+      const body = request.url.includes("/api/v1/skills/") ? SKILLS : profile;
       return new Response(JSON.stringify(body), {
         headers: { "Content-Type": "application/json" },
       });
@@ -48,14 +57,37 @@ test.each([
   ["major only", { ...EMPTY, major: "CS" }, 20],
   ["skills only", { ...EMPTY, skills: SKILLS }, 40],
   ["bio only", { ...EMPTY, bio: "Hi" }, 20],
-  ["photo only", { ...EMPTY, avatar_url: "/api/v1/profiles/7/avatar/?v=1" }, 20],
-  ["everything but a photo", PROFILE, 80],
-  ["everything", { ...PROFILE, avatar_url: "/api/v1/profiles/7/avatar/?v=1" }, 100],
+  ["photo only", { ...EMPTY, avatar_url: PHOTO }, 10],
+  ["GitHub only", { ...EMPTY, github_url: "https://github.com/sam" }, 5],
+  ["LinkedIn only", { ...EMPTY, linkedin_url: "https://linkedin.com/in/sam" }, 5],
+  ["everything but a photo and links", PROFILE, 80],
+  ["everything", FULL, 100],
 ])("strength for %s is %i", (_, profile, expected) => {
   expect(profileStrength(profile)).toBe(expected);
 });
 
-test("a profile without a photo stops at 80%", async () => {
+test("Preview shows GitHub and LinkedIn as cards that open in a new tab", async () => {
+  renderTabs(FULL);
+
+  const github = await screen.findByRole("link", { name: /GitHub/ });
+  expect(github).toHaveAttribute("href", "https://github.com/sam");
+  expect(github).toHaveAttribute("target", "_blank");
+  expect(github).toHaveAttribute("rel", "noopener noreferrer");
+  expect(github).toHaveTextContent("github.com/sam");
+  expect(github).toHaveAccessibleName(/opens in a new tab/);
+  expect(screen.getByRole("link", { name: /LinkedIn/ })).toHaveTextContent(
+    "linkedin.com/in/sam",
+  );
+  expect(screen.getByRole("meter")).toHaveAttribute("aria-valuenow", "100");
+});
+
+test("no link cards without links", async () => {
+  renderTabs();
+  await screen.findByRole("heading", { name: "Sam Student" });
+  expect(screen.queryByRole("list", { name: "Links" })).not.toBeInTheDocument();
+});
+
+test("a profile without a photo or links stops at 80%", async () => {
   renderTabs();
   const meter = await screen.findByRole("meter", { name: "Profile strength" });
   expect(meter).toHaveAttribute("aria-valuenow", "80");

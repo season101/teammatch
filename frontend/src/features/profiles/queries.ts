@@ -30,7 +30,13 @@ function csrfToken(): string {
 function readFieldErrors(body: unknown): FieldErrors {
   const record = (body ?? {}) as Record<string, unknown>;
   const fields: FieldErrors = {};
-  for (const key of ["display_name", "bio", "major"] as const) {
+  for (const key of [
+    "display_name",
+    "bio",
+    "major",
+    "github_url",
+    "linkedin_url",
+  ] as const) {
     const value = record[key];
     if (Array.isArray(value) && value.length > 0)
       fields[key] = String(value[0]);

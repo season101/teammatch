@@ -42,6 +42,9 @@ class Profile(TimeStampedModel):
     skills = models.ManyToManyField(Skill, blank=True, related_name="profiles")
     # On the default storage (SeaweedFS). The API streams it; the bucket is never public (F1-07).
     avatar = models.ImageField(upload_to=avatar_path, blank=True)
+    # Only https://github.com/... and https://linkedin.com/..., checked by the serializer (F1-15).
+    github_url = models.URLField(blank=True)
+    linkedin_url = models.URLField(blank=True)
     # Set by retire() when their team locks (BR-08). F1-08 adds the rest.
     retired_until = models.DateField(null=True, blank=True)
     # When they agreed to the Team rules (DD-12). Empty until they do.
