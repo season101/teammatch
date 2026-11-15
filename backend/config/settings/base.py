@@ -232,9 +232,10 @@ LOGGING = {
     },
     "root": {"handlers": ["stdout"], "level": env("LOG_LEVEL", default="INFO")},
     # Both bring their own handlers; point them at ours so nothing prints twice or as plain text.
+    # Not "uvicorn": dictConfig would re-enable its uvicorn.access child, undoing --no-access-log.
     "loggers": {
         "django": {"handlers": ["stdout"], "propagate": False},
-        "uvicorn": {"handlers": ["stdout"], "propagate": False},
+        "uvicorn.error": {"handlers": ["stdout"], "propagate": False},
     },
 }
 logging.captureWarnings(True)  # a Python warning is one JSON line, not two stderr lines

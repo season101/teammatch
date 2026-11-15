@@ -1,0 +1,16 @@
+# Opt-in: traces from the api to the shared local Jaeger that `logq ui` runs (logq phase 3).
+#   docker compose -f compose.local.yml -f compose.logq.yml up -d
+# Local dev only. Without `logq ui` running, the exporter logs a failed export now and then.
+services:
+  api:
+    environment:
+      OTEL_SERVICE_NAME: api
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://host.docker.internal:4318
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_PYTHON_LOG_CORRELATION: "true"
+      OTEL_PYTHON_DJANGO_EXCLUDED_URLS: healthz  # the compose healthcheck, every 5 s
+    # --no-access-log: the `request finished` line replaces uvicorn's plain-text access log
+    command: sh -c "python manage.py migrate --noinput && python manage.py bootstrap && exec opentelemetry-instrument uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --reload --no-access-log"

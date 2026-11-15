@@ -23,6 +23,14 @@ dependencies = [
 [dependency-groups]
 dev = [
     "daphne>=4.2.3",
+    # logq pilot: tracing, started by opentelemetry-instrument in compose.logq.yml
+    "opentelemetry-distro>=0.66b2",
+    "opentelemetry-exporter-otlp-proto-http>=1.45.2",
+    "opentelemetry-instrumentation-asgi>=0.66b2",
+    "opentelemetry-instrumentation-django>=0.66b2",
+    "opentelemetry-instrumentation-logging>=0.66b2",
+    "opentelemetry-instrumentation-psycopg>=0.66b2",
+    "opentelemetry-instrumentation-redis>=0.66b2",
     "pytest>=9.1.1",
     "pytest-django>=4.14.0",
     "ruff>=0.16.9",

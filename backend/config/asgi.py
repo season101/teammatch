@@ -13,11 +13,14 @@ from channels.security.websocket import AllowedHostsOriginValidator  # noqa: E40
 
 from config.routing import websocket_urlpatterns  # noqa: E402
 
-application = ProtocolTypeRouter(
-    {
-        "http": django_asgi_app,
-        "websocket": AllowedHostsOriginValidator(
-            AuthMiddlewareStack(URLRouter(websocket_urlpatterns))
-        ),
-    }
-)
+websocket_app = AllowedHostsOriginValidator(AuthMiddlewareStack(URLRouter(websocket_urlpatterns)))
+try:
+    # Dev-only package (logq pilot). The Django instrumentation traces HTTP; this gives each
+    # chat socket a span, so the consumer's log lines carry a trace_id too.
+    from opentelemetry.instrumentation.asgi import OpenTelemetryMiddleware
+
+    websocket_app = OpenTelemetryMiddleware(websocket_app)
+except ImportError:
+    pass
+
+application = ProtocolTypeRouter({"http": django_asgi_app, "websocket": websocket_app})
