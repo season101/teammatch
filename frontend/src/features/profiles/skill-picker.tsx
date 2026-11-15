@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, MotionConfig } from "motion/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Chip } from "@/components/ui/chip";
 import { inputClass } from "@/components/ui/form-classes";
 import type { Skill } from "./queries";
@@ -35,6 +35,8 @@ export function SkillPicker({
   error,
 }: Props) {
   const [query, setQuery] = useState("");
+  const fieldset = useRef<HTMLFieldSetElement>(null);
+  const searchBox = useRef<HTMLInputElement>(null);
 
   const chosen = skills.filter((skill) => selected.includes(skill.id));
   const search = query.trim().toLowerCase();
@@ -44,9 +46,22 @@ export function SkillPicker({
   );
   const full = selected.length >= MAX_SKILLS;
 
+  // The pressed button leaves its list. If it has focus, hand it to the next button in
+  // that list (or the one before), or to the search box when the list goes away, so
+  // focus doesn't drop to the page.
+  function keepFocus(listStays = true) {
+    const pressed = document.activeElement as HTMLButtonElement | null;
+    const list = pressed?.closest("ul");
+    if (!pressed || !list || !fieldset.current?.contains(list)) return;
+    const buttons = [...list.querySelectorAll("button")];
+    const i = buttons.indexOf(pressed);
+    const next = listStays ? (buttons[i + 1] ?? buttons[i - 1]) : undefined;
+    (next ?? searchBox.current)?.focus();
+  }
+
   return (
     <MotionConfig reducedMotion="user">
-      <fieldset className="flex flex-col gap-3" disabled={disabled}>
+      <fieldset ref={fieldset} className="flex flex-col gap-3" disabled={disabled}>
         <legend className="font-medium">Skills</legend>
 
         {chosen.length === 0 ? (
@@ -60,9 +75,10 @@ export function SkillPicker({
                 <Chip
                   variant="selected"
                   pill
-                  onRemove={() =>
-                    onChange(selected.filter((id) => id !== skill.id))
-                  }
+                  onRemove={() => {
+                    keepFocus();
+                    onChange(selected.filter((id) => id !== skill.id));
+                  }}
                 >
                   {skill.name}
                 </Chip>
@@ -76,6 +92,7 @@ export function SkillPicker({
             Search skills
           </label>
           <input
+            ref={searchBox}
             id="skill-search"
             type="search"
             value={query}
@@ -99,6 +116,8 @@ export function SkillPicker({
                   type="button"
                   className="min-h-11 rounded-pill border border-border px-3 py-1 text-sm text-text hover:border-muted"
                   onClick={() => {
+                    // At the cap the list gives way to a message.
+                    keepFocus(selected.length + 1 < MAX_SKILLS);
                     onChange([...selected, skill.id]);
                     setQuery("");
                   }}

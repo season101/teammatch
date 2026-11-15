@@ -186,6 +186,10 @@ function OpenRoleQueue({ role, projectId }: QueueProps) {
   function decideOn(like: boolean) {
     if (!current || Date.now() - decidedAt.current < DOUBLE_TAP) return;
     decidedAt.current = Date.now();
+    // Focus on the leaving card would drop to the page. Like the deck's stack, the role's
+    // panel stays put, and Tab goes on to the next card.
+    if (rootRef.current?.contains(document.activeElement))
+      rootRef.current.closest<HTMLElement>('[role="tabpanel"]')?.focus();
     decide.mutate({ id: current.id, name, like });
   }
 

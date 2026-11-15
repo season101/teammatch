@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { useState } from "react";
 import { vi } from "vitest";
 import { SkillPicker } from "./skill-picker";
 
@@ -47,4 +48,37 @@ test("a skill that isn't in the list can't be picked", () => {
   expect(
     screen.queryByRole("list", { name: "Skills to add" }),
   ).not.toBeInTheDocument();
+});
+
+function Picker({ initial }: { initial: number[] }) {
+  const [selected, setSelected] = useState(initial);
+  return <SkillPicker skills={SKILLS} selected={selected} onChange={setSelected} />;
+}
+
+function press(name: string) {
+  const button = screen.getByRole("button", { name });
+  button.focus();
+  fireEvent.click(button);
+}
+
+test("after adding a skill, focus moves to the next one to add, not the page", () => {
+  render(<Picker initial={[]} />);
+
+  press("+ Python");
+  expect(screen.getByRole("button", { name: "+ React" })).toHaveFocus();
+  // The last one in the list hands focus back to the one before it.
+  press("+ React");
+  expect(screen.getByRole("button", { name: "+ Django" })).toHaveFocus();
+  // Nothing left to add: the search box.
+  press("+ Django");
+  expect(screen.getByLabelText("Search skills")).toHaveFocus();
+});
+
+test("after removing a skill, focus moves to the next remove button, then the search", () => {
+  render(<Picker initial={[1, 2]} />);
+
+  press("Remove Django");
+  expect(screen.getByRole("button", { name: "Remove Python" })).toHaveFocus();
+  press("Remove Python");
+  expect(screen.getByLabelText("Search skills")).toHaveFocus();
 });

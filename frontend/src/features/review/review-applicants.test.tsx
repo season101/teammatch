@@ -346,6 +346,25 @@ test("shows the API's message when the application was already decided", async (
   expect(screen.queryByText("Offers out")).not.toBeInTheDocument();
 });
 
+test("after Like or Pass, focus stays on the role, not the page", async () => {
+  mockApi({ waiting: [sam, ava] });
+  renderPage();
+  const like = await screen.findByRole("button", { name: "Like Sam Candidate" });
+  const panel = screen.getByRole("tabpanel", { name: /Frontend developer/ });
+
+  like.focus();
+  fireEvent.click(like);
+  expect(panel).toHaveFocus();
+
+  // Tab from there reaches the next card.
+  await screen.findByRole("article", { name: /Applicant Ava Lee/ });
+  const pass = screen.getByRole("button", { name: "Pass on Ava Lee" });
+  vi.spyOn(Date, "now").mockReturnValue(Date.now() + 1000);
+  pass.focus();
+  fireEvent.click(pass);
+  expect(panel).toHaveFocus();
+});
+
 test("a second press right after a decision is ignored", async () => {
   const requests = mockApi();
   renderPage();
