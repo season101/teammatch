@@ -141,7 +141,8 @@ def test_duplicate_email_api_status_matches_a_new_signup(api, verified_user):
     dup = signup_api(api, existing.email, f"acct-{uuid.uuid4().hex}")
     fresh = signup_api(api, f"acct-{tag()}@latech.edu", f"acct-{uuid.uuid4().hex}")
     assert dup.status == fresh.status == 401
-    assert dup.json().keys() == fresh.json().keys()
+    # same body, so nothing tells an existing account from a new one
+    assert dup.json() == fresh.json()
 
 
 def test_duplicate_email_in_other_case_is_also_silent(page: Page, verified_user):
