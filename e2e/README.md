@@ -6,7 +6,7 @@ CI runs them on every push to `main`, nightly, on demand, and on pull requests t
 
 ## Run them locally
 
-1. In the repo's `.env`, set `EMAIL_FILE_PATH=/app/.e2e-mail`, and `SEED_CANDIDATE_EMAIL` and `SEED_CANDIDATE_PASSWORD` for the smoke test. With `EMAIL_FILE_PATH` set, the api writes each email to a file in `backend/.e2e-mail/` instead of the console, and the tests read verification links from there. Leave it empty to get console mail back.
+1. In the repo's `.env`, set `EMAIL_FILE_PATH=/app/.e2e-mail`, and `SEED_CANDIDATE_EMAIL` and `SEED_CANDIDATE_PASSWORD` for the smoke test. With `EMAIL_FILE_PATH` set, the api writes each email to a file in `backend/.e2e-mail/` instead of the console, and the tests read verification links from there. Leave it empty to get console mail back. Also set `E2E_NO_RATE_LIMITS=1` so allauth's per-IP sign-up and sign-in limits don't stall a run that creates many accounts (local stacks only; prod ignores it).
 2. Start the stack and add the sample data:
 
    ```sh
