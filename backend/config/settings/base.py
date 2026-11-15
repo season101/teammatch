@@ -54,6 +54,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    # Last, so it sees the body before GZip compresses it. Off unless LOGQ_CAPTURE_BODY=1.
+    "config.logq_body_capture.BodyCaptureMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"

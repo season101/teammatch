@@ -12,5 +12,7 @@ services:
       OTEL_LOGS_EXPORTER: none
       OTEL_PYTHON_LOG_CORRELATION: "true"
       OTEL_PYTHON_DJANGO_EXCLUDED_URLS: healthz  # the compose healthcheck, every 5 s
+      # 1 adds redacted JSON request/response bodies (first 2 KB) to spans. Never in prod.
+      LOGQ_CAPTURE_BODY: ${LOGQ_CAPTURE_BODY:-0}
     # --no-access-log: the `request finished` line replaces uvicorn's plain-text access log
     command: sh -c "python manage.py migrate --noinput && python manage.py bootstrap && exec opentelemetry-instrument uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --reload --no-access-log"
