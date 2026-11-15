@@ -93,6 +93,42 @@ def test_existing_account_with_the_same_email_is_linked_not_duplicated(client):
     assert user.check_password("a-long-password-123")  # email/password still works
 
 
+# F1-14: a password account whose email was never verified
+
+
+def test_never_verified_account_signs_in_with_google_and_becomes_verified(client):
+    user = get_user_model().objects.create_user(STUDENT["email"], "someone-elses-password-1")
+    EmailAddress.objects.create(user=user, email=user.email, verified=False, primary=True)
+
+    response = google_returns(client, STUDENT)
+
+    assert error_of(response) is None  # signed in, not "Couldn't sign in with Google"
+    assert client.session["_auth_user_id"] == str(user.pk)
+    assert SocialAccount.objects.get(provider="google").user == user
+    assert EmailAddress.objects.get(user=user).verified
+    assert get_user_model().objects.count() == 1
+    # Someone else may have registered this address and set that password, so it stops working.
+    user.refresh_from_db()
+    assert not user.has_usable_password()
+    client.logout()
+    login = client.post(
+        "/_allauth/browser/v1/auth/login",
+        {"email": STUDENT["email"], "password": "someone-elses-password-1"},
+        content_type="application/json",
+    )
+    assert login.status_code == 400
+
+
+def test_an_unverified_google_email_does_not_verify_the_account(client):
+    user = get_user_model().objects.create_user(STUDENT["email"], "a-long-password-123")
+    EmailAddress.objects.create(user=user, email=user.email, verified=False, primary=True)
+
+    google_returns(client, {**STUDENT, "email_verified": False})
+
+    assert not EmailAddress.objects.get(user=user).verified
+    assert "_auth_user_id" not in client.session
+
+
 def test_cancel_at_google_returns_to_the_app_with_an_error(client):
     state = parse_qs(urlsplit(start(client)).query)["state"][0]
 

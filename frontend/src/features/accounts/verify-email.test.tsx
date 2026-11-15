@@ -43,8 +43,15 @@ test("shows an error for an invalid or expired key", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "Verification links last 3 days",
   );
-  expect(screen.getByRole("link", { name: "Sign up again" })).toHaveAttribute(
-    "href",
-    "/signup",
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "Sign in to get a new one.",
   );
+  // Signing in sends a new link; signing up again doesn't (F1-14).
+  expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+    "href",
+    "/login",
+  );
+  expect(
+    screen.queryByRole("link", { name: "Sign up again" }),
+  ).not.toBeInTheDocument();
 });

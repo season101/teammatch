@@ -55,15 +55,14 @@ export function VerifyEmail({ verificationKey }: { verificationKey: string }) {
         <h1 className="font-display text-2xl font-extrabold">
           This link has expired
         </h1>
+        {/* Signing in sends a new link; signing up again only sends the
+            already-have-an-account email (F1-14). */}
         <p role="alert" className="text-muted">
-          Verification links last 3 days, and each works once. Sign up again to
-          get a new one.
+          Verification links last 3 days, and each works once. Sign in to get a
+          new one.
         </p>
-        <Link href="/signup" className={`${buttonClasses("cta")} w-full`}>
-          Sign up again
-        </Link>
-        <Link href="/login" className={buttonClasses("ghost", "sm")}>
-          Back to sign in
+        <Link href="/login" className={`${buttonClasses("cta")} w-full`}>
+          Sign in
         </Link>
       </section>
     );
