@@ -26,9 +26,11 @@ permissions:
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # PRs diff against the base to pick the test files they changed
 
       - name: throwaway .env
         run: |
@@ -73,9 +75,23 @@ jobs:
         working-directory: e2e
         run: uv run playwright install --with-deps chromium
 
+      # PRs run the smoke and golden path plus the test files they touch; main, nightly and
+      # manual runs run every file.
       - name: run the tests
         working-directory: e2e
-        run: uv run pytest
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.base_ref }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            # --relative: paths and the pathspec are relative to e2e/, the working directory
+            # minus the two that always run, so pytest doesn't collect them twice
+            changed=$(git diff --name-only --relative --diff-filter=AMR "origin/$BASE...HEAD" -- 'test_*.py' \
+              | { grep -vxE 'test_(smoke|golden_path)\.py' || true; })
+            uv run pytest test_smoke.py test_golden_path.py $changed
+          else
+            uv run pytest
+          fi
 
       - name: upload traces, screenshots and videos
         if: failure()
