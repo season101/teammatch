@@ -47,7 +47,9 @@ There's no note on the deck: a swipe right applies without one ([DD-40](../decis
 ## Keyboard legend
 On desktop, a row pinned to the bottom of the stage:
 
-`Hide` · ← Pass · → Apply · ↑ Details · ↓ Close · Z Undo pass · Space Next page
+`Hide` · ← Pass · → Apply · ↑ Details · Z Undo pass
+
+It lists only keys that work. ↓ and Space join it when the deck gets a details panel and card pages; today details open on the project page.
 
 - Key caps are 24px `surface-2` boxes, Geist 12px semibold.
 - `Hide` collapses the row until the next visit.

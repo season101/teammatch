@@ -120,16 +120,24 @@ test("the deck shows its keyboard legend, and Hide collapses it", () => {
   renderShell("/feed");
   const legend = screen.getByRole("complementary", { name: "Keyboard shortcuts" });
 
-  expect(legend).toHaveTextContent("Details");
+  // Only the keys feed.tsx handles.
+  expect(within(legend).getAllByRole("listitem").map((key) => key.textContent)).toEqual([
+    "←Pass",
+    "→Apply",
+    "↑Details",
+    "ZUndo pass",
+  ]);
   fireEvent.click(within(legend).getByRole("button", { name: "Hide" }));
   expect(screen.queryByRole("complementary", { name: "Keyboard shortcuts" })).toBeNull();
 });
 
-test("the review queue has its own keys", () => {
+test("the review queue has its own keys, only the ones that work", () => {
   renderShell("/applicants");
-  expect(screen.getByRole("complementary", { name: "Keyboard shortcuts" })).toHaveTextContent(
-    "Like",
-  );
+  const legend = screen.getByRole("complementary", { name: "Keyboard shortcuts" });
+  expect(within(legend).getAllByRole("listitem").map((key) => key.textContent)).toEqual([
+    "←Pass",
+    "→Like",
+  ]);
 });
 
 test("screens without keys show no legend", () => {

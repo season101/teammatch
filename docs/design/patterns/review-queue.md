@@ -25,7 +25,9 @@ Match % first, then the oldest application. Benched candidates are never shown.
 | Space | Next section of the profile |
 | Esc | Close the panel |
 
-The legend at the bottom shows these keys while the queue is on the stage.
+The legend at the bottom shows these keys while the queue is on the stage, but only the ones that work: ← and → today. ↑, ↓, Space and Esc join it with the Details panel, which isn't built yet.
+
+The keys follow Settings → Keyboard shortcuts. They never fire while typing, on a role tab or behind a dialog, and a held key decides once.
 
 ## What happens on Like
 1. The application becomes an offer. The role stays open, and you can like more than one person for it.

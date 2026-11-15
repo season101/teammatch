@@ -6,21 +6,18 @@ import { useShortcutsEnabled } from "./preferences";
 
 export type LegendKey = [key: string, action: string];
 
+// Only keys that work: feed.tsx and role-queue.tsx. ↓, Space and the profile keys come
+// with the card pages and the Details panel, which aren't built yet.
 export const DECK_KEYS: LegendKey[] = [
   ["←", "Pass"],
   ["→", "Apply"],
   ["↑", "Details"],
-  ["↓", "Close"],
   ["Z", "Undo pass"],
-  ["Space", "Next page"],
 ];
 
 export const REVIEW_KEYS: LegendKey[] = [
   ["←", "Pass"],
   ["→", "Like"],
-  ["↑", "Profile"],
-  ["↓", "Close"],
-  ["Space", "Next section"],
 ];
 
 // Pinned to the bottom of the stage on desktop. Hide lasts until the next visit to the screen.
