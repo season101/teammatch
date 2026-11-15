@@ -49,9 +49,12 @@ export function NewProjectForm() {
     const found: FieldErrors = {};
     if (!title.trim()) found.title = "Title is required.";
     if (!pitch.trim()) found.pitch = "Pitch is required.";
-    setClientErrors(found);
+    const invalid = Object.keys(found).length > 0;
+    // A failed check keeps hiding the API errors on fields fixed since (typing set those
+    // to undefined); sending starts clean, so every new API error shows.
+    setClientErrors((prev) => (invalid ? { ...prev, ...found } : {}));
     setSubmits((count) => count + 1);
-    if (Object.keys(found).length > 0) return;
+    if (invalid) return;
     create.mutate({
       title: title.trim(),
       pitch: pitch.trim(),
