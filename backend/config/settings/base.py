@@ -77,6 +77,12 @@ DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=0)
 
 REDIS_URL = env("REDIS_URL")
 
+# Shared by every worker (prod runs 2), so allauth's rate limits and DRF throttles add up
+# across them. Per-process LocMemCache would give each worker its own count.
+CACHES = {
+    "default": {"BACKEND": "django.core.cache.backends.redis.RedisCache", "LOCATION": REDIS_URL}
+}
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
@@ -158,6 +164,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "apps.core.exceptions.exception_handler",
+    # Per user, for views with a throttle_scope. Test and local settings raise them.
+    "DEFAULT_THROTTLE_RATES": {"apply": "60/hour"},
 }
 
 SPECTACULAR_SETTINGS = {

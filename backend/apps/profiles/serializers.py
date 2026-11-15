@@ -35,6 +35,14 @@ def https_link(site, code):
     )
 
 
+def skills_from_ids(ids):
+    """The skills for these ids in one query. Unknown ids are rejected (F1-04)."""
+    skills = list(Skill.objects.filter(id__in=ids))
+    if len(skills) != len(set(ids)):
+        raise serializers.ValidationError("Unknown skill id.")
+    return skills
+
+
 class SkillSerializer(serializers.ModelSerializer):
     class Meta:
         model = Skill
@@ -79,10 +87,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         return bool(profile.resume)
 
     def validate_skill_ids(self, ids):
-        skills = list(Skill.objects.filter(id__in=ids))
-        if len(skills) != len(set(ids)):
-            raise serializers.ValidationError("Unknown skill id.")
-        return skills
+        return skills_from_ids(ids)
 
     def update(self, profile, validated_data):
         # Only the fields sent: a full save could put back an avatar or retire() that

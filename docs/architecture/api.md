@@ -122,8 +122,8 @@ Login, signup, logout, password and Google live under allauth (below).
 | DELETE | `/api/v1/projects/{id}/` | owner | delete draft **(planned)** |
 | POST | `/api/v1/projects/{id}/publish/` | owner | draft to open |
 | POST | `/api/v1/projects/{id}/close/` | owner | archive |
-| POST | `/api/v1/projects/{id}/roles/` | owner | add role |
-| PATCH | `/api/v1/roles/{id}/` | owner | edit role, required skills |
+| POST | `/api/v1/projects/{id}/roles/` | owner | add role with 1-20 `required_skills` ids (unknown id: `400`) |
+| PATCH | `/api/v1/roles/{id}/` | owner | edit role, required skills (1-20 ids) |
 | DELETE | `/api/v1/roles/{id}/` | owner | delete open role (may trigger lock) |
 
 ### matching
@@ -231,4 +231,4 @@ Every frame is JSON:
 
 ## Rate limits
 
-DRF throttles: `apply` 60/hour per user, `chat.send` 30/10s per connection **(planned)**, anonymous auth endpoints 20/min per IP.
+DRF throttles: `apply` 60/hour per user (`POST /api/v1/applications/`, then `429` `throttled`; `DEFAULT_THROTTLE_RATES` in settings, raised in test and local settings), `chat.send` 30/10s per connection **(planned)**, anonymous auth endpoints 20/min per IP.

@@ -3,7 +3,7 @@ import os
 os.environ.setdefault("DJANGO_SECRET_KEY", "local-dev-only-not-a-secret")
 
 from .base import *  # noqa: E402, F403
-from .base import MIDDLEWARE  # noqa: E402
+from .base import MIDDLEWARE, REST_FRAMEWORK  # noqa: E402
 
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
@@ -21,3 +21,6 @@ USE_X_FORWARDED_HOST = True
 # uvicorn does not serve static like runserver does; with DEBUG on, WhiteNoise
 # reads straight from the app dirs so admin and /api/docs work without collectstatic.
 MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+
+# Playwright runs and demo rehearsals apply far more often than a student would.
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["apply"] = "10000/hour"

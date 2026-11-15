@@ -2,8 +2,10 @@ from datetime import timedelta
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.test import APIClient
+from rest_framework.throttling import ScopedRateThrottle
 
 from apps.core.models import Term
 from apps.matching.models import Application, ApplicationStatus
@@ -59,6 +61,23 @@ def test_apply_creates_a_pending_application_the_owner_sees(owner, candidate, ro
     assert response.json()["note"] == "I built two Django apps"
     queue = as_user(owner).get(f"/api/v1/roles/{role.id}/applications/").json()["results"]
     assert [a["note"] for a in queue] == ["I built two Django apps"]
+
+
+def test_applying_is_rate_limited_per_user(owner, candidate, role, monkeypatch):
+    monkeypatch.setitem(ScopedRateThrottle.THROTTLE_RATES, "apply", "2/hour")
+    cache.clear()
+    other = Role.objects.create(project=role.project, title="Frontend dev")
+
+    assert apply(candidate, role).status_code == 201
+    assert apply(candidate, role).status_code == 409  # a refused apply still counts
+    response = apply(candidate, other)
+
+    assert response.status_code == 429
+    assert response.json()["code"] == "throttled"
+    assert not Application.objects.filter(role=other).exists()
+    # someone else has their own allowance
+    third = User.objects.create_user(email="third@latech.edu", password="pw")
+    assert apply(third, other).status_code == 201
 
 
 def test_note_is_optional(candidate, role):

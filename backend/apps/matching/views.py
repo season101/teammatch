@@ -5,6 +5,7 @@ from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.core.pagination import DefaultCursorPagination
@@ -84,9 +85,14 @@ class ApplicationDecisionView(APIView):
 
 @extend_schema(tags=["matching"])
 class ApplyView(generics.CreateAPIView):
-    """Apply to an open role with an optional note. My own project, or I'm retired: 403."""
+    """Apply to an open role with an optional note. My own project, or I'm retired: 403.
+
+    Rate limited per user (the apply rate in DEFAULT_THROTTLE_RATES): 429 throttled.
+    """
 
     serializer_class = ApplySerializer
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "apply"
 
     def perform_create(self, serializer):
         role = serializer.validated_data["role"]

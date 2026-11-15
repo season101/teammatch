@@ -62,7 +62,7 @@ flowchart TB
         web["web<br/>Next.js 15, standalone, port 3000"]
         api["api<br/>Django 5.2 ASGI, uvicorn, port 8000<br/>DRF + allauth + Channels"]
         db[("db<br/>Postgres 17")]
-        redis[("redis<br/>Redis 7, channel layer")]
+        redis[("redis<br/>Redis, channel layer + cache")]
         storage[("storage<br/>S3 object storage, internal only")]
     end
 
@@ -76,7 +76,7 @@ flowchart TB
 
     web -->|"server-side fetch, internal network"| api
     api -->|"SQL"| db
-    api -->|"channel layer pub/sub"| redis
+    api -->|"channel layer pub/sub, cache (rate limits)"| redis
     api -->|"S3 API via django-storages"| storage
 ```
 
