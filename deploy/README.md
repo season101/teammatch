@@ -92,9 +92,9 @@ The example ships 1.0.0. Before you start, check that every PR for the release i
 
    GitHub's **Draft a new release** button works too: choose a new `vX.Y.Z` tag on `main` and publish. It makes the tag and the Release together, and the workflow keeps that Release.
 
-2. The release workflow pushes `ghcr.io/season101/teammatch-api:1.0.0` and `teammatch-web:1.0.0`, creates the GitHub Release, then the `deploy` job waits for you. Open the run, click **Review deployments**, tick `production` and approve.
+2. The release workflow first waits for CI on the tagged commit and stops if it didn't pass (`ci-passed` job, up to 30 minutes). Then it pushes `ghcr.io/season101/teammatch-api:1.0.0` and `teammatch-web:1.0.0`, creates the GitHub Release, and the `deploy` job waits for you. Open the run, click **Review deployments**, tick `production` and approve. If CI failed only because of a flake, re-run CI on that commit, then re-run the release's failed jobs.
 
-3. The deploy runs on its own: backup to `~/backups`, check out `v1.0.0` in `apps/teammatch`, set `TEAMMATCH_VERSION`, pull and restart `teammatch-migrate`, `teammatch-api` and `teammatch-web`, then wait for `/api/v1/health/` to say `ok` with `"version": "1.0.0"`. If anything after the checkout fails, it rolls back to the previous version and the job goes red. The output is in the Actions log and in `~/teammatch-deploy.log` on the server.
+3. The deploy runs on its own: backup to `~/backups`, check out `v1.0.0` in `apps/teammatch`, set `TEAMMATCH_VERSION`, pull and restart `teammatch-migrate`, `teammatch-api` and `teammatch-web`, then wait for `/api/v1/health/` to say `ok` with `"version": "1.0.0"` and for `teammatch-web` to be healthy on the `1.0.0` image. If anything after the checkout fails, it rolls back to the previous version and the job goes red. The output is in the Actions log and in `~/teammatch-deploy.log` on the server.
 
 4. When the job is green, sign up on the live site with a real inbox, open the link in the email, and sign in.
 
@@ -136,7 +136,7 @@ Use these only if the Deploy workflow can't reach the server. The quick way is t
 
 ## Roll back
 
-The deploy rolls itself back when `teammatch-migrate` fails or the health check isn't `ok` on the new version within about 2 minutes. If you find a problem later (for example sign-up or email verification fails), deploy the previous version with the Deploy workflow:
+The deploy rolls itself back when `teammatch-migrate` fails, or the API health isn't `ok` on the new version or `teammatch-web` isn't healthy within about 2 minutes. If you find a problem later (for example sign-up or email verification fails), deploy the previous version with the Deploy workflow:
 
 ```bash
 gh workflow run deploy.yml --repo season101/teammatch --ref main -f version=0.1.0

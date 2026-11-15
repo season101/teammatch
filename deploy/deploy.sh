@@ -39,15 +39,25 @@ compose() { (cd "$INFRA" && docker compose --profile apps "$@"); }
 
 set_version() { sed -i "s/^TEAMMATCH_VERSION=.*/TEAMMATCH_VERSION=$1/" "$ENV_FILE"; }
 
-# Health has to say ok and report the wanted version, within about 2 minutes.
-wait_healthy() {
-  local want=$1 i
-  for i in $(seq 24); do
-    if curl -fsS --max-time 5 "$HEALTH_URL" 2>/dev/null | python3 -c '
+# The API's health says ok and reports the wanted version.
+api_healthy() {
+  curl -fsS --max-time 5 "$HEALTH_URL" 2>/dev/null | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
 sys.exit(0 if d.get("status") == "ok" and d.get("version") == sys.argv[1] else 1)
-' "$want" 2>/dev/null; then
+' "$1" 2>/dev/null
+}
+
+# The web container runs the wanted image and its own healthcheck passes.
+web_healthy() {
+  [[ $(docker inspect -f '{{.Config.Image}} {{.State.Health.Status}}' teammatch-web 2>/dev/null) == *":$1 healthy" ]]
+}
+
+# Both have to be healthy on the wanted version within about 2 minutes.
+wait_healthy() {
+  local want=$1 i
+  for i in $(seq 24); do
+    if api_healthy "$want" && web_healthy "$want"; then
       log "healthy on $want"
       return 0
     fi

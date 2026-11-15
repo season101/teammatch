@@ -9,7 +9,37 @@ permissions:
   packages: write
 
 jobs:
+  # Release only a commit CI passed. A tag pushed right after a merge waits for main's CI run.
+  ci-passed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      actions: read
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          runs="repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&per_page=1"
+          for i in $(seq 60); do
+            out=$(gh api "$runs" --jq '.workflow_runs[0] | "\(.status // "missing") \(.conclusion // "none") \(.html_url // "")"') ||
+              out="unreachable none"
+            read -r status conclusion url <<<"$out"
+            if [[ $status == completed ]]; then
+              if [[ $conclusion == success ]]; then
+                echo "CI passed on $GITHUB_SHA: $url"
+                exit 0
+              fi
+              echo "::error::CI on $GITHUB_SHA ended $conclusion, so this tag isn't released: $url"
+              exit 1
+            fi
+            echo "CI on $GITHUB_SHA: $status, checking again in 30 s ($i/60)"
+            sleep 30
+          done
+          echo "::error::no finished CI run on $GITHUB_SHA after 30 minutes"
+          exit 1
+
   images:
+    needs: ci-passed
     runs-on: ubuntu-latest
     strategy:
       matrix:

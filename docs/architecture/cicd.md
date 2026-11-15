@@ -56,13 +56,14 @@ Dependabot opens weekly PRs for uv (`backend/`), npm (`frontend/`) and GitHub Ac
 
 On push of a tag matching `v*`:
 
-1. Checkout, set up buildx, log in to GHCR with `GITHUB_TOKEN` (`permissions: packages: write`).
-2. Build and push:
+1. The `ci-passed` job looks up the CI run for the tagged commit (`actions: read` on that job only). It waits while CI is still running, up to 30 minutes, and stops the release unless CI passed, so nothing is built or deployed from a red commit. If CI failed only because of a flake, re-run CI on that commit, then re-run the release's failed jobs.
+2. Checkout, set up buildx, log in to GHCR with `GITHUB_TOKEN` (`permissions: packages: write`).
+3. Build and push:
    - `ghcr.io/season101/teammatch-api`
    - `ghcr.io/season101/teammatch-web`
-3. Tags from `docker/metadata-action`: `1.2.0` and `1.2`, plus `latest` (the action adds it for every semver tag).
-4. The `release` job runs after both images are pushed. It creates a GitHub Release for the tag with notes generated from the squash commits, or keeps the one that's there if the Release was made with GitHub's "Draft a new release" button (`permissions: contents: write` on that job only).
-5. The `deploy` job calls `deploy.yml` (below) with the tag's version.
+4. Tags from `docker/metadata-action`: `1.2.0` and `1.2`, plus `latest` (the action adds it for every semver tag).
+5. The `release` job runs after both images are pushed. It creates a GitHub Release for the tag with notes generated from the squash commits, or keeps the one that's there if the Release was made with GitHub's "Draft a new release" button (`permissions: contents: write` on that job only).
+6. The `deploy` job calls `deploy.yml` (below) with the tag's version.
 
 The repo is public, so the images are public and the host can pull without logging in.
 
@@ -77,7 +78,7 @@ Called by `release.yml` after each release. Run it by hand from the Actions tab 
    - fetches the tag and checks out `apps/teammatch` at it,
    - sets `TEAMMATCH_VERSION` in `deploy/.env`,
    - pulls and restarts only `teammatch-migrate`, `teammatch-api` and `teammatch-web`,
-   - waits about 2 minutes for `/api/v1/health/` to say `ok` with the new version.
+   - waits about 2 minutes for `/api/v1/health/` to say `ok` with the new version, and for `teammatch-web` to run the new image with its healthcheck passing.
 4. If any step after the checkout fails, the script puts the previous checkout and version back, restarts the same three services, and the job fails.
 
 `concurrency` keeps it to one deploy at a time, and the script takes a `flock` too. Its output shows in the Actions log and in `~/teammatch-deploy.log` on the host. The badge on the README shows the latest `production` deployment. Host setup is in [deploy/README.md](../../deploy/README.md#one-time-setup).
@@ -123,12 +124,12 @@ flowchart LR
         approve["approve<br/>production environment"]
         ssh["ssh, forced command<br/>teammatch-deploy X.Y.Z"]
         steps["backup, check out tag,<br/>compose pull + up"]
-        verify["health ok on new version"]
+        verify["api health ok on new version,<br/>web container healthy"]
         rollback["roll back to previous version"]
     end
 
     dev --> pr --> ci
-    ci -->|"all green"| review --> main --> tag --> build --> ghcr --> notes
+    ci -->|"all green"| review --> main --> tag -->|"CI green on the tagged commit"| build --> ghcr --> notes
     notes --> approve --> ssh --> steps --> verify
     verify -.->|"fails"| rollback
 ```
