@@ -131,7 +131,10 @@ def test_phone_tap_targets_at_least_44px(owner_page: Page, path):
     ],
 )
 def test_known_small_phone_control_is_44px(owner_page: Page, path, text):
-    assert text not in small_controls(owner_page, path)
+    small = small_controls(owner_page, path)
+    if text == "Load more" and not owner_page.get_by_role("button", name=text).count():
+        pytest.skip("Load more only shows when the list has a second page")
+    assert text not in small
 
 
 def test_bottom_tab_bar_targets(owner_page: Page):
