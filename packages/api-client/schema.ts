@@ -221,6 +221,24 @@ export interface paths {
         patch: operations["me_profile_partial_update"];
         trace?: never;
     };
+    "/api/v1/me/profile/resume/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description A PDF of 5 MB or less. Too big: 400 resume_too_big. Not a PDF: 400 resume_not_pdf. */
+        put: operations["me_profile_resume_update"];
+        post?: never;
+        /** @description Remove my resume and delete its file. */
+        delete: operations["me_profile_resume_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/rules/accept/": {
         parameters: {
             query?: never;
@@ -286,6 +304,28 @@ export interface paths {
         };
         /** @description Someone's avatar, streamed from storage. 404 when they have none. */
         get: operations["profiles_avatar_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiles/{id}/resume/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Someone's resume, streamed from private storage (F1-16, DD-42).
+         *
+         *     Only the person and owners of projects they applied to: 403 for anyone else, checked
+         *     before anything else so it never says whether a resume exists. 404 when there's none.
+         */
+        get: operations["profiles_resume_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -695,10 +735,12 @@ export interface components {
             readonly avatar_url: string | null;
             github_url?: string;
             linkedin_url?: string;
+            readonly has_resume: boolean;
             /** Format: email */
             readonly email: string;
             /** Format: date-time */
             readonly rules_accepted_at: string | null;
+            readonly resume_name: string;
         };
         MyProject: {
             readonly id: number;
@@ -833,6 +875,7 @@ export interface components {
             readonly avatar_url: string | null;
             github_url?: string;
             linkedin_url?: string;
+            readonly has_resume: boolean;
         };
         Project: {
             readonly id: number;
@@ -883,6 +926,13 @@ export interface components {
          * @enum {string}
          */
         ProjectStatusEnum: "draft" | "open" | "locked" | "archived";
+        ResumeUploadRequest: {
+            /**
+             * Format: binary
+             * @description A PDF of 5 MB or less.
+             */
+            resume: string;
+        };
         Role: {
             readonly id: number;
             readonly project: number;
@@ -1266,6 +1316,48 @@ export interface operations {
             };
         };
     };
+    me_profile_resume_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["ResumeUploadRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyProfile"];
+                };
+            };
+        };
+    };
+    me_profile_resume_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyProfile"];
+                };
+            };
+        };
+    };
     me_rules_accept_create: {
         parameters: {
             query?: never;
@@ -1369,6 +1461,44 @@ export interface operations {
                 content: {
                     "image/*": string;
                 };
+            };
+            /** @description No response body */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    profiles_resume_retrieve: {
+        parameters: {
+            query?: {
+                /** @description 1 or true sends it as an attachment. */
+                download?: boolean;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /** @description No response body */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description No response body */
             404: {

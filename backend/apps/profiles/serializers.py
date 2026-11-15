@@ -56,6 +56,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     avatar_url = serializers.SerializerMethodField()
     github_url = https_link("github.com", "github_url_invalid")
     linkedin_url = https_link("linkedin.com", "linkedin_url_invalid")
+    # Never the file or its address: GET /profiles/{id}/resume/ checks who's asking (DD-42).
+    has_resume = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
@@ -69,8 +71,12 @@ class ProfileSerializer(serializers.ModelSerializer):
             "avatar_url",
             "github_url",
             "linkedin_url",
+            "has_resume",
         ]
         read_only_fields = ["id"]
+
+    def get_has_resume(self, profile) -> bool:
+        return bool(profile.resume)
 
     def validate_skill_ids(self, ids):
         skills = list(Skill.objects.filter(id__in=ids))
@@ -101,10 +107,14 @@ class AvatarUploadSerializer(serializers.Serializer):
     avatar = serializers.FileField(help_text="JPEG, PNG or WebP, 2 MB or less.")
 
 
+class ResumeUploadSerializer(serializers.Serializer):
+    resume = serializers.FileField(help_text="A PDF of 5 MB or less.")
+
+
 class MyProfileSerializer(ProfileSerializer):
-    # Only the owner sees their own email.
+    # Only the owner sees their own email and resume file name.
     email = serializers.EmailField(source="user.email", read_only=True)
 
     class Meta(ProfileSerializer.Meta):
-        fields = [*ProfileSerializer.Meta.fields, "email", "rules_accepted_at"]
-        read_only_fields = ["id", "email", "rules_accepted_at"]
+        fields = [*ProfileSerializer.Meta.fields, "email", "rules_accepted_at", "resume_name"]
+        read_only_fields = ["id", "email", "rules_accepted_at", "resume_name"]

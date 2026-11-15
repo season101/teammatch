@@ -49,7 +49,7 @@ All `/api/v1/` errors use one shape (custom DRF exception handler in `core`):
 
 | Status | `code` examples | When |
 |---|---|---|
-| 400 | `validation_error`, `invalid_avatar`, `repo_url_not_github` | bad input |
+| 400 | `validation_error`, `invalid_avatar`, `repo_url_not_github`, `resume_too_big`, `resume_not_pdf` | bad input |
 | 401 | `not_authenticated` | no session |
 | 403 | `permission_denied`, `profile_retired`, `own_project` | logged in but not allowed |
 | 404 | `not_found` | missing or not visible to you |
@@ -102,7 +102,10 @@ Login, signup, logout, password and Google live under allauth (below).
 | POST | `/api/v1/me/avatar/` | user | upload my avatar as `multipart/form-data`, field `avatar`: JPEG, PNG or WebP of 2 MB or less, checked from the file's bytes with Pillow. It's redrawn at most 512px (dropping EXIF such as location) and saved to SeaweedFS through django-storages; the old file is deleted. Anything else: `400` `invalid_avatar`, and the old avatar stays. Answers with my profile |
 | DELETE | `/api/v1/me/avatar/` | user | remove my avatar and delete its file. Answers with my profile |
 | GET | `/api/v1/profiles/{id}/avatar/` | user | avatar image, streamed by the API from SeaweedFS (`Cache-Control: private`). No avatar: `404`. Profiles give `avatar_url`, this address with `?v=` that changes on each upload, or `null` |
-| GET | `/api/v1/profiles/{id}/` | user | public profile view: name, bio, major, skills, `avatar_url`, `github_url`, `linkedin_url`. The same shape is the `applicant` in Review |
+| PUT | `/api/v1/me/profile/resume/` | user | upload or replace my resume as `multipart/form-data`, field `resume` (F1-16). Over 5 MB: `400` `resume_too_big`. Not starting with `%PDF-`, whatever its name: `400` `resume_not_pdf`. Either way nothing is saved. Stored on the private `resumes` storage; the old file is deleted. Answers with my profile (`has_resume`, `resume_name`) |
+| DELETE | `/api/v1/me/profile/resume/` | user | remove my resume and delete its file. Answers with my profile |
+| GET | `/api/v1/profiles/{id}/resume/` | person or owner | the PDF, streamed with `Content-Type: application/pdf`, `Content-Disposition: inline`, `Cache-Control: private, no-store` and `X-Content-Type-Options: nosniff`. `?download=1` sends it as an attachment. Only the person and owners of a project they applied to, in any status (DD-42); anyone else gets `403` before anything else is checked. No resume: `404`. There's never a public link |
+| GET | `/api/v1/profiles/{id}/` | user | public profile view: name, bio, major, skills, `avatar_url`, `github_url`, `linkedin_url`, `has_resume` (never the file or its address). The same shape is the `applicant` in Review |
 | PATCH | `/api/v1/profiles/{id}/` | owner | edit your own profile by id (`403` for anyone else) |
 | GET | `/api/v1/skills/?q=` | user | filter skills by name for pickers |
 | POST | `/api/v1/skills/` | user | add a new skill (deduped by name) **(planned)** |

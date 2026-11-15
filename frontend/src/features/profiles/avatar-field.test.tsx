@@ -11,6 +11,8 @@ const PROFILE: MyProfile = {
   major: "",
   skills: [],
   avatar_url: null,
+  has_resume: false,
+  resume_name: "",
   email: "sam@latech.edu",
   rules_accepted_at: null,
 };

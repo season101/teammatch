@@ -11,6 +11,7 @@ import { PendingLabel } from "@/components/ui/pending-label";
 import { GitHubIcon, LinkedInIcon } from "@/components/ui/link-card";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { AvatarField } from "./avatar-field";
+import { ResumeField } from "./resume-field";
 import { SkillPicker } from "./skill-picker";
 import {
   useMyProfile,
@@ -199,6 +200,8 @@ function ProfileFields({
           edited();
         }}
       />
+
+      <ResumeField profile={profile} />
 
       {save.isSuccess && (
         <p role="status" className="text-sm text-success">

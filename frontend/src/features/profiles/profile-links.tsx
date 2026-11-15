@@ -1,26 +1,39 @@
 import type { components } from "@teammatch/api-client";
 import {
+  FileIcon,
   GitHubIcon,
   LinkCard,
   LinkedInIcon,
   shortLink,
 } from "@/components/ui/link-card";
+import { resumeUrl } from "./queries";
 
 type Profile = components["schemas"]["Profile"];
 
-// GitHub and LinkedIn as link cards (F1-15): full cards on Preview, small tiles on the
-// applicant card. Only what the person added; nothing at all without either.
+// GitHub, LinkedIn and the resume as link cards (F1-15, F1-16): full cards on Preview,
+// small tiles on the applicant card. Only what the person added; nothing without any.
 export function ProfileLinks({
   profile,
   compact = false,
 }: {
-  profile: Pick<Profile, "github_url" | "linkedin_url">;
+  profile: Pick<Profile, "id" | "github_url" | "linkedin_url" | "has_resume">;
   compact?: boolean;
 }) {
   const links = [
     { title: "GitHub", href: profile.github_url, icon: <GitHubIcon /> },
     { title: "LinkedIn", href: profile.linkedin_url, icon: <LinkedInIcon /> },
-  ].filter((link) => link.href);
+  ]
+    .filter((link) => link.href)
+    .map((link) => ({ ...link, href: link.href!, detail: shortLink(link.href!) }));
+  if (profile.has_resume) {
+    // The API checks who's asking, so only the person and owners they applied to get it.
+    links.push({
+      title: "Resume",
+      href: resumeUrl(profile.id),
+      icon: <FileIcon />,
+      detail: "PDF. Read it here.",
+    });
+  }
   if (links.length === 0) return null;
   return (
     <ul
@@ -29,14 +42,7 @@ export function ProfileLinks({
     >
       {links.map((link) => (
         <li key={link.title} className={compact ? "flex flex-1" : undefined}>
-          <LinkCard
-            external
-            compact={compact}
-            href={link.href!}
-            icon={link.icon}
-            title={link.title}
-            detail={shortLink(link.href!)}
-          />
+          <LinkCard external compact={compact} {...link} />
         </li>
       ))}
     </ul>

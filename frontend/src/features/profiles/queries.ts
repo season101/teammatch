@@ -87,12 +87,19 @@ export function useSaveProfile() {
       if (data) return data;
       throw new SaveProfileError(response.status, readFieldErrors(error));
     },
-    // The photo saves on its own and the two replies can cross. A PATCH never changes
-    // the photo, so keep the cached one: a late reply can't bring back the old photo.
+    // The photo and resume save on their own, and the replies can cross. A PATCH never
+    // changes them, so keep the cached ones: a late reply can't bring back an old file.
     onSuccess: async (profile) => {
       await queryClient.cancelQueries({ queryKey: ["my-profile"] });
       queryClient.setQueryData<MyProfile>(["my-profile"], (old) =>
-        old ? { ...profile, avatar_url: old.avatar_url } : profile,
+        old
+          ? {
+              ...profile,
+              avatar_url: old.avatar_url,
+              has_resume: old.has_resume,
+              resume_name: old.resume_name,
+            }
+          : profile,
       );
     },
   });
@@ -134,6 +141,52 @@ export function useSetAvatar() {
       await queryClient.cancelQueries({ queryKey: ["my-profile"] });
       queryClient.setQueryData<MyProfile>(["my-profile"], (old) =>
         old ? { ...old, avatar_url: profile.avatar_url } : profile,
+      );
+    },
+  });
+}
+
+// F1-16. The copy matches the server's messages for resume_too_big and resume_not_pdf.
+export const RESUME_MAX_BYTES = 5 * 1024 * 1024;
+export const RESUME_TOO_BIG = "That file is over 5 MB. Choose a smaller PDF.";
+export const RESUME_NOT_PDF = "Only PDF files can be uploaded.";
+
+// Never a storage address: the API streams it after checking who's asking (DD-42).
+export const resumeUrl = (profileId: number) =>
+  `/api/v1/profiles/${profileId}/resume/`;
+
+// A file uploads or replaces my resume; null removes it. The API answers with my profile.
+export function useSetResume() {
+  const queryClient = useQueryClient();
+  return useMutation<MyProfile, Error, File | null>({
+    mutationFn: async (file) => {
+      const headers = { "X-CSRFToken": csrfToken() };
+      let result;
+      if (file) {
+        const form = new FormData();
+        form.append("resume", file);
+        result = await api.PUT("/api/v1/me/profile/resume/", {
+          body: form as unknown as { resume: string },
+          headers,
+        });
+      } else {
+        result = await api.DELETE("/api/v1/me/profile/resume/", { headers });
+      }
+      if (result.data) return result.data;
+      const { detail } = (result.error ?? {}) as { detail?: unknown };
+      throw new Error(
+        result.response.status === 400 && typeof detail === "string"
+          ? detail
+          : "Couldn't update your resume. Please try again.",
+      );
+    },
+    // Only the resume fields, after stopping any older profile GET, as for the photo.
+    onSuccess: async (profile) => {
+      await queryClient.cancelQueries({ queryKey: ["my-profile"] });
+      queryClient.setQueryData<MyProfile>(["my-profile"], (old) =>
+        old
+          ? { ...old, has_resume: profile.has_resume, resume_name: profile.resume_name }
+          : profile,
       );
     },
   });

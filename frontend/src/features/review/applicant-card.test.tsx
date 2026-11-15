@@ -13,6 +13,7 @@ const APPLICATION: Applicant = {
     avatar_url: null,
     github_url: "https://github.com/sam",
     linkedin_url: "",
+    has_resume: false,
   },
   note: "",
   status: "pending",
@@ -42,6 +43,13 @@ test("shows a small card for each link the applicant added, opening in a new tab
   expect(links[0]).toHaveAttribute("href", "https://github.com/sam");
   expect(links[0]).toHaveAttribute("target", "_blank");
   expect(links[0]).toHaveAttribute("rel", "noopener noreferrer");
+});
+
+test("an applicant's resume is a third tile, through the API's permission check", () => {
+  renderCard({ ...APPLICATION, applicant: { ...APPLICATION.applicant, has_resume: true } });
+
+  const resume = screen.getByRole("link", { name: /^Resume/ });
+  expect(resume).toHaveAttribute("href", "/api/v1/profiles/3/resume/");
 });
 
 test("no link cards when the applicant added none", () => {
