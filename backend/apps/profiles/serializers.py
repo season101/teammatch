@@ -37,6 +37,17 @@ class ProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Unknown skill id.")
         return skills
 
+    def update(self, profile, validated_data):
+        # Only the fields sent: a full save could put back an avatar or retire() that
+        # changed while this request ran, pointing at a file already deleted.
+        skills = validated_data.pop("skills", None)
+        for field, value in validated_data.items():
+            setattr(profile, field, value)
+        profile.save(update_fields=[*validated_data, "updated_at"])
+        if skills is not None:
+            profile.skills.set(skills)
+        return profile
+
     def get_avatar_url(self, profile) -> str | None:
         # The API's own address, never the bucket's. ?v= changes with each upload.
         if not profile.avatar:

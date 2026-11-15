@@ -83,10 +83,12 @@ export function useSaveProfile() {
     },
     // The photo saves on its own and the two replies can cross. A PATCH never changes
     // the photo, so keep the cached one: a late reply can't bring back the old photo.
-    onSuccess: (profile) =>
+    onSuccess: async (profile) => {
+      await queryClient.cancelQueries({ queryKey: ["my-profile"] });
       queryClient.setQueryData<MyProfile>(["my-profile"], (old) =>
         old ? { ...profile, avatar_url: old.avatar_url } : profile,
-      ),
+      );
+    },
   });
 }
 
@@ -121,10 +123,13 @@ export function useSetAvatar() {
       );
     },
     // Only the photo, for the same reason: the form's fields may have saved meanwhile.
-    onSuccess: (profile) =>
+    // A profile GET that left before the upload would bring back the old photo, so stop it.
+    onSuccess: async (profile) => {
+      await queryClient.cancelQueries({ queryKey: ["my-profile"] });
       queryClient.setQueryData<MyProfile>(["my-profile"], (old) =>
         old ? { ...old, avatar_url: profile.avatar_url } : profile,
-      ),
+      );
+    },
   });
 }
 

@@ -103,3 +103,20 @@ test("Remove photo deletes it", async () => {
   expect(await screen.findByRole("status")).toHaveTextContent("Photo removed.");
   expect(requests[0].method).toBe("DELETE");
 });
+
+test("a profile refetch that started before the upload can't bring back the old photo", async () => {
+  mockApi({ status: 200, body: WITH_PHOTO });
+  const client = renderField(PROFILE);
+  let finishOldGet: (profile: MyProfile) => void = () => {};
+  void client.prefetchQuery({
+    queryKey: ["my-profile"],
+    queryFn: () => new Promise<MyProfile>((resolve) => (finishOldGet = resolve)),
+  });
+
+  pick(new File(["png"], "me.png", { type: "image/png" }));
+  expect(await screen.findByRole("status")).toHaveTextContent("Photo updated.");
+  finishOldGet(PROFILE);
+  await new Promise((resolve) => setTimeout(resolve, 20));
+
+  expect(client.getQueryData<MyProfile>(["my-profile"])?.avatar_url).toBe(WITH_PHOTO.avatar_url);
+});

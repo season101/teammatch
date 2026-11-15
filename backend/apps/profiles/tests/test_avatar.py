@@ -7,6 +7,7 @@ from PIL import Image
 
 from apps.accounts.models import User
 from apps.profiles.models import Profile
+from apps.profiles.serializers import MyProfileSerializer
 from apps.profiles.services import remove_avatar, set_avatar
 
 pytestmark = pytest.mark.django_db
@@ -153,3 +154,17 @@ def test_avatar_changes_leave_the_rest_of_the_profile_alone(sam):
     fresh = Profile.objects.get(user=sam)
     assert (fresh.bio, str(fresh.retired_until)) == ("Saved meanwhile", "2026-12-12")
     assert not fresh.avatar
+
+
+def test_a_profile_patch_leaves_a_new_avatar_alone(sam):
+    # The PATCH loaded the profile before an upload committed.
+    stale = Profile.objects.get(user=sam)
+    set_avatar(Profile.objects.get(user=sam), image_file())
+    uploaded = Profile.objects.get(user=sam).avatar.name
+
+    serializer = MyProfileSerializer(stale, data={"bio": "New bio"}, partial=True)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+
+    fresh = Profile.objects.get(user=sam)
+    assert (fresh.bio, fresh.avatar.name) == ("New bio", uploaded)
