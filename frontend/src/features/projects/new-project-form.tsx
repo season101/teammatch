@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { buttonClasses } from "@/components/ui/button";
 import {
   errorClass,
@@ -23,8 +23,15 @@ export function NewProjectForm() {
   const [extra, setExtra] = useState<RepoDetails>({ repo_url: "", details: "" });
   const [clientErrors, setClientErrors] = useState<FieldErrors>({});
   const create = useCreateProject();
+  const form = useRef<HTMLFormElement>(null);
+  // Counts submits. After a failed one, here or from the API, focus goes to the first
+  // invalid field (forms.md); typing that clears an error doesn't move it.
+  const [submits, setSubmits] = useState(0);
 
   const failure = create.error;
+  useEffect(() => {
+    form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [submits, failure]);
   const noTerm = failure?.status === 409;
   const signedOut = failure?.status === 401;
   // Signed in but not allowed (for example the Team rules aren't accepted): the API says why.
@@ -42,8 +49,12 @@ export function NewProjectForm() {
     const found: FieldErrors = {};
     if (!title.trim()) found.title = "Title is required.";
     if (!pitch.trim()) found.pitch = "Pitch is required.";
-    setClientErrors(found);
-    if (Object.keys(found).length > 0) return;
+    const invalid = Object.keys(found).length > 0;
+    // A failed check keeps hiding the API errors on fields fixed since (typing set those
+    // to undefined); sending starts clean, so every new API error shows.
+    setClientErrors((prev) => (invalid ? { ...prev, ...found } : {}));
+    setSubmits((count) => count + 1);
+    if (invalid) return;
     create.mutate({
       title: title.trim(),
       pitch: pitch.trim(),
@@ -86,7 +97,7 @@ export function NewProjectForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
+    <form ref={form} onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
       {noTerm && (
         <p role="alert" className={noticeClass}>
           There is no active term yet, so projects can&apos;t be created. Ask an

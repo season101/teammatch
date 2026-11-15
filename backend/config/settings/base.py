@@ -113,6 +113,8 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_ADAPTER = "apps.accounts.adapter.AccountAdapter"
+# Checks the sign-up password against the email too ("not close to your email").
+ACCOUNT_SIGNUP_FORM_CLASS = "apps.accounts.forms.SignupForm"
 # BR-01: only these domains may sign up or sign in (comma-separated in .env).
 ALLOWED_EMAIL_DOMAINS = env.list(
     "ALLOWED_EMAIL_DOMAINS", default=["latech.edu", "email.latech.edu"]

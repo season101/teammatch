@@ -94,10 +94,6 @@ def test_all_numbers_password_is_refused_with_a_message(page: Page):
     expect(page.get_by_role("heading", name="Check your inbox")).to_have_count(0)
 
 
-@pytest.mark.xfail(
-    reason="BUG: a password made of the email's name is accepted, though the form says not close to your email",
-    strict=True,
-)
 def test_password_close_to_the_email_is_refused(page: Page):
     name = f"acct{tag()}"
     fill_signup(page, f"{name}@latech.edu", f"{name}1")

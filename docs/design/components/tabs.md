@@ -6,6 +6,7 @@ Text tabs with a violet underline on the active one. They switch between sibling
 - A `tablist` row with a hairline bottom border.
 - Each tab is 44px tall, semibold 14px, `text-muted`. The active tab is `text`, with a 2px `primary` underline that slides in.
 - Counts go after the label in Geist Mono ("Applications 4").
+- Labels stay on one line. When the tabs don't fit (a project with many roles on a phone), the row scrolls sideways inside its container; the page never does.
 
 ## Props
 | Prop | Type | Default | Notes |

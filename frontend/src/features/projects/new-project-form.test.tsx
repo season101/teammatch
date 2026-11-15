@@ -56,6 +56,25 @@ test("asks for a title and a pitch without calling the API", async () => {
   expect(await screen.findByText("Title is required.")).toBeInTheDocument();
   expect(screen.getByText("Pitch is required.")).toBeInTheDocument();
   expect(requests).toHaveLength(0);
+  expect(screen.getByLabelText("Title")).toHaveFocus();
+});
+
+test("a failed submit moves focus to the first invalid field", () => {
+  mockFetch({}, 201);
+  renderForm();
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "TeamMatch" } });
+  fireEvent.click(screen.getByRole("button", { name: /create project/i }));
+  expect(screen.getByLabelText("Pitch")).toHaveFocus();
+});
+
+test("typing in a field with an error doesn't pull focus to another invalid one", () => {
+  mockFetch({}, 201);
+  renderForm();
+  fireEvent.click(screen.getByRole("button", { name: /create project/i }));
+  const pitch = screen.getByLabelText("Pitch");
+  pitch.focus();
+  fireEvent.change(pitch, { target: { value: "Find a team" } });
+  expect(pitch).toHaveFocus();
 });
 
 test("creates a project and shows the success message", async () => {
@@ -113,6 +132,7 @@ test("a link that isn't to GitHub shows the server's error on the field and keep
 
   expect(await screen.findByText(message)).toHaveAttribute("id", "project-repo-error");
   expect(repo).toHaveAttribute("aria-invalid", "true");
+  expect(repo).toHaveFocus();
   expect(repo).toHaveAccessibleDescription(
     `For software projects. Must be a github.com link. ${message}`,
   );
@@ -135,6 +155,35 @@ test("shows the server's message next to the field", async () => {
   renderForm();
   fillAndSubmit();
   expect(await screen.findByText("Server says no.")).toBeInTheDocument();
+});
+
+test("a server error fixed since stays hidden when another field then fails, and focus goes there", async () => {
+  mockFetch({ title: ["Server says no."] }, 400);
+  renderForm();
+  fillAndSubmit();
+  await screen.findByText("Server says no.");
+
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "A better title" } });
+  fireEvent.change(screen.getByLabelText("Pitch"), { target: { value: "" } });
+  fireEvent.click(screen.getByRole("button", { name: /create project/i }));
+
+  expect(screen.getByText("Pitch is required.")).toBeInTheDocument();
+  expect(screen.queryByText("Server says no.")).not.toBeInTheDocument();
+  expect(screen.getByLabelText("Pitch")).toHaveFocus();
+});
+
+test("sending again shows the API's new error on a field fixed before", async () => {
+  mockFetch({ title: ["Server says no."] }, 400);
+  renderForm();
+  fillAndSubmit();
+  await screen.findByText("Server says no.");
+
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Still not right" } });
+  expect(screen.queryByText("Server says no.")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /create project/i }));
+
+  expect(await screen.findByText("Server says no.")).toBeInTheDocument();
+  expect(screen.getByLabelText("Title")).toHaveFocus();
 });
 
 test("a 401 says to sign in", async () => {

@@ -54,21 +54,9 @@ def nav_visible(page: Page):
 # ---------- Responsive (F2-10) ----------
 
 
-KNOWN_WIDE = {("/", 1024)}  # landing page overflows by 3px here (the xfail below)
-
-
-def _public_cases():
-    for p in PUBLIC:
-        for w, h in WIDTHS:
-            marks = (
-                [pytest.mark.xfail(reason="BUG: landing page scrolls sideways by 3px at 1024px wide", strict=True)]
-                if (p, w) in KNOWN_WIDE
-                else []
-            )
-            yield pytest.param(p, w, h, marks=marks, id=f"{pid(p)}-{w}")
-
-
-@pytest.mark.parametrize("path,w,h", list(_public_cases()))
+@pytest.mark.parametrize(
+    "path,w,h", [pytest.param(p, w, h, id=f"{pid(p)}-{w}") for p in PUBLIC for w, h in WIDTHS]
+)
 def test_public_routes_no_horizontal_scroll(page: Page, path, w, h):
     page.set_viewport_size({"width": w, "height": h})
     settle(page, path)
@@ -94,9 +82,6 @@ def test_app_routes_no_horizontal_scroll(owner_page: Page, path):
 # ---------- Tap targets ----------
 
 
-# Known undersized phone controls: {route: [text of each]}. Each gets its own xfail below.
-KNOWN_SMALL = {"/feed": ["My applications"], "/projects": ["New project", "Load more"]}
-
 SMALL_JS = """() => [...document.querySelectorAll('button, a[href], [role=tab]')]
   .filter(e => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e);
     return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !e.closest('[aria-hidden=true]')
@@ -113,28 +98,20 @@ def small_controls(page: Page, path):
 
 @pytest.mark.parametrize("path", ["/feed", "/projects", "/teams", "/settings", "/projects/new"])
 def test_phone_tap_targets_at_least_44px(owner_page: Page, path):
-    small = [t for t in small_controls(owner_page, path) if t not in KNOWN_SMALL.get(path, [])]
+    small = small_controls(owner_page, path)
     assert not small, f"controls under 44px on {path}: {small}"
 
 
-@pytest.mark.parametrize(
-    "path,text",
-    [
-        pytest.param(
-            p,
-            t,
-            marks=pytest.mark.xfail(reason=f"BUG: '{t}' on {p} is 36px tall on phones (<44)", strict=True),
-            id=f"{p}-{t}",
-        )
-        for p, texts in KNOWN_SMALL.items()
-        for t in texts
-    ],
-)
-def test_known_small_phone_control_is_44px(owner_page: Page, path, text):
-    small = small_controls(owner_page, path)
-    if text == "Load more" and not owner_page.get_by_role("button", name=text).count():
-        pytest.skip("Load more only shows when the list has a second page")
-    assert text not in small
+def test_load_more_is_44px_on_a_phone(owner_page: Page, api):
+    # The API says whether Browse has a second page, so a missing button fails instead of passing.
+    if not api().sign_in(owner_page.user).send("GET", "/api/v1/projects/").json()["next"]:
+        pytest.skip("Browse has one page on this stack, so there's no Load more")
+    owner_page.set_viewport_size({"width": 375, "height": 812})
+    owner_page.goto("/projects")
+    button = owner_page.get_by_role("button", name="Load more").locator("visible=true")
+    expect(button).to_be_visible()
+    box = button.bounding_box()
+    assert box["height"] >= 44 and box["width"] >= 44, box
 
 
 def test_bottom_tab_bar_targets(owner_page: Page):
@@ -343,9 +320,6 @@ def test_settings_shows_install_row(owner_page: Page):
 # ---------- Errors ----------
 
 
-@pytest.mark.xfail(
-    reason="BUG: unknown route shows Next's bare default 404 with no link home (no app/not-found.tsx)", strict=True
-)
 def test_unknown_route_404_has_way_home(page: Page):
     page.goto("/definitely-not-a-page")
     expect(page.get_by_role("link", name=re.compile("home|TeamMatch|discover|sign in|back", re.I)).first).to_be_visible(

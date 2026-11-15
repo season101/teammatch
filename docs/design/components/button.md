@@ -15,7 +15,7 @@ A pill (`rounded-pill`) with a label and an optional leading icon, semibold Geis
 | Prop | Type | Default | Notes |
 |---|---|---|---|
 | `variant` | `"cta" \| "secondary" \| "ghost" \| "danger"` | `"cta"` | |
-| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Heights 36 / 44 / 52px. Use `md` unless there's a reason. |
+| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Heights 36 / 44 / 52px; `sm` is 44px on a phone, so it stays a full touch target. Use `md` unless there's a reason. |
 | `type` | `"button" \| "submit" \| "reset"` | `"button"` | Use `submit` for the form's main button. |
 | …rest | native `<button>` props | | `disabled`, `onClick`, `ref`, `aria-*` |
 

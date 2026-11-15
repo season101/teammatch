@@ -165,8 +165,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   };
 
+  // wrap-anywhere: a long unbroken word someone typed (a title, pitch, role or name)
+  // wraps on every signed-in screen instead of scrolling the page sideways.
   return (
-    <div className="flex flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] sm:pb-0 lg:flex-row">
+    <div className="flex flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] wrap-anywhere sm:pb-0 lg:flex-row">
       <header className="sticky top-[env(safe-area-inset-top)] z-10 hidden items-center gap-6 border-b border-border bg-surface px-6 sm:flex lg:hidden">
         <Logo className="text-lg" />
         <nav aria-label="Main" onKeyDown={moveFocus} className="flex">
@@ -217,7 +219,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex flex-1 flex-col">
+      {/* min-w-0: on desktop this column sits in a row, and without it wide content (a
+          row of role tabs) would widen the column past the screen instead of scrolling. */}
+      <div className="flex min-w-0 flex-1 flex-col">
         {children}
         {legend && <KeyboardLegend key={pathname} keys={legend} />}
       </div>

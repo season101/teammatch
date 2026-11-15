@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import type { components } from "@teammatch/api-client";
 import { api, csrfToken } from "@/lib/api";
 import { cursorFrom } from "@/features/projects/queries";
@@ -41,7 +46,14 @@ export function useApplicants(
   roleId: number,
   status: "pending" | "liked" | "passed" | "declined" = "pending",
 ) {
-  return useQuery({
+  return useQuery(applicantsQuery(roleId, status));
+}
+
+export function applicantsQuery(
+  roleId: number,
+  status: "pending" | "liked" | "passed" | "declined" = "pending",
+) {
+  return queryOptions({
     queryKey: ["applicants", roleId, status],
     queryFn: async () => {
       const all: Applicant[] = [];
