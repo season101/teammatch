@@ -7,6 +7,7 @@ from PIL import Image
 
 from apps.accounts.models import User
 from apps.profiles.models import Profile
+from apps.profiles.services import remove_avatar, set_avatar
 
 pytestmark = pytest.mark.django_db
 
@@ -139,3 +140,16 @@ def test_others_see_my_avatar_url_on_my_public_profile(client, sam):
 
     assert body["avatar_url"].startswith(f"/api/v1/profiles/{sam.profile.id}/avatar/")
     assert client.get(body["avatar_url"]).status_code == 200
+
+
+def test_avatar_changes_leave_the_rest_of_the_profile_alone(sam):
+    # A copy loaded before a retire() or PATCH landed must not write it back.
+    stale = Profile.objects.get(user=sam)
+    Profile.objects.filter(user=sam).update(bio="Saved meanwhile", retired_until="2026-12-12")
+
+    set_avatar(stale, image_file())
+    remove_avatar(stale)
+
+    fresh = Profile.objects.get(user=sam)
+    assert (fresh.bio, str(fresh.retired_until)) == ("Saved meanwhile", "2026-12-12")
+    assert not fresh.avatar

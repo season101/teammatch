@@ -81,7 +81,12 @@ export function useSaveProfile() {
       if (data) return data;
       throw new SaveProfileError(response.status, readFieldErrors(error));
     },
-    onSuccess: (profile) => queryClient.setQueryData(["my-profile"], profile),
+    // The photo saves on its own and the two replies can cross. A PATCH never changes
+    // the photo, so keep the cached one: a late reply can't bring back the old photo.
+    onSuccess: (profile) =>
+      queryClient.setQueryData<MyProfile>(["my-profile"], (old) =>
+        old ? { ...profile, avatar_url: old.avatar_url } : profile,
+      ),
   });
 }
 
@@ -115,7 +120,11 @@ export function useSetAvatar() {
           : "Couldn't update your photo. Please try again.",
       );
     },
-    onSuccess: (profile) => queryClient.setQueryData(["my-profile"], profile),
+    // Only the photo, for the same reason: the form's fields may have saved meanwhile.
+    onSuccess: (profile) =>
+      queryClient.setQueryData<MyProfile>(["my-profile"], (old) =>
+        old ? { ...old, avatar_url: profile.avatar_url } : profile,
+      ),
   });
 }
 

@@ -19,7 +19,7 @@ from .serializers import (
     ProfileSerializer,
     SkillSerializer,
 )
-from .services import set_avatar
+from .services import remove_avatar, set_avatar
 
 
 def my_profile(user):
@@ -57,7 +57,7 @@ class MyAvatarView(APIView):
     def delete(self, request):
         """Remove my avatar and delete its file."""
         profile = my_profile(request.user)
-        profile.avatar.delete()  # the file, then the field; nothing to do without one
+        remove_avatar(profile)
         return Response(MyProfileSerializer(profile).data)
 
 

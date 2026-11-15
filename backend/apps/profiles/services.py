@@ -76,6 +76,17 @@ def set_avatar(profile, upload):
         raise InvalidAvatar()
     content, ext = checked
     old = profile.avatar.name
-    profile.avatar.save(f"avatar.{ext}", content)
+    profile.avatar.save(f"avatar.{ext}", content, save=False)
+    # Only this column: a full save could undo a retire() or PATCH that landed meanwhile.
+    profile.save(update_fields=["avatar", "updated_at"])
     if old:
         profile.avatar.storage.delete(old)
+
+
+def remove_avatar(profile):
+    old = profile.avatar.name
+    if not old:
+        return
+    profile.avatar = ""
+    profile.save(update_fields=["avatar", "updated_at"])
+    profile.avatar.storage.delete(old)
