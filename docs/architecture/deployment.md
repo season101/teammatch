@@ -115,7 +115,7 @@ Names only; see `.env.example` and [deploy/README.md](../../deploy/README.md). V
 | `POSTGRES_DB` | db | |
 | `POSTGRES_USER` | db | |
 | `POSTGRES_PASSWORD` | db | required |
-| `REDIS_URL` | api | |
+| `REDIS_URL` | api | channel layer and the Django cache (allauth rate limits, DRF throttles), shared by both workers |
 | `ALLOWED_EMAIL_DOMAINS` | api | comma separated (F1-06) |
 | `GOOGLE_CLIENT_ID` | api | empty hides Google sign-in |
 | `GOOGLE_CLIENT_SECRET` | api | required when `GOOGLE_CLIENT_ID` is set |

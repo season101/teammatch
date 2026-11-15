@@ -8,6 +8,7 @@ from .base import REST_FRAMEWORK, STORAGES  # noqa: E402
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 # Uploads stay in memory, so tests don't need SeaweedFS.
 STORAGES = {
     **STORAGES,

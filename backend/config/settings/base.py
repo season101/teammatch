@@ -77,6 +77,12 @@ DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=0)
 
 REDIS_URL = env("REDIS_URL")
 
+# Shared by every worker (prod runs 2), so allauth's rate limits and DRF throttles add up
+# across them. Per-process LocMemCache would give each worker its own count.
+CACHES = {
+    "default": {"BACKEND": "django.core.cache.backends.redis.RedisCache", "LOCATION": REDIS_URL}
+}
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
