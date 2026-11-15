@@ -42,8 +42,12 @@ jobs:
             echo "$kv" >> .env
           done
 
+      # --wait counts the one-shot storage-init exiting as a failure, so it waits for web and
+      # what web needs, and storage-init (the media bucket) runs on its own.
       - name: start the stack
-        run: docker compose -f compose.local.yml up -d --build --wait
+        run: |
+          docker compose -f compose.local.yml up -d --build --wait web
+          docker compose -f compose.local.yml run --rm storage-init
 
       - name: migrate and seed
         run: |
