@@ -1,12 +1,13 @@
 """Helpers for the accounts tests: emailed links and a Google-only account."""
 
+import os
 import re
 import subprocess
 import time
 import uuid
 
 import pytest
-from conftest import ALLAUTH, User, _body, _messages
+from conftest import ALLAUTH, REPO, User, _body, _messages
 
 
 def mail_links(address, pattern):
@@ -54,15 +55,18 @@ def make_google_only(user: User, link: bool = True):
         "s.save()\n"
         "print('google-only-ok', s.session_key)\n"
     )
-    out = subprocess.run(
-        [
-            "docker", "compose", "-p", "teammatch-e2e", "exec", "-T", "api",
-            "python", "manage.py", "shell", "-c", code,
-        ],
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
+    # CI runs the stack from the repo root under the default project name; locally set
+    # E2E_COMPOSE_PROJECT (e.g. teammatch-e2e) to the project the stack was started under.
+    project = os.environ.get("E2E_COMPOSE_PROJECT")
+    command = ["docker", "compose", "-f", str(REPO / "compose.local.yml")]
+    command += ["-p", project] if project else []
+    command += ["exec", "-T", "api", "python", "manage.py", "shell", "-c", code]
+    try:
+        out = subprocess.run(command, capture_output=True, text=True, timeout=120, cwd=REPO)
+    except FileNotFoundError:
+        pytest.skip("docker isn't installed, so no Google-only account can be made")
+    if "Cannot connect to the Docker daemon" in out.stderr:
+        pytest.skip("docker isn't reachable, so no Google-only account can be made")
     assert "google-only-ok" in out.stdout, out.stdout + out.stderr
     # a session for the new state: changing the password signs the old one out
     return out.stdout.split("google-only-ok")[1].split()[0]

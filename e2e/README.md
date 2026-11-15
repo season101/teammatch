@@ -30,6 +30,7 @@ The web app has to be on port 3000, as local settings only trust CSRF from there
 | `E2E_ENV_FILE` | `../.env` | where `SEED_CANDIDATE_*` come from, if they aren't in the environment |
 | `E2E_MAIL_DIR` | `../backend/.e2e-mail` | where the api writes email |
 | `E2E_CHROMIUM_PATH` | Playwright's own | a Chromium you already have, instead of `playwright install` |
+| `E2E_COMPOSE_PROJECT` | unset | the Compose project the stack runs under (`-p`). The accounts tests run `manage.py shell` in its api container to make a Google-only account; unset works for `docker compose -f compose.local.yml up` from the repo root, as CI does. Skipped if docker isn't reachable |
 
 ## Add a test
 
