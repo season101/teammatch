@@ -129,6 +129,13 @@ def test_coach_marks_show_on_the_first_deck_only(page: Page, verified_user, sign
     sign_in(page, user)
     onboard(page, user, skill="Python")  # dismisses "One role at a time"
     page.reload()
+    # The sheet can only appear after hydration (the server renders "seen"), so wait until React
+    # has attached to the page before asserting it stays away.
+    page.wait_for_function(
+        "() => [...document.querySelectorAll('button, a')]"
+        ".some(e => Object.keys(e).some(k => k.startsWith('__reactProps')))"
+    )
+    assert page.evaluate("localStorage.getItem('teammatch:coach-seen')") is not None
     expect(page.get_by_role("dialog", name="One role at a time")).to_have_count(0)
 
 

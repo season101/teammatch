@@ -167,13 +167,15 @@ def test_keyboard_only_sign_in(page: Page, verified_user):
 def test_keyboard_tab_order_reaches_every_control(page: Page):
     page.goto("/login")
     page.get_by_label("School email").focus()
-    order = []
-    for _ in range(5):
+    page.keyboard.press("Tab")
+    expect(page.get_by_label("Password")).to_be_focused()
+    for role, name in (
+        ("link", "Forgot password?"),
+        ("button", "Sign in"),
+        ("link", "Create account"),
+    ):
         page.keyboard.press("Tab")
-        order.append(page.evaluate("document.activeElement.textContent || document.activeElement.id"))
-    text = " ".join(order)
-    for expected in ("Forgot password?", "Sign in", "Create account"):
-        assert expected in text, order
+        expect(page.get_by_role(role, name=name, exact=True)).to_be_focused()
 
 
 def test_keyboard_wrong_password_keeps_focus_in_the_password_field(page: Page, verified_user):
