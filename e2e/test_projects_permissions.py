@@ -36,7 +36,7 @@ def open_one(make_api_user):
 
 
 def test_another_users_draft_is_not_found(world):
-    # Recorded: GET gives 404, so a draft's existence is not revealed on read.
+    # GET gives 404, so a draft's existence is not revealed on read.
     r = world["other"].send("GET", f"/api/v1/projects/{world['draft']['id']}/")
     assert r.status == 404
 
@@ -61,16 +61,16 @@ def test_another_users_draft_is_not_in_lists(world):
 def test_cannot_change_someone_elses_draft(world):
     other, pid, rid = world["other"], world["draft"]["id"], world["draft_role"]["id"]
     ids = skill_ids(other)
-    # Recorded: writes on someone else's draft give 403, while a read gives 404.
-    assert other.send("PATCH", f"/api/v1/projects/{pid}/", {"title": "hijack"}).status == 403
-    assert other.send("POST", f"/api/v1/projects/{pid}/publish/").status == 403
-    assert other.send("POST", f"/api/v1/projects/{pid}/close/").status == 403
+    # Writes on someone else's draft: 403 until PR #256, 404 after it (like a read).
+    assert other.send("PATCH", f"/api/v1/projects/{pid}/", {"title": "hijack"}).status in (403, 404)
+    assert other.send("POST", f"/api/v1/projects/{pid}/publish/").status in (403, 404)
+    assert other.send("POST", f"/api/v1/projects/{pid}/close/").status in (403, 404)
     add = other.send(
         "POST", f"/api/v1/projects/{pid}/roles/", {"title": "x", "required_skills": [ids["Python"]]}
     )
-    assert add.status == 403
-    assert other.send("PATCH", f"/api/v1/roles/{rid}/", {"title": "x"}).status == 403
-    assert other.send("DELETE", f"/api/v1/roles/{rid}/").status == 403
+    assert add.status in (403, 404)
+    assert other.send("PATCH", f"/api/v1/roles/{rid}/", {"title": "x"}).status in (403, 404)
+    assert other.send("DELETE", f"/api/v1/roles/{rid}/").status in (403, 404)
     still = world["owner"].send("GET", f"/api/v1/projects/{pid}/").json()
     assert still["title"] == world["draft"]["title"] and still["status"] == "draft"
 

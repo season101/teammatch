@@ -33,6 +33,12 @@ def world(make_api_user):
     }
 
 
+@pytest.fixture
+def cand(make_api_user):
+    """A fresh candidate per test, so no test depends on what another one applied to."""
+    return make_api_user("Proj ApplyCand")[1]
+
+
 def page_for(browser, client):
     context = browser.new_context(base_url=BASE, storage_state=signed_in_state(client))
     return context, context.new_page()
@@ -42,8 +48,8 @@ def role_card(page, role):
     return page.get_by_role("listitem").filter(has=page.get_by_role("heading", name=re.compile(re.escape(role["title"]))))
 
 
-def test_candidate_sees_apply_on_every_open_role(browser, world):
-    context, page = page_for(browser, world["cand"])
+def test_candidate_sees_apply_on_every_open_role(browser, world, cand):
+    context, page = page_for(browser, cand)
     page.goto(f"/projects/{world['project']['id']}")
     expect(page.get_by_role("heading", name=world["project"]["title"], level=1)).to_be_visible()
     for role in world["roles"]:
@@ -63,9 +69,9 @@ def test_owner_sees_no_apply_on_own_project(browser, world):
     context.close()
 
 
-def test_apply_from_project_page_shows_applied_state_and_persists(browser, world):
+def test_apply_from_project_page_shows_applied_state_and_persists(browser, world, cand):
     role = world["roles"][0]
-    context, page = page_for(browser, world["cand"])
+    context, page = page_for(browser, cand)
     page.goto(f"/projects/{world['project']['id']}")
     page.get_by_role("button", name=f"Apply to {role['title']}").click()
     card = role_card(page, role)
@@ -80,11 +86,11 @@ def test_apply_from_project_page_shows_applied_state_and_persists(browser, world
     context.close()
 
 
-def test_apply_with_a_note_sends_the_note(browser, world):
+def test_apply_with_a_note_sends_the_note(browser, world, cand):
     role = world["roles"][1]
-    context, page = page_for(browser, world["cand"])
+    context, page = page_for(browser, cand)
     page.goto(f"/projects/{world['project']['id']}")
-    page.get_by_label("Note to the owner (optional)").first.fill("I love testing")
+    role_card(page, role).get_by_label("Note to the owner (optional)").fill("I love testing")
     expect(page.get_by_text("14/300 characters")).to_be_visible()
     page.get_by_role("button", name=f"Apply to {role['title']}").click()
     expect(role_card(page, role).get_by_text("Applied")).to_be_visible()
@@ -94,19 +100,21 @@ def test_apply_with_a_note_sends_the_note(browser, world):
     context.close()
 
 
-def test_note_is_limited_to_300_characters(browser, world):
-    context, page = page_for(browser, world["cand"])
+def test_note_is_limited_to_300_characters(browser, world, cand):
+    context, page = page_for(browser, cand)
     page.goto(f"/projects/{world['project']['id']}")
-    note = page.get_by_label("Note to the owner (optional)").last
+    note = page.get_by_label("Note to the owner (optional)").first
     note.fill("n" * 400)
     expect(note).to_have_value("n" * 300)
     expect(page.get_by_text("300/300 characters")).to_be_visible()
     context.close()
 
 
-def test_applying_twice_is_refused_by_the_api(world):
+def test_applying_twice_is_refused_by_the_api(world, cand):
     role = world["roles"][0]
-    again = world["cand"].send("POST", "/api/v1/applications/", {"role": role["id"], "note": ""})
+    first = cand.send("POST", "/api/v1/applications/", {"role": role["id"], "note": ""})
+    assert first.status == 201
+    again = cand.send("POST", "/api/v1/applications/", {"role": role["id"], "note": ""})
     assert again.status == 409
 
 

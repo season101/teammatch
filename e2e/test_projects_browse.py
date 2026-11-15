@@ -21,6 +21,8 @@ T = tag()
 def world(make_api_user):
     """Owner A (open Docker project + a draft), owner B (archived one + open Machine Learning one),
     and a viewer. Every title/pitch/role carries a token unique to this run."""
+    global T
+    T = tag()  # per build of this fixture, in case pytest builds it twice in one session
     a_user, a = make_api_user("Proj BrowseA")
     b_user, b = make_api_user("Proj BrowseB")
     viewer = make_api_user("Proj Viewer")
