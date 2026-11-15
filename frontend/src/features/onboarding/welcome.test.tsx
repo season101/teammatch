@@ -22,6 +22,7 @@ const NEW = {
   bio: "",
   major: "",
   skills: [] as typeof SKILLS,
+  avatar_url: null,
   email: "sam@latech.edu",
   rules_accepted_at: null as string | null,
 };

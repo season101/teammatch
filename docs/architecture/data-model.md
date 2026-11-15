@@ -40,7 +40,7 @@ erDiagram
         string display_name
         text bio
         string major
-        string avatar_key "SeaweedFS object key, nullable"
+        string avatar "storage key avatars/{user_id}/{uuid}.{ext}, blank without one"
         date retired_until "nullable"
     }
     SKILL {

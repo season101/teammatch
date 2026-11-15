@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from django.urls import reverse
 from rest_framework import serializers
 
 from .models import Profile, Skill
@@ -21,10 +24,11 @@ class ProfileSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
     )
+    avatar_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields = ["id", "display_name", "bio", "major", "skills", "skill_ids"]
+        fields = ["id", "display_name", "bio", "major", "skills", "skill_ids", "avatar_url"]
         read_only_fields = ["id"]
 
     def validate_skill_ids(self, ids):
@@ -32,6 +36,17 @@ class ProfileSerializer(serializers.ModelSerializer):
         if len(skills) != len(set(ids)):
             raise serializers.ValidationError("Unknown skill id.")
         return skills
+
+    def get_avatar_url(self, profile) -> str | None:
+        # The API's own address, never the bucket's. ?v= changes with each upload.
+        if not profile.avatar:
+            return None
+        url = reverse("profile-avatar", args=[profile.id])
+        return f"{url}?v={Path(profile.avatar.name).stem}"
+
+
+class AvatarUploadSerializer(serializers.Serializer):
+    avatar = serializers.FileField(help_text="JPEG, PNG or WebP, 2 MB or less.")
 
 
 class MyProfileSerializer(ProfileSerializer):

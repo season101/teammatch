@@ -242,6 +242,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/Health'
           description: ''
+  /api/v1/me/avatar/:
+    post:
+      operationId: me_avatar_create
+      description: 'JPEG, PNG or WebP, 2 MB or less. Anything else: 400 invalid_avatar,
+        old one kept.'
+      tags:
+      - me
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AvatarUploadRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyProfile'
+          description: ''
+    delete:
+      operationId: me_avatar_destroy
+      description: Remove my avatar and delete its file.
+      tags:
+      - me
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyProfile'
+          description: ''
   /api/v1/me/profile/:
     get:
       operationId: me_profile_retrieve
@@ -363,6 +399,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Profile'
           description: ''
+  /api/v1/profiles/{id}/avatar/:
+    get:
+      operationId: profiles_avatar_retrieve
+      description: Someone's avatar, streamed from storage. 404 when they have none.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - profiles
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '404':
+          description: No response body
   /api/v1/projects/:
     get:
       operationId: projects_list
@@ -919,6 +979,15 @@ components:
           maxLength: 300
       required:
       - role
+    AvatarUploadRequest:
+      type: object
+      properties:
+        avatar:
+          type: string
+          format: binary
+          description: JPEG, PNG or WebP, 2 MB or less.
+      required:
+      - avatar
     ChatMessage:
       type: object
       description: Same shape as the chat.message socket event, minus client_id.
@@ -1169,6 +1238,10 @@ components:
           items:
             $ref: '#/components/schemas/Skill'
           readOnly: true
+        avatar_url:
+          type: string
+          nullable: true
+          readOnly: true
         email:
           type: string
           format: email
@@ -1179,6 +1252,7 @@ components:
           readOnly: true
           nullable: true
       required:
+      - avatar_url
       - email
       - id
       - rules_accepted_at
@@ -1473,7 +1547,12 @@ components:
           items:
             $ref: '#/components/schemas/Skill'
           readOnly: true
+        avatar_url:
+          type: string
+          nullable: true
+          readOnly: true
       required:
+      - avatar_url
       - id
       - skills
     Project:

@@ -1,7 +1,26 @@
+from io import BytesIO
+
+from django.core.files.base import ContentFile
 from django.db.models import Q
 from django.utils import timezone
+from PIL import Image, ImageOps
+from rest_framework.exceptions import APIException
 
 from .models import Profile
+
+AVATAR_MAX_BYTES = 2 * 1024 * 1024
+# Pillow's format name -> the extension we store it under.
+AVATAR_FORMATS = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
+# Bigger than any phone photo; stops a tiny file that decodes to gigabytes.
+AVATAR_MAX_PIXELS = 50_000_000
+# Shown at 56px at most, so 512 covers 2x and 3x screens.
+AVATAR_SIZE = 512
+
+
+class InvalidAvatar(APIException):
+    status_code = 400
+    default_detail = "Choose a JPEG, PNG or WebP image of 2 MB or less."
+    default_code = "invalid_avatar"
 
 
 def retire(users, until):
@@ -23,3 +42,40 @@ def is_retired(user, today=None):
     """
     today = today or timezone.localdate()
     return Profile.objects.filter(user=user, retired_until__gte=today).exists()
+
+
+def _reencode_avatar(upload):
+    """The upload redrawn at most 512px, as (file, ext), or None if it isn't an image we take.
+
+    The type comes from the bytes, not the name. Redrawing drops EXIF, like a phone
+    photo's location, and fails on a truncated or broken file.
+    """
+    try:
+        with Image.open(upload) as image:
+            kind = image.format
+            if kind not in AVATAR_FORMATS or image.width * image.height > AVATAR_MAX_PIXELS:
+                return None
+            icc = image.info.get("icc_profile")
+            image = ImageOps.exif_transpose(image)
+            image.thumbnail((AVATAR_SIZE, AVATAR_SIZE))
+            out = BytesIO()
+            image.save(out, format=kind, quality=90, icc_profile=icc)
+    # Pillow raises many error types on bad input; Django's ImageField catches them all too.
+    except Exception:
+        return None
+    return ContentFile(out.getvalue()), AVATAR_FORMATS[kind]
+
+
+def set_avatar(profile, upload):
+    """Swap in a new avatar (F1-07). A bad file raises invalid_avatar and keeps the old one.
+
+    The old file is deleted only after the new one is saved.
+    """
+    checked = _reencode_avatar(upload) if upload and upload.size <= AVATAR_MAX_BYTES else None
+    if checked is None:
+        raise InvalidAvatar()
+    content, ext = checked
+    old = profile.avatar.name
+    profile.avatar.save(f"avatar.{ext}", content)
+    if old:
+        profile.avatar.storage.delete(old)

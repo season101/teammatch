@@ -185,6 +185,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/avatar/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description JPEG, PNG or WebP, 2 MB or less. Anything else: 400 invalid_avatar, old one kept. */
+        post: operations["me_avatar_create"];
+        /** @description Remove my avatar and delete its file. */
+        delete: operations["me_avatar_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/profile/": {
         parameters: {
             query?: never;
@@ -257,6 +275,23 @@ export interface paths {
         head?: never;
         /** @description Someone's public profile. Editing it is owner-only (403 otherwise). */
         patch: operations["profiles_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/profiles/{id}/avatar/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Someone's avatar, streamed from storage. 404 when they have none. */
+        get: operations["profiles_avatar_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/projects/": {
@@ -557,6 +592,13 @@ export interface components {
             role: number;
             note?: string;
         };
+        AvatarUploadRequest: {
+            /**
+             * Format: binary
+             * @description JPEG, PNG or WebP, 2 MB or less.
+             */
+            avatar: string;
+        };
         /** @description Same shape as the chat.message socket event, minus client_id. */
         ChatMessage: {
             readonly id: number;
@@ -646,6 +688,7 @@ export interface components {
             bio?: string;
             major?: string;
             readonly skills: components["schemas"]["Skill"][];
+            readonly avatar_url: string | null;
             /** Format: email */
             readonly email: string;
             /** Format: date-time */
@@ -777,6 +820,7 @@ export interface components {
             bio?: string;
             major?: string;
             readonly skills: components["schemas"]["Skill"][];
+            readonly avatar_url: string | null;
         };
         Project: {
             readonly id: number;
@@ -1116,6 +1160,48 @@ export interface operations {
             };
         };
     };
+    me_avatar_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["AvatarUploadRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyProfile"];
+                };
+            };
+        };
+    };
+    me_avatar_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyProfile"];
+                };
+            };
+        };
+    };
     me_profile_retrieve: {
         parameters: {
             query?: never;
@@ -1242,6 +1328,34 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Profile"];
                 };
+            };
+        };
+    };
+    profiles_avatar_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/*": string;
+                };
+            };
+            /** @description No response body */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

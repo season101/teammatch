@@ -9,6 +9,7 @@ import {
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { PendingLabel } from "@/components/ui/pending-label";
 import { useState, type FormEvent } from "react";
+import { AvatarField } from "./avatar-field";
 import { SkillPicker } from "./skill-picker";
 import {
   useMyProfile,
@@ -39,7 +40,12 @@ export function ProfileForm() {
       </p>
     );
   }
-  return <ProfileFields profile={profile.data} skills={skills.data} />;
+  return (
+    <div className="flex flex-col gap-5">
+      <AvatarField profile={profile.data} />
+      <ProfileFields profile={profile.data} skills={skills.data} />
+    </div>
+  );
 }
 
 function ProfileFields({
