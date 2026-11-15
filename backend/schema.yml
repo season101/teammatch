@@ -1242,6 +1242,12 @@ components:
           type: string
           nullable: true
           readOnly: true
+        github_url:
+          type: string
+          maxLength: 200
+        linkedin_url:
+          type: string
+          maxLength: 200
         email:
           type: string
           format: email
@@ -1473,6 +1479,12 @@ components:
             minimum: 1
           writeOnly: true
           maxItems: 20
+        github_url:
+          type: string
+          maxLength: 200
+        linkedin_url:
+          type: string
+          maxLength: 200
     PatchedProfileRequest:
       type: object
       properties:
@@ -1492,6 +1504,12 @@ components:
             minimum: 1
           writeOnly: true
           maxItems: 20
+        github_url:
+          type: string
+          maxLength: 200
+        linkedin_url:
+          type: string
+          maxLength: 200
     PatchedProjectRequest:
       type: object
       properties:
@@ -1551,6 +1569,12 @@ components:
           type: string
           nullable: true
           readOnly: true
+        github_url:
+          type: string
+          maxLength: 200
+        linkedin_url:
+          type: string
+          maxLength: 200
       required:
       - avatar_url
       - id

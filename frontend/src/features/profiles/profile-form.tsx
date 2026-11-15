@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/form-classes";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { PendingLabel } from "@/components/ui/pending-label";
-import { useState, type FormEvent } from "react";
+import { GitHubIcon, LinkedInIcon } from "@/components/ui/link-card";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { AvatarField } from "./avatar-field";
 import { SkillPicker } from "./skill-picker";
 import {
@@ -23,6 +24,7 @@ import {
 const NAME_MAX = 80;
 const BIO_MAX = 500;
 const MAJOR_MAX = 100;
+const LINK_MAX = 200;
 
 export function ProfileForm() {
   const profile = useMyProfile();
@@ -61,6 +63,8 @@ function ProfileFields({
   const [skillIds, setSkillIds] = useState(
     profile.skills.map((skill) => skill.id),
   );
+  const [github, setGithub] = useState(profile.github_url ?? "");
+  const [linkedin, setLinkedin] = useState(profile.linkedin_url ?? "");
   const save = useSaveProfile();
 
   const errors = save.error?.fields ?? {};
@@ -78,6 +82,8 @@ function ProfileFields({
       bio: bio.trim(),
       major: major.trim(),
       skill_ids: skillIds,
+      github_url: github.trim(),
+      linkedin_url: linkedin.trim(),
     });
   }
 
@@ -167,6 +173,33 @@ function ProfileFields({
         }}
       />
 
+      <LinkField
+        id="github"
+        label="GitHub"
+        icon={<GitHubIcon />}
+        placeholder="https://github.com/you"
+        value={github}
+        error={errors.github_url}
+        disabled={save.isPending}
+        onChange={(value) => {
+          setGithub(value);
+          edited();
+        }}
+      />
+      <LinkField
+        id="linkedin"
+        label="LinkedIn"
+        icon={<LinkedInIcon />}
+        placeholder="https://linkedin.com/in/you"
+        value={linkedin}
+        error={errors.linkedin_url}
+        disabled={save.isPending}
+        onChange={(value) => {
+          setLinkedin(value);
+          edited();
+        }}
+      />
+
       {save.isSuccess && (
         <p role="status" className="text-sm text-success">
           Profile saved.
@@ -186,5 +219,57 @@ function ProfileFields({
         <PendingLabel pending={save.isPending} label="Saving">Save profile</PendingLabel>
       </button>
     </form>
+  );
+}
+
+// GitHub or LinkedIn (F1-15). The server checks the address and its message shows here.
+function LinkField({
+  id,
+  label,
+  icon,
+  placeholder,
+  value,
+  error,
+  disabled,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  icon: ReactNode;
+  placeholder: string;
+  value: string;
+  error?: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="flex items-center gap-2 font-medium">
+        {icon}
+        {label}
+      </label>
+      <input
+        id={id}
+        type="url"
+        inputMode="url"
+        autoComplete="url"
+        placeholder={placeholder}
+        value={value}
+        maxLength={LINK_MAX}
+        disabled={disabled}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${id}-hint ${id}-error` : `${id}-hint`}
+        className={inputClass}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <p id={`${id}-hint`} className={helperClass}>
+        Optional. Adds 5% to profile strength.
+      </p>
+      {error && (
+        <p id={`${id}-error`} role="alert" className={errorClass}>
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

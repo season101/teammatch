@@ -111,6 +111,36 @@ test("saves name, major, bio and skills", async () => {
     bio: "I like building things.",
     major: "Computer Science",
     skill_ids: [1],
+    github_url: "",
+    linkedin_url: "",
+  });
+});
+
+test("sends GitHub and LinkedIn, and shows the server's message on a bad link", async () => {
+  const patches = mockApi({
+    status: 400,
+    body: { github_url: ["Enter a link that starts with https://github.com/"] },
+  });
+  renderForm();
+
+  fireEvent.change(await screen.findByLabelText("GitHub"), {
+    target: { value: " https://gitlab.com/sam " },
+  });
+  fireEvent.change(screen.getByLabelText("LinkedIn"), {
+    target: { value: "https://linkedin.com/in/sam" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save profile" }));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Enter a link that starts with https://github.com/",
+  );
+  expect(screen.getByLabelText("GitHub")).toHaveAttribute("aria-invalid", "true");
+  expect(screen.getByLabelText("GitHub")).toHaveAccessibleDescription(
+    /Enter a link that starts with https:\/\/github.com\//,
+  );
+  expect(await patches[0].json()).toMatchObject({
+    github_url: "https://gitlab.com/sam",
+    linkedin_url: "https://linkedin.com/in/sam",
   });
 });
 

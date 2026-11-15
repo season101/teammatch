@@ -65,6 +65,18 @@ def test_owner_sees_pending_applicants_with_name_major_skills_and_note(owner, ro
     assert "email" not in result["applicant"]
 
 
+def test_owner_sees_the_applicants_github_and_linkedin(owner, role):
+    application = apply(role, "sam@latech.edu")
+    Profile.objects.filter(user=application.applicant).update(
+        github_url="https://github.com/sam", linkedin_url="https://linkedin.com/in/sam"
+    )
+
+    [result] = as_user(owner).get(url(role)).json()["results"]
+
+    assert result["applicant"]["github_url"] == "https://github.com/sam"
+    assert result["applicant"]["linkedin_url"] == "https://linkedin.com/in/sam"
+
+
 def test_only_pending_applications_are_listed(owner, role):
     pending = apply(role, "a@latech.edu")
     apply(role, "b@latech.edu", status=ApplicationStatus.PASSED)
