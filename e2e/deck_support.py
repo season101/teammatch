@@ -192,7 +192,10 @@ class Deck:
             owner = proj.owner
             if owner.dirty:
                 continue
-            owner.client.send("POST", f"/api/v1/projects/{proj.id}/close/")
+            closed = owner.client.send("POST", f"/api/v1/projects/{proj.id}/close/")
+            if not closed.ok:
+                owner.dirty = True  # its project is still open (BR-14): keep it out of reuse
+                continue
             if owner not in self.pool.free_owners:
                 self.pool.free_owners.append(owner)
         # Candidates aren't cleaned: every test's roles are new, and keeping their passes on
@@ -231,24 +234,29 @@ def open_deck(page: Page, deck: Deck, acct: Account, keep, top=None, coach=True)
     """Isolate the candidate's deck to `keep`, sign in, load it, wait for the top card."""
     keep = set(keep)
     login(page, acct, coach)
-    # Other sessions post roles all the time: retry until the deck held only `keep` while it loaded.
+
+    def is_deck_feed(response):
+        return (
+            response.request.method == "GET"
+            and re.search(r"/api/v1/feed/(\?.*)?$", response.url) is not None
+        )
+
+    # Other sessions post roles all the time: retry until the feed the browser itself loaded
+    # held only `keep`.
     for _ in range(6):
         for _ in range(4):
             if all(r["id"] in keep for r in deck.isolate(acct, keep)):
                 break
-        page.goto("/feed")
+        with page.expect_response(is_deck_feed) as loaded:
+            page.goto("/feed")
+        if not all(r["id"] in keep for r in loaded.value.json()["results"]):
+            continue
         if top:
-            try:
-                expect(apply_button(page, top)).to_be_visible(timeout=6_000)
-            except AssertionError:
-                continue  # a stranger's role was on top
+            expect_top(page, top)
         else:
             page.wait_for_load_state("networkidle")
-        if all(r["id"] in keep for r in deck.feed(acct)):
-            return page
-    if top:
-        expect_top(page, top)
-    return page
+        return page
+    raise AssertionError("could not isolate the deck: other sessions keep posting roles")
 
 
 def set_shortcuts(page: Page, on: bool):

@@ -57,12 +57,14 @@ def test_equal_match_is_newest_first(deck):
 def test_higher_share_beats_newer(deck):
     t = tag()
     cand = deck.candidate(["Python", "Docker", "Git"])
-    good = deck.project([(f"Good {t}", ["Python", "Docker", "Git"])])  # 100%
-    meh = deck.project([(f"Meh {t}", ["Python", "Figma", "Java"])])  # 33%, newer
+    # Fewer overlapping skills but a bigger share beats more overlap: 1 of 1 over 2 of 3.
+    good = deck.project([(f"Good {t}", ["Python"])])  # 100%, 1 overlap
+    meh = deck.project([(f"Meh {t}", ["Python", "Docker", "Figma"])])  # 67%, 2 overlap, newer
     ids = [good.role_id(f"Good {t}"), meh.role_id(f"Meh {t}")]
     mine = [r for r in deck.feed(cand) if r["id"] in ids]
     assert [r["id"] for r in mine] == ids
-    assert [r["match_percent"] for r in mine] == [100, 33]
+    assert [r["match_percent"] for r in mine][0] == 100
+    assert [r["match_percent"] for r in mine][1] in (66, 67)
 
 
 def test_same_roles_rank_differently_for_different_candidates(deck):
