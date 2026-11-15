@@ -2,7 +2,7 @@
 
 Playwright tests, in Python with pytest, against a running stack. `test_smoke.py` signs in a seeded student and loads the deck (PL-14). `test_golden_path.py` is the demo from start to finish with two people in two browsers at once (PL-08): an owner and a candidate sign up, verify and onboard, the owner posts a project with one role, the candidate applies from the deck, the owner likes them, the candidate commits, both see "It's a Team!" and they chat.
 
-CI runs them on every push to `main`, nightly and on demand ([e2e.yml](../.github/workflows/e2e.yml)). A failed run uploads a trace, screenshot and video for each failed test as the `e2e-test-results` artifact. Open a trace with `uv run playwright show-trace <trace.zip>`.
+CI runs them on every push to `main`, nightly, on demand, and on pull requests that change `e2e/`, the workflow, `compose.local.yml` or local settings ([e2e.yml](../.github/workflows/e2e.yml)). A failed run uploads a trace, screenshot and video for each failed test as the `e2e-test-results` artifact. Open a trace with `uv run playwright show-trace <trace.zip>`.
 
 ## Run them locally
 
@@ -51,7 +51,7 @@ def test_owner_sees_an_empty_review_queue(page: Page, verified_user, sign_in):
 | `page` | a page in a fresh browser context (from pytest-playwright) |
 | `make_user(name)` | a new `User` (email, password, name) on an allowed domain, not signed up |
 | `verified_user(name, skills=..., onboarded=True)` | a `User` signed up and verified over the API. Fast. `onboarded=False` leaves Team rules, info and skills to the test |
-| `sign_up(page, user)` | sign up, open the verification link and sign in, all through the UI. Ends on Team rules |
+| `sign_up(page, user)` | sign up and open the verification link through the UI, which signs you in. Ends on Team rules |
 | `onboard(page, user, skill)` | Team rules, info, one skill and the coach marks through the UI. Ends on the deck |
 | `sign_in(page, user)` | sign in through the UI |
 | `verify_link(email)` | the newest verification link sent to that address |

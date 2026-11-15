@@ -4,9 +4,21 @@ name: E2E
 on:
   push:
     branches: [main]
+  # PRs that change the tests or what they run on; every other PR is covered after merge.
+  pull_request:
+    paths:
+      - "e2e/**"
+      - ".github/workflows/e2e.yml"
+      - "compose.local.yml"
+      - "backend/config/settings/local.py"
   schedule:
     - cron: "0 8 * * *" # nightly, 2 am Central
   workflow_dispatch:
+
+# a new push to a PR cancels its older run; main, nightly and manual runs each get their own group
+concurrency:
+  group: e2e-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read

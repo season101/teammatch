@@ -154,13 +154,9 @@ def verified_user(api, make_user, verify_link):
         )  # 401: verify next
         key = unquote(verify_link(user.email).rsplit("/verify-email/", 1)[1])
         verified = client.send("POST", f"{ALLAUTH}/auth/email/verify", {"key": key})
-        # 401 is verified but not signed in (allauth signs in only some verifications).
-        assert verified.status in (200, 401), (
-            f"verify {user.email}: {verified.status} {verified.text()}"
-        )
+        # 200: verified and signed in, as this session signed up (F1-01).
+        assert verified.status == 200, f"verify {user.email}: {verified.status} {verified.text()}"
         if onboarded:
-            if verified.status == 401:
-                client.sign_in(user)
             ids = {s["name"]: s["id"] for s in client.send("GET", "/api/v1/skills/").json()}
             assert client.send("POST", "/api/v1/me/rules/accept/").ok
             profile = {
@@ -205,7 +201,7 @@ def sign_in():
 
 
 @pytest.fixture(scope="session")
-def sign_up(verify_link, sign_in):
+def sign_up(verify_link):
     def do(page: Page, user: User):
         page.goto("/signup")
         page.get_by_label("School email").fill(user.email)
@@ -215,13 +211,11 @@ def sign_up(verify_link, sign_in):
 
         page.goto(verify_link(user.email))
         page.get_by_role("button", name="Verify my email").click()
+        # Verifying in the browser that signed up signs you in (F1-01): Continue, not Sign in.
         expect(page.get_by_role("heading", name="You're verified")).to_be_visible()
         page.get_by_role("link", name="Continue").click()
-        # Continue goes to /feed, and its gate to Team rules for a new account.
-        page.wait_for_url(re.compile(r"/(login|welcome/rules)"))
-        # shortcut: remove once fix/verify-signs-in merges
-        if "/login" in page.url:
-            sign_in(page, user)
+        # Continue goes to /feed, and its gate sends a new account to Team rules.
+        expect(page).to_have_url(re.compile(r"/welcome/rules$"))
 
     return do
 
