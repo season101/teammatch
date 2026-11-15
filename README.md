@@ -16,7 +16,7 @@ Built for CSC 5323 (Advanced Software Engineering), Louisiana Tech, Fall 2026. T
 
 ## Features
 
-On `main` and live (v3.1.1):
+On `main`. Production runs v3.1.1; the items marked * merged after that tag and ship with the next one.
 
 - **Accounts:** sign up and sign in with email and password or Google, an email-domain allowlist, forgotten-password reset, and Settings to add Google or a password to an account (F1-01 to F1-06, F1-10, F1-12, F1-14).
 - **Profile and skills:** a profile with major, bio and skills, and a guided setup on first sign-in that includes the team rules (F1-03, F1-04).
@@ -25,9 +25,14 @@ On `main` and live (v3.1.1):
 - **My applications:** track and withdraw applications, and apply from a project page (F3-06).
 - **Review and match:** an applicant queue per role, like or pass, commit to one offer, and the team locks when every role is filled. Locking withdraws the members' other applications and retires them for the term (F4-01 to F4-05, F4-07, F4-10, F4-11, F1-08).
 - **Team chat:** real-time chat for a locked team, with history and reconnect (F4-08, F4-09).
+- **Sign-in extras:** a password offer for Google-only accounts at sign-in* (F1-13).
+- **Profile extras:** avatar upload* (F1-07), GitHub and LinkedIn links* (F1-15), resume upload* (F1-16) and reading a resume in the app* (F1-17).
+- **Project and role details:** a repository link and more details on projects* (F2-12), and a role details page opened from a deck card* (F3-13).
+- **Admin moderation*** (PL-07).
+- **End-to-end tests*:** Playwright smoke and golden-path tests (PL-08), see [e2e/README.md](e2e/README.md).
 - **App shell:** responsive navigation, light and dark theme, installable on Android and iPhone (PL-16, F2-08).
 
-Not built yet: avatar upload (F1-07), GitHub and resume links on profiles (F1-15 to F1-17), repository link on projects (F2-12), the role details page (F3-13), admin moderation (PL-07), and the end-to-end test (PL-08). Status per story is in the [backlog](docs/product/backlog.md) and on the [project board](https://github.com/users/season101/projects/1).
+Status per story is in the [backlog](docs/product/backlog.md) and on the [project board](https://github.com/users/season101/projects/1).
 
 ## How it works
 
@@ -117,9 +122,10 @@ Health checks: `/healthz` (process is up, no dependencies), `/readyz` (db + redi
 ```bash
 make up      # the checks need Postgres and Redis running
 make check   # backend: ruff, pytest. frontend: lint, typecheck, Vitest, build. Same as CI
+make e2e     # Playwright end-to-end tests against the running stack (make e2e args=-x to stop at the first failure)
 ```
 
-CI runs the same checks plus the schema and client drift check on every pull request, and a secret scan. The Playwright golden-path test (PL-08) is not in the repo yet.
+There are three layers: backend pytest, frontend Vitest and Playwright end-to-end tests in [e2e/](e2e/README.md) (setup and how to add a test are in its README). CI runs the checks and the schema and client drift check on every pull request, plus a secret scan. The e2e job runs on pull requests that touch `e2e/` (smoke, golden path and the test files the PR touches), and the full e2e suite runs on `main` and nightly.
 
 ## Install on your phone
 
