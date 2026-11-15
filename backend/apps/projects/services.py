@@ -132,6 +132,7 @@ def publish_project(project):
 
 def open_projects(today=None, q=""):
     """Open projects in the current term, with how many roles are still open (F2-03).
+    Not the projects of owners an admin deactivated (PL-07).
 
     q keeps the ones whose title, pitch, or an open role's title or required skill
     contains it, ignoring case (F2-07).
@@ -142,6 +143,7 @@ def open_projects(today=None, q=""):
             status=ProjectStatus.OPEN,
             term__start_date__lte=today,
             term__end_date__gte=today,
+            owner__is_active=True,
         )
         .select_related("owner__profile")
         .annotate(open_role_count=Count("roles", filter=Q(roles__status=RoleStatus.OPEN)))

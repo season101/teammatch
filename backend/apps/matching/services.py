@@ -45,7 +45,8 @@ def feed_roles(user, today=None):
     """Open roles in the current term the user can still act on, best match first (F3-04).
 
     Skips the user's own projects (BR-04) and roles they already applied to
-    (any status, since an application is one per user per role) or passed.
+    (any status, since an application is one per user per role) or passed, and the projects
+    of owners an admin deactivated (PL-07).
     Empty while they're retired (BR-09) or hold a seat they committed to (F4-10).
     """
     today = today or timezone.localdate()
@@ -55,6 +56,7 @@ def feed_roles(user, today=None):
             project__status=ProjectStatus.OPEN,
             project__term__start_date__lte=today,
             project__term__end_date__gte=today,
+            project__owner__is_active=True,
         )
         .exclude(project__owner=user)
         .exclude(applications__applicant=user)
@@ -106,6 +108,7 @@ def my_summary(user, today=None):
         role__status=RoleStatus.OPEN,
         role__project__owner=user,
         role__project__status=ProjectStatus.OPEN,
+        applicant__is_active=True,
     ).exclude(applicant__profile__retired_until__gte=today)
     offers = Application.objects.filter(applicant=user, status=ApplicationStatus.LIKED)
     return {"offers": offers.count(), "applicants_waiting": waiting.count(), "deck": deck}
@@ -122,9 +125,10 @@ def role_applications(role, status=ApplicationStatus.PENDING):
     """
     applications = role.applications.filter(status=status)
     if status == ApplicationStatus.PENDING:
+        # nor anyone an admin deactivated (PL-07)
         applications = applications.exclude(
             applicant__profile__retired_until__gte=timezone.localdate()
-        )
+        ).filter(applicant__is_active=True)
     return (
         applications.select_related("applicant__profile")
         .prefetch_related("applicant__profile__skills")

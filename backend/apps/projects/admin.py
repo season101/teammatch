@@ -13,5 +13,5 @@ class ProjectAdmin(admin.ModelAdmin):
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
     list_display = ("title", "project", "status", "filled_by", "created_at")
-    list_filter = ("status",)
+    list_filter = ("status", "project__term")
     search_fields = ("title", "project__title")

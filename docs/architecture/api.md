@@ -116,7 +116,7 @@ Login, signup, logout, password and Google live under allauth (below).
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/v1/projects/` | user | open projects, cursor-paginated. `?q=` searches title, pitch, open role titles and their required skills, ignoring case (F2-07). The `term`, `skill` and `status` filters are **(planned)** |
+| GET | `/api/v1/projects/` | user | open projects (not those of deactivated owners, PL-07), cursor-paginated. `?q=` searches title, pitch, open role titles and their required skills, ignoring case (F2-07). The `term`, `skill` and `status` filters are **(planned)** |
 | POST | `/api/v1/projects/` | user | create project (draft): title, pitch, and optionally `repo_url` and `details` (F2-12) |
 | GET | `/api/v1/projects/mine/` | user | projects I own, newest first, each with its roles in the order they were added (as on the project page) |
 | GET | `/api/v1/projects/{id}/` | user | project detail with roles, `repo_url` and `details` (empty strings when not set) |
@@ -132,14 +132,14 @@ Login, signup, logout, password and Google live under allauth (below).
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/v1/feed/` | user | swipe deck, open roles ranked by match % (share of the role's required skills I have), then newest. Empty while I'm retired |
+| GET | `/api/v1/feed/` | user | swipe deck, open roles ranked by match % (share of the role's required skills I have), then newest. Leaves out deactivated owners' projects (PL-07). Empty while I'm retired |
 | POST | `/api/v1/feed/reset/` | user | clear my passes so those roles come back into my feed, `204`. Applied roles stay out |
 | POST | `/api/v1/roles/{id}/dismiss/` | user | candidate pass on a role, `204`; repeats are fine. My own project: `403`; role or project not open: `409` |
 | DELETE | `/api/v1/roles/{id}/dismiss/` | user | take back my pass on a role, `204`, also when there was none. Only my own pass |
 | POST | `/api/v1/applications/` | user | apply to a role `{role, note}`. Retired: `403` `profile_retired`. Committed this term: `409` `applicant_committed` |
 | GET | `/api/v1/applications/mine/?status=` | user | my applications. A withdrawn one has `withdrawn_reason`: `applicant` (I withdrew), `committed` (I took a seat elsewhere), `team_locked` (my own team locked) or `project_closed` (the owner closed it); empty on rows withdrawn before it was recorded |
 | POST | `/api/v1/applications/{id}/withdraw/` | applicant | withdraw pending application |
-| GET | `/api/v1/roles/{id}/applications/?status=` | owner | pending applicants for a role, minus retired ones, best `match_percent` first then oldest. Someone else's open or locked project: `403`; their draft or archived one: `404`. `?status=liked` lists offers out, `?status=committed` who took the seat. Each has `committed_elsewhere`: true when the applicant holds a seat on another open project this term, so a like would get `409` `applicant_committed` |
+| GET | `/api/v1/roles/{id}/applications/?status=` | owner | pending applicants for a role, minus retired and deactivated ones, best `match_percent` first then oldest. Someone else's open or locked project: `403`; their draft or archived one: `404`. `?status=liked` lists offers out, `?status=committed` who took the seat. Each has `committed_elsewhere`: true when the applicant holds a seat on another open project this term, so a like would get `409` `applicant_committed` |
 | POST | `/api/v1/applications/{id}/like/` | owner | like: sends an offer, the role stays open (F4-10). Applicant on a team or committed: `409`. Your own application: `403`; someone else's on a role that isn't yours: `404` |
 | POST | `/api/v1/applications/{id}/commit/` | applicant | take the seat an offer is for: fills the role, closes my other applications this term, may lock the team. `409` `offer_not_open`, `role_not_open`, `owns_open_project` or `applicant_committed`. An offer on your own role: `403`; anyone else's: `404` |
 | POST | `/api/v1/applications/{id}/decline/` | applicant | turn an offer down; the role stays open. Not an open offer: `409` |
