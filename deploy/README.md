@@ -37,7 +37,7 @@ S3_BUCKET=teammatch-media
 S3_ACCESS_KEY=teammatch
 S3_SECRET_KEY=change-me
 
-EMAIL_URL=consolemail://         # smtp+tls://user:pass@host:587 once email is set up
+EMAIL_URL=smtp+tls://user:pass@host:587   # required; consolemail:// logs emails instead of sending
 DEFAULT_FROM_EMAIL=TeamMatch <verification@teammatch.sijancodes.com>
 
 # optional demo accounts, created verified on every deploy (leave a pair empty to skip it)
@@ -49,7 +49,7 @@ SEED_CANDIDATE_EMAIL=sam.student@latech.edu
 SEED_CANDIDATE_PASSWORD=change-me
 ```
 
-`DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, and `TEAMMATCH_VERSION` have no defaults, so compose refuses to start without them.
+`DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `EMAIL_URL`, and `TEAMMATCH_VERSION` have no defaults, so compose refuses to start without them.
 
 After `migrate`, `teammatch-migrate` runs `python manage.py bootstrap`, so this happens on every deploy:
 - It adds the terms listed in `backend/apps/core/management/commands/bootstrap.py`, starting with Fall 2026. A term that already exists keeps the dates an admin set.
@@ -92,9 +92,9 @@ The example ships 1.0.0. Before you start, check that every PR for the release i
 
    GitHub's **Draft a new release** button works too: choose a new `vX.Y.Z` tag on `main` and publish. It makes the tag and the Release together, and the workflow keeps that Release.
 
-2. The release workflow pushes `ghcr.io/season101/teammatch-api:1.0.0` and `teammatch-web:1.0.0`, creates the GitHub Release, then the `deploy` job waits for you. Open the run, click **Review deployments**, tick `production` and approve.
+2. The release workflow first waits for CI on the tagged commit and stops if it didn't pass (`ci-passed` job, up to 30 minutes). Then it pushes `ghcr.io/season101/teammatch-api:1.0.0` and `teammatch-web:1.0.0`, creates the GitHub Release, and the `deploy` job waits for you. Open the run, click **Review deployments**, tick `production` and approve. If CI failed only because of a flake, re-run CI on that commit, then re-run the release's failed jobs.
 
-3. The deploy runs on its own: backup to `~/backups`, check out `v1.0.0` in `apps/teammatch`, set `TEAMMATCH_VERSION`, pull and restart `teammatch-migrate`, `teammatch-api` and `teammatch-web`, then wait for `/api/v1/health/` to say `ok` with `"version": "1.0.0"`. If anything after the checkout fails, it rolls back to the previous version and the job goes red. The output is in the Actions log and in `~/teammatch-deploy.log` on the server.
+3. The deploy runs on its own: backup to `~/backups`, check out `v1.0.0` in `apps/teammatch`, set `TEAMMATCH_VERSION`, pull and restart `teammatch-migrate`, `teammatch-api` and `teammatch-web`, then wait for `/api/v1/health/` to say `ok` with `"version": "1.0.0"` and for `teammatch-web` to be healthy on the `1.0.0` image. If anything after the checkout fails, it rolls back to the previous version and the job goes red. The output is in the Actions log and in `~/teammatch-deploy.log` on the server.
 
 4. When the job is green, sign up on the live site with a real inbox, open the link in the email, and sign in.
 
@@ -136,7 +136,7 @@ Use these only if the Deploy workflow can't reach the server. The quick way is t
 
 ## Roll back
 
-The deploy rolls itself back when `teammatch-migrate` fails or the health check isn't `ok` on the new version within about 2 minutes. If you find a problem later (for example sign-up or email verification fails), deploy the previous version with the Deploy workflow:
+The deploy rolls itself back when `teammatch-migrate` fails, or the API health isn't `ok` on the new version or `teammatch-web` isn't healthy within about 2 minutes. If you find a problem later (for example sign-up or email verification fails), deploy the previous version with the Deploy workflow:
 
 ```bash
 gh workflow run deploy.yml --repo season101/teammatch --ref main -f version=0.1.0
@@ -219,12 +219,15 @@ Then test it by redeploying the version that's live (`gh workflow run deploy.yml
 
 ## Sample data for demos
 
-`seed_demo` adds five sample projects with open roles. They belong to sample accounts at `example.com`, which can't sign in. With `--candidate`, it also fills that account's profile with sample skills if the profile is still empty, so the feed shows skill matches. Running it again only adds what's missing.
+`seed_demo` adds sample projects with open roles (one of Marco's two is a draft, since an owner gets one open project per term). They belong to sample accounts at `example.com`, which can't sign in. With `--candidate`, it also fills that account's profile with sample skills if the profile is still empty, so the feed shows skill matches. Running it again only adds what's missing.
 
 ```bash
 docker exec teammatch-api python manage.py seed_demo --candidate <demo candidate email>
-docker exec teammatch-api python manage.py seed_demo --remove   # delete the sample projects and accounts
+# delete the sample projects and accounts
+docker exec teammatch-api python manage.py seed_demo --remove --owner <demo owner email> --candidate <demo candidate email>
 ```
+
+`--remove` refuses, and removes nothing, while anyone other than the sample people and the accounts named with `--owner` and `--candidate` has applied to or passed on a sample role, because deleting the projects deletes those too. `teammatch-api` doesn't get the `SEED_*` values, so name the demo accounts. Add `--force` to remove anyway.
 
 Locally, run `make seed`, and `make seed args=--remove` to take the data out again.
 

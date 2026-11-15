@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.db.models import Q
 
-from apps.matching.models import Application, ApplicationStatus
+from apps.matching.models import Application, ApplicationStatus, RoleDismissal
 from apps.matching.services import holds_seat
 from apps.profiles.models import Profile, Skill
 from apps.profiles.services import is_retired
@@ -78,6 +78,9 @@ STUDENTS = {
         ["Java", "Testing", "Git"],
     ),
 }
+
+# Seeded as drafts: Marco's other project is open, and an owner gets one per term (BR-14).
+DRAFTS = {"Thesis Tracker"}
 
 # owner, title, pitch, roles as (title, description, skills, who fills it or None)
 PROJECTS = [
@@ -332,6 +335,12 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--remove", action="store_true", help="Delete the sample data.")
         parser.add_argument(
+            "--force",
+            action="store_true",
+            help="With --remove: delete even when real students applied to or passed on "
+            "sample roles. Their applications and passes are deleted too.",
+        )
+        parser.add_argument(
             "--candidate",
             default=os.environ.get("SEED_CANDIDATE_EMAIL", ""),
             help="Account that gets sample skills, applications and an offer "
@@ -345,7 +354,7 @@ class Command(BaseCommand):
         )
 
     @transaction.atomic
-    def handle(self, *args, remove=False, candidate="", owner="", **options):
+    def handle(self, *args, remove=False, force=False, candidate="", owner="", **options):
         User = get_user_model()
         owner = owner.strip() and User.objects.filter(email__iexact=owner.strip()).first()
         candidate = (
@@ -359,9 +368,33 @@ class Command(BaseCommand):
             owner_project = Q(roles__filled_by__email__in=sample_people)
             if owner:
                 owner_project |= Q(owner=owner)
-            projects, _ = Project.objects.filter(
+            projects = Project.objects.filter(
                 Q(owner__email__in=sample_people) | Q(title=OWNER_PROJECT[0]) & owner_project
-            ).delete()
+            )
+            # Deleting a project deletes its applications and passes. The sample people's and
+            # the seed accounts' are demo data; anyone else's belong to a real student.
+            # Lock the sample roles first, so an apply or pass landing meanwhile waits for this
+            # transaction and the count below sees every row the delete will take.
+            list(Role.objects.filter(project__in=projects).select_for_update())
+            demo_users = User.objects.filter(
+                Q(email__in=sample_people) | Q(pk__in=[u.pk for u in (owner, candidate) if u])
+            )
+            real = (
+                Application.objects.filter(role__project__in=projects)
+                .exclude(applicant__in=demo_users)
+                .count()
+                + RoleDismissal.objects.filter(role__project__in=projects)
+                .exclude(user__in=demo_users)
+                .count()
+            )
+            if real and not force:
+                raise CommandError(
+                    f"Real students have {real} applications or passes on the sample projects, "
+                    "and removing the projects would delete them. Nothing was removed. "
+                    "If they are the demo accounts, name them with --owner and --candidate. "
+                    "To delete them anyway, add --force."
+                )
+            projects, _ = projects.delete()
             users, _ = User.objects.filter(email__in=sample_people).delete()
             self.stdout.write(f"removed sample data ({projects} project rows, {users} user rows)")
             return
@@ -400,7 +433,11 @@ class Command(BaseCommand):
         project, created = Project.objects.get_or_create(
             owner=owner,
             title=title,
-            defaults={"term": term, "pitch": pitch, "status": ProjectStatus.OPEN},
+            defaults={
+                "term": term,
+                "pitch": pitch,
+                "status": ProjectStatus.DRAFT if title in DRAFTS else ProjectStatus.OPEN,
+            },
         )
         if not created:
             return None
