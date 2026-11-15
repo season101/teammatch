@@ -135,8 +135,6 @@ export function ProjectsList() {
 // tabs, so only the Browse list shows. The two layouts switch by CSS at 1024 px.
 function ProjectsView() {
   const mine = useMyProjects();
-  const owned =
-    mine.data?.filter((project) => project.status !== "archived") ?? [];
 
   return (
     <>
@@ -158,7 +156,7 @@ function ProjectsView() {
               label: "Mine",
               panel: (
                 <div className="pt-4">
-                  <MyProjectsList projects={owned} withOpenNote />
+                  <MyProjectsList projects={mine.data ?? []} withOpenNote />
                 </div>
               ),
             },

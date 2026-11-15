@@ -155,8 +155,11 @@ export function useAddRole(projectId: number) {
       if (!data) throw apiError(response.status, error);
       return data;
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["project", projectId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      // The sidebar's Mine list counts the roles.
+      queryClient.invalidateQueries({ queryKey: ["my-projects"] });
+    },
   });
 }
 
@@ -172,8 +175,11 @@ export function useUpdateRole(projectId: number) {
       if (!data) throw apiError(response.status, error);
       return data;
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["project", projectId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      // The sidebar's Mine list counts the roles.
+      queryClient.invalidateQueries({ queryKey: ["my-projects"] });
+    },
   });
 }
 
@@ -215,6 +221,8 @@ export function useDeleteRole(projectId: number) {
       queryClient.invalidateQueries({ queryKey: ["my-projects"] });
       // The nav badges count open roles and their applicants.
       queryClient.invalidateQueries({ queryKey: ["my-summary"] });
+      // Deleting the last open role locks the team (try_lock), so "It's a Team!" and Teams show it.
+      queryClient.invalidateQueries({ queryKey: ["my-team"] });
     },
   });
 }

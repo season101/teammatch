@@ -36,12 +36,21 @@ function renderShell(
   if (profile) client.setQueryData(["my-profile"], profile);
   client.setQueryData(["my-team"], team);
   if (summary) client.setQueryData(["my-summary"], summary);
-  render(
+  const shell = () => (
     <QueryClientProvider client={client}>
       <AppShell>{children}</AppShell>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+  const { rerender } = render(shell());
+  // Goes to another page with the shell still mounted, like a client-side navigation.
+  return (next: string) => {
+    nav.pathname = next;
+    rerender(shell());
+  };
 }
+
+const sidebar = () =>
+  screen.getAllByRole("navigation", { name: "Main" })[1].closest("aside")!;
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -172,6 +181,22 @@ test("the saved theme applies before the first paint", () => {
   expect(document.documentElement.dataset.theme).toBe("dark");
 });
 
+test("a theme picked in another tab applies here too", () => {
+  applySavedTheme();
+  const root = document.documentElement;
+  // What the browser fires in this tab when another one saves the key.
+  const otherTab = (value: string | null) => {
+    if (value === null) localStorage.removeItem("teammatch:theme");
+    else localStorage.setItem("teammatch:theme", value);
+    window.dispatchEvent(new StorageEvent("storage", { key: "teammatch:theme" }));
+  };
+
+  otherTab("light");
+  expect(root.dataset.theme).toBe("light");
+  otherTab(null);
+  expect(root).not.toHaveAttribute("data-theme");
+});
+
 test("the logo goes to Discover, and Profile and Settings are their own rows on desktop", () => {
   renderShell("/profile");
   const [, sideNav, bottomBar] = screen.getAllByRole("navigation", { name: "Main" });
@@ -233,6 +258,48 @@ test("the sidebar's Teams tab links to my team once I have one", () => {
     "/teams",
   );
   expect(within(sidebar).queryByText(/once every role is filled/)).not.toBeInTheDocument();
+});
+
+test("a closed project stays under Mine → Archived, without making me a reviewer", () => {
+  renderShell("/projects", {
+    projects: [{ ...project, id: 5, title: "Old idea", status: "archived" }],
+  });
+  fireEvent.click(within(sidebar()).getByRole("tab", { name: "Mine" }));
+
+  const archived = within(sidebar()).getByRole("region", { name: "Archived" });
+  expect(within(archived).getByRole("link", { name: /Old idea/ })).toHaveAttribute(
+    "href",
+    "/projects/5",
+  );
+  expect(within(sidebar()).queryByRole("link", { name: "Review applicants" })).toBeNull();
+});
+
+test("the sidebar opens each page's own tab, not the last page's", () => {
+  const go = renderShell("/applicants");
+  const selected = () =>
+    within(sidebar())
+      .getAllByRole("tab")
+      .filter((tab) => tab.getAttribute("aria-selected") === "true")
+      .map((tab) => tab.textContent);
+  expect(selected()).toEqual(["Mine"]);
+
+  // Review → Teams: a different set of tabs, and Teams is picked with its panel showing.
+  go("/teams");
+  expect(selected()).toEqual(["Teams"]);
+  expect(within(sidebar()).getByText(/once every role is filled/)).toBeVisible();
+
+  go("/feed");
+  expect(selected()).toEqual(["Applications"]);
+
+  // Deck → Teams, inside the same set of tabs.
+  go("/teams");
+  expect(selected()).toEqual(["Teams"]);
+
+  // Moving around inside Projects keeps the tab I picked.
+  go("/projects");
+  fireEvent.click(within(sidebar()).getByRole("tab", { name: "Mine" }));
+  go("/projects/4");
+  expect(selected()).toEqual(["Mine"]);
 });
 
 test("the nav column lists what's left to set up, above the email", () => {

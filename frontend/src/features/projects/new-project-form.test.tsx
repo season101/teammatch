@@ -1,15 +1,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
+import NewProjectPage from "@/app/(app)/projects/new/page";
 import { NewProjectForm } from "./new-project-form";
 
-function renderForm() {
+const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace }),
+  usePathname: () => "/projects/new",
+}));
+
+function renderForm(ui = <NewProjectForm />) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <QueryClientProvider client={client}>
-      <NewProjectForm />
-    </QueryClientProvider>,
-  );
+  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
 }
 
 function mockFetch(body: unknown, status: number) {
@@ -35,7 +38,15 @@ function fillAndSubmit() {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  replace.mockClear();
   document.cookie = "csrftoken=; max-age=0";
+});
+
+test("the page sends a signed-out visitor to sign in before they fill the form", async () => {
+  mockFetch({ status: 401 }, 401);
+  renderForm(<NewProjectPage />);
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/login?next=%2Fprojects%2Fnew"));
+  expect(screen.queryByLabelText("Title")).toBeNull();
 });
 
 test("asks for a title and a pitch without calling the API", async () => {
