@@ -133,7 +133,7 @@ test("the deck shows its keyboard legend, and Hide collapses it", () => {
   expect(within(legend).getAllByRole("listitem").map((key) => key.textContent)).toEqual([
     "←Pass",
     "→Apply",
-    "↑Details",
+    "↑ / EnterDetails",
     "ZUndo pass",
   ]);
   fireEvent.click(within(legend).getByRole("button", { name: "Hide" }));

@@ -5,8 +5,17 @@ import type { FeedRole } from "./queries";
 // The rest go behind "+N more" so the chips stay on one row.
 const SKILLS_SHOWN = 3;
 
-// Until F3-13 adds the role details page, this is the project page as it is.
+// The role details page: the project page focused on one role (F3-13, DD-39).
 export const roleHref = (role: FeedRole) => `/projects/${role.project.id}?role=${role.id}`;
+
+// How the deck and the role details page hand off (F3-13). `opened` is the role the deck
+// just opened, so the page's Back steps back to the deck in history and the cached feed
+// shows the same card. Opened from a link or after a reload it's null, and Back goes to
+// Discover. `returning` asks the deck to take focus once it's back, for the arrow keys.
+export const deckHandoff = { opened: null as number | null, returning: false };
+export const markOpenedFromDeck = (role: FeedRole) => {
+  deckHandoff.opened = role.id;
+};
 
 // The card fills the phone between the header and the action buttons. The loading
 // skeleton takes the same height, so nothing moves when the first role arrives.
@@ -93,6 +102,7 @@ export function RoleCard({ role, mySkillIds }: { role: FeedRole; mySkillIds: num
 
       <Link
         href={roleHref(role)}
+        onClick={() => markOpenedFromDeck(role)}
         aria-label={`View details for ${role.title}`}
         className="flex min-h-11 items-center gap-3 rounded-row border border-border px-3 py-2 hover:bg-surface-2"
       >

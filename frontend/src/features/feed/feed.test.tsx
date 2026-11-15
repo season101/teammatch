@@ -4,6 +4,7 @@ import { MotionGlobalConfig } from "motion/react";
 import { afterEach, vi } from "vitest";
 import { setShortcutsEnabled } from "@/features/shell/preferences";
 import { Feed } from "./feed";
+import { deckHandoff } from "./role-card";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
@@ -221,6 +222,38 @@ test("tapping the card, ↑ or Enter opens the role on its project page", async 
     "href",
     "/projects/3?role=7",
   );
+});
+
+// F3-13: the details page's Back steps back to the deck only when the deck opened it.
+test("opening details tells the details page it came from the deck", async () => {
+  mockApi({ roles: [role, nextRole] });
+  renderFeed();
+  deckHandoff.opened = null;
+  fireEvent.keyDown(await deck(), { key: "ArrowUp" });
+  expect(deckHandoff.opened).toBe(7);
+
+  deckHandoff.opened = null;
+  fireEvent.click(screen.getByRole("link", { name: "View details for Backend dev" }));
+  expect(deckHandoff.opened).toBe(7);
+  deckHandoff.opened = null;
+});
+
+test("back from the details page, the deck is on the same card and has focus", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+  });
+  mockApi({ roles: [role, nextRole] });
+  // The feed as the deck left it.
+  client.setQueryData(["feed"], [role, nextRole]);
+  deckHandoff.returning = true;
+  renderFeed(client);
+
+  expect(await screen.findByRole("article", { name: "Backend dev" })).toBeInTheDocument();
+  expect(await deck()).toHaveFocus();
+  expect(deckHandoff.returning).toBe(false);
+  // So ← and → work at once.
+  fireEvent.keyDown(document.activeElement!, { key: "ArrowRight" });
+  expect(await screen.findByRole("article", { name: "Frontend dev" })).toBeInTheDocument();
 });
 
 test("passing the last card leaves me all caught up", async () => {
