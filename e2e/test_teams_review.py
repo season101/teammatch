@@ -79,6 +79,7 @@ def test_like_sends_an_offer_and_lists_it_under_offers_out(
     assert [a["applicant"]["display_name"] for a in waiting(project, rid, "liked")] == [full1.name]
 
     # A second like for the same role is allowed: first commit wins.
+    page.wait_for_timeout(400)  # a press within 250 ms of a decision is ignored as a double tap
     page.get_by_role("button", name=f"Like {full2.name}").click()
     expect(out.get_by_role("listitem").filter(has_text=full2.name)).to_be_visible()
     expect(out.get_by_text("If they take other offers or decline", exact=False)).to_be_visible()
