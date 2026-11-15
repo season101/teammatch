@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -26,3 +27,18 @@ class Term(models.Model):
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        # Two terms on one day would make "the current term" ambiguous (admin runs this).
+        # shortcut: not a DB constraint, so bootstrap's TERMS list must not overlap either.
+        if self.start_date and self.end_date:
+            overlap = (
+                Term.objects.filter(start_date__lte=self.end_date, end_date__gte=self.start_date)
+                .exclude(pk=self.pk)
+                .first()
+            )
+            if overlap:
+                raise ValidationError(
+                    f"These dates overlap {overlap.name} "
+                    f"({overlap.start_date:%b %d, %Y} to {overlap.end_date:%b %d, %Y})."
+                )
