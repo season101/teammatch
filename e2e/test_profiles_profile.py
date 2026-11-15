@@ -406,10 +406,10 @@ def test_strength_reaches_100_with_links_and_resume(session, tmp_path):
     _, page = session(skills=["Python"])
     edit_tab(page)
     page.get_by_label("Bio").fill("Full profile.")
-    page.get_by_label("GitHub").fill("https://github.com/e2e-user")
+    page.get_by_label("GitHub", exact=True).fill("https://github.com/e2e-user")
     save(page)
     assert strength(page) == 85
-    page.get_by_label("LinkedIn").fill("https://www.linkedin.com/in/e2e-user")
+    page.get_by_label("LinkedIn", exact=True).fill("https://www.linkedin.com/in/e2e-user")
     save(page)
     assert strength(page) == 90
     pdf = tmp_path / "cv.pdf"

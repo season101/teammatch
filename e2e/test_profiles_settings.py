@@ -314,8 +314,8 @@ def test_avatar_is_served_only_to_signed_in_users(page, signed, files, api):
 def test_links_save_and_show_as_cards_in_preview(page, signed):
     signed()
     edit(page)
-    page.get_by_label("GitHub").fill("https://github.com/e2e-user")
-    page.get_by_label("LinkedIn").fill("https://www.linkedin.com/in/e2e-user")
+    page.get_by_label("GitHub", exact=True).fill("https://github.com/e2e-user")
+    page.get_by_label("LinkedIn", exact=True).fill("https://www.linkedin.com/in/e2e-user")
     page.get_by_role("button", name="Save profile").click()
     expect(page.get_by_text("Profile saved.")).to_be_visible()
     page.get_by_role("tab", name="Preview").click()
@@ -328,7 +328,7 @@ def test_links_save_and_show_as_cards_in_preview(page, signed):
     )
     page.reload()
     page.get_by_role("tab", name="Edit").click()
-    expect(page.get_by_label("GitHub")).to_have_value("https://github.com/e2e-user")
+    expect(page.get_by_label("GitHub", exact=True)).to_have_value("https://github.com/e2e-user")
 
 
 def test_no_links_list_without_any_link(page, signed):
@@ -367,10 +367,10 @@ def test_bad_links_are_refused_with_one_message(page, signed, field, bad):
 def test_clearing_a_link_removes_it(page, signed):
     signed()
     edit(page)
-    page.get_by_label("GitHub").fill("https://github.com/e2e-user")
+    page.get_by_label("GitHub", exact=True).fill("https://github.com/e2e-user")
     page.get_by_role("button", name="Save profile").click()
     expect(page.get_by_text("Profile saved.")).to_be_visible()
-    page.get_by_label("GitHub").fill("")
+    page.get_by_label("GitHub", exact=True).fill("")
     page.get_by_role("button", name="Save profile").click()
     expect(page.get_by_text("Profile saved.")).to_be_visible()
     page.get_by_role("tab", name="Preview").click()
