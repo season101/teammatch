@@ -28,6 +28,14 @@ def team(owned, candidate):
     return project, member, client
 
 
+def sign_in_member(page: Page, sign_in, user):
+    """Sign in and get past "It's a Team!", which shows once on the landing page."""
+    sign_in(page, user)
+    expect(page.get_by_role("dialog", name="It's a Team!")).to_be_visible()
+    page.keyboard.press("Escape")
+    expect(page.get_by_role("dialog", name="It's a Team!")).to_have_count(0)
+
+
 def box(page: Page):
     return page.get_by_role("textbox", name=re.compile(r"^Message "))
 
@@ -41,8 +49,8 @@ def test_messages_arrive_live_both_ways_and_history_loads_on_reopen(two_pages, t
     project, member, client = team
     team_id = team_of(project.client)["id"]
     owner_page, member_page = two_pages()
-    sign_in(owner_page, project.owner)
-    sign_in(member_page, member)
+    sign_in_member(owner_page, sign_in, project.owner)
+    sign_in_member(member_page, sign_in, member)
     for page in (owner_page, member_page):
         page.goto(f"/teams/{team_id}/chat")
         expect(page.get_by_role("heading", name=project.title)).to_be_visible()
@@ -94,7 +102,7 @@ def test_open_team_chat_from_celebration_and_teams_screen(page: Page, team, sign
 def test_empty_and_blank_messages_are_not_sent(page: Page, team, sign_in):
     project, member, client = team
     team_id = team_of(project.client)["id"]
-    sign_in(page, member)
+    sign_in_member(page, sign_in, member)
     page.goto(f"/teams/{team_id}/chat")
     expect(page.get_by_role("button", name="Send")).to_be_enabled()
     page.get_by_role("button", name="Send").click()
@@ -112,8 +120,8 @@ def test_enter_sends_shift_enter_makes_a_new_line_and_long_text_is_capped(
     project, member, client = team
     team_id = team_of(project.client)["id"]
     owner_page, member_page = two_pages()
-    sign_in(owner_page, project.owner)
-    sign_in(member_page, member)
+    sign_in_member(owner_page, sign_in, project.owner)
+    sign_in_member(member_page, sign_in, member)
     for page in (owner_page, member_page):
         page.goto(f"/teams/{team_id}/chat")
         expect(page.get_by_role("button", name="Send")).to_be_enabled()
