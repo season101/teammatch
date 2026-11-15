@@ -114,7 +114,7 @@ Login, signup, logout, password and Google live under allauth (below).
 | POST | `/api/v1/projects/` | user | create project (draft): title, pitch, and optionally `repo_url` and `details` (F2-12) |
 | GET | `/api/v1/projects/mine/` | user | projects I own, newest first, each with its roles in the order they were added (as on the project page) |
 | GET | `/api/v1/projects/{id}/` | user | project detail with roles, `repo_url` and `details` (empty strings when not set) |
-| PATCH | `/api/v1/projects/{id}/` | owner | edit title, pitch, `repo_url`, `details`. A `repo_url` that isn't `https://github.com/...` is refused with `repo_url_not_github` (F2-12) |
+| PATCH | `/api/v1/projects/{id}/` | owner | edit title, pitch, `repo_url`, `details`. A `repo_url` that isn't `https://github.com/...` gets `400` with the field error `{"repo_url": ["Enter a link that starts with https://github.com/"]}`. The server raises it as `repo_url_not_github`, but field errors don't carry their code in the body yet (F2-12) |
 | DELETE | `/api/v1/projects/{id}/` | owner | delete draft **(planned)** |
 | POST | `/api/v1/projects/{id}/publish/` | owner | draft to open |
 | POST | `/api/v1/projects/{id}/close/` | owner | archive |

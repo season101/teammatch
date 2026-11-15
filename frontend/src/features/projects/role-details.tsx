@@ -30,13 +30,21 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 // From the deck, Back steps back to it in history, so the cached feed shows the same
 // card. Opened from a link or after a reload there's no deck behind it: go to Discover.
+// Only once: a decision that lands after I pressed Back, or left the page, stays put.
 function useBackToDeck(roleId: number) {
   const router = useRouter();
   const [fromDeck] = useState(() => deckHandoff.opened === roleId);
+  const left = useRef(false);
   useEffect(() => {
     deckHandoff.opened = null;
+    left.current = false;
+    return () => {
+      left.current = true;
+    };
   }, []);
   return useCallback(() => {
+    if (left.current) return;
+    left.current = true;
     deckHandoff.returning = true;
     if (fromDeck) router.back();
     else router.push("/feed");
@@ -110,7 +118,8 @@ export function RoleDetails({
   const data = project.data;
   const skillName = (id: number) =>
     skills.data.find((skill) => skill.id === id)?.name ?? "Unknown skill";
-  const others = data.roles.filter((each) => each !== role);
+  // This role is the page's subject, so it's only listed once someone fills it.
+  const others = data.roles.filter((each) => each !== role || each.status === "filled");
   const busy = apply.isPending || dismiss.isPending;
 
   async function decide(to: "apply" | "pass") {

@@ -10,7 +10,9 @@ vi.mock("next/navigation", () => ({ useRouter: () => router }));
 type Reply = [unknown, number];
 type Call = { method: string; path: string; body: unknown };
 
-function mockApi(handler: (method: string, path: string) => Reply | undefined) {
+function mockApi(
+  handler: (method: string, path: string) => Reply | Promise<Reply> | undefined,
+) {
   const calls: Call[] = [];
   vi.stubGlobal(
     "fetch",
@@ -19,7 +21,7 @@ function mockApi(handler: (method: string, path: string) => Reply | undefined) {
       const body =
         request.method === "GET" ? undefined : await request.json().catch(() => undefined);
       calls.push({ method: request.method, path, body });
-      const [payload, status] = handler(request.method, path) ?? [{}, 200];
+      const [payload, status] = (await handler(request.method, path)) ?? [{}, 200];
       return new Response(status === 204 ? null : JSON.stringify(payload), {
         status,
         headers: { "Content-Type": "application/json" },
@@ -69,13 +71,15 @@ function api({
   mine = [] as unknown[],
   apply = [{ id: 20, role: 3, note: "", status: "pending" }, 201] as Reply,
   dismiss = [null, 204] as Reply,
+  // Apply answers once this settles.
+  wait = Promise.resolve(),
 } = {}) {
   return mockApi((method, path) => {
     if (path === "/api/v1/skills/") return [SKILLS, 200];
     if (path === "/api/v1/me/profile/") return [{ skills: [SKILLS[0]] }, 200];
     if (path === "/api/v1/applications/mine/") return [{ results: mine }, 200];
     if (path === "/api/v1/projects/7/") return [details, 200];
-    if (method === "POST" && path === "/api/v1/applications/") return apply;
+    if (method === "POST" && path === "/api/v1/applications/") return wait.then(() => apply);
     if (method === "POST" && path === "/api/v1/roles/3/dismiss/") return dismiss;
   });
 }
@@ -150,10 +154,11 @@ test("a role I already applied to shows its status instead of Apply and Pass", a
   expect(screen.queryByRole("button", { name: /Pass on/ })).not.toBeInTheDocument();
 });
 
-test("a filled role offers no Apply or Pass", async () => {
+test("a filled role offers no Apply or Pass, and its member is in the team", async () => {
   api({ details: project({ roles: [{ ...ROLE, status: "filled", filled_by_name: "Kim" }] }) });
   renderDetails();
   expect(await screen.findByText("This role is filled.")).toBeInTheDocument();
+  expect(screen.getByText("Kim, UI designer")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /Apply to/ })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /Pass on/ })).not.toBeInTheDocument();
 });
@@ -173,15 +178,19 @@ test("a role that isn't on the project shows the whole project page", async () =
   expect(screen.getByRole("heading", { name: "Roles" })).toBeInTheDocument();
 });
 
-test("opened from the deck, Back and Esc step back to it", async () => {
+test("opened from the deck, Esc or Back steps back to it, once", async () => {
   deckHandoff.opened = 3;
   api();
   renderDetails();
-  fireEvent.click(await screen.findByRole("link", { name: "Back to the deck" }));
+  // The page took the hand-off on opening, so a later visit from a link can't reuse it.
+  expect(deckHandoff.opened).toBeNull();
+  const backLink = await screen.findByRole("link", { name: "Back to the deck" });
+  fireEvent.keyDown(document.body, { key: "Escape" });
   expect(router.back).toHaveBeenCalledTimes(1);
   expect(deckHandoff.returning).toBe(true);
-  fireEvent.keyDown(document.body, { key: "Escape" });
-  expect(router.back).toHaveBeenCalledTimes(2);
+  // Already on the way back: a second press doesn't step back past the deck.
+  fireEvent.click(backLink);
+  expect(router.back).toHaveBeenCalledTimes(1);
   expect(router.push).not.toHaveBeenCalled();
 });
 
@@ -218,6 +227,26 @@ test("applies with a note up to 300 characters, then goes back to the deck on th
   });
   // The deck shows the next card.
   expect(client.getQueryData(["feed"])).toEqual([NEXT_ROLE]);
+});
+
+test("an Apply that lands after I pressed Back doesn't step back again", async () => {
+  deckHandoff.opened = 3;
+  let answer = () => {};
+  const calls = api({ wait: new Promise<void>((resolve) => (answer = resolve)) });
+  const client = renderDetails();
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Apply to UI designer on Campus Eats" }),
+  );
+  await waitFor(() =>
+    expect(calls.some((call) => call.path === "/api/v1/applications/")).toBe(true),
+  );
+  fireEvent.click(screen.getByRole("link", { name: "Back to the deck" }));
+  expect(router.back).toHaveBeenCalledTimes(1);
+
+  answer();
+  // Saved all the same, and the deck drops the role.
+  await waitFor(() => expect(client.getQueryData(["feed"])).toEqual([NEXT_ROLE]));
+  expect(router.back).toHaveBeenCalledTimes(1);
 });
 
 test("passes, then goes to Discover when opened from a link", async () => {
