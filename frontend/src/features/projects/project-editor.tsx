@@ -189,11 +189,15 @@ export function ProjectEditor({
                       </li>
                     ))}
                   </ul>
-                  {!isOwner &&
-                    data.status === "open" &&
-                    role.status === "open" && (
-                      <ApplyToRole roleId={role.id} roleTitle={role.title} />
-                    )}
+                  {!isOwner && (
+                    <ApplyToRole
+                      roleId={role.id}
+                      roleTitle={role.title}
+                      canApply={
+                        data.status === "open" && role.status === "open"
+                      }
+                    />
+                  )}
                   {canEdit && role.status === "open" && (
                     <div className="mt-4 flex flex-wrap gap-3">
                       <button

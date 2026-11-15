@@ -68,11 +68,14 @@ export async function signOut(): Promise<void> {
 }
 
 // Which sign-in providers (like Google) the server has keys for. Empty when none.
+// A failed request throws, so it isn't cached as "no Google".
 export async function getProviders(): Promise<string[]> {
   const response = await fetch(`${BASE}/config`, {
     credentials: "same-origin",
   });
-  const data = await response.json().catch(() => ({}));
+  if (!response.ok)
+    throw new Error(`Could not load sign-in options (${response.status}).`);
+  const data = await response.json();
   const providers: { id: string }[] = data.data?.socialaccount?.providers ?? [];
   return providers.map((provider) => provider.id);
 }
@@ -92,10 +95,13 @@ export async function getSignInMethods(): Promise<{
     getProviders(),
   ]);
   const user = (await session.json().catch(() => ({}))).data?.user;
-  const linked: { provider: { id: string } }[] =
-    (await providers.json().catch(() => ({}))).data ?? [];
   if (!user)
     throw new Error(`Could not load your account (${session.status}).`);
+  // A failed request isn't "no Google linked": that would offer Connect again.
+  if (!providers.ok)
+    throw new Error(`Could not load your sign-in methods (${providers.status}).`);
+  const linked: { provider: { id: string } }[] =
+    (await providers.json()).data ?? [];
   return {
     email: user.email,
     password: user.has_usable_password !== false,

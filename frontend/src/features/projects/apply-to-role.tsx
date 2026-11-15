@@ -10,13 +10,16 @@ import { useApply } from "@/features/feed/queries";
 
 // Apply to one open role from the project page (#172). Same API, note limit and
 // error messages as the swipe deck. An existing application, whatever its
-// status, blocks another one (BR-02), so it shows as a status instead.
+// status, blocks another one (BR-02), so it shows as a status instead, even
+// once the role is filled or the project closes. canApply: role and project open.
 export function ApplyToRole({
   roleId,
   roleTitle,
+  canApply,
 }: {
   roleId: number;
   roleTitle: string;
+  canApply: boolean;
 }) {
   const applications = useMyApplications();
   const apply = useApply();
@@ -30,12 +33,22 @@ export function ApplyToRole({
 
   if (status) {
     return (
-      <p className="mt-4 flex items-center gap-2 text-sm">
-        <span className="font-medium">Applied</span>
-        <StatusChip status={status} />
-      </p>
+      <>
+        <p className="mt-4 flex items-center gap-2 text-sm">
+          <span className="font-medium">Applied</span>
+          <StatusChip status={status} />
+        </p>
+        {/* A 409 that the refetch reconciled (e.g. applied in another tab): keep saying why. */}
+        {apply.isError && (
+          <p role="alert" className={`mt-2 ${noticeClass}`}>
+            {apply.error.message}
+          </p>
+        )}
+      </>
     );
   }
+
+  if (!canApply) return null;
 
   return (
     <form
