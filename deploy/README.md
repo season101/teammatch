@@ -223,8 +223,11 @@ Then test it by redeploying the version that's live (`gh workflow run deploy.yml
 
 ```bash
 docker exec teammatch-api python manage.py seed_demo --candidate <demo candidate email>
-docker exec teammatch-api python manage.py seed_demo --remove   # delete the sample projects and accounts
+# delete the sample projects and accounts
+docker exec teammatch-api python manage.py seed_demo --remove --owner <demo owner email> --candidate <demo candidate email>
 ```
+
+`--remove` refuses, and removes nothing, while anyone other than the sample people and the accounts named with `--owner` and `--candidate` has applied to or passed on a sample role, because deleting the projects deletes those too. `teammatch-api` doesn't get the `SEED_*` values, so name the demo accounts. Add `--force` to remove anyway.
 
 Locally, run `make seed`, and `make seed args=--remove` to take the data out again.
 

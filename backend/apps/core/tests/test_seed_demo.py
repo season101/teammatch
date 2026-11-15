@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 
 from apps.accounts.models import User
 from apps.core.models import Term
-from apps.matching.models import Application, ApplicationStatus
+from apps.matching.models import Application, ApplicationStatus, RoleDismissal
 from apps.profiles.models import Profile
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 
@@ -188,7 +188,13 @@ def test_running_again_with_accounts_adds_nothing(current_term, olive, sam):
     assert Application.objects.filter(applicant=sam, status="withdrawn").count() == 2
 
 
-@pytest.mark.parametrize("remove_args", [(), ("--owner", "olive.owner@latech.edu")])
+@pytest.mark.parametrize(
+    "remove_args",
+    [
+        ("--candidate", "sam.student@latech.edu"),
+        ("--owner", "olive.owner@latech.edu", "--candidate", "sam.student@latech.edu"),
+    ],
+)
 def test_remove_takes_out_everything_seeded_for_the_accounts(
     current_term, olive, sam, remove_args, monkeypatch
 ):
@@ -202,3 +208,50 @@ def test_remove_takes_out_everything_seeded_for_the_accounts(
     assert not User.objects.filter(email__endswith="@example.com").exists()
     # the real accounts stay
     assert User.objects.filter(pk__in=[olive.pk, sam.pk]).count() == 2
+
+
+@pytest.fixture
+def real_student():
+    return User.objects.create_user("riley.real@latech.edu", "x-long-password")
+
+
+def sample_role():
+    return Role.objects.filter(project__title="Ruston Rec League", status=RoleStatus.OPEN).first()
+
+
+@pytest.mark.parametrize("action", ["applied", "passed"])
+def test_remove_refuses_while_real_students_used_the_sample_roles(
+    current_term, real_student, action
+):
+    seed()
+    if action == "applied":
+        Application.objects.create(role=sample_role(), applicant=real_student, note="real")
+    else:
+        RoleDismissal.objects.create(role=sample_role(), user=real_student)
+    counts = Project.objects.count(), Application.objects.count(), RoleDismissal.objects.count()
+
+    with pytest.raises(CommandError, match="--force"):
+        seed("--remove")
+
+    after = Project.objects.count(), Application.objects.count(), RoleDismissal.objects.count()
+    assert after == counts
+
+
+def test_remove_with_force_deletes_the_real_students_data_too(current_term, real_student):
+    seed()
+    Application.objects.create(role=sample_role(), applicant=real_student)
+
+    seed("--remove", "--force")
+
+    assert not Project.objects.exists()
+    assert not Application.objects.exists()
+    assert User.objects.filter(pk=real_student.pk).exists()
+
+
+def test_remove_without_the_candidate_counts_their_applications_as_real(current_term, sam):
+    seed("--candidate", "sam.student@latech.edu")
+
+    with pytest.raises(CommandError, match="Real students have 3 applications"):
+        seed("--remove")
+
+    assert Application.objects.filter(applicant=sam).count() == 3
