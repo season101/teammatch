@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { allauthPost, getSessionUser, signOut } from "./allauth";
+import { CheckInbox } from "./forgot-password-form";
 import { googleErrorText } from "./google-button";
-import { buttonClasses } from "@/components/ui/button";
+import { Button, buttonClasses } from "@/components/ui/button";
 import { PendingLabel } from "@/components/ui/pending-label";
 
 // Only follow ?next= to a page on this site, never to another website. Default: the Discover deck.
@@ -47,6 +48,10 @@ export function SignInForm({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  // F1-13: the email of a Google-only account, for the Set a password prompt.
+  const [googleOnly, setGoogleOnly] = useState("");
+  const [requesting, setRequesting] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
   // A refused sign-in: the password field is marked, takes focus and shakes once.
   // `attempt` only restarts the shake; typing clears the mark.
   const [attempt, setAttempt] = useState(0);
@@ -60,6 +65,7 @@ export function SignInForm({
     event.preventDefault(); // stop the browser from reloading the page
     setSending(true);
     setError("");
+    setGoogleOnly("");
     setSubmitted(true); // the Google error is about an earlier try, so hide it now
     try {
       let result = await allauthPost("/auth/login", { email, password });
@@ -85,6 +91,11 @@ export function SignInForm({
         setError(
           "Please verify your email first. Check your inbox for the link.",
         );
+      } else if (
+        result.errors.some((e) => e.code === "google_only_account")
+      ) {
+        // The one exception to the single error (DD-37): offer a password instead.
+        setGoogleOnly(email);
       } else {
         // The allowed domains are public (BR-01), so naming them gives nothing away.
         const domainError = result.errors.find(
@@ -101,6 +112,42 @@ export function SignInForm({
       setError("Can't reach the server. Try again.");
     }
     setSending(false);
+  }
+
+  // The same request as Forgot password (screen 36): the emailed link sets one.
+  async function requestPassword() {
+    setRequesting(true);
+    setError("");
+    try {
+      const result = await allauthPost("/auth/password/request", {
+        email: googleOnly,
+      });
+      if (result.status === 200) {
+        setLinkSent(true);
+      } else {
+        setError(result.errors[0]?.message ?? "Something went wrong. Try again.");
+      }
+    } catch {
+      setError("Can't reach the server. Try again.");
+    }
+    setRequesting(false);
+  }
+
+  if (linkSent) {
+    return (
+      <CheckInbox email={googleOnly}>
+        <Button
+          variant="cta"
+          className="w-full"
+          onClick={() => {
+            setLinkSent(false);
+            setGoogleOnly("");
+          }}
+        >
+          Back to sign in
+        </Button>
+      </CheckInbox>
+    );
   }
 
   return (
@@ -165,6 +212,25 @@ export function SignInForm({
           Forgot password?
         </Link>
       </div>
+
+      {/* Hidden again once the email is changed: it was about that address. */}
+      {googleOnly && googleOnly === email && (
+        <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+          <p role="alert" className="text-sm text-text">
+            This email signs in with Google. Want to set a password too?
+          </p>
+          <Button
+            variant="secondary"
+            className="w-full"
+            onClick={requestPassword}
+            disabled={requesting}
+          >
+            <PendingLabel pending={requesting} label="Sending link">
+              Set a password
+            </PendingLabel>
+          </Button>
+        </div>
+      )}
 
       {error && (
         <p role="alert" className="text-sm text-pass">

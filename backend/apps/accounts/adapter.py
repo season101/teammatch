@@ -1,4 +1,5 @@
 from allauth.account.adapter import DefaultAccountAdapter
+from allauth.account.utils import filter_users_by_email
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -19,7 +20,22 @@ class AccountAdapter(DefaultAccountAdapter):
         email = credentials.get("email")
         if email and not is_allowed_email(email):
             raise domain_not_allowed_error()
-        return super().authenticate(request, **credentials)
+        user = super().authenticate(request, **credentials)
+        # F1-13, DD-37: the one exception to the single sign-in error. Saying yes
+        # only emails a set-password link to the inbox owner.
+        if user is None and email and is_google_only(email):
+            raise ValidationError(
+                "This email signs in with Google. Want to set a password too?",
+                code="google_only_account",
+            )
+        return user
+
+
+def is_google_only(email):
+    return any(
+        not user.has_usable_password() and user.socialaccount_set.filter(provider="google").exists()
+        for user in filter_users_by_email(email)
+    )
 
 
 class SocialAccountAdapter(DefaultSocialAccountAdapter):

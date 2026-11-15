@@ -262,6 +262,98 @@ test("hides the Google error once the email form is used", async () => {
   );
 });
 
+// F1-13, DD-37: a Google-only account gets a prompt instead of the single error.
+function mockGoogleOnly(resetStatus = 200) {
+  document.cookie = "csrftoken=test-token";
+  const reply = (status: number, body: unknown) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+  const fetchMock = vi.fn<typeof fetch>(async (input) =>
+    String(input).endsWith("/auth/login")
+      ? reply(400, {
+          status: 400,
+          errors: [
+            {
+              message:
+                "This email signs in with Google. Want to set a password too?",
+              code: "google_only_account",
+            },
+          ],
+        })
+      : reply(resetStatus, { status: resetStatus, errors: [] }),
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+test("offers a Google-only account a password, and emails the link", async () => {
+  const fetchMock = mockGoogleOnly();
+  renderForm();
+  fillAndSubmit("sam@email.latech.edu", "any-password");
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "This email signs in with Google. Want to set a password too?",
+  );
+  expect(
+    screen.queryByText("Email or password is incorrect."),
+  ).not.toBeInTheDocument();
+  // not a wrong password: no red mark on the field
+  expect(screen.getByLabelText("Password")).toBeValid();
+
+  fireEvent.click(screen.getByRole("button", { name: "Set a password" }));
+
+  expect(
+    await screen.findByRole("heading", { name: "Check your inbox" }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "We sent an email to sam@email.latech.edu with the next step.",
+  );
+  const [url, init] = fetchMock.mock.calls[1];
+  expect(url).toBe("/_allauth/browser/v1/auth/password/request");
+  expect(init?.method).toBe("POST");
+  expect(JSON.parse(init?.body as string)).toEqual({
+    email: "sam@email.latech.edu",
+  });
+  expect(replace).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole("button", { name: "Back to sign in" }));
+  expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+test("hides the Google-only prompt once the email changes", async () => {
+  mockGoogleOnly();
+  renderForm();
+  fillAndSubmit("sam@email.latech.edu", "any-password");
+  await screen.findByRole("button", { name: "Set a password" });
+
+  fireEvent.change(screen.getByLabelText("School email"), {
+    target: { value: "kim@email.latech.edu" },
+  });
+
+  expect(
+    screen.queryByRole("button", { name: "Set a password" }),
+  ).not.toBeInTheDocument();
+});
+
+test("keeps the prompt and says so when the link can't be sent", async () => {
+  mockGoogleOnly(429);
+  renderForm();
+  fillAndSubmit("sam@email.latech.edu", "any-password");
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Set a password" }),
+  );
+
+  expect(
+    await screen.findByText("Something went wrong. Try again."),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Set a password" }),
+  ).toBeInTheDocument();
+});
+
 test("tells users from another email domain to use their school email", async () => {
   const message = "Use your @latech.edu or @email.latech.edu email.";
   mockFetch(400, {

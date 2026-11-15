@@ -172,7 +172,7 @@ Endpoints we use (same under both prefixes):
 |---|---|---|
 | GET | `config` | available providers, signup open |
 | POST | `auth/signup` | email signup |
-| POST | `auth/login` | email login |
+| POST | `auth/login` | email login; a Google account with no password gets 400 `google_only_account` instead of the usual mismatch (F1-13, DD-37) |
 | GET | `auth/session` | who am I |
 | DELETE | `auth/session` | logout |
 | POST | `auth/email/verify` | verify email key; 200 signed in (the browser that signed up), 401 verified but sign in next |

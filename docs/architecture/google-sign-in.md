@@ -68,7 +68,7 @@ One email is always one account (`ACCOUNT_UNIQUE_EMAIL`). With `SOCIALACCOUNT_EM
 | Google | Set a password in Settings | Saved directly with `account/password/change`, no current password or link (F1-12) | Password and Google |
 | Password, email verified | Continue with Google | Signed in to the same account, and Google is linked | Password and Google |
 | Password, email never verified | Continue with Google | Signed in, and Google is linked. allauth wipes the old password first, in case someone else registered the student's address, then `verify_email_google_proved` (`apps/accounts/signals.py`) marks the address verified because Google proved it (F1-14) | Google |
-| Google | Sign in with email and password | Fails as a wrong password: an account made through Google has none | Google |
+| Google | Sign in with email and password | Refused with `google_only_account`, not the single wrong-password error: the sign-in page says the email signs in with Google and offers Set a password, which emails the same link as Forgot password (F1-13, DD-37) | Google |
 | Google | Sign up with email and password, same address | No second account. allauth answers as for a new signup and emails a "you already have an account" message with a reset link | Google |
 | Google | Reset the password, then sign in with it | allauth sends reset emails to Google-only accounts too | Password and Google |
 

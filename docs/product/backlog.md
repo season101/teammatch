@@ -109,7 +109,7 @@ Sprint S1 | 2 h | Must | UC-01
 ### F1-02 Sign in and sign out
 As a user, I want to sign in and out so that my account stays mine on shared devices.
 - Given a verified account, when I enter the right email and password, then I am signed in with a session cookie.
-- Given wrong credentials, when I submit, then I see a generic error. One planned exception: an account with Google and no password gets a prompt to set one (F1-13, [DD-37](../design/decisions.md)).
+- Given wrong credentials, when I submit, then I see a generic error. One exception: an account with Google and no password gets a prompt to set one (F1-13, [DD-37](../design/decisions.md)).
 - Given I am signed in, when I click sign out, then my session ends and protected pages redirect to sign-in.
 
 Design: [forms](../design/patterns/forms.md), [confirmations](../design/patterns/confirmations.md), screens [02](../design/screens/img/02-sign-in.png) and [25](../design/screens/img/25-settings.png)

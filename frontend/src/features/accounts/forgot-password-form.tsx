@@ -1,12 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { allauthPost, type AllauthError } from "./allauth";
 import { StatusIcon } from "./auth-layout";
 import { buttonClasses } from "@/components/ui/button";
 
 type Status = "idle" | "sending" | "sent";
+
+// Screen 37. Set a password on the sign-in page (F1-13) ends here too.
+export function CheckInbox({
+  email,
+  children,
+}: {
+  email: string;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      aria-labelledby="sent-heading"
+      className="flex flex-col items-center gap-3 text-center"
+    >
+      <StatusIcon name="mail" />
+      <h1 id="sent-heading" className="font-display text-2xl font-extrabold">
+        Check your inbox
+      </h1>
+      <p role="status" className="text-muted">
+        We sent an email to <strong className="text-text">{email}</strong> with
+        the next step.
+      </p>
+      {children}
+    </section>
+  );
+}
 
 // Step 1 of a password reset (F1-10): ask for the email, then allauth sends the link.
 export function ForgotPasswordForm() {
@@ -40,18 +66,7 @@ export function ForgotPasswordForm() {
 
   if (status === "sent") {
     return (
-      <section
-        aria-labelledby="sent-heading"
-        className="flex flex-col items-center gap-3 text-center"
-      >
-        <StatusIcon name="mail" />
-        <h1 id="sent-heading" className="font-display text-2xl font-extrabold">
-          Check your inbox
-        </h1>
-        <p role="status" className="text-muted">
-          We sent an email to <strong className="text-text">{email}</strong>{" "}
-          with the next step.
-        </p>
+      <CheckInbox email={email}>
         <Link href="/login" className={`${buttonClasses("cta")} w-full`}>
           Back to sign in
         </Link>
@@ -62,7 +77,7 @@ export function ForgotPasswordForm() {
         >
           Use a different email
         </button>
-      </section>
+      </CheckInbox>
     );
   }
 
