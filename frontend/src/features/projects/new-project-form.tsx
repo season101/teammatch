@@ -163,7 +163,11 @@ export function NewProjectForm() {
         value={extra}
         errors={errors}
         disabled={create.isPending}
-        onChange={(change) => setExtra((prev) => ({ ...prev, ...change }))}
+        onChange={(field, value) => {
+          setExtra((prev) => ({ ...prev, [field]: value }));
+          // Like Title and Pitch: editing a field drops its error from the last save.
+          setClientErrors((prev) => ({ ...prev, [field]: undefined }));
+        }}
       />
 
       <button

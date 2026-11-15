@@ -348,6 +348,14 @@ test("edits the repository, and a bad link shows on the field with the form kept
   });
   // A field error, so no "Could not save" notice on top.
   expect(screen.queryByText(/Could not save/)).not.toBeInTheDocument();
+
+  // Fixing the link clears the error, and the next failed save shows it again.
+  fireEvent.change(repo, { target: { value: "https://github.com/olive" } });
+  expect(screen.queryByText(message)).not.toBeInTheDocument();
+  expect(repo).toHaveAttribute("aria-invalid", "false");
+  expect(screen.getByLabelText("Title")).toHaveValue("TeamMatch v2");
+  fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+  expect(await screen.findByText(message)).toBeInTheDocument();
 });
 
 test("asks for a title and pitch without calling the API", async () => {

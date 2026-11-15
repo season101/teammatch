@@ -122,6 +122,12 @@ test("a link that isn't to GitHub shows the server's error on the field and keep
   expect(screen.getByLabelText("Pitch")).toHaveValue("Find a team");
   expect(screen.getByLabelText("More details (optional)")).toHaveValue("We meet Tuesdays");
   expect(screen.queryByText("Something went wrong. Please try again.")).not.toBeInTheDocument();
+
+  // Fixing the link clears the error before the next save.
+  fireEvent.change(repo, { target: { value: "https://github.com/olive/campus-eats" } });
+  expect(screen.queryByText(message)).not.toBeInTheDocument();
+  expect(repo).toHaveAttribute("aria-invalid", "false");
+  expect(screen.getByLabelText("More details (optional)")).toHaveValue("We meet Tuesdays");
 });
 
 test("shows the server's message next to the field", async () => {

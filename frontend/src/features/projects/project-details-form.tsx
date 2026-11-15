@@ -35,6 +35,8 @@ export function ProjectDetailsForm({
     title?: string;
     pitch?: string;
   }>({});
+  // Fields edited since the last save lose that save's error.
+  const [edited, setEdited] = useState<Partial<Record<keyof RepoDetails, undefined>>>({});
   const update = useUpdateProject(projectId);
 
   const fields = update.error?.fields ?? {};
@@ -52,6 +54,7 @@ export function ProjectDetailsForm({
     if (!pitch.trim()) found.pitch = "Pitch is required.";
     setClientErrors(found);
     if (found.title || found.pitch) return;
+    setEdited({});
     update.mutate(
       {
         title: title.trim(),
@@ -118,9 +121,12 @@ export function ProjectDetailsForm({
       <RepoDetailsFields
         idPrefix="edit"
         value={extra}
-        errors={fields}
+        errors={{ ...fields, ...edited }}
         disabled={update.isPending}
-        onChange={(change) => setExtra((prev) => ({ ...prev, ...change }))}
+        onChange={(field, value) => {
+          setExtra((prev) => ({ ...prev, [field]: value }));
+          setEdited((prev) => ({ ...prev, [field]: undefined }));
+        }}
       />
       <div className="flex gap-3">
         <button

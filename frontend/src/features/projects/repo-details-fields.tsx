@@ -20,7 +20,7 @@ export function RepoDetailsFields({
   value: RepoDetails;
   errors: Partial<RepoDetails>;
   disabled: boolean;
-  onChange: (change: Partial<RepoDetails>) => void;
+  onChange: (field: keyof RepoDetails, value: string) => void;
 }) {
   const repoId = `${idPrefix}-repo`;
   const detailsId = `${idPrefix}-details`;
@@ -43,7 +43,7 @@ export function RepoDetailsFields({
           aria-invalid={Boolean(errors.repo_url)}
           aria-describedby={`${repoId}-hint${errors.repo_url ? ` ${repoId}-error` : ""}`}
           className={inputClass}
-          onChange={(event) => onChange({ repo_url: event.target.value })}
+          onChange={(event) => onChange("repo_url", event.target.value)}
         />
         <p id={`${repoId}-hint`} className={helperClass}>
           For software projects. Must be a github.com link.
@@ -67,7 +67,7 @@ export function RepoDetailsFields({
           aria-invalid={Boolean(errors.details)}
           aria-describedby={errors.details ? `${detailsId}-error` : undefined}
           className={inputClass}
-          onChange={(event) => onChange({ details: event.target.value })}
+          onChange={(event) => onChange("details", event.target.value)}
         />
         <p className={helperClass}>
           {value.details.length}/{DETAILS_MAX} characters
