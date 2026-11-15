@@ -419,10 +419,15 @@ def test_strength_reaches_100_with_links_and_resume(session, tmp_path):
     expect(page.get_by_role("meter", name="Profile strength")).to_have_attribute("aria-valuenow", "100")
 
 
-def test_strength_is_zero_for_a_bare_profile(verified_user, api):
-    user = verified_user("profiles bare", onboarded=False)
-    me = api().sign_in(user).send("GET", "/api/v1/me/profile/").json()
+def test_strength_is_zero_for_a_bare_profile(page, verified_user, sign_in, api):
+    user = verified_user("profiles bare")
+    client = api().sign_in(user)
+    assert client.send("PATCH", "/api/v1/me/profile/", {"major": "", "skill_ids": []}).ok
+    me = client.send("GET", "/api/v1/me/profile/").json()
     assert me["skills"] == [] and me["bio"] == "" and me["major"] == ""
+    sign_in(page, user)
+    page.goto("/profile")
+    expect(page.get_by_role("meter", name="Profile strength")).to_have_attribute("aria-valuenow", "0")
 
 
 # ---------- someone else's profile (API; the app has no /profile/<id> page) ----------

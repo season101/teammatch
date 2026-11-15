@@ -186,11 +186,22 @@ def seed_candidate():
     return User(email=email_, password=password, name="Sam Student")
 
 
+
+def wait_hydrated(page):
+    """Wait for React to attach to the form: Sign in before that submits natively and stays on /login."""
+    page.wait_for_function(
+        "() => { const f = document.querySelector('main form'); "
+        "return !!f && Object.keys(f).some(k => k.startsWith('__reactProps')) }",
+        timeout=10_000,
+    )
+
+
 @pytest.fixture(scope="session")
 def sign_in():
     def do(page: Page, user: User):
         if "/login" not in page.url:
             page.goto("/login")
+        wait_hydrated(page)
         page.get_by_label("School email").fill(user.email)
         page.get_by_label("Password").fill(user.password)
         page.get_by_role("button", name="Sign in", exact=True).click()

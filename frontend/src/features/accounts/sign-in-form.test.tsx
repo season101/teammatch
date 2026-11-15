@@ -237,7 +237,7 @@ test("shows one generic error for wrong credentials", async () => {
   expect(replace).not.toHaveBeenCalled();
   // The password field is marked and takes focus, and typing clears the mark.
   const password = screen.getByLabelText("Password");
-  expect(password).toHaveFocus();
+  await waitFor(() => expect(password).toHaveFocus());
   expect(password).toBeInvalid();
   fireEvent.change(password, { target: { value: "another-try" } });
   expect(password).toBeValid();

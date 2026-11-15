@@ -78,4 +78,7 @@ def signup_api(api, email, password):
 
 def alerts(scope):
     """The page's own error messages: not Next's always-present, empty route announcer."""
-    return scope.get_by_role("alert").filter(has_text=re.compile(r"\S"))
+    # After a client-side navigation the announcer holds the page title ("Welcome back."), so exclude it by id.
+    return scope.locator('[role="alert"]:not(#__next-route-announcer__)').filter(
+        has_text=re.compile(r"\S")
+    )
