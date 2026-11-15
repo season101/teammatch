@@ -221,6 +221,8 @@ export function useDeleteRole(projectId: number) {
       queryClient.invalidateQueries({ queryKey: ["my-projects"] });
       // The nav badges count open roles and their applicants.
       queryClient.invalidateQueries({ queryKey: ["my-summary"] });
+      // Deleting the last open role locks the team (try_lock), so "It's a Team!" and Teams show it.
+      queryClient.invalidateQueries({ queryKey: ["my-team"] });
     },
   });
 }
