@@ -123,7 +123,8 @@ export function SwipeCard({
       className={`relative col-start-1 row-start-1 touch-pan-y select-none rounded-card shadow-card ${
         isPresent ? (isTop ? "z-10" : "") : isTop ? "z-20" : ""
       }`}
-      style={{ x, y, rotate: reduce ? 0 : rotate }}
+      // willChange: the card gets its own GPU layer, so a drag doesn't repaint the page (PL-17).
+      style={{ x, y, rotate: reduce ? 0 : rotate, willChange: "transform" }}
       animate={{ scale: isTop || reduce ? 1 : 0.96, opacity: isTop ? 1 : 0.7 }}
       transition={{ duration: 0.2, ease: STANDARD }}
       exit="gone"
