@@ -181,6 +181,22 @@ test("the saved theme applies before the first paint", () => {
   expect(document.documentElement.dataset.theme).toBe("dark");
 });
 
+test("a theme picked in another tab applies here too", () => {
+  applySavedTheme();
+  const root = document.documentElement;
+  // What the browser fires in this tab when another one saves the key.
+  const otherTab = (value: string | null) => {
+    if (value === null) localStorage.removeItem("teammatch:theme");
+    else localStorage.setItem("teammatch:theme", value);
+    window.dispatchEvent(new StorageEvent("storage", { key: "teammatch:theme" }));
+  };
+
+  otherTab("light");
+  expect(root.dataset.theme).toBe("light");
+  otherTab(null);
+  expect(root).not.toHaveAttribute("data-theme");
+});
+
 test("the logo goes to Discover, and Profile and Settings are their own rows on desktop", () => {
   renderShell("/profile");
   const [, sideNav, bottomBar] = screen.getAllByRole("navigation", { name: "Main" });
