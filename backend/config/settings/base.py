@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import environ
@@ -198,9 +199,40 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# One JSON object per line on stdout, per logq's logging contract. The otel* fields come
+# from opentelemetry-instrument's log correlation and are null without it.
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler"}},
-    "root": {"handlers": ["console"], "level": env("LOG_LEVEL", default="INFO")},
+    "formatters": {
+        "json": {
+            "()": "pythonjsonlogger.json.JsonFormatter",
+            "fmt": "%(levelname)s %(message)s %(otelTraceID)s %(otelSpanID)s "
+            "%(otelServiceName)s %(funcName)s",
+            "timestamp": True,
+            "rename_fields": {
+                "levelname": "severity_text",
+                "message": "body",
+                "funcName": "code.function",
+                "otelTraceID": "trace_id",
+                "otelSpanID": "span_id",
+                "otelServiceName": "service.name",
+                "exc_info": "exception.stacktrace",
+            },
+        }
+    },
+    "handlers": {
+        "stdout": {
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+            "formatter": "json",
+        }
+    },
+    "root": {"handlers": ["stdout"], "level": env("LOG_LEVEL", default="INFO")},
+    # Both bring their own handlers; point them at ours so nothing prints twice or as plain text.
+    "loggers": {
+        "django": {"handlers": ["stdout"], "propagate": False},
+        "uvicorn": {"handlers": ["stdout"], "propagate": False},
+    },
 }
+logging.captureWarnings(True)  # a Python warning is one JSON line, not two stderr lines
