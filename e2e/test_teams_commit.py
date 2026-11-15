@@ -336,7 +336,8 @@ def test_deleting_the_only_open_role_of_an_unfilled_project(owned):
     project = owned("Zero Owner", [("Only", ["Python"])])
     deleted = project.client.send("DELETE", f"/api/v1/roles/{role_id(project)}/")
     assert deleted.status in (204, 409), deleted.text()
-    assert team_of(project.client) is None or deleted.status == 204
+    # Whatever DELETE answered, nobody was ever committed, so no team may exist.
+    assert team_of(project.client) is None
 
 
 def test_committed_member_cannot_apply_and_deck_stays_closed_after_lock(

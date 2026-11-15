@@ -103,15 +103,20 @@ def test_empty_and_blank_messages_are_not_sent(page: Page, team, sign_in):
     project, member, client = team
     team_id = team_of(project.client)["id"]
     sign_in_member(page, sign_in, member)
+    sent = []
+    page.on("websocket", lambda ws: ws.on("framesent", lambda frame: sent.append(frame)))
     page.goto(f"/teams/{team_id}/chat")
     expect(page.get_by_role("button", name="Send")).to_be_enabled()
+    # The socket is open: the page's own frames (if any) are the baseline.
+    baseline = len(sent)
     page.get_by_role("button", name="Send").click()
     box(page).fill("   \n  ")
     box(page).press("Enter")
     page.get_by_role("button", name="Send").click()
-    page.wait_for_timeout(800)
-    assert client.send("GET", f"/api/v1/teams/{team_id}/messages/").json()["results"] == []
+    # A send writes its frame in the submit handler, so nothing more is out by now.
+    assert len(sent) == baseline, f"empty submits sent frames: {sent[baseline:]}"
     expect(page.get_by_role("log", name="Messages").get_by_role("listitem")).to_have_count(0)
+    assert client.send("GET", f"/api/v1/teams/{team_id}/messages/").json()["results"] == []
 
 
 def test_enter_sends_shift_enter_makes_a_new_line_and_long_text_is_capped(
