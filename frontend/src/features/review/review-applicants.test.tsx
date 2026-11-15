@@ -223,6 +223,40 @@ test("a role with no one waiting says so", async () => {
   ).toBeInTheDocument();
 });
 
+test("opens on the first role with someone waiting, past filled and empty ones", async () => {
+  mockApi({
+    projects: [
+      {
+        ...openProject,
+        roles: [
+          { id: 3, title: "Designer", status: "filled" },
+          { id: 1, title: "Backend developer", status: "open" },
+          { id: 2, title: "Frontend developer", status: "open" },
+        ],
+      },
+    ],
+  });
+  renderPage();
+
+  expect(
+    await screen.findByRole("tab", { name: /Frontend developer/ }),
+  ).toHaveAttribute("aria-selected", "true");
+  expect(
+    await screen.findByRole("article", {
+      name: "Applicant Sam Candidate for Frontend developer",
+    }),
+  ).toBeInTheDocument();
+});
+
+test("with no one waiting anywhere, opens on the first role", async () => {
+  mockApi({ waiting: [] });
+  renderPage();
+
+  expect(
+    await screen.findByRole("tab", { name: /Frontend developer/ }),
+  ).toHaveAttribute("aria-selected", "true");
+});
+
 test("a filled role shows a tick, who committed and what happened to the others", async () => {
   mockApi({
     projects: [

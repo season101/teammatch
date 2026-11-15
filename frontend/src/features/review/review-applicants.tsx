@@ -1,9 +1,10 @@
 "use client";
 
+import { useQueries } from "@tanstack/react-query";
 import Link from "next/link";
 import { Tabs } from "@/components/ui/tabs";
 import { SkeletonRows } from "@/components/ui/skeleton";
-import { useMyProjects } from "./queries";
+import { applicantsQuery, useMyProjects, type MyProject } from "./queries";
 import { RoleQueue, RoleTabLabel } from "./role-queue";
 
 export function ReviewApplicants() {
@@ -65,30 +66,47 @@ export function ReviewApplicants() {
           {project.roles.length === 0 ? (
             <p className="text-sm text-muted">No roles yet.</p>
           ) : (
-            <Tabs
-              label={`Roles of ${project.title}`}
-              // Back from an applicant's resume (F1-17) returns to the same role.
-              remember={`review-${project.id}`}
-              tabs={project.roles.map((role) => ({
-                id: String(role.id),
-                label: <RoleTabLabel role={role} />,
-                panel: (
-                  <RoleQueue
-                    role={role}
-                    projectId={project.id}
-                    rolesToGo={
-                      project.roles.filter(
-                        (other) =>
-                          other.status === "open" && other.id !== role.id,
-                      ).length
-                    }
-                  />
-                ),
-              }))}
-            />
+            <RoleTabs project={project} />
           )}
         </section>
       ))}
     </div>
+  );
+}
+
+// Opens on the first role with someone waiting, not on a filled one, else the first
+// role; a role picked earlier this session wins. The tab labels load the same lists
+// for their counts, so no extra requests.
+function RoleTabs({ project }: { project: MyProject }) {
+  const open = project.roles.filter((role) => role.status === "open");
+  const waiting = useQueries({
+    queries: open.map((role) => applicantsQuery(role.id)),
+  });
+  if (waiting.some((list) => list.isPending)) {
+    return <SkeletonRows label="Loading applicants" />;
+  }
+  const first =
+    open.find((_, i) => waiting[i].data?.length) ?? project.roles[0];
+
+  return (
+    <Tabs
+      label={`Roles of ${project.title}`}
+      defaultTab={String(first.id)}
+      // Back from an applicant's resume (F1-17) returns to the same role.
+      remember={`review-${project.id}`}
+      tabs={project.roles.map((role) => ({
+        id: String(role.id),
+        label: <RoleTabLabel role={role} />,
+        panel: (
+          <RoleQueue
+            role={role}
+            projectId={project.id}
+            rolesToGo={
+              open.filter((other) => other.id !== role.id).length
+            }
+          />
+        ),
+      }))}
+    />
   );
 }
