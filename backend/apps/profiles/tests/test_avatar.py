@@ -128,8 +128,8 @@ def test_remove_deletes_the_file(client, sam):
 
 def test_avatar_needs_sign_in(client):
     user = User.objects.create_user("alex@latech.edu", "a-long-password")
-    assert client.post(URL, {"avatar": image_file()}).status_code in (401, 403)
-    assert client.get(f"/api/v1/profiles/{user.profile.id}/avatar/").status_code in (401, 403)
+    assert client.post(URL, {"avatar": image_file()}).status_code == 401
+    assert client.get(f"/api/v1/profiles/{user.profile.id}/avatar/").status_code == 401
 
 
 def test_others_see_my_avatar_url_on_my_public_profile(client, sam):

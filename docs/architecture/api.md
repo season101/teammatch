@@ -12,6 +12,7 @@ The source of truth is the OpenAPI schema, not this page. This page is the overv
 | Format | JSON, `snake_case` fields, ISO 8601 timestamps with their offset, in Central time (`2026-11-15T01:44:00-06:00`; stored in UTC). Dates such as a term's are Central calendar dates |
 | Auth | Session cookie from allauth headless (`browser` client). Unsafe methods need the `X-CSRFToken` header. Future mobile app sends `X-Session-Token` (`app` client). |
 | Authz | Every object endpoint checks ownership or membership. Objects the user cannot see return `404`. Acting on something you can see but don't own returns `403` (for example editing someone else's profile). |
+| Team rules | Applying, creating or publishing a project, like/pass, commit and sending a chat message need the Team rules accepted (`POST /api/v1/me/rules/accept/`, DD-12). Before that they answer `403` `rules_not_accepted` (chat: a `chat.error` with that code). Reading, withdrawing and declining don't. The app's onboarding asks first (DD-47); the API holds it for any client |
 | IDs | Integer ids in paths |
 | Trailing slash | Always (`/api/v1/projects/`) |
 | Past terms | Once a project's term has ended (its last day counts), publishing it, applying to its roles, like/pass and commit answer `409` `term_over`, even by id |
@@ -31,7 +32,7 @@ The source of truth is the OpenAPI schema, not this page. This page is the overv
 
 ## Errors
 
-> Not built yet. Today the API returns Django REST Framework's default bodies: `{ "detail": "..." }`, or `{ "field": ["..."] }` for validation errors. The `code` values in the table below are raised by the backend, for example `project_locked`, but they are not in the response body yet. The shape below is the target.
+> Today the API returns Django REST Framework's default bodies with one addition: `{ "detail": "...", "code": "..." }`. The `core` exception handler adds `code` whenever the error has one, for example `not_authenticated` or `project_locked`, and the frontend branches on it. Validation errors stay `{ "field": ["..."] }`. The envelope below is the target, not built yet.
 
 All `/api/v1/` errors use one shape (custom DRF exception handler in `core`):
 
@@ -50,8 +51,8 @@ All `/api/v1/` errors use one shape (custom DRF exception handler in `core`):
 | Status | `code` examples | When |
 |---|---|---|
 | 400 | `validation_error`, `invalid_avatar`, `repo_url_not_github`, `resume_too_big`, `resume_not_pdf` | bad input |
-| 401 | `not_authenticated` | no session |
-| 403 | `permission_denied`, `profile_retired`, `own_project` | logged in but not allowed |
+| 401 | `not_authenticated` | no session, sent with `WWW-Authenticate: Session`. A client treats `401` as signed out and `403` as not allowed; a write without the CSRF token is `403` too |
+| 403 | `permission_denied`, `profile_retired`, `own_project`, `rules_not_accepted` | logged in but not allowed |
 | 404 | `not_found` | missing or not visible to you |
 | 409 | `already_applied`, `role_not_open`, `already_on_team`, `project_locked`, `term_over` | state conflict |
 | 429 | `throttled` | rate limit |
@@ -99,6 +100,7 @@ Login, signup, logout, password and Google live under allauth (below).
 |---|---|---|---|
 | GET | `/api/v1/me/profile/` | user | own profile |
 | PATCH | `/api/v1/me/profile/` | user | update display name, bio, major, skills, `github_url` and `linkedin_url` (F1-15). Links must be `https://github.com/...` or `https://linkedin.com/...`, with or without `www.`, with a path and no port or user; blank clears one. Anything else is a `400` on the field, "Enter a link that starts with https://github.com/" (code `github_url_invalid`) or the LinkedIn one (`linkedin_url_invalid`) |
+| POST | `/api/v1/me/rules/accept/` | user | agree to the Team rules, `204`; repeats keep the first time. `rules_accepted_at` on my profile |
 | POST | `/api/v1/me/avatar/` | user | upload my avatar as `multipart/form-data`, field `avatar`: JPEG, PNG or WebP of 2 MB or less, checked from the file's bytes with Pillow. It's redrawn at most 512px (dropping EXIF such as location) and saved to SeaweedFS through django-storages; the old file is deleted. Anything else: `400` `invalid_avatar`, and the old avatar stays. Answers with my profile |
 | DELETE | `/api/v1/me/avatar/` | user | remove my avatar and delete its file. Answers with my profile |
 | GET | `/api/v1/profiles/{id}/avatar/` | user | avatar image, streamed by the API from SeaweedFS (`Cache-Control: private`). No avatar: `404`. Profiles give `avatar_url`, this address with `?v=` that changes on each upload, or `null` |
@@ -114,13 +116,13 @@ Login, signup, logout, password and Google live under allauth (below).
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/v1/projects/` | user | open projects, cursor-paginated. `?q=` searches title, pitch, open role titles and their required skills, ignoring case (F2-07). The `term`, `skill` and `status` filters are **(planned)** |
+| GET | `/api/v1/projects/` | user | open projects (not those of deactivated owners, PL-07), cursor-paginated. `?q=` searches title, pitch, open role titles and their required skills, ignoring case (F2-07). The `term`, `skill` and `status` filters are **(planned)** |
 | POST | `/api/v1/projects/` | user | create project (draft): title, pitch, and optionally `repo_url` and `details` (F2-12) |
 | GET | `/api/v1/projects/mine/` | user | projects I own, newest first, each with its roles in the order they were added (as on the project page) |
 | GET | `/api/v1/projects/{id}/` | user | project detail with roles, `repo_url` and `details` (empty strings when not set) |
 | PATCH | `/api/v1/projects/{id}/` | owner | edit title, pitch, `repo_url`, `details`. An empty `repo_url` or `details` clears it. A non-empty `repo_url` that isn't `https://github.com/...` gets `400` with the field error `{"repo_url": ["Enter a link that starts with https://github.com/"]}`. The server raises it as `repo_url_not_github`, but field errors don't carry their code in the body yet (F2-12) |
 | DELETE | `/api/v1/projects/{id}/` | owner | delete draft **(planned)** |
-| POST | `/api/v1/projects/{id}/publish/` | owner | draft to open |
+| POST | `/api/v1/projects/{id}/publish/` | owner | draft to open. The owner-only rows answer `404` for someone else's draft or archived project, `403` for their open or locked one |
 | POST | `/api/v1/projects/{id}/close/` | owner | archive |
 | POST | `/api/v1/projects/{id}/roles/` | owner | add role with 1-20 `required_skills` ids (unknown id: `400`) |
 | PATCH | `/api/v1/roles/{id}/` | owner | edit role, required skills (1-20 ids) |
@@ -130,18 +132,18 @@ Login, signup, logout, password and Google live under allauth (below).
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/v1/feed/` | user | swipe deck, open roles ranked by match % (share of the role's required skills I have), then newest. Empty while I'm retired |
+| GET | `/api/v1/feed/` | user | swipe deck, open roles ranked by match % (share of the role's required skills I have), then newest. Leaves out deactivated owners' projects (PL-07). Empty while I'm retired |
 | POST | `/api/v1/feed/reset/` | user | clear my passes so those roles come back into my feed, `204`. Applied roles stay out |
 | POST | `/api/v1/roles/{id}/dismiss/` | user | candidate pass on a role, `204`; repeats are fine. My own project: `403`; role or project not open: `409` |
 | DELETE | `/api/v1/roles/{id}/dismiss/` | user | take back my pass on a role, `204`, also when there was none. Only my own pass |
 | POST | `/api/v1/applications/` | user | apply to a role `{role, note}`. Retired: `403` `profile_retired`. Committed this term: `409` `applicant_committed` |
 | GET | `/api/v1/applications/mine/?status=` | user | my applications. A withdrawn one has `withdrawn_reason`: `applicant` (I withdrew), `committed` (I took a seat elsewhere), `team_locked` (my own team locked) or `project_closed` (the owner closed it); empty on rows withdrawn before it was recorded |
 | POST | `/api/v1/applications/{id}/withdraw/` | applicant | withdraw pending application |
-| GET | `/api/v1/roles/{id}/applications/?status=` | owner | pending applicants for a role, minus retired ones, best `match_percent` first then oldest (`403` if it's not your project). `?status=liked` lists offers out, `?status=committed` who took the seat. Each has `committed_elsewhere`: true when the applicant holds a seat on another open project this term, so a like would get `409` `applicant_committed` |
-| POST | `/api/v1/applications/{id}/like/` | owner | like: sends an offer, the role stays open (F4-10). Applicant on a team or committed: `409` |
-| POST | `/api/v1/applications/{id}/commit/` | applicant | take the seat an offer is for: fills the role, closes my other applications this term, may lock the team. `409` `offer_not_open`, `role_not_open`, `owns_open_project` or `applicant_committed`; someone else's: `403` |
+| GET | `/api/v1/roles/{id}/applications/?status=` | owner | pending applicants for a role, minus retired and deactivated ones, best `match_percent` first then oldest. Someone else's open or locked project: `403`; their draft or archived one: `404`. `?status=liked` lists offers out, `?status=committed` who took the seat. Each has `committed_elsewhere`: true when the applicant holds a seat on another open project this term, so a like would get `409` `applicant_committed` |
+| POST | `/api/v1/applications/{id}/like/` | owner | like: sends an offer, the role stays open (F4-10). Applicant on a team or committed: `409`. Your own application: `403`; someone else's on a role that isn't yours: `404` |
+| POST | `/api/v1/applications/{id}/commit/` | applicant | take the seat an offer is for: fills the role, closes my other applications this term, may lock the team. `409` `offer_not_open`, `role_not_open`, `owns_open_project` or `applicant_committed`. An offer on your own role: `403`; anyone else's: `404` |
 | POST | `/api/v1/applications/{id}/decline/` | applicant | turn an offer down; the role stays open. Not an open offer: `409` |
-| POST | `/api/v1/applications/{id}/pass/` | owner | pass |
+| POST | `/api/v1/applications/{id}/pass/` | owner | pass (`403`/`404` as for like) |
 | GET | `/api/v1/teams/mine/` | user | my team this term with my `seen_at`: `{"team": {id, project {id, title}, term {name, end_date}, members [{display_name, role}], formed_at, seen_at}}`. `role` is the role title, or `"Owner"`. `formed_at` is when the team locked. No team this term: `200` with `{"team": null}` |
 | GET | `/api/v1/teams/{id}/` | member | team detail with members and roles **(planned)** |
 | POST | `/api/v1/teams/{id}/seen/` | member | mark the "It's a Team!" screen as seen, `204`. Sets my `seen_at` the first time; repeats keep it. Not my team: `404` |
@@ -222,7 +224,7 @@ Every frame is JSON:
 | `type` | `data` |
 |---|---|
 | `chat.message` | `{ "id": 1, "team": 3, "sender": { "id": 7, "display_name": "..." }, "body": "...", "created_at": "2026-10-30T18:00:00Z", "client_id": "uuid or null" }` |
-| `chat.error` | `{ "code": "validation_error", "message": "...", "client_id": "uuid or null" }` |
+| `chat.error` | `{ "code": "validation_error", "message": "...", "client_id": "uuid or null" }`. `code` is `rules_not_accepted` when the sender hasn't accepted the Team rules |
 | `application.liked` | `{ "application": 12, "role": 4, "project": 2 }` (future, `/ws/notifications/`) |
 | `team.formed` | `{ "team": 3, "project": 2 }` (future, `/ws/notifications/`) |
 | `pong` | `{}` |

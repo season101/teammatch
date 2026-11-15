@@ -188,7 +188,7 @@ def test_a_locking_commit_runs_a_fixed_number_of_queries(
     offer(apply(role, "lee@latech.edu"))
     client = as_user(liked.applicant)
 
-    with django_assert_num_queries(28):  # same count however many roles or rivals
+    with django_assert_num_queries(29):  # same count however many roles or rivals
         response = client.post(f"/api/v1/applications/{liked.id}/commit/")
 
     assert response.json()["team_locked"] is True
@@ -427,13 +427,15 @@ def test_decline_closes_the_offer_and_leaves_the_role_open(owner, project):
     assert commit_as(liked).status_code == 409
 
 
-def test_commit_and_decline_are_403_for_someone_elses_offer(owner, project):
+def test_commit_and_decline_are_404_for_someone_elses_offer(owner, project):
     liked = offer(apply(add_role(project), "sam@latech.edu"))
     stranger = as_user(user("kim@latech.edu"))
 
-    assert stranger.post(f"/api/v1/applications/{liked.id}/commit/").status_code == 403
-    assert stranger.post(f"/api/v1/applications/{liked.id}/decline/").status_code == 403
+    # a stranger can't see the offer at all; the owner can, but it isn't theirs to take
+    assert stranger.post(f"/api/v1/applications/{liked.id}/commit/").status_code == 404
+    assert stranger.post(f"/api/v1/applications/{liked.id}/decline/").status_code == 404
     assert as_user(owner).post(f"/api/v1/applications/{liked.id}/commit/").status_code == 403
+    assert as_user(owner).post(f"/api/v1/applications/{liked.id}/decline/").status_code == 403
     assert status_of(liked) == LIKED
 
 
@@ -508,7 +510,7 @@ def test_seen_is_404_for_a_non_member_and_an_unknown_team(team):
 
 
 def test_seen_requires_sign_in(team):
-    assert APIClient().post(f"/api/v1/teams/{team.id}/seen/").status_code in (401, 403)
+    assert APIClient().post(f"/api/v1/teams/{team.id}/seen/").status_code == 401
 
 
 # Races. SQLite ignores select_for_update, so these need Postgres (CI has it).

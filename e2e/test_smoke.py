@@ -6,8 +6,8 @@ from playwright.sync_api import Page, expect
 
 
 def test_seeded_user_signs_in_and_sees_the_deck(page: Page, api, seed_candidate, sign_in):
-    # seed_demo fills the profile but leaves Team rules to the student; agree once so the gate
-    # lets them through. Idempotent, so reruns on the same stack are fine.
+    # bootstrap and seed_demo mark the seed accounts' Team rules accepted, so the gate lets
+    # them through. Agreeing again keeps the first time, and covers a stack seeded before that.
     assert api().sign_in(seed_candidate).send("POST", "/api/v1/me/rules/accept/").ok
 
     sign_in(page, seed_candidate)

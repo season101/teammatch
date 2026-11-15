@@ -3,10 +3,12 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.core.pagination import DefaultCursorPagination
+from apps.profiles.permissions import RulesAccepted
 
 from . import services
 from .models import Project, Role
@@ -20,8 +22,9 @@ from .serializers import (
 
 
 def owned_project(request, pk):
-    """The project, or 404. Not mine: 403."""
-    project = get_object_or_404(Project, pk=pk)
+    """My project. Missing or not visible to me (someone's draft or archived one): 404.
+    Someone's open or locked project: 403."""
+    project = get_object_or_404(Project.objects.filter(services.visible_to(request.user)), pk=pk)
     if project.owner_id != request.user.id:
         raise PermissionDenied()
     return project
@@ -42,10 +45,11 @@ def owned_project(request, pk):
 )
 class ProjectListCreateView(generics.ListCreateAPIView):
     """GET: open projects in the current term, newest first. ?q= searches them (F2-07).
-    POST: create a draft.
+    POST: create a draft. Team rules not accepted: 403 rules_not_accepted.
     """
 
     pagination_class = DefaultCursorPagination
+    permission_classes = [IsAuthenticated, RulesAccepted]
 
     def get_queryset(self):
         return services.open_projects(q=self.request.query_params.get("q", ""))
@@ -83,7 +87,8 @@ class RoleUpdateView(generics.UpdateAPIView):
     http_method_names = ["patch", "delete", "options"]
 
     def get_object(self):
-        role = get_object_or_404(Role.objects.select_related("project"), pk=self.kwargs["pk"])
+        roles = Role.objects.filter(services.visible_to(self.request.user, "project__"))
+        role = get_object_or_404(roles.select_related("project"), pk=self.kwargs["pk"])
         if role.project.owner_id != self.request.user.id:
             raise PermissionDenied()
         if self.request.method == "PATCH":
@@ -106,7 +111,10 @@ class RoleUpdateView(generics.UpdateAPIView):
 
 @extend_schema(tags=["projects"], request=None, responses=ProjectSerializer)
 class ProjectPublishView(APIView):
-    """Open my draft project for applications. Blocked when it has no roles."""
+    """Open my draft project for applications. Blocked when it has no roles.
+    Team rules not accepted: 403 rules_not_accepted."""
+
+    permission_classes = [IsAuthenticated, RulesAccepted]
 
     def post(self, request, pk):
         project = services.publish_project(owned_project(request, pk))

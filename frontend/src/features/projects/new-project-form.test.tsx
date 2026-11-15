@@ -137,6 +137,25 @@ test("shows the server's message next to the field", async () => {
   expect(await screen.findByText("Server says no.")).toBeInTheDocument();
 });
 
+test("a 401 says to sign in", async () => {
+  mockFetch({ detail: "Authentication credentials were not provided.", code: "not_authenticated" }, 401);
+  renderForm();
+  fillAndSubmit();
+  expect(await screen.findByText("Sign in to create a project.")).toBeInTheDocument();
+});
+
+test("a 403 is not signed out: it shows the server's reason", async () => {
+  mockFetch(
+    { detail: "Agree to the Team rules before you do that.", code: "rules_not_accepted" },
+    403,
+  );
+  renderForm();
+  fillAndSubmit();
+  expect(await screen.findByText("Agree to the Team rules before you do that.")).toBeInTheDocument();
+  expect(screen.queryByText("Sign in to create a project.")).not.toBeInTheDocument();
+  expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();
+});
+
 test("disables creation and explains when there is no active term", async () => {
   mockFetch({ detail: "There is no active term, so projects cannot be created yet." }, 409);
   renderForm();

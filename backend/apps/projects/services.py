@@ -132,6 +132,7 @@ def publish_project(project):
 
 def open_projects(today=None, q=""):
     """Open projects in the current term, with how many roles are still open (F2-03).
+    Not the projects of owners an admin deactivated (PL-07).
 
     q keeps the ones whose title, pitch, or an open role's title or required skill
     contains it, ignoring case (F2-07).
@@ -142,6 +143,7 @@ def open_projects(today=None, q=""):
             status=ProjectStatus.OPEN,
             term__start_date__lte=today,
             term__end_date__gte=today,
+            owner__is_active=True,
         )
         .select_related("owner__profile")
         .annotate(open_role_count=Count("roles", filter=Q(roles__status=RoleStatus.OPEN)))
@@ -168,17 +170,24 @@ def my_projects(user):
     return Project.objects.filter(owner=user).prefetch_related(Prefetch("roles", queryset=roles))
 
 
+def visible_to(user, via=""):
+    """Projects this user may see: their own, and anyone's open or locked ones (F2-02).
+
+    via is the lookup path to the project, e.g. "project__" to filter roles.
+    """
+    shown = [ProjectStatus.OPEN, ProjectStatus.LOCKED]
+    return Q(**{f"{via}owner": user}) | Q(**{f"{via}status__in": shown})
+
+
 def visible_projects(user):
-    """Projects this user may open: their own, and anyone's open or locked ones (F2-02)."""
+    """Projects this user may open (visible_to), with their roles."""
     roles = (
         Role.objects.order_by("created_at")
         .select_related("filled_by__profile")
         .prefetch_related("required_skills")
     )
     return (
-        Project.objects.filter(
-            Q(owner=user) | Q(status__in=[ProjectStatus.OPEN, ProjectStatus.LOCKED])
-        )
+        Project.objects.filter(visible_to(user))
         .select_related("owner__profile")
         .prefetch_related(Prefetch("roles", queryset=roles))
     )

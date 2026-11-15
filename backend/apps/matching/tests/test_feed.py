@@ -61,7 +61,7 @@ def feed_ids(api):
 
 
 def test_feed_requires_sign_in():
-    assert APIClient().get(FEED_URL).status_code == 403
+    assert APIClient().get(FEED_URL).status_code == 401
 
 
 def test_feed_lists_open_roles_with_project(api, project, owner):

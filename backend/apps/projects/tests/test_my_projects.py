@@ -84,4 +84,4 @@ def test_query_count_does_not_grow_with_projects(owner, term, django_assert_max_
 
 
 def test_requires_sign_in():
-    assert APIClient().get(URL).status_code in (401, 403)
+    assert APIClient().get(URL).status_code == 401

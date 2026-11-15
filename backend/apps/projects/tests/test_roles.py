@@ -145,17 +145,23 @@ def test_role_needs_a_title(owner, project, skill):
     assert "title" in response.data
 
 
-def test_non_owner_cannot_add_a_role(other, project, skill):
+# Someone's draft is not visible to anyone else (404); their open project is (403).
+NOT_MINE = [(ProjectStatus.DRAFT, 404), (ProjectStatus.OPEN, 403)]
+
+
+@pytest.mark.parametrize("status, answer", NOT_MINE)
+def test_non_owner_cannot_add_a_role(other, project, skill, status, answer):
+    Project.objects.filter(pk=project.pk).update(status=status)
     body = {"title": "Dev", "required_skills": [skill.id]}
     response = client_for(other).post(roles_url(project), body, format="json")
-    assert response.status_code == 403
+    assert response.status_code == answer
     assert Role.objects.count() == 0
 
 
 def test_anonymous_cannot_add_a_role(project, skill):
     body = {"title": "Dev", "required_skills": [skill.id]}
     response = APIClient().post(roles_url(project), body, format="json")
-    assert response.status_code in (401, 403)
+    assert response.status_code == 401
 
 
 def test_cannot_add_a_role_to_a_locked_project(owner, project, skill):
@@ -179,9 +185,11 @@ def test_owner_edits_a_role_and_its_skills(owner, role, skill_b):
     assert list(role.required_skills.all()) == [skill_b]
 
 
-def test_non_owner_cannot_edit_a_role(other, role):
+@pytest.mark.parametrize("status, answer", NOT_MINE)
+def test_non_owner_cannot_edit_a_role(other, role, status, answer):
+    Project.objects.filter(pk=role.project_id).update(status=status)
     response = client_for(other).patch(role_url(role), {"title": "Hacked"}, format="json")
-    assert response.status_code == 403
+    assert response.status_code == answer
     role.refresh_from_db()
     assert role.title == "Backend dev"
 
@@ -215,7 +223,7 @@ def test_project_without_roles_cannot_be_published(owner, project):
 
 def test_non_owner_cannot_publish(other, project, role):
     response = client_for(other).post(publish_url(project))
-    assert response.status_code == 403
+    assert response.status_code == 404  # someone's draft isn't visible
     project.refresh_from_db()
     assert project.status == ProjectStatus.DRAFT
 
@@ -346,9 +354,11 @@ def test_owner_deletes_an_open_role_and_its_applications(owner, other, project, 
     assert not Application.objects.filter(applicant=other).exists()
 
 
-def test_non_owner_cannot_delete_a_role(other, project, role):
+@pytest.mark.parametrize("status, answer", NOT_MINE)
+def test_non_owner_cannot_delete_a_role(other, project, role, status, answer):
+    Project.objects.filter(pk=project.pk).update(status=status)
     response = client_for(other).delete(role_url(role))
-    assert response.status_code == 403
+    assert response.status_code == answer
     assert Role.objects.filter(pk=role.pk).exists()
 
 

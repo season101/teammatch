@@ -63,4 +63,4 @@ def test_no_active_term_blocks_creation(client):
 
 def test_anonymous_user_cannot_create(active_term):
     response = APIClient().post(URL, {"title": "A", "pitch": "B"}, format="json")
-    assert response.status_code in (401, 403)
+    assert response.status_code == 401

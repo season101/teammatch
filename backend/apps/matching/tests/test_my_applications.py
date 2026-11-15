@@ -125,8 +125,8 @@ def test_cannot_withdraw_someone_elses_application(project, sam):
     assert application.status == ApplicationStatus.PENDING
 
 
-def test_signed_out_users_get_403(project, sam):
+def test_signed_out_users_get_401(project, sam):
     application = apply(project, sam)
 
-    assert APIClient().get(MINE).status_code == 403
-    assert APIClient().post(withdraw_url(application)).status_code == 403
+    assert APIClient().get(MINE).status_code == 401
+    assert APIClient().post(withdraw_url(application)).status_code == 401

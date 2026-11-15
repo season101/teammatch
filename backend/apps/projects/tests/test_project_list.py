@@ -157,4 +157,4 @@ def test_search_skips_filled_roles_and_projects_that_are_not_open(client, owner,
 
 def test_anonymous_user_cannot_list(owner, term):
     response = APIClient().get(URL)
-    assert response.status_code in (401, 403)
+    assert response.status_code == 401

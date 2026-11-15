@@ -38,6 +38,7 @@ export interface paths {
          * @description Take the seat this offer is for (F4-10). Closes my other applications this term.
          *
          *     409: offer_not_open, role_not_open, owns_open_project or applicant_committed.
+         *     Team rules not accepted: 403 rules_not_accepted.
          */
         post: operations["applications_commit_create"];
         delete?: never;
@@ -76,6 +77,8 @@ export interface paths {
          * @description Like or pass a pending applicant on my role. A like is an offer (F4-10).
          *
          *     Not pending, the role is filled, or the applicant is on a team or committed: 409.
+         *     My own application: 403. Someone else's on a role that isn't mine: 404.
+         *     Team rules not accepted: 403 rules_not_accepted.
          */
         post: operations["applications_like_create"];
         delete?: never;
@@ -97,6 +100,8 @@ export interface paths {
          * @description Like or pass a pending applicant on my role. A like is an offer (F4-10).
          *
          *     Not pending, the role is filled, or the applicant is on a team or committed: 409.
+         *     My own application: 403. Someone else's on a role that isn't mine: 404.
+         *     Team rules not accepted: 403 rules_not_accepted.
          */
         post: operations["applications_pass_create"];
         delete?: never;
@@ -347,13 +352,13 @@ export interface paths {
         };
         /**
          * @description GET: open projects in the current term, newest first. ?q= searches them (F2-07).
-         *     POST: create a draft.
+         *     POST: create a draft. Team rules not accepted: 403 rules_not_accepted.
          */
         get: operations["projects_list"];
         put?: never;
         /**
          * @description GET: open projects in the current term, newest first. ?q= searches them (F2-07).
-         *     POST: create a draft.
+         *     POST: create a draft. Team rules not accepted: 403 rules_not_accepted.
          */
         post: operations["projects_create"];
         delete?: never;
@@ -418,7 +423,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Open my draft project for applications. Blocked when it has no roles. */
+        /**
+         * @description Open my draft project for applications. Blocked when it has no roles.
+         *     Team rules not accepted: 403 rules_not_accepted.
+         */
         post: operations["projects_publish_create"];
         delete?: never;
         options?: never;
@@ -486,7 +494,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * @description Applicants for one of my roles. Not my project: 403.
+         * @description Applicants for one of my roles. Someone's open or locked project: 403. A role I
+         *     can't see (on someone's draft or archived project): 404.
          *
          *     Pending by default, minus retired ones (BR-09), best match first then oldest.
          *     ?status=liked lists my offers out (F4-10), newest first.

@@ -94,7 +94,7 @@ def test_owner_email_is_not_exposed(other, project):
 
 def test_anonymous_user_cannot_see_a_project(project):
     response = APIClient().get(url(project))
-    assert response.status_code in (401, 403)
+    assert response.status_code == 401
 
 
 @pytest.fixture

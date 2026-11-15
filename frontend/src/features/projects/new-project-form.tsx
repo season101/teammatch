@@ -26,12 +26,15 @@ export function NewProjectForm() {
 
   const failure = create.error;
   const noTerm = failure?.status === 409;
-  const signedOut = failure?.status === 401 || failure?.status === 403;
+  const signedOut = failure?.status === 401;
+  // Signed in but not allowed (for example the Team rules aren't accepted): the API says why.
+  const refused = failure?.status === 403 && failure.message ? failure.message : "";
   const errors: FieldErrors = { ...failure?.fields, ...clientErrors };
   const unexpected =
     failure &&
     !noTerm &&
     !signedOut &&
+    !refused &&
     Object.keys(failure.fields).length === 0;
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -93,6 +96,11 @@ export function NewProjectForm() {
       {signedOut && (
         <p role="alert" className={noticeClass}>
           Sign in to create a project.
+        </p>
+      )}
+      {refused && (
+        <p role="alert" className={noticeClass}>
+          {refused}
         </p>
       )}
       {unexpected && (

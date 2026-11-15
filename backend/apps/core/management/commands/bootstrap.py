@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from apps.core.models import Term
+from apps.profiles.services import accept_rules
 
 # Add a line once the next term's dates are known. A term that exists keeps the dates an admin set.
 TERMS = [("Fall 2026", datetime.date(2026, 9, 1), datetime.date(2026, 11, 20))]
@@ -47,6 +48,10 @@ class Command(BaseCommand):
             EmailAddress.objects.update_or_create(
                 user=user, email=user.email, defaults={"verified": True, "primary": True}
             )
+            # Demo accounts act straight away, and the API needs the Team rules accepted.
+            accept_rules(user)
             role = ", admin" if is_admin else ""
             action = "created" if created else "updated"
-            self.stdout.write(f"{prefix.lower()} account {user.email}: {action}, verified{role}")
+            self.stdout.write(
+                f"{prefix.lower()} account {user.email}: {action}, verified, rules accepted{role}"
+            )
