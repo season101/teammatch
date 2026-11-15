@@ -47,7 +47,14 @@ export function Tabs({
 
   return (
     <div>
-      <div role="tablist" aria-label={label} className="flex border-b border-border">
+      {/* Tabs that don't fit (many roles on a phone) scroll inside the row, not the page.
+          The hairline is an inset shadow so the active underline covers it without
+          poking out of the scroll box, and the focus ring sits inside each tab. */}
+      <div
+        role="tablist"
+        aria-label={label}
+        className="flex overflow-x-auto shadow-[inset_0_-1px_0_var(--color-border)]"
+      >
         {tabs.map((tab, i) => {
           const active = tab.id === selected;
           return (
@@ -61,7 +68,7 @@ export function Tabs({
               tabIndex={active ? 0 : -1}
               onClick={() => setSelected(tab.id)}
               onKeyDown={(event) => handleKeyDown(event, i)}
-              className="relative min-h-11 flex-1 px-4 text-sm font-semibold text-muted transition-colors duration-fast ease-standard after:absolute after:inset-x-4 after:-bottom-px after:h-0.5 after:scale-x-0 after:rounded-pill after:bg-primary hover:text-text aria-selected:text-text aria-selected:after:scale-x-100 motion-safe:after:transition-transform motion-safe:after:duration-base"
+              className="relative min-h-11 flex-1 px-4 text-sm font-semibold whitespace-nowrap text-muted -outline-offset-2 transition-colors duration-fast ease-standard after:absolute after:inset-x-4 after:bottom-0 after:h-0.5 after:scale-x-0 after:rounded-pill after:bg-primary hover:text-text aria-selected:text-text aria-selected:after:scale-x-100 motion-safe:after:transition-transform motion-safe:after:duration-base"
             >
               {tab.label}
             </button>

@@ -219,7 +219,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex flex-1 flex-col">
+      {/* min-w-0: on desktop this column sits in a row, and without it wide content (a
+          row of role tabs) would widen the column past the screen instead of scrolling. */}
+      <div className="flex min-w-0 flex-1 flex-col">
         {children}
         {legend && <KeyboardLegend key={pathname} keys={legend} />}
       </div>
