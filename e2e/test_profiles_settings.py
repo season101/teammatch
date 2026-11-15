@@ -26,6 +26,20 @@ def theme(page):
     return page.evaluate("document.documentElement.dataset.theme || 'system'")
 
 
+def contrast(a, b):
+    """WCAG contrast ratio of two computed `rgb(...)`/`rgba(...)` colours (alpha ignored)."""
+
+    def lum(c):
+        r, g, bl = (
+            (v / 255 / 12.92) if v / 255 <= 0.03928 else ((v / 255 + 0.055) / 1.055) ** 2.4
+            for v in map(float, re.findall(r"[\d.]+", c)[:3])
+        )
+        return 0.2126 * r + 0.7152 * g + 0.0722 * bl
+
+    hi, lo = sorted((lum(a), lum(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
 def no_hscroll(page):
     return page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
 
@@ -36,7 +50,7 @@ def no_hscroll(page):
 def test_settings_page_sections(page, signed):
     signed()
     page.goto("/settings")
-    expect(page.get_by_role("heading", name="Settings", exact=True)).to_be_visible()
+    expect(page.get_by_role("main").get_by_role("heading", name="Settings", exact=True)).to_be_visible()
     expect(page.get_by_role("heading", name="Appearance")).to_be_visible()
     expect(page.get_by_role("heading", name="Keyboard")).to_be_visible()
     expect(page.get_by_text("Install TeamMatch")).to_be_visible()
@@ -92,15 +106,15 @@ def test_dark_theme_changes_background_color(page, signed):
     assert light != dark
 
 
-def test_system_theme_follows_os_preference(browser, base_url, verified_user, sign_in):
+def test_system_theme_follows_os_preference(new_context, verified_user, sign_in):
     user = verified_user("profiles os")
-    ctx = browser.new_context(base_url=base_url, color_scheme="dark")
+    ctx = new_context(color_scheme="dark")
     page = ctx.new_page()
     sign_in(page, user)
     page.goto("/settings")
     dark = page.evaluate("getComputedStyle(document.body).backgroundColor")
     ctx.close()
-    ctx = browser.new_context(base_url=base_url, color_scheme="light")
+    ctx = new_context(color_scheme="light")
     page = ctx.new_page()
     sign_in(page, user)
     page.goto("/settings")
@@ -158,10 +172,10 @@ def test_install_row_on_desktop_gives_menu_steps(page, signed):
     expect(page.get_by_text("Open your browser's menu and choose Install app or Add to Home screen.")).to_be_visible()
 
 
-def test_install_row_on_iphone_gives_share_steps(browser, base_url, verified_user, sign_in):
+def test_install_row_on_iphone_gives_share_steps(new_context, verified_user, sign_in):
     user = verified_user("profiles ios")
-    ctx = browser.new_context(
-        base_url=base_url, viewport=PHONE, user_agent=IPHONE_UA, is_mobile=True, has_touch=True
+    ctx = new_context(
+        viewport=PHONE, user_agent=IPHONE_UA, is_mobile=True, has_touch=True
     )
     page = ctx.new_page()
     sign_in(page, user)
@@ -196,10 +210,10 @@ def test_settings_requires_sign_in(page):
 
 
 def test_settings_account_section_phone_has_profile_link_and_sign_out(
-    browser, base_url, verified_user, sign_in
+    new_context, verified_user, sign_in
 ):
     user = verified_user("profiles acct")
-    ctx = browser.new_context(base_url=base_url, viewport=PHONE)
+    ctx = new_context(viewport=PHONE)
     page = ctx.new_page()
     sign_in(page, user)
     page.goto("/settings")
@@ -250,10 +264,10 @@ def test_avatar_upload_replaces_initials_and_persists(page, signed, files):
     page.reload()
     page.get_by_role("tab", name="Preview").click()
     expect(preview_avatar(page)).to_have_count(1)
-    assert page.evaluate(
-        "new Promise(r => { const i = document.querySelector('article img'); "
-        "i.complete ? r(i.naturalWidth) : i.onload = () => r(i.naturalWidth) })"
-    ) > 0
+    page.wait_for_function(
+        "document.querySelector('article img')?.complete && document.querySelector('article img').naturalWidth > 0",
+        timeout=10_000,
+    )
 
 
 def test_avatar_wrong_type_is_refused_and_old_photo_kept(page, signed, files):
@@ -452,9 +466,9 @@ SCREENS = ["/profile", "/settings"]
 
 @pytest.mark.parametrize("path", SCREENS)
 @pytest.mark.parametrize("scheme", ["light", "dark"])
-def test_screens_have_no_horizontal_scroll_at_390(browser, base_url, verified_user, sign_in, path, scheme):
+def test_screens_have_no_horizontal_scroll_at_390(new_context, verified_user, sign_in, path, scheme):
     user = verified_user("profiles phone", skills=["Python", "Django", "React"])
-    ctx = browser.new_context(base_url=base_url, viewport=PHONE, color_scheme=scheme)
+    ctx = new_context(viewport=PHONE, color_scheme=scheme)
     page = ctx.new_page()
     sign_in(page, user)
     page.goto(path)
@@ -464,9 +478,9 @@ def test_screens_have_no_horizontal_scroll_at_390(browser, base_url, verified_us
 
 
 @pytest.mark.parametrize("tab", ["Preview", "Edit"])
-def test_profile_tabs_phone_no_hscroll_with_long_content(browser, base_url, verified_user, sign_in, tab):
+def test_profile_tabs_phone_no_hscroll_with_long_content(new_context, verified_user, sign_in, tab):
     user = verified_user("profiles long", skills=["Python", "Django", "React"])
-    ctx = browser.new_context(base_url=base_url, viewport=PHONE)
+    ctx = new_context(viewport=PHONE)
     page = ctx.new_page()
     sign_in(page, user)
     page.goto("/profile")
@@ -481,9 +495,9 @@ def test_profile_tabs_phone_no_hscroll_with_long_content(browser, base_url, veri
     ctx.close()
 
 
-def test_phone_skill_buttons_are_tappable_size(browser, base_url, verified_user, sign_in):
+def test_phone_skill_buttons_are_tappable_size(new_context, verified_user, sign_in):
     user = verified_user("profiles tap")
-    ctx = browser.new_context(base_url=base_url, viewport=PHONE)
+    ctx = new_context(viewport=PHONE)
     page = ctx.new_page()
     sign_in(page, user)
     page.goto("/profile")
@@ -499,7 +513,9 @@ def test_dark_theme_profile_form_text_is_readable(page, signed):
     page.get_by_text("Dark", exact=True).click()
     page.goto("/profile")
     page.get_by_role("tab", name="Edit").click()
-    bg = page.evaluate("getComputedStyle(document.getElementById('bio')).backgroundColor")
-    fg = page.evaluate("getComputedStyle(document.getElementById('bio')).color")
-    assert bg != fg
+    bg, fg = (
+        page.evaluate(f"getComputedStyle(document.getElementById('bio')).{prop}")
+        for prop in ("backgroundColor", "color")
+    )
+    assert contrast(bg, fg) >= 4.5, f"bio text {fg} on {bg}"
     expect(page.get_by_role("meter", name="Profile strength")).to_be_visible()

@@ -4,6 +4,7 @@ import re
 import uuid
 
 from accounts_support import RESET, alerts, mail_links, make_google_only, new_link
+from conftest import wait_hydrated
 from playwright.sync_api import Page, expect
 
 
@@ -45,6 +46,7 @@ def test_full_reset_flow_then_sign_in_with_the_new_password(page: Page, verified
     expect(page.get_by_role("heading", name="Your password is set")).to_be_visible()
     page.get_by_role("link", name="Sign in").click()
     expect(page).to_have_url(re.compile(r"/login"))
+    wait_hydrated(page)
 
     # old password no longer works, the new one does
     page.get_by_label("School email").fill(user.email)
