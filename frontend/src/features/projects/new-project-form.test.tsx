@@ -72,7 +72,62 @@ test("creates a project and shows the success message", async () => {
   expect(requests[0].method).toBe("POST");
   expect(requests[0].url).toContain("/api/v1/projects/");
   expect(requests[0].headers.get("X-CSRFToken")).toBe("test-token");
-  expect(await requests[0].json()).toEqual({ title: "TeamMatch", pitch: "Find a team" });
+  // Both optional fields left empty: the project saves as before (F2-12).
+  expect(await requests[0].json()).toEqual({
+    title: "TeamMatch",
+    pitch: "Find a team",
+    repo_url: "",
+    details: "",
+  });
+});
+
+test("sends the repository and more details when filled in", async () => {
+  const requests = mockFetch({ id: 1, title: "TeamMatch" }, 201);
+  renderForm();
+  fireEvent.change(screen.getByLabelText("GitHub repository (optional)"), {
+    target: { value: " https://github.com/olive/campus-eats " },
+  });
+  fireEvent.change(screen.getByLabelText("More details (optional)"), {
+    target: { value: "We meet Tuesdays" },
+  });
+  expect(screen.getByText("16/2000 characters")).toBeInTheDocument();
+  fillAndSubmit();
+
+  expect(await screen.findByText("Project created")).toBeInTheDocument();
+  expect(await requests[0].json()).toMatchObject({
+    repo_url: "https://github.com/olive/campus-eats",
+    details: "We meet Tuesdays",
+  });
+});
+
+test("a link that isn't to GitHub shows the server's error on the field and keeps the form", async () => {
+  const message = "Enter a link that starts with https://github.com/";
+  mockFetch({ repo_url: [message] }, 400);
+  renderForm();
+  const repo = screen.getByLabelText("GitHub repository (optional)");
+  fireEvent.change(repo, { target: { value: "campus-eats.com" } });
+  fireEvent.change(screen.getByLabelText("More details (optional)"), {
+    target: { value: "We meet Tuesdays" },
+  });
+  fillAndSubmit();
+
+  expect(await screen.findByText(message)).toHaveAttribute("id", "project-repo-error");
+  expect(repo).toHaveAttribute("aria-invalid", "true");
+  expect(repo).toHaveAccessibleDescription(
+    `For software projects. Must be a github.com link. ${message}`,
+  );
+  // Nothing typed is lost, and no generic error shows.
+  expect(repo).toHaveValue("campus-eats.com");
+  expect(screen.getByLabelText("Title")).toHaveValue("TeamMatch");
+  expect(screen.getByLabelText("Pitch")).toHaveValue("Find a team");
+  expect(screen.getByLabelText("More details (optional)")).toHaveValue("We meet Tuesdays");
+  expect(screen.queryByText("Something went wrong. Please try again.")).not.toBeInTheDocument();
+
+  // Fixing the link clears the error before the next save.
+  fireEvent.change(repo, { target: { value: "https://github.com/olive/campus-eats" } });
+  expect(screen.queryByText(message)).not.toBeInTheDocument();
+  expect(repo).toHaveAttribute("aria-invalid", "false");
+  expect(screen.getByLabelText("More details (optional)")).toHaveValue("We meet Tuesdays");
 });
 
 test("shows the server's message next to the field", async () => {

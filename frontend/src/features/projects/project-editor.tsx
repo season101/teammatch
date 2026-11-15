@@ -10,12 +10,14 @@ import {
   useProject,
   usePublishProject,
   useUpdateRole,
+  type ProjectDetail,
 } from "./queries";
 import { ApplyToRole } from "./apply-to-role";
 import { RoleForm } from "./role-form";
 import { Modal } from "@/components/ui/modal";
 import { ProjectDetailsForm } from "./project-details-form";
 import { Chip } from "@/components/ui/chip";
+import { GitHubIcon, LinkCard } from "@/components/ui/link-card";
 import { TeamStrip, type Segment } from "@/components/ui/team-strip";
 import { buttonClasses } from "@/components/ui/button";
 import { noticeClass, successClass } from "@/components/ui/form-classes";
@@ -87,7 +89,12 @@ export function ProjectEditor({
         {editingDetails ? (
           <ProjectDetailsForm
             projectId={projectId}
-            initial={{ title: data.title, pitch: data.pitch }}
+            initial={{
+              title: data.title,
+              pitch: data.pitch,
+              repo_url: data.repo_url ?? "",
+              details: data.details ?? "",
+            }}
             onDone={() => setEditingDetails(false)}
             onCancel={() => setEditingDetails(false)}
           />
@@ -103,6 +110,7 @@ export function ProjectEditor({
               {data.status} · by {data.owner_name || "an unnamed owner"}
             </p>
             <p className="text-text">{data.pitch}</p>
+            <RepoAndDetails project={data} />
             {canEdit && (
               <div className="mt-2 flex flex-wrap gap-3">
                 <button
@@ -317,5 +325,32 @@ export function ProjectEditor({
         </p>
       )}
     </div>
+  );
+}
+
+// View the code and More from the owner (F2-12), each hidden when empty. The role
+// details page shows them too.
+export function RepoAndDetails({
+  project,
+}: {
+  project: Pick<ProjectDetail, "repo_url" | "details">;
+}) {
+  return (
+    <>
+      {project.repo_url && (
+        <LinkCard href={project.repo_url} title="View the code" icon={<GitHubIcon />} />
+      )}
+      {project.details && (
+        <section aria-labelledby="owner-details-heading" className="flex flex-col gap-1">
+          <h2
+            id="owner-details-heading"
+            className="text-xs font-semibold tracking-wide text-muted uppercase"
+          >
+            More from the owner
+          </h2>
+          <p className="whitespace-pre-line text-text">{project.details}</p>
+        </section>
+      )}
+    </>
   );
 }

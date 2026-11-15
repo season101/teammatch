@@ -434,7 +434,8 @@ paths:
         GET: one project with its roles and their required skills.
         Owners see their own drafts. Everyone else sees open and locked projects only (404 otherwise).
 
-        PATCH: the owner edits the title or pitch of a draft or open project.
+        PATCH: the owner edits the title, pitch, repository link or more details of a draft or
+        open project.
       parameters:
       - in: path
         name: id
@@ -458,7 +459,8 @@ paths:
         GET: one project with its roles and their required skills.
         Owners see their own drafts. Everyone else sees open and locked projects only (404 otherwise).
 
-        PATCH: the owner edits the title or pitch of a draft or open project.
+        PATCH: the owner edits the title, pitch, repository link or more details of a draft or
+        open project.
       parameters:
       - in: path
         name: id
@@ -1427,6 +1429,16 @@ components:
           type: string
           minLength: 1
           maxLength: 2000
+        repo_url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        details:
+          type: string
+          maxLength: 2000
     PatchedRoleRequest:
       type: object
       properties:
@@ -1476,6 +1488,16 @@ components:
         pitch:
           type: string
           maxLength: 2000
+        repo_url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        details:
+          type: string
+          maxLength: 2000
         status:
           allOf:
           - $ref: '#/components/schemas/ProjectStatusEnum'
@@ -1508,6 +1530,16 @@ components:
           type: string
           maxLength: 100
         pitch:
+          type: string
+          maxLength: 2000
+        repo_url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        details:
           type: string
           maxLength: 2000
         status:
@@ -1576,6 +1608,16 @@ components:
         pitch:
           type: string
           minLength: 1
+          maxLength: 2000
+        repo_url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        details:
+          type: string
           maxLength: 2000
       required:
       - pitch

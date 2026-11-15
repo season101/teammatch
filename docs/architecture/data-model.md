@@ -64,6 +64,8 @@ erDiagram
         bigint term_id FK
         string title
         text pitch
+        string repo_url "optional, https://github.com/... only"
+        text details "optional, 2000 chars"
         string status "draft, open, locked, archived"
     }
     ROLE {
