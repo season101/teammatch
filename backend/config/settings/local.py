@@ -12,6 +12,9 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # e2e tests read verification links from files; unset, mail still goes to the console.
 if EMAIL_FILE_PATH := os.environ.get("EMAIL_FILE_PATH"):
     EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+# e2e runs sign up many accounts from one IP; allauth's per-IP limits would stall them.
+if os.environ.get("E2E_NO_RATE_LIMITS") == "1":
+    ACCOUNT_RATE_LIMITS = False
 # Behind the Next rewrite the Host is api:8000; Google's redirect_uri must say localhost:3000.
 USE_X_FORWARDED_HOST = True
 
