@@ -50,7 +50,7 @@ def project(owner, term):
 
 
 def test_summary_requires_sign_in():
-    assert APIClient().get(URL).status_code == 403
+    assert APIClient().get(URL).status_code == 401
 
 
 def test_summary_starts_empty(me):

@@ -123,7 +123,7 @@ def test_non_owner_cannot_add_a_role(other, project, skill):
 def test_anonymous_cannot_add_a_role(project, skill):
     body = {"title": "Dev", "required_skills": [skill.id]}
     response = APIClient().post(roles_url(project), body, format="json")
-    assert response.status_code in (401, 403)
+    assert response.status_code == 401
 
 
 def test_cannot_add_a_role_to_a_locked_project(owner, project, skill):

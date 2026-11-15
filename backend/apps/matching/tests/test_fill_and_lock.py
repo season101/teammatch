@@ -508,7 +508,7 @@ def test_seen_is_404_for_a_non_member_and_an_unknown_team(team):
 
 
 def test_seen_requires_sign_in(team):
-    assert APIClient().post(f"/api/v1/teams/{team.id}/seen/").status_code in (401, 403)
+    assert APIClient().post(f"/api/v1/teams/{team.id}/seen/").status_code == 401
 
 
 # Races. SQLite ignores select_for_update, so these need Postgres (CI has it).

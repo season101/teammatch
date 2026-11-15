@@ -130,5 +130,5 @@ def test_does_not_leak_other_teams_or_emails(team, fall, ava):
     assert my_team(outsider) is None
 
 
-def test_signed_out_users_get_403(team):
-    assert APIClient().get(MINE).status_code == 403
+def test_signed_out_users_get_401(team):
+    assert APIClient().get(MINE).status_code == 401

@@ -41,7 +41,7 @@ def test_unverified_email_cannot_sign_in(client):
     User.objects.create_user("new@latech.edu", "a-long-password")
     response = sign_in(client, "new@latech.edu", "a-long-password")
     assert response.status_code == 401
-    assert client.get("/api/v1/me/profile/").status_code in (401, 403)
+    assert client.get("/api/v1/me/profile/").status_code == 401
 
 
 def test_sign_out_ends_the_session(client, sam):
@@ -50,7 +50,7 @@ def test_sign_out_ends_the_session(client, sam):
 
     assert client.delete(SESSION).status_code == 401
     assert client.get(SESSION).status_code == 401
-    assert client.get("/api/v1/me/profile/").status_code in (401, 403)
+    assert client.get("/api/v1/me/profile/").status_code == 401
 
 
 def account(email, password=None, google=False):

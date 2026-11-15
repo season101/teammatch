@@ -17,7 +17,7 @@ def alex():
 
 
 def test_me_profile_needs_sign_in(client):
-    assert client.get("/api/v1/me/profile/").status_code in (401, 403)
+    assert client.get("/api/v1/me/profile/").status_code == 401
 
 
 def test_new_user_has_a_profile_without_visiting_it(sam):
@@ -88,7 +88,7 @@ RULES_URL = "/api/v1/me/rules/accept/"
 
 
 def test_accept_rules_needs_sign_in(client):
-    assert client.post(RULES_URL).status_code in (401, 403)
+    assert client.post(RULES_URL).status_code == 401
 
 
 def test_new_profile_has_not_accepted_the_rules(client, sam):

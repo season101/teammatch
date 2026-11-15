@@ -256,7 +256,7 @@ def test_someone_elses_role_returns_403(role):
 
 
 def test_requires_sign_in(role):
-    assert APIClient().get(url(role)).status_code in (401, 403)
+    assert APIClient().get(url(role)).status_code == 401
 
 
 # F4-02: like or pass an applicant

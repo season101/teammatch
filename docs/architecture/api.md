@@ -31,7 +31,7 @@ The source of truth is the OpenAPI schema, not this page. This page is the overv
 
 ## Errors
 
-> Not built yet. Today the API returns Django REST Framework's default bodies: `{ "detail": "..." }`, or `{ "field": ["..."] }` for validation errors. The `code` values in the table below are raised by the backend, for example `project_locked`, but they are not in the response body yet. The shape below is the target.
+> Today the API returns Django REST Framework's default bodies with one addition: `{ "detail": "...", "code": "..." }`. The `core` exception handler adds `code` whenever the error has one, for example `not_authenticated` or `project_locked`, and the frontend branches on it. Validation errors stay `{ "field": ["..."] }`. The envelope below is the target, not built yet.
 
 All `/api/v1/` errors use one shape (custom DRF exception handler in `core`):
 
@@ -50,7 +50,7 @@ All `/api/v1/` errors use one shape (custom DRF exception handler in `core`):
 | Status | `code` examples | When |
 |---|---|---|
 | 400 | `validation_error`, `invalid_avatar`, `repo_url_not_github`, `resume_too_big`, `resume_not_pdf` | bad input |
-| 401 | `not_authenticated` | no session |
+| 401 | `not_authenticated` | no session, sent with `WWW-Authenticate: Session`. A client treats `401` as signed out and `403` as not allowed; a write without the CSRF token is `403` too |
 | 403 | `permission_denied`, `profile_retired`, `own_project` | logged in but not allowed |
 | 404 | `not_found` | missing or not visible to you |
 | 409 | `already_applied`, `role_not_open`, `already_on_team`, `project_locked`, `term_over` | state conflict |

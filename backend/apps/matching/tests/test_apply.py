@@ -114,7 +114,7 @@ def test_unknown_role_is_rejected(candidate):
 
 
 def test_requires_sign_in(role):
-    assert APIClient().post(URL, {"role": role.id}, format="json").status_code in (401, 403)
+    assert APIClient().post(URL, {"role": role.id}, format="json").status_code == 401
 
 
 @needs_postgres

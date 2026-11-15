@@ -108,7 +108,7 @@ def test_unknown_role_is_404(candidate):
 
 
 def test_requires_sign_in(role):
-    assert APIClient().post(f"/api/v1/roles/{role.id}/dismiss/").status_code in (401, 403)
+    assert APIClient().post(f"/api/v1/roles/{role.id}/dismiss/").status_code == 401
     assert not RoleDismissal.objects.exists()
 
 
@@ -140,7 +140,7 @@ def test_undo_unknown_role_404(candidate):
 
 
 def test_undo_needs_sign_in(role):
-    assert APIClient().delete(f"/api/v1/roles/{role.id}/dismiss/").status_code in (401, 403)
+    assert APIClient().delete(f"/api/v1/roles/{role.id}/dismiss/").status_code == 401
 
 
 def reset(user):
@@ -175,4 +175,4 @@ def test_reset_only_clears_my_passes(candidate, role):
 
 
 def test_reset_requires_sign_in():
-    assert APIClient().post("/api/v1/feed/reset/").status_code in (401, 403)
+    assert APIClient().post("/api/v1/feed/reset/").status_code == 401

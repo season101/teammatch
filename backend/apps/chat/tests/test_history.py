@@ -75,8 +75,8 @@ def test_a_missing_team_is_404(team, marco):
     assert client_for(marco).get(messages_url(team.id + 1)).status_code == 404
 
 
-def test_signed_out_users_get_403(team):
-    assert APIClient().get(messages_url(team.id)).status_code == 403
+def test_signed_out_users_get_401(team):
+    assert APIClient().get(messages_url(team.id)).status_code == 401
 
 
 @pytest.mark.parametrize("count", [1, 50])
