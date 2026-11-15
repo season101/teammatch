@@ -10,6 +10,7 @@ import {
   noticeClass,
 } from "@/components/ui/form-classes";
 import { PendingLabel } from "@/components/ui/pending-label";
+import { RequireSignIn } from "@/features/accounts/require-sign-in";
 import { useCreateProject, type FieldErrors } from "./queries";
 
 const TITLE_MAX = 100;
@@ -158,4 +159,9 @@ export function NewProjectForm() {
       </button>
     </form>
   );
+}
+
+// The page itself is a server component, so the sign-in wrapper lives here.
+export function SignedInNewProjectForm() {
+  return <RequireSignIn>{() => <NewProjectForm />}</RequireSignIn>;
 }

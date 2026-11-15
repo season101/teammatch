@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { NewProjectForm } from "@/features/projects/new-project-form";
+import { SignedInNewProjectForm } from "@/features/projects/new-project-form";
 
 export const metadata: Metadata = { title: "New project · TeamMatch" };
 
@@ -13,7 +13,7 @@ export default function NewProjectPage() {
           publish it next.
         </p>
       </header>
-      <NewProjectForm />
+      <SignedInNewProjectForm />
     </main>
   );
 }
