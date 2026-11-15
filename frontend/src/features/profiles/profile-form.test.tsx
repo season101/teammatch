@@ -128,3 +128,36 @@ test("shows the server's message next to the field", async () => {
   ).toBeInTheDocument();
   expect(screen.queryByText("Profile saved.")).not.toBeInTheDocument();
 });
+
+// The two saves are separate requests; a PATCH reply sent before the upload finished
+// still has no photo, and it mustn't take the new one away.
+test("a Save profile reply that crossed a photo upload keeps the new photo", async () => {
+  const PHOTO = "/api/v1/profiles/7/avatar/?v=new";
+  const client = newClient();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (request: Request) => {
+      let body: unknown = { ...PROFILE, avatar_url: null };
+      if (request.url.includes("/api/v1/skills/")) body = SKILLS;
+      if (request.method === "POST") body = { ...PROFILE, avatar_url: PHOTO };
+      if (request.method === "PATCH") body = { ...PROFILE, bio: "New bio", avatar_url: null };
+      return new Response(JSON.stringify(body), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }),
+  );
+  renderForm(client);
+
+  fireEvent.change(await screen.findByLabelText("Photo file"), {
+    target: { files: [new File(["png"], "me.png", { type: "image/png" })] },
+  });
+  expect(await screen.findByText("Photo updated.")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Save profile" }));
+  expect(await screen.findByText("Profile saved.")).toBeInTheDocument();
+
+  expect(client.getQueryData(["my-profile"])).toMatchObject({
+    bio: "New bio",
+    avatar_url: PHOTO,
+  });
+  expect(screen.getByRole("button", { name: "Change photo" })).toBeInTheDocument();
+});

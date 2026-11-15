@@ -217,12 +217,12 @@ sequenceDiagram
     U->>W: pick image
     W->>W: check type jpeg/png/webp and size under 2 MB
     W->>A: POST /api/v1/me/avatar/ multipart file
-    A->>A: check type and size, build key avatars/{user_id}/{uuid}.{ext}
+    A->>A: check size, then type from the bytes (Pillow), redraw at 512px, build key avatars/{user_id}/{uuid}.{ext}
     alt not an image or over 2 MB
         A-->>W: 400 invalid_avatar
     else ok
         A->>S: save via django-storages (S3 API)
-        A->>A: save avatar_key, delete old object
+        A->>A: save Profile.avatar, delete old object
         A-->>W: 200 profile with avatar_url
     end
     W-->>U: show new avatar

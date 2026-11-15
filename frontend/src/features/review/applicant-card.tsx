@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { Chip } from "@/components/ui/chip";
 import { buttonClasses } from "@/components/ui/button";
-import { initials } from "@/features/teams/my-team";
+import { Avatar } from "@/features/profiles/avatar";
 import type { Applicant } from "./queries";
 
 // One candidate for one role, as in docs/design/components/applicant-card.md.
@@ -40,12 +40,11 @@ export function ApplicantCard({
       <header className="flex items-center gap-3 bg-surface-2 p-5">
         {/* Only the avatar greys out. Text keeps its contrast (WCAG 1.4.3); the tag and
             the turned-off Like carry the signal. */}
-        <span
-          aria-hidden="true"
-          className={`grid size-14 shrink-0 place-items-center rounded-full text-lg font-bold ${elsewhere ? "border border-border bg-surface text-muted" : "bg-cta text-on-cta"}`}
-        >
-          {initials(name)}
-        </span>
+        <Avatar
+          name={name}
+          url={applicant.avatar_url}
+          className={`size-14 text-lg ${elsewhere ? "border border-border bg-surface text-muted grayscale" : "bg-cta text-on-cta"}`}
+        />
         <div>
           <p className="text-2xl font-semibold">{name}</p>
           {applicant.major && <p className="text-muted">{applicant.major}</p>}

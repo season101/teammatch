@@ -98,9 +98,9 @@ Login, signup, logout, password and Google live under allauth (below).
 |---|---|---|---|
 | GET | `/api/v1/me/profile/` | user | own profile |
 | PATCH | `/api/v1/me/profile/` | user | update display name, bio, major, skills |
-| POST | `/api/v1/me/avatar/` | user | upload avatar as `multipart/form-data` (JPEG/PNG/WebP, max 2 MB); API saves it to SeaweedFS via django-storages **(planned)** |
-| DELETE | `/api/v1/me/avatar/` | user | remove avatar **(planned)** |
-| GET | `/api/v1/profiles/{id}/avatar/` | user | avatar image, streamed by the API from SeaweedFS **(planned)** |
+| POST | `/api/v1/me/avatar/` | user | upload my avatar as `multipart/form-data`, field `avatar`: JPEG, PNG or WebP of 2 MB or less, checked from the file's bytes with Pillow. It's redrawn at most 512px (dropping EXIF such as location) and saved to SeaweedFS through django-storages; the old file is deleted. Anything else: `400` `invalid_avatar`, and the old avatar stays. Answers with my profile |
+| DELETE | `/api/v1/me/avatar/` | user | remove my avatar and delete its file. Answers with my profile |
+| GET | `/api/v1/profiles/{id}/avatar/` | user | avatar image, streamed by the API from SeaweedFS (`Cache-Control: private`). No avatar: `404`. Profiles give `avatar_url`, this address with `?v=` that changes on each upload, or `null` |
 | GET | `/api/v1/profiles/{id}/` | user | public profile view |
 | PATCH | `/api/v1/profiles/{id}/` | owner | edit your own profile by id (`403` for anyone else) |
 | GET | `/api/v1/skills/?q=` | user | filter skills by name for pickers |

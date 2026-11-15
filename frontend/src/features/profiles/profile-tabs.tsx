@@ -5,16 +5,17 @@ import { errorClass } from "@/components/ui/form-classes";
 import { ProfileStrength } from "@/components/ui/profile-strength";
 import { Tabs } from "@/components/ui/tabs";
 import { SkeletonRows } from "@/components/ui/skeleton";
-import { initials } from "@/features/teams/my-team";
+import { Avatar } from "./avatar";
 import { ProfileForm } from "./profile-form";
 import { useMyProfile, type MyProfile } from "./queries";
 
-// DD-10 weights. Avatar (+20%) waits on photo upload (#13), so this tops out at 80.
+// DD-10 weights: major 20, skills 40, bio 20, photo 20.
 export function profileStrength(profile: MyProfile) {
   return (
     (profile.major ? 20 : 0) +
     (profile.skills.length > 0 ? 40 : 0) +
-    (profile.bio ? 20 : 0)
+    (profile.bio ? 20 : 0) +
+    (profile.avatar_url ? 20 : 0)
   );
 }
 
@@ -60,12 +61,11 @@ function ProfilePreview({ profile }: { profile: MyProfile }) {
       </p>
       <article className="overflow-hidden rounded-card border border-border bg-surface">
         <header className="flex items-center gap-3 bg-linear-to-br from-cover-indigo to-[color-mix(in_oklab,var(--color-cover-indigo)_62%,black)] p-5 text-white">
-          <span
-            aria-hidden="true"
-            className="grid size-12 shrink-0 place-items-center rounded-full bg-white/20 font-bold"
-          >
-            {initials(profile.display_name ?? "")}
-          </span>
+          <Avatar
+            name={profile.display_name ?? ""}
+            url={profile.avatar_url}
+            className="size-12 bg-white/20"
+          />
           <div>
             <h2 className="text-xl font-bold">{name}</h2>
             {profile.major && <p className="text-sm">{profile.major}</p>}

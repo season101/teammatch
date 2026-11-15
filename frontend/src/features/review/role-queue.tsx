@@ -6,6 +6,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { SkeletonCard } from "@/components/ui/skeleton";
+import { Avatar } from "@/features/profiles/avatar";
 import { useProject } from "@/features/projects/queries";
 import { useShortcutsEnabled } from "@/features/shell/preferences";
 import { initials } from "@/features/teams/my-team";
@@ -35,12 +36,11 @@ function People({ rows }: { rows: { application: Applicant; chip: string }[] }) 
     <ul className="flex flex-col divide-y divide-border">
       {rows.map(({ application, chip }) => (
         <li key={application.id} className="flex min-h-11 items-center gap-3 py-2">
-          <span
-            aria-hidden="true"
-            className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-2 text-sm font-bold"
-          >
-            {initials(nameOf(application))}
-          </span>
+          <Avatar
+            name={nameOf(application)}
+            url={application.applicant.avatar_url}
+            className="size-9 bg-surface-2 text-sm"
+          />
           <span className="flex-1 font-semibold">{nameOf(application)}</span>
           <Chip>{chip}</Chip>
         </li>

@@ -81,7 +81,55 @@ export function useSaveProfile() {
       if (data) return data;
       throw new SaveProfileError(response.status, readFieldErrors(error));
     },
-    onSuccess: (profile) => queryClient.setQueryData(["my-profile"], profile),
+    // The photo saves on its own and the two replies can cross. A PATCH never changes
+    // the photo, so keep the cached one: a late reply can't bring back the old photo.
+    onSuccess: async (profile) => {
+      await queryClient.cancelQueries({ queryKey: ["my-profile"] });
+      queryClient.setQueryData<MyProfile>(["my-profile"], (old) =>
+        old ? { ...profile, avatar_url: old.avatar_url } : profile,
+      );
+    },
+  });
+}
+
+// The server's own rule (F1-07); the picker checks it first so nothing big is sent.
+export const AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
+export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+export const AVATAR_HINT = "Choose a JPEG, PNG or WebP image of 2 MB or less.";
+
+// A file uploads a new photo; null removes it. Either way the API answers with my profile.
+export function useSetAvatar() {
+  const queryClient = useQueryClient();
+  return useMutation<MyProfile, Error, File | null>({
+    mutationFn: async (file) => {
+      const headers = { "X-CSRFToken": csrfToken() };
+      let result;
+      if (file) {
+        const form = new FormData();
+        form.append("avatar", file);
+        // openapi-fetch sends FormData as it is; the schema calls the file a string.
+        result = await api.POST("/api/v1/me/avatar/", {
+          body: form as unknown as { avatar: string },
+          headers,
+        });
+      } else {
+        result = await api.DELETE("/api/v1/me/avatar/", { headers });
+      }
+      if (result.data) return result.data;
+      throw new Error(
+        result.response.status === 400
+          ? AVATAR_HINT
+          : "Couldn't update your photo. Please try again.",
+      );
+    },
+    // Only the photo, for the same reason: the form's fields may have saved meanwhile.
+    // A profile GET that left before the upload would bring back the old photo, so stop it.
+    onSuccess: async (profile) => {
+      await queryClient.cancelQueries({ queryKey: ["my-profile"] });
+      queryClient.setQueryData<MyProfile>(["my-profile"], (old) =>
+        old ? { ...old, avatar_url: profile.avatar_url } : profile,
+      );
+    },
   });
 }
 

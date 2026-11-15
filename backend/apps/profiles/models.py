@@ -1,3 +1,6 @@
+from pathlib import Path
+from uuid import uuid4
+
 from django.conf import settings
 from django.db import models
 from django.db.models.functions import Lower
@@ -23,7 +26,12 @@ class Skill(models.Model):
         return self.name
 
 
-# One profile per user. Avatar (F1-07) comes later.
+def avatar_path(profile, filename):
+    # avatars/{user_id}/{uuid}.{ext}: a new name per upload, so a cached old photo never shows.
+    return f"avatars/{profile.user_id}/{uuid4().hex}{Path(filename).suffix}"
+
+
+# One profile per user.
 class Profile(TimeStampedModel):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile"
@@ -32,6 +40,8 @@ class Profile(TimeStampedModel):
     bio = models.TextField(max_length=500, blank=True)
     major = models.CharField(max_length=100, blank=True)
     skills = models.ManyToManyField(Skill, blank=True, related_name="profiles")
+    # On the default storage (SeaweedFS). The API streams it; the bucket is never public (F1-07).
+    avatar = models.ImageField(upload_to=avatar_path, blank=True)
     # Set by retire() when their team locks (BR-08). F1-08 adds the rest.
     retired_until = models.DateField(null=True, blank=True)
     # When they agreed to the Team rules (DD-12). Empty until they do.

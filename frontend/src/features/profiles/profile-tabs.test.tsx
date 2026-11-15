@@ -14,6 +14,7 @@ const PROFILE = {
   bio: "I like building things.",
   major: "Computer Science",
   skills: [SKILLS[1]],
+  avatar_url: null as string | null,
   email: "sam@latech.edu",
   rules_accepted_at: null,
 };
@@ -47,12 +48,14 @@ test.each([
   ["major only", { ...EMPTY, major: "CS" }, 20],
   ["skills only", { ...EMPTY, skills: SKILLS }, 40],
   ["bio only", { ...EMPTY, bio: "Hi" }, 20],
-  ["everything", PROFILE, 80],
+  ["photo only", { ...EMPTY, avatar_url: "/api/v1/profiles/7/avatar/?v=1" }, 20],
+  ["everything but a photo", PROFILE, 80],
+  ["everything", { ...PROFILE, avatar_url: "/api/v1/profiles/7/avatar/?v=1" }, 100],
 ])("strength for %s is %i", (_, profile, expected) => {
   expect(profileStrength(profile)).toBe(expected);
 });
 
-test("a full profile tops out at 80% until avatars exist", async () => {
+test("a profile without a photo stops at 80%", async () => {
   renderTabs();
   const meter = await screen.findByRole("meter", { name: "Profile strength" });
   expect(meter).toHaveAttribute("aria-valuenow", "80");
