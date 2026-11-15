@@ -89,6 +89,8 @@ services:
       SEED_CANDIDATE_PASSWORD: ${SEED_CANDIDATE_PASSWORD:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      # e2e/: mail goes to files under backend/ instead of the console (see e2e/README.md)
+      EMAIL_FILE_PATH: ${EMAIL_FILE_PATH:-}
     command: sh -c "python manage.py migrate --noinput && python manage.py bootstrap && exec uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --reload"
     ports:
       - "${API_PORT:-8000}:8000"

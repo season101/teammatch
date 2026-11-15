@@ -1,0 +1,26 @@
+[project]
+name = "teammatch-e2e"
+version = "0.1.0"
+description = "Playwright end-to-end tests against a running TeamMatch stack (PL-08, PL-14)."
+requires-python = ">=3.12"
+dependencies = [
+    "playwright==1.59.0",
+    "pytest",
+    "pytest-playwright",
+    "python-dotenv",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+# Chromium only. A failed test keeps its trace, screenshot and video in test-results/.
+addopts = "--browser chromium --tracing retain-on-failure --screenshot only-on-failure --video retain-on-failure --output test-results"
+
+# Same style as backend/.
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

@@ -32,6 +32,8 @@ test-results/
 
 # local data
 data/
+# verification emails the e2e stack writes (e2e/README.md)
+backend/.e2e-mail/
 
 # editors and os
 .idea/
