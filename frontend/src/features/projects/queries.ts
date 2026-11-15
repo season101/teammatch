@@ -155,8 +155,11 @@ export function useAddRole(projectId: number) {
       if (!data) throw apiError(response.status, error);
       return data;
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["project", projectId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      // The sidebar's Mine list counts the roles.
+      queryClient.invalidateQueries({ queryKey: ["my-projects"] });
+    },
   });
 }
 
@@ -172,8 +175,11 @@ export function useUpdateRole(projectId: number) {
       if (!data) throw apiError(response.status, error);
       return data;
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["project", projectId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      // The sidebar's Mine list counts the roles.
+      queryClient.invalidateQueries({ queryKey: ["my-projects"] });
+    },
   });
 }
 
