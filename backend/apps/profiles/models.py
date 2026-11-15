@@ -2,6 +2,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from django.conf import settings
+from django.core.files.storage import storages
 from django.db import models
 from django.db.models.functions import Lower
 from django.db.models.signals import post_save
@@ -31,6 +32,15 @@ def avatar_path(profile, filename):
     return f"avatars/{profile.user_id}/{uuid4().hex}{Path(filename).suffix}"
 
 
+def resume_path(profile, filename):
+    return f"resumes/{profile.user_id}/{uuid4().hex}.pdf"
+
+
+def resume_storage():
+    # The private "resumes" storage, never the public-style default (F1-16, DD-42).
+    return storages["resumes"]
+
+
 # One profile per user.
 class Profile(TimeStampedModel):
     user = models.OneToOneField(
@@ -45,6 +55,10 @@ class Profile(TimeStampedModel):
     # Only https://github.com/... and https://linkedin.com/..., checked by the serializer (F1-15).
     github_url = models.URLField(blank=True)
     linkedin_url = models.URLField(blank=True)
+    # A PDF only its owner and owners they applied to can read, streamed by the API (F1-16).
+    resume = models.FileField(upload_to=resume_path, storage=resume_storage, blank=True)
+    # The name it was uploaded with, shown to its owner and used for downloads.
+    resume_name = models.CharField(max_length=255, blank=True)
     # Set by retire() when their team locks (BR-08). F1-08 adds the rest.
     retired_until = models.DateField(null=True, blank=True)
     # When they agreed to the Team rules (DD-12). Empty until they do.

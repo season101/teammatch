@@ -190,6 +190,17 @@ STORAGES = {
     },
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
+# Resumes (F1-16): same bucket (only the app's S3 key can read it) under private/, and any
+# URL it could make is signed. The API never hands one out: it streams the file after a
+# permission check (DD-42).
+STORAGES["resumes"] = {
+    "BACKEND": "storages.backends.s3.S3Storage",
+    "OPTIONS": {
+        **STORAGES["default"]["OPTIONS"],
+        "location": "private",
+        "querystring_auth": True,
+    },
+}
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"

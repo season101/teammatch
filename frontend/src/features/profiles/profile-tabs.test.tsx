@@ -17,6 +17,8 @@ const PROFILE = {
   avatar_url: null as string | null,
   github_url: "",
   linkedin_url: "",
+  has_resume: false,
+  resume_name: "",
   email: "sam@latech.edu",
   rules_accepted_at: null,
 };
@@ -28,6 +30,8 @@ const FULL = {
   avatar_url: PHOTO,
   github_url: "https://github.com/sam",
   linkedin_url: "https://www.linkedin.com/in/sam/",
+  has_resume: true,
+  resume_name: "sam.pdf",
 };
 
 function renderTabs(profile: typeof PROFILE = PROFILE) {
@@ -57,10 +61,13 @@ test.each([
   ["major only", { ...EMPTY, major: "CS" }, 20],
   ["skills only", { ...EMPTY, skills: SKILLS }, 40],
   ["bio only", { ...EMPTY, bio: "Hi" }, 20],
-  ["photo only", { ...EMPTY, avatar_url: PHOTO }, 10],
+  // DD-43: the photo stops counting once the resume is in.
+  ["photo only", { ...EMPTY, avatar_url: PHOTO }, 0],
   ["GitHub only", { ...EMPTY, github_url: "https://github.com/sam" }, 5],
   ["LinkedIn only", { ...EMPTY, linkedin_url: "https://linkedin.com/in/sam" }, 5],
-  ["everything but a photo and links", PROFILE, 80],
+  ["resume only", { ...EMPTY, has_resume: true }, 10],
+  ["no GitHub (DD-43 says 95)", { ...FULL, github_url: "" }, 95],
+  ["everything but links and a resume", PROFILE, 80],
   ["everything", FULL, 100],
 ])("strength for %s is %i", (_, profile, expected) => {
   expect(profileStrength(profile)).toBe(expected);
@@ -77,6 +84,11 @@ test("Preview shows GitHub and LinkedIn as cards that open in a new tab", async 
   expect(github).toHaveAccessibleName(/opens in a new tab/);
   expect(screen.getByRole("link", { name: /LinkedIn/ })).toHaveTextContent(
     "linkedin.com/in/sam",
+  );
+  // Through the API's permission check, never a storage address.
+  expect(screen.getByRole("link", { name: /^Resume/ })).toHaveAttribute(
+    "href",
+    "/api/v1/profiles/7/resume/",
   );
   expect(screen.getByRole("meter")).toHaveAttribute("aria-valuenow", "100");
 });

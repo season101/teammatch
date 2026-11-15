@@ -318,6 +318,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/MyProfile'
           description: ''
+  /api/v1/me/profile/resume/:
+    put:
+      operationId: me_profile_resume_update
+      description: 'A PDF of 5 MB or less. Too big: 400 resume_too_big. Not a PDF:
+        400 resume_not_pdf.'
+      tags:
+      - me
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResumeUploadRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyProfile'
+          description: ''
+    delete:
+      operationId: me_profile_resume_destroy
+      description: Remove my resume and delete its file.
+      tags:
+      - me
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyProfile'
+          description: ''
   /api/v1/me/rules/accept/:
     post:
       operationId: me_rules_accept_create
@@ -421,6 +457,41 @@ paths:
                 type: string
                 format: binary
           description: ''
+        '404':
+          description: No response body
+  /api/v1/profiles/{id}/resume/:
+    get:
+      operationId: profiles_resume_retrieve
+      description: |-
+        Someone's resume, streamed from private storage (F1-16, DD-42).
+
+        Only the person and owners of projects they applied to: 403 for anyone else, checked
+        before anything else so it never says whether a resume exists. 404 when there's none.
+      parameters:
+      - in: query
+        name: download
+        schema:
+          type: boolean
+        description: 1 sends it as an attachment.
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - profiles
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '403':
+          description: No response body
         '404':
           description: No response body
   /api/v1/projects/:
@@ -1248,6 +1319,9 @@ components:
         linkedin_url:
           type: string
           maxLength: 200
+        has_resume:
+          type: boolean
+          readOnly: true
         email:
           type: string
           format: email
@@ -1257,10 +1331,15 @@ components:
           format: date-time
           readOnly: true
           nullable: true
+        resume_name:
+          type: string
+          readOnly: true
       required:
       - avatar_url
       - email
+      - has_resume
       - id
+      - resume_name
       - rules_accepted_at
       - skills
     MyProject:
@@ -1575,8 +1654,12 @@ components:
         linkedin_url:
           type: string
           maxLength: 200
+        has_resume:
+          type: boolean
+          readOnly: true
       required:
       - avatar_url
+      - has_resume
       - id
       - skills
     Project:
@@ -1737,6 +1820,15 @@ components:
         * `open` - Open
         * `locked` - Locked
         * `archived` - Archived
+    ResumeUploadRequest:
+      type: object
+      properties:
+        resume:
+          type: string
+          format: binary
+          description: A PDF of 5 MB or less.
+      required:
+      - resume
     Role:
       type: object
       properties:

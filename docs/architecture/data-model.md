@@ -43,6 +43,8 @@ erDiagram
         string avatar "storage key avatars/{user_id}/{uuid}.{ext}, blank without one"
         string github_url "https://github.com/..., blank"
         string linkedin_url "https://linkedin.com/..., blank"
+        string resume "key resumes/{user_id}/{uuid}.pdf on the private resumes storage, blank"
+        string resume_name "the uploaded file's name, blank"
         date retired_until "nullable"
     }
     SKILL {

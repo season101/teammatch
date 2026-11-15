@@ -1,10 +1,13 @@
 from io import BytesIO
+from pathlib import Path
 
 from django.core.files.base import ContentFile
 from django.db.models import Q
 from django.utils import timezone
 from PIL import Image, ImageOps
 from rest_framework.exceptions import APIException
+
+from apps.matching.models import Application
 
 from .models import Profile
 
@@ -17,10 +20,25 @@ AVATAR_MAX_PIXELS = 50_000_000
 AVATAR_SIZE = 512
 
 
+RESUME_MAX_BYTES = 5 * 1024 * 1024
+
+
 class InvalidAvatar(APIException):
     status_code = 400
     default_detail = "Choose a JPEG, PNG or WebP image of 2 MB or less."
     default_code = "invalid_avatar"
+
+
+class ResumeTooBig(APIException):
+    status_code = 400
+    default_detail = "That file is over 5 MB. Choose a smaller PDF."
+    default_code = "resume_too_big"
+
+
+class ResumeNotPdf(APIException):
+    status_code = 400
+    default_detail = "Only PDF files can be uploaded."
+    default_code = "resume_not_pdf"
 
 
 def retire(users, until):
@@ -90,3 +108,45 @@ def remove_avatar(profile):
     profile.avatar = ""
     profile.save(update_fields=["avatar", "updated_at"])
     profile.avatar.storage.delete(old)
+
+
+RESUME_FIELDS = ["resume", "resume_name", "updated_at"]
+
+
+def set_resume(profile, upload):
+    """Swap in a new resume (F1-16): a PDF of 5 MB or less, checked from its first bytes.
+
+    A bad file raises and saves nothing. The old file is deleted only after the new one is saved.
+    """
+    if upload is None:
+        raise ResumeNotPdf()
+    if upload.size > RESUME_MAX_BYTES:
+        raise ResumeTooBig()
+    if upload.read(5) != b"%PDF-":
+        raise ResumeNotPdf()
+    upload.seek(0)
+    old = profile.resume.name
+    profile.resume_name = Path(upload.name).name[:255]
+    profile.resume.save("resume.pdf", upload, save=False)
+    profile.save(update_fields=RESUME_FIELDS)  # only these, as for the avatar
+    if old:
+        profile.resume.storage.delete(old)
+
+
+def remove_resume(profile):
+    old = profile.resume.name
+    if not old:
+        return
+    profile.resume, profile.resume_name = "", ""
+    profile.save(update_fields=RESUME_FIELDS)
+    profile.resume.storage.delete(old)
+
+
+def can_read_resume(user, profile):
+    """The person, and owners of projects they applied to, whatever became of it (DD-42)."""
+    return (
+        profile.user_id == user.id
+        or Application.objects.filter(
+            applicant_id=profile.user_id, role__project__owner=user
+        ).exists()
+    )

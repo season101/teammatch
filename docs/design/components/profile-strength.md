@@ -8,11 +8,11 @@ A labelled meter showing how complete a profile is. Stronger profiles rank highe
 | Major | 20% |
 | Skills (at least one) | 40% |
 | Bio | 20% |
-| Photo | 10% |
 | GitHub | 5% |
 | LinkedIn | 5% |
+| Resume | 10% |
 
-[DD-43](../decisions.md) has GitHub +5%, LinkedIn +5% and a resume +10% take the photo's 20% from DD-10. Photo upload (F1-07) shipped too, so until the resume (F1-16) ships the photo keeps 10% and the total stays 100%. With the resume, the photo stops counting, as DD-43 says. The team hasn't agreed to DD-43 yet. See [deck details](../patterns/deck-details.md#profile-strength).
+These are [DD-43](../decisions.md)'s weights. GitHub, LinkedIn and the resume take the 20% DD-10 gave the photo, so the photo doesn't count, though people can still add one (F1-07). Between F1-15 and F1-16 the photo kept 10%, so the total was always 100%. The team hasn't agreed to DD-43 yet. See [deck details](../patterns/deck-details.md#profile-strength).
 
 ## Look
 - A label on the left and a Geist Mono percentage on the right.

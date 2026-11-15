@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -17,9 +18,10 @@ from .serializers import (
     AvatarUploadSerializer,
     MyProfileSerializer,
     ProfileSerializer,
+    ResumeUploadSerializer,
     SkillSerializer,
 )
-from .services import remove_avatar, set_avatar
+from .services import can_read_resume, remove_avatar, remove_resume, set_avatar, set_resume
 
 
 def my_profile(user):
@@ -73,6 +75,57 @@ class AvatarView(APIView):
         response = FileResponse(profile.avatar.open("rb"), content_type=content_type)
         # The address changes with each upload (?v=), so a day's cache is safe.
         response["Cache-Control"] = "private, max-age=86400"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
+
+
+class MyResumeView(APIView):
+    """Upload, replace or remove my resume (F1-16). Answers with my profile."""
+
+    parser_classes = [MultiPartParser]
+
+    @extend_schema(
+        request={"multipart/form-data": ResumeUploadSerializer},
+        responses={200: MyProfileSerializer},
+    )
+    def put(self, request):
+        """A PDF of 5 MB or less. Too big: 400 resume_too_big. Not a PDF: 400 resume_not_pdf."""
+        profile = my_profile(request.user)
+        set_resume(profile, request.FILES.get("resume"))
+        return Response(MyProfileSerializer(profile).data)
+
+    @extend_schema(request=None, responses={200: MyProfileSerializer})
+    def delete(self, request):
+        """Remove my resume and delete its file."""
+        profile = my_profile(request.user)
+        remove_resume(profile)
+        return Response(MyProfileSerializer(profile).data)
+
+
+@extend_schema(
+    parameters=[OpenApiParameter("download", bool, description="1 sends it as an attachment.")],
+    responses={(200, "application/pdf"): OpenApiTypes.BINARY, 403: None, 404: None},
+)
+class ResumeView(APIView):
+    """Someone's resume, streamed from private storage (F1-16, DD-42).
+
+    Only the person and owners of projects they applied to: 403 for anyone else, checked
+    before anything else so it never says whether a resume exists. 404 when there's none.
+    """
+
+    def get(self, request, pk):
+        profile = get_object_or_404(Profile, pk=pk)
+        if not can_read_resume(request.user, profile):
+            raise PermissionDenied("You can't open this resume.")
+        if not profile.resume:
+            raise Http404
+        response = FileResponse(
+            profile.resume.open("rb"),
+            content_type="application/pdf",
+            as_attachment=request.query_params.get("download") == "1",
+            filename=profile.resume_name or "resume.pdf",
+        )
+        response["Cache-Control"] = "private, no-store"
         response["X-Content-Type-Options"] = "nosniff"
         return response
 
