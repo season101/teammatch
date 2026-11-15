@@ -258,7 +258,7 @@ function LinkField({
         maxLength={LINK_MAX}
         disabled={disabled}
         aria-invalid={Boolean(error)}
-        aria-describedby={`${id}-hint`}
+        aria-describedby={error ? `${id}-hint ${id}-error` : `${id}-hint`}
         className={inputClass}
         onChange={(event) => onChange(event.target.value)}
       />
@@ -266,7 +266,7 @@ function LinkField({
         Optional. Adds 5% to profile strength.
       </p>
       {error && (
-        <p role="alert" className={errorClass}>
+        <p id={`${id}-error`} role="alert" className={errorClass}>
           {error}
         </p>
       )}

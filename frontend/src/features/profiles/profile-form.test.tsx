@@ -135,6 +135,9 @@ test("sends GitHub and LinkedIn, and shows the server's message on a bad link", 
     "Enter a link that starts with https://github.com/",
   );
   expect(screen.getByLabelText("GitHub")).toHaveAttribute("aria-invalid", "true");
+  expect(screen.getByLabelText("GitHub")).toHaveAccessibleDescription(
+    /Enter a link that starts with https:\/\/github.com\//,
+  );
   expect(await patches[0].json()).toMatchObject({
     github_url: "https://gitlab.com/sam",
     linkedin_url: "https://linkedin.com/in/sam",
