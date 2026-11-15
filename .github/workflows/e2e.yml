@@ -85,7 +85,9 @@ jobs:
         run: |
           if [ "$EVENT" = pull_request ]; then
             # --relative: paths and the pathspec are relative to e2e/, the working directory
-            changed=$(git diff --name-only --relative --diff-filter=AMR "origin/$BASE...HEAD" -- 'test_*.py')
+            # minus the two that always run, so pytest doesn't collect them twice
+            changed=$(git diff --name-only --relative --diff-filter=AMR "origin/$BASE...HEAD" -- 'test_*.py' \
+              | { grep -vxE 'test_(smoke|golden_path)\.py' || true; })
             uv run pytest test_smoke.py test_golden_path.py $changed
           else
             uv run pytest
