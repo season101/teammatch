@@ -67,6 +67,8 @@ export function ReviewApplicants() {
           ) : (
             <Tabs
               label={`Roles of ${project.title}`}
+              // Back from an applicant's resume (F1-17) returns to the same role.
+              remember={`review-${project.id}`}
               tabs={project.roles.map((role) => ({
                 id: String(role.id),
                 label: <RoleTabLabel role={role} />,

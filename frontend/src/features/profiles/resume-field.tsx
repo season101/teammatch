@@ -4,21 +4,31 @@ import { useRef, useState, type ChangeEvent } from "react";
 import { buttonClasses } from "@/components/ui/button";
 import { errorClass } from "@/components/ui/form-classes";
 import { FileIcon, LinkCard } from "@/components/ui/link-card";
+import { Modal } from "@/components/ui/modal";
 import { PendingLabel } from "@/components/ui/pending-label";
 import {
   RESUME_MAX_BYTES,
   RESUME_NOT_PDF,
   RESUME_TOO_BIG,
-  resumeUrl,
+  resumeViewerHref,
   useSetResume,
   type MyProfile,
 } from "./queries";
 
 // Profile → Edit, screen 51: add, read, replace or remove my resume (F1-16). It saves as
-// soon as a file is picked, apart from Save profile, like the photo.
-export function ResumeField({ profile }: { profile: MyProfile }) {
+// soon as a file is picked, apart from Save profile, like the photo. `unsaved`: the form
+// around it has edits that opening the viewer, in this tab, would throw away.
+export function ResumeField({
+  profile,
+  unsaved = false,
+}: {
+  profile: MyProfile;
+  unsaved?: boolean;
+}) {
   const input = useRef<HTMLInputElement>(null);
   const setResume = useSetResume();
+  const [leaving, setLeaving] = useState(false);
+  const viewer = resumeViewerHref(profile.id);
   // The picker's own check, before anything is sent. The server checks the bytes.
   const [picked, setPicked] = useState("");
   const error = picked || setResume.error?.message;
@@ -48,12 +58,28 @@ export function ResumeField({ profile }: { profile: MyProfile }) {
       {profile.has_resume ? (
         <>
           <LinkCard
-            external
-            href={resumeUrl(profile.id)}
+            external={false}
+            href={viewer}
             icon={<FileIcon />}
             title={profile.resume_name || "Resume"}
             detail="Tap to read. Only owners you apply to can open it."
+            onClick={(event) => {
+              if (!unsaved) return;
+              event.preventDefault();
+              setLeaving(true);
+            }}
           />
+          <Modal
+            open={leaving}
+            onClose={() => setLeaving(false)}
+            title="Leave without saving?"
+            ctaLabel="Keep editing"
+            onCta={() => setLeaving(false)}
+            escapeLabel="Leave"
+            escapeHref={viewer}
+          >
+            Your changes to your profile will be lost.
+          </Modal>
           <div className="flex gap-2">
             <button
               type="button"

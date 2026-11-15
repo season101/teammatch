@@ -95,6 +95,8 @@ Photo upload (F1-07) shipped before F1-15, so as built the photo keeps 10% from 
 - 403 shows No access. A PDF.js error shows Won't display with Download instead.
 - It works in a phone browser, a desktop browser and the installed app. Test the installed app on an iPhone, since it keeps its own cookies (see F2-08).
 
+As built (F1-17): the page is `/profiles/<id>/resume`, outside the app shell, so the viewer's own top and bottom bars replace the tab bar, as on screen 53. `features/profiles/open-pdf.ts` is the only place that imports `pdfjs-dist`, and it starts the worker from the app's own bundle. A 404 also shows No access, as the edge cases say. 100% fits the page to the column; past that, the pages scroll sideways inside the column, not the whole screen. Back goes back in history when the page before is TeamMatch's (the Navigation API's `canGoBack`, which ignores other sites). Review and Profile reopen the tab that was open, so Back lands on the same applicant. Opened in a new tab, from a pasted address or from another site, Back goes to my profile or to Review. With unsaved edits in Profile → Edit, opening the resume asks "Leave without saving?" first. A page that fails to draw shows Won't display with Download instead.
+
 ## Components
 
 | Component | How it's used |

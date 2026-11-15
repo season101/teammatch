@@ -42,6 +42,7 @@ export function ProfileTabs() {
       <ProfileStrength value={profileStrength(profile.data)} />
       <Tabs
         label="Profile"
+        remember="profile"
         tabs={[
           {
             id: "preview",

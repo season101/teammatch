@@ -88,7 +88,7 @@ test("Preview shows GitHub and LinkedIn as cards that open in a new tab", async 
   // Through the API's permission check, never a storage address.
   expect(screen.getByRole("link", { name: /^Resume/ })).toHaveAttribute(
     "href",
-    "/api/v1/profiles/7/resume/",
+    "/profiles/7/resume",
   );
   expect(screen.getByRole("meter")).toHaveAttribute("aria-valuenow", "100");
 });
@@ -104,6 +104,18 @@ test("a profile without a photo or links stops at 80%", async () => {
   const meter = await screen.findByRole("meter", { name: "Profile strength" });
   expect(meter).toHaveAttribute("aria-valuenow", "80");
   expect(screen.getByText("80%")).toBeInTheDocument();
+});
+
+// F1-17: Back from the resume viewer remounts the page, maybe long after the query cache
+// dropped anything it held (a new client here); it still opens on Edit.
+test("coming back to Profile opens the tab that was open", async () => {
+  const { unmount } = renderTabs();
+  fireEvent.click(await screen.findByRole("tab", { name: "Edit" }));
+  unmount();
+
+  renderTabs();
+
+  expect(await screen.findByRole("tab", { name: "Edit", selected: true })).toBeInTheDocument();
 });
 
 test("Preview shows the card owners see; Edit shows the form", async () => {

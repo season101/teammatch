@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { MouseEventHandler, ReactNode } from "react";
 
 // 16px brand and file glyphs (deck details, screens 50 to 52). Decorative: the text
 // beside them names the link.
@@ -46,6 +46,7 @@ export function LinkCard({
   detail = shortLink(href),
   external = true,
   compact = false,
+  onClick,
 }: {
   href: string;
   icon: ReactNode;
@@ -53,6 +54,7 @@ export function LinkCard({
   detail?: string;
   external?: boolean;
   compact?: boolean;
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
 }) {
   const body = compact ? (
     <>
@@ -83,6 +85,7 @@ export function LinkCard({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={onClick}
       // The label puts the spaces in; the sr-only text is for anything reading the text.
       aria-label={`${title}${compact ? "" : `, ${detail}`} (opens in a new tab)`}
       className={className}
@@ -91,7 +94,7 @@ export function LinkCard({
       <span className="sr-only">(opens in a new tab)</span>
     </a>
   ) : (
-    <Link href={href} className={className}>
+    <Link href={href} onClick={onClick} className={className}>
       {body}
     </Link>
   );

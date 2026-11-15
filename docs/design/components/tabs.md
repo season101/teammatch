@@ -13,6 +13,7 @@ Text tabs with a violet underline on the active one. They switch between sibling
 | `tabs` | `{ id, label, panel }[]` | required | |
 | `label` | `string` | required | The tablist's accessible name |
 | `defaultTab` | `string` | first tab | |
+| `remember` | `string` | none | A key. The choice is kept in `sessionStorage` for the browser tab's session, so coming back opens the same tab (Profile, Review). Read on mount, so not for tabs in the server-rendered first paint |
 
 ## Behaviour
 - **Mouse:** click selects.
