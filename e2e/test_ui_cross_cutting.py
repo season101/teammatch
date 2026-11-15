@@ -54,24 +54,25 @@ def nav_visible(page: Page):
 # ---------- Responsive (F2-10) ----------
 
 
-@pytest.mark.parametrize(
-    "path",
-    [
-        pytest.param(p, marks=pytest.mark.xfail(reason="BUG: landing page scrolls sideways by 3px at 1024px wide", strict=True))
-        if p == "/"
-        else p
-        for p in PUBLIC
-    ],
-    ids=pid,
-)
-def test_public_routes_no_horizontal_scroll(page: Page, path):
-    bad = []
-    for w, h in WIDTHS:
-        page.set_viewport_size({"width": w, "height": h})
-        settle(page, path)
-        if overflow(page) > 0:
-            bad.append(f"{w}px: +{overflow(page)}")
-    assert not bad, f"{path} scrolls sideways: {bad}"
+KNOWN_WIDE = {("/", 1024)}  # landing page overflows by 3px here (the xfail below)
+
+
+def _public_cases():
+    for p in PUBLIC:
+        for w, h in WIDTHS:
+            marks = (
+                [pytest.mark.xfail(reason="BUG: landing page scrolls sideways by 3px at 1024px wide", strict=True)]
+                if (p, w) in KNOWN_WIDE
+                else []
+            )
+            yield pytest.param(p, w, h, marks=marks, id=f"{pid(p)}-{w}")
+
+
+@pytest.mark.parametrize("path,w,h", list(_public_cases()))
+def test_public_routes_no_horizontal_scroll(page: Page, path, w, h):
+    page.set_viewport_size({"width": w, "height": h})
+    settle(page, path)
+    assert overflow(page) <= 0, f"{path} scrolls sideways by {overflow(page)}px at {w}px"
 
 
 @pytest.mark.parametrize("path", APP + ["PROJECT", "CHAT"] + WELCOME, ids=pid)
@@ -93,29 +94,44 @@ def test_app_routes_no_horizontal_scroll(owner_page: Page, path):
 # ---------- Tap targets ----------
 
 
-@pytest.mark.parametrize(
-    "path",
-    [
-        pytest.param("/feed", marks=pytest.mark.xfail(reason="BUG: 'My applications' link on /feed is 36px tall on phones (<44)", strict=True)),
-        pytest.param("/projects", marks=pytest.mark.xfail(reason="BUG: 'New project' link and 'Load more' on /projects are 36px tall on phones (<44)", strict=True)),
-        "/teams",
-        "/settings",
-        "/projects/new",
-    ],
-)
-def test_phone_tap_targets_at_least_44px(owner_page: Page, path):
-    page = owner_page
+# Known undersized phone controls: {route: [text of each]}. Each gets its own xfail below.
+KNOWN_SMALL = {"/feed": ["My applications"], "/projects": ["New project", "Load more"]}
+
+SMALL_JS = """() => [...document.querySelectorAll('button, a[href], [role=tab]')]
+  .filter(e => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e);
+    return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !e.closest('[aria-hidden=true]')
+      && !(e.tagName === 'A' && e.closest('p, li') && s.display === 'inline')
+      && (r.height < 43.5 || r.width < 43.5); })
+  .map(e => (e.getAttribute('aria-label') || e.textContent).trim().slice(0,30))"""
+
+
+def small_controls(page: Page, path):
     page.set_viewport_size({"width": 375, "height": 812})
     settle(page, path)
-    small = page.evaluate(
-        """() => [...document.querySelectorAll('button, a[href], [role=tab]')]
-          .filter(e => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e);
-            return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !e.closest('[aria-hidden=true]')
-              && !(e.tagName === 'A' && e.closest('p, li') && s.display === 'inline')
-              && (r.height < 43.5 || r.width < 43.5); })
-          .map(e => `${e.tagName} "${(e.getAttribute('aria-label') || e.textContent).trim().slice(0,30)}" ${Math.round(e.getBoundingClientRect().width)}x${Math.round(e.getBoundingClientRect().height)}`)"""
-    )
+    return page.evaluate(SMALL_JS)
+
+
+@pytest.mark.parametrize("path", ["/feed", "/projects", "/teams", "/settings", "/projects/new"])
+def test_phone_tap_targets_at_least_44px(owner_page: Page, path):
+    small = [t for t in small_controls(owner_page, path) if t not in KNOWN_SMALL.get(path, [])]
     assert not small, f"controls under 44px on {path}: {small}"
+
+
+@pytest.mark.parametrize(
+    "path,text",
+    [
+        pytest.param(
+            p,
+            t,
+            marks=pytest.mark.xfail(reason=f"BUG: '{t}' on {p} is 36px tall on phones (<44)", strict=True),
+            id=f"{p}-{t}",
+        )
+        for p, texts in KNOWN_SMALL.items()
+        for t in texts
+    ],
+)
+def test_known_small_phone_control_is_44px(owner_page: Page, path, text):
+    assert text not in small_controls(owner_page, path)
 
 
 def test_bottom_tab_bar_targets(owner_page: Page):
@@ -311,8 +327,9 @@ def test_service_worker_registers(page: Page):
     page.goto("/")
     page.wait_for_timeout(2500)
     regs = page.evaluate("navigator.serviceWorker.getRegistrations().then(r => r.length)")
-    if regs == 0:
+    if regs == 0 and page.locator("nextjs-portal").count():  # Next's dev overlay marks a dev server
         pytest.skip("SW registers only in production builds (app-install.tsx); this stack is a dev server")
+    assert regs >= 1, "production build did not register /sw.js"
 
 
 def test_settings_shows_install_row(owner_page: Page):
@@ -353,15 +370,15 @@ def test_status_page_loads(page: Page):
 # ---------- Basic a11y ----------
 
 
-@pytest.mark.parametrize("path", ["/", "/login", "/signup", "/reset-password", "/status"] + APP + WELCOME, ids=str)
+@pytest.mark.parametrize("path", ["/", "/login", "/signup", "/reset-password", "/status"] + APP, ids=str)
 def test_one_h1_and_main_landmark(owner_page: Page, path):
     page = owner_page
     page.set_viewport_size({"width": 1440, "height": 900})
     if path in PUBLIC:
         page.context.clear_cookies()
     settle(page, path)
-    if "/login" in page.url and path != "/login":
-        pytest.skip("redirected to login")
+    if path != "/login":
+        assert "/login" not in page.url, f"{path} redirected to {page.url}"
     page.wait_for_timeout(500)
     assert page.locator("h1:visible").count() == 1, f"{path}: {page.locator('h1:visible').count()} h1"
     assert page.locator("main:visible").count() == 1, f"{path}: main count"
@@ -391,3 +408,11 @@ def test_landing_has_lang_title_and_alt(page: Page):
     assert page.evaluate("[...document.images].filter(i => !i.hasAttribute('alt')).length") == 0
     assert page.locator("html").get_attribute("lang")
     assert page.title().strip()
+
+
+def test_welcome_step_has_one_h1_and_main(page: Page, verified_user, sign_in):
+    sign_in(page, verified_user("UI Newbie", onboarded=False))
+    page.goto("/welcome/rules")
+    expect(page.get_by_role("heading", name="Team rules")).to_be_visible()
+    assert page.locator("h1:visible").count() == 1
+    assert page.locator("main:visible").count() == 1
