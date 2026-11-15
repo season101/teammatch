@@ -33,13 +33,21 @@ def test_adds_open_sample_projects_with_skilled_roles(current_term):
     projects = Project.objects.all()
     assert projects.count() == 6
     for project in projects:
-        assert project.status == ProjectStatus.OPEN
+        draft = project.title == "Thesis Tracker"
+        assert project.status == (ProjectStatus.DRAFT if draft else ProjectStatus.OPEN)
         assert project.term == current_term
         assert 3 <= project.roles.count() <= 5
         assert all(role.required_skills.exists() for role in project.roles.all())
         assert project.owner.email.endswith("@example.com")
         assert not project.owner.has_usable_password()
         assert project.owner.profile.display_name
+
+
+def test_no_sample_owner_has_two_open_projects(current_term):
+    seed()
+
+    owners = list(Project.objects.filter(status=ProjectStatus.OPEN).values_list("owner", flat=True))
+    assert len(owners) == len(set(owners)) == 5  # BR-14
 
 
 def test_running_again_adds_nothing(current_term):

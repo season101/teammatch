@@ -219,7 +219,7 @@ Then test it by redeploying the version that's live (`gh workflow run deploy.yml
 
 ## Sample data for demos
 
-`seed_demo` adds five sample projects with open roles. They belong to sample accounts at `example.com`, which can't sign in. With `--candidate`, it also fills that account's profile with sample skills if the profile is still empty, so the feed shows skill matches. Running it again only adds what's missing.
+`seed_demo` adds sample projects with open roles (one of Marco's two is a draft, since an owner gets one open project per term). They belong to sample accounts at `example.com`, which can't sign in. With `--candidate`, it also fills that account's profile with sample skills if the profile is still empty, so the feed shows skill matches. Running it again only adds what's missing.
 
 ```bash
 docker exec teammatch-api python manage.py seed_demo --candidate <demo candidate email>

@@ -79,6 +79,9 @@ STUDENTS = {
     ),
 }
 
+# Seeded as drafts: Marco's other project is open, and an owner gets one per term (BR-14).
+DRAFTS = {"Thesis Tracker"}
+
 # owner, title, pitch, roles as (title, description, skills, who fills it or None)
 PROJECTS = [
     (
@@ -400,7 +403,11 @@ class Command(BaseCommand):
         project, created = Project.objects.get_or_create(
             owner=owner,
             title=title,
-            defaults={"term": term, "pitch": pitch, "status": ProjectStatus.OPEN},
+            defaults={
+                "term": term,
+                "pitch": pitch,
+                "status": ProjectStatus.DRAFT if title in DRAFTS else ProjectStatus.OPEN,
+            },
         )
         if not created:
             return None
