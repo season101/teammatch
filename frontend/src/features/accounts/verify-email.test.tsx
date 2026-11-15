@@ -17,8 +17,8 @@ function mockFetch(status: number) {
 
 afterEach(() => vi.unstubAllGlobals());
 
-test("decodes the key from the link before sending it to allauth", async () => {
-  const fetchMock = mockFetch(401);
+test("signed in by the link: Continue goes on to setup", async () => {
+  const fetchMock = mockFetch(200);
   render(<VerifyEmail verificationKey="Mw%3A1xH8V1%3Aabc-_123" />);
   fireEvent.click(screen.getByRole("button", { name: "Verify my email" }));
 
@@ -28,11 +28,30 @@ test("decodes the key from the link before sending it to allauth", async () => {
     "href",
     "/feed",
   );
+  // The key is decoded from the link before it goes to allauth.
   const [url, init] = fetchMock.mock.calls[0];
   expect(url).toBe("/_allauth/browser/v1/auth/email/verify");
   expect(JSON.parse(init?.body as string)).toEqual({
     key: "Mw:1xH8V1:abc-_123",
   });
+});
+
+test("verified in another browser: offers Sign in, not Continue", async () => {
+  mockFetch(401);
+  render(<VerifyEmail verificationKey="key" />);
+  fireEvent.click(screen.getByRole("button", { name: "Verify my email" }));
+
+  expect(await screen.findByText("You're verified")).toBeInTheDocument();
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "Sign in with your school email and password",
+  );
+  expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+    "href",
+    "/login",
+  );
+  expect(
+    screen.queryByRole("link", { name: "Continue" }),
+  ).not.toBeInTheDocument();
 });
 
 test("shows an error for an invalid or expired key", async () => {

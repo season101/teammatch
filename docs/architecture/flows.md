@@ -36,6 +36,8 @@ sequenceDiagram
     end
 ```
 
+The verify call signs the student in only in the browser that signed up, within 15 minutes (`ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION`, allauth's `LOGIN_TIMEOUT`). Anywhere else it still verifies the email but answers 401, and the page offers Sign in.
+
 ## 2. Google sign-in via allauth headless
 
 The browser does a real form POST (not fetch) so allauth can redirect to Google. Why only @email.latech.edu, and how LA Tech's login fits in: [Google Sign-In](google-sign-in.md).

@@ -175,7 +175,7 @@ Endpoints we use (same under both prefixes):
 | POST | `auth/login` | email login |
 | GET | `auth/session` | who am I |
 | DELETE | `auth/session` | logout |
-| POST | `auth/email/verify` | verify email key |
+| POST | `auth/email/verify` | verify email key; 200 signed in (the browser that signed up), 401 verified but sign in next |
 | POST | `auth/password/request` | password reset email |
 | POST | `auth/password/reset` | set new password with key |
 | POST | `auth/provider/redirect` | start Google login (browser form POST) |
