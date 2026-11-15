@@ -3,7 +3,14 @@
 import { AnimatePresence, useMotionValue } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { useBump } from "@/components/ui/bump";
 import { buttonClasses } from "@/components/ui/button";
@@ -24,7 +31,7 @@ import {
   type FeedRole,
 } from "./queries";
 import { PassToast } from "./pass-toast";
-import { deckCardHeight, RoleCard, roleHref } from "./role-card";
+import { deckCardHeight, deckHandoff, markOpenedFromDeck, RoleCard, roleHref } from "./role-card";
 import { SwipeCard, type Direction } from "./swipe-card";
 
 export function Feed() {
@@ -64,6 +71,18 @@ export function Feed() {
   const [error, setError] = useState("");
   const shortcuts = useShortcutsEnabled();
   const stack = useRef<HTMLDivElement>(null);
+  // Back from a role's details page: the deck takes focus once it's on screen, so ← and →
+  // work at once.
+  useEffect(() => {
+    if (!deckHandoff.returning || !stack.current) return;
+    deckHandoff.returning = false;
+    stack.current.focus();
+  });
+
+  function openDetails(role: FeedRole) {
+    markOpenedFromDeck(role);
+    router.push(roleHref(role));
+  }
 
   if (feed.isPending || team.isPending) {
     return <SkeletonCard label="Loading open roles" className={deckCardHeight} />;
@@ -209,7 +228,7 @@ export function Feed() {
       (shortcuts && event.key === "ArrowUp");
     if (open) {
       event.preventDefault();
-      router.push(roleHref(top));
+      openDetails(top);
       return;
     }
     const to = event.key === "ArrowRight" ? "right" : event.key === "ArrowLeft" ? "left" : null;
@@ -284,7 +303,7 @@ export function Feed() {
               returning={role.id === returning}
               follow={follow}
               onCommit={commit}
-              onTap={() => router.push(roleHref(role))}
+              onTap={() => openDetails(role)}
             >
               <RoleCard role={role} mySkillIds={mySkillIds} />
             </SwipeCard>

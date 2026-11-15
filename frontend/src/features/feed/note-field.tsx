@@ -3,7 +3,8 @@
 // Same limit as Application.note.
 const NOTE_MAX = 300;
 
-// Left the deck in UI-06 (DD-40). The role details page (F3-13) owns the note next.
+// Left the deck in UI-06 (DD-40). The role details page (F3-13) and Apply on the
+// project page (#172) use it.
 export function NoteField({
   roleId,
   note,

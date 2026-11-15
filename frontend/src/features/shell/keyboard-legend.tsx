@@ -11,7 +11,7 @@ export type LegendKey = [key: string, action: string];
 export const DECK_KEYS: LegendKey[] = [
   ["←", "Pass"],
   ["→", "Apply"],
-  ["↑", "Details"],
+  ["↑ / Enter", "Details"],
   ["Z", "Undo pass"],
 ];
 

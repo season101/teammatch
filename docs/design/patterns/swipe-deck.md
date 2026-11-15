@@ -12,7 +12,7 @@ Open roles on open projects that the candidate hasn't applied to or passed, that
 | Pass | Swipe left | Drag left | ← | ✕ Pass |
 | Undo the last pass | | | Z | ↺ Undo |
 | Open details | Tap the card | Click the card | ↑, or Enter on the deck | View details |
-| Close details | Swipe down / tap ✕ | Click ✕ | ↓ or Esc | |
+| Close details | Back to the deck | Back to the deck | Esc | |
 | Next or previous card page | Tap right or left half | Click right or left half | Space | |
 
 ## Gesture
@@ -21,7 +21,7 @@ Open roles on open projects that the candidate hasn't applied to or passed, that
 - **On release short of that,** the card springs back (0.5s, no bounce), starting at the speed it was let go.
 - **On commit,** the card flies off in that direction on the same spring, so a flick leaves at the speed it was thrown. It fades over 200ms, and the next card scales from 0.96 to 1.
 - **While dragging,** the next card grows with the drag and reaches full size at the commit distance, so it's already coming forward under the finger.
-- **A tap** that doesn't turn into a drag opens the role on its project page (`/projects/<id>?role=<role id>`).
+- **A tap** that doesn't turn into a drag opens the role details page (`/projects/<id>?role=<role id>`, F3-13). Back to the deck steps back to the same card, which is still on top of the cached feed, and the deck takes focus. Opened from a link, Back goes to Discover. Apply or Pass there saves the decision and returns to the deck on the next card.
 
 ### Stamps
 While dragging, an outlined word appears at the top corner on the side the card is heading to:
@@ -42,14 +42,14 @@ The opacity is the drag distance ÷ the commit distance. Stamps are decorative (
 Every card is the same height, so ✕ and ✓ stay in one place, just above the phone tab bar. The height is the viewport minus the page header, padding, buttons and tab bar, kept between 22rem and 38rem. The title and project take one line each, skills one row with "+N more", and the pitch five lines. Longer text ends in an ellipsis, and nothing scrolls inside the card.
 
 ## The note
-There's no note on the deck: a swipe right applies without one ([DD-40](../decisions.md), agreed Nov 11, 2026). The note moves to the role details page with F3-13. See [deck details](deck-details.md).
+There's no note on the deck: a swipe right applies without one ([DD-40](../decisions.md), agreed Nov 11, 2026). The note is on the role details page (F3-13): Add a note opens it above Pass and Apply, up to 300 characters. See [deck details](deck-details.md).
 
 ## Keyboard legend
 On desktop, a row pinned to the bottom of the stage:
 
-`Hide` · ← Pass · → Apply · ↑ Details · Z Undo pass
+`Hide` · ← Pass · → Apply · ↑ / Enter Details · Z Undo pass
 
-It lists only keys that work. ↓ and Space join it when the deck gets a details panel and card pages; today details open on the project page.
+It lists only keys that work. ↓ and Space join it when the deck gets a details panel and card pages; today details open on the role details page, where Esc goes back.
 
 - Key caps are 24px `surface-2` boxes, Geist 12px semibold.
 - `Hide` collapses the row until the next visit.

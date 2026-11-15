@@ -59,9 +59,14 @@ export function useApply() {
       );
       return queryClient.invalidateQueries({ queryKey: ["my-applications"] });
     },
+    // 409: the role filled or closed, or I already applied, so it leaves the deck too.
     // 403: my team just locked, so the deck turns into the benched state, and the
     // lock liked one of my applications and withdrew the rest.
-    onError: (error) => {
+    onError: (error, { role: id }) => {
+      if (error.status === 409)
+        queryClient.setQueryData<FeedRole[]>(["feed"], (roles) =>
+          roles?.filter((role) => role.id !== id),
+        );
       if (error.status !== 403) return;
       queryClient.invalidateQueries({ queryKey: ["my-team"] });
       queryClient.invalidateQueries({ queryKey: ["my-applications"] });
