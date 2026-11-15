@@ -562,6 +562,50 @@ test("a withdrawn application still blocks applying again", async () => {
   ).not.toBeInTheDocument();
 });
 
+test("my application still shows once the role is filled and the project locks", async () => {
+  mockApi((method, path) => {
+    if (path === "/api/v1/skills/") return [SKILLS, 200];
+    if (path === "/api/v1/applications/mine/")
+      return [{ results: [{ ...APPLICATION, status: "committed" }] }, 200];
+    return [
+      project({
+        status: "locked",
+        owner: 2,
+        roles: [{ ...ROLE, status: "filled" }],
+      }),
+      200,
+    ];
+  });
+  renderEditor(1);
+  expect(await screen.findByText("Applied")).toBeInTheDocument();
+  expect(screen.getByText("Committed")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Apply to Backend dev" }),
+  ).not.toBeInTheDocument();
+});
+
+test("a 409 that turns out I'd already applied keeps the server's message", async () => {
+  let applied = false;
+  mockApi((method, path) => {
+    if (path === "/api/v1/skills/") return [SKILLS, 200];
+    if (path === "/api/v1/applications/mine/")
+      return [{ results: applied ? [APPLICATION] : [] }, 200];
+    if (path === "/api/v1/applications/" && method === "POST") {
+      applied = true; // another tab got there first
+      return [{ detail: "You already applied to this role." }, 409];
+    }
+    return [project({ status: "open", owner: 2, roles: [ROLE] }), 200];
+  });
+  renderEditor(1);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Apply to Backend dev" }),
+  );
+  expect(await screen.findByText("Applied")).toBeInTheDocument();
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "You already applied to this role.",
+  );
+});
+
 test("shows the server's message when applying fails", async () => {
   mockApi((method, path) => {
     if (path === "/api/v1/skills/") return [SKILLS, 200];

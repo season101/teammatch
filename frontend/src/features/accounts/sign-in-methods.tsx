@@ -127,7 +127,8 @@ export function SignInMethods() {
   const [connecting, setConnecting] = useState(false);
   // Coming back from a refused Connect: Google sends ?error=<code> (screen 46).
   // It's only shown once the methods load, so the first render matches the server's.
-  const [error] = useState(() =>
+  // Also set when Connect can't start (no server), so the click isn't silently lost.
+  const [error, setError] = useState(() =>
     typeof window === "undefined"
       ? null
       : new URL(window.location.href).searchParams.get("error"),
@@ -204,9 +205,11 @@ export function SignInMethods() {
         disabled={connecting}
         onClick={() => {
           setConnecting(true);
-          continueWith("google", undefined, "connect").catch(() =>
-            setConnecting(false),
-          );
+          setError(null);
+          continueWith("google", undefined, "connect").catch(() => {
+            setConnecting(false);
+            setError("start_failed"); // "Couldn't connect Google. Try again."
+          });
         }}
         className={buttonClasses("secondary", "sm")}
       >

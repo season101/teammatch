@@ -16,6 +16,7 @@ function mockAllauth(
   account: Account,
   change = { status: 200, body: {} as unknown },
   googleKeys = true,
+  providersStatus = 200,
 ) {
   document.cookie = "csrftoken=test-token";
   let current = { ...account };
@@ -45,7 +46,7 @@ function mockAllauth(
           },
         });
       if (url.endsWith("/account/providers"))
-        return reply(200, {
+        return reply(providersStatus, {
           data: current.google ? [{ provider: { id: "google" } }] : [],
         });
       if (url.endsWith("/config"))
@@ -115,6 +116,43 @@ test("Connect starts the Google redirect as a connect, coming back to Settings",
     process: "connect",
     callback_url: "/settings",
   });
+});
+
+test("Connect that can't reach the server says so, and a retry clears it", async () => {
+  mockAllauth({ email: "sam@email.latech.edu", password: true, google: false });
+  const submit = vi
+    .spyOn(HTMLFormElement.prototype, "submit")
+    .mockImplementationOnce(() => {
+      throw new Error("offline");
+    })
+    .mockImplementation(() => {});
+  renderSection();
+
+  fireEvent.click(await screen.findByRole("button", { name: "Connect" }));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Couldn't connect Google. Try again.",
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Connect" }));
+  await waitFor(() => expect(submit).toHaveBeenCalledTimes(2));
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+test("a failed linked-accounts request shows an error, not Connect", async () => {
+  mockAllauth(
+    { email: "sam@email.latech.edu", password: true, google: true },
+    undefined,
+    true,
+    500,
+  );
+  renderSection();
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Couldn't load your sign-in methods.",
+  );
+  expect(
+    screen.queryByRole("button", { name: "Connect" }),
+  ).not.toBeInTheDocument();
 });
 
 test("staff on @latech.edu aren't offered Google", async () => {
