@@ -14,6 +14,7 @@ The source of truth is the OpenAPI schema, not this page. This page is the overv
 | Authz | Every object endpoint checks ownership or membership. Objects the user cannot see return `404`. Acting on something you can see but don't own returns `403` (for example editing someone else's profile). |
 | IDs | Integer ids in paths |
 | Trailing slash | Always (`/api/v1/projects/`) |
+| Past terms | Once a project's term has ended (its last day counts), publishing it, applying to its roles, like/pass and commit answer `409` `term_over`, even by id |
 
 ## Versioning
 
@@ -52,7 +53,7 @@ All `/api/v1/` errors use one shape (custom DRF exception handler in `core`):
 | 401 | `not_authenticated` | no session |
 | 403 | `permission_denied`, `profile_retired`, `own_project` | logged in but not allowed |
 | 404 | `not_found` | missing or not visible to you |
-| 409 | `already_applied`, `role_not_open`, `already_on_team`, `project_locked` | state conflict |
+| 409 | `already_applied`, `role_not_open`, `already_on_team`, `project_locked`, `term_over` | state conflict |
 | 429 | `throttled` | rate limit |
 | 500 | `server_error` | bug, no details leaked |
 

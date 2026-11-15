@@ -17,6 +17,7 @@ from rest_framework.exceptions import APIException
 
 from apps.profiles.services import is_retired, retire
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
+from apps.projects.services import ensure_term_not_over
 
 from .models import Application, ApplicationStatus, Membership, RoleDismissal, Team
 
@@ -223,8 +224,9 @@ def decide(application, status):
     Rows are locked role, applicant, then application, as in commit, so a like and
     a commit on the same role or person wait for each other.
     """
-    role = Role.objects.select_related("project").select_for_update(of=("self",))
+    role = Role.objects.select_related("project__term").select_for_update(of=("self",))
     role = role.get(pk=application.role_id)
+    ensure_term_not_over(role.project.term)
     if status == ApplicationStatus.LIKED:
         get_user_model().objects.select_for_update().get(pk=application.applicant_id)
         # A seat on any team this term means they're retired (BR-08).
@@ -271,9 +273,10 @@ def commit(application):
     if application.status != ApplicationStatus.LIKED:
         raise OfferNotOpen()
     # Read after the role lock, so a close that held it is seen (see apply).
-    project = Project.objects.get(pk=role.project_id)
+    project = Project.objects.select_related("term").get(pk=role.project_id)
     if role.status != RoleStatus.OPEN or project.status != ProjectStatus.OPEN:
         raise RoleNotOpen("This role was just filled.")
+    ensure_term_not_over(project.term)
     applicant_id = application.applicant_id
     if is_retired(applicant_id) or holds_seat(applicant_id, term_id=project.term_id):
         raise ApplicantCommitted("You already have a spot on a team this term.")
@@ -409,8 +412,10 @@ def apply(role, user, note=""):
         raise ApplicantCommitted("You already committed to a team this term.")
     if role.status == RoleStatus.FILLED:
         raise RoleNotOpen("This role was just filled.")
-    if Project.objects.get(pk=role.project_id).status != ProjectStatus.OPEN:
+    project = Project.objects.select_related("term").get(pk=role.project_id)
+    if project.status != ProjectStatus.OPEN:
         raise RoleNotOpen()
+    ensure_term_not_over(project.term)
     if role.applications.filter(applicant=user).exists():
         raise AlreadyApplied()
     return Application.objects.create(role=role, applicant=user, note=note)

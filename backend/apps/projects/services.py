@@ -57,6 +57,18 @@ class OwnerHasASpot(APIException):
     default_code = "owner_has_a_spot"
 
 
+class TermOver(APIException):
+    status_code = 409
+    default_detail = "This project's term is over."
+    default_code = "term_over"
+
+
+def ensure_term_not_over(term, today=None):
+    """A past term's projects take no new step: publish, apply, like, pass or commit."""
+    if term.end_date < (today or timezone.localdate()):
+        raise TermOver()
+
+
 def get_active_term(today=None):
     """The term whose dates include today, or None."""
     today = today or timezone.localdate()
@@ -95,6 +107,7 @@ def publish_project(project):
     get_user_model().objects.select_for_update().get(pk=project.owner_id)
     if project.status != ProjectStatus.DRAFT:
         raise ProjectNotDraft()
+    ensure_term_not_over(project.term)
     if not project.roles.exists():
         raise ProjectNeedsRoles()
     already_open = (
