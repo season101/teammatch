@@ -21,6 +21,7 @@ Same frame as the [RoleCard](role-card.md): 3:4.6, `rounded-card`, 380 × 640 on
 - **Like** sends an offer; the role stays open until someone commits ([commit flow](../patterns/commit-flow.md)). A status line says "Offer sent to Riley Chen." and the next applicant shows.
 - **Pass** sets the application to passed and shows the next applicant.
 - **When someone commits,** the role fills and its other applicants and offers become passed.
+- **Has a spot elsewhere:** someone with a seat on another open project this term gets a grey avatar and that tag. Their text keeps full contrast (WCAG 1.4.3). Like is `aria-disabled` and described by the reason; Pass still works.
 - **Benched candidates never appear.** If someone joins another team while the owner is looking, Like fails with "This person just joined another team." and the card moves on.
 
 ## Accessibility

@@ -185,6 +185,8 @@ function OpenRoleQueue({ role, projectId }: QueueProps) {
 
   function decideOn(like: boolean) {
     if (!current || Date.now() - decidedAt.current < DOUBLE_TAP) return;
+    // Like is off for someone with a seat elsewhere (bug 40); → does nothing either.
+    if (like && current.committed_elsewhere) return;
     decidedAt.current = Date.now();
     // Focus on the leaving card would drop to the page. Like the deck's stack, the role's
     // panel stays put, and Tab goes on to the next card.

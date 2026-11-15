@@ -39,6 +39,9 @@ The keys follow Settings → Keyboard shortcuts. They never fire while typing, o
 - If the server refuses (the applicant was already decided), the card and the Offers out list go back to how they were, and the reason shows above the card.
 - A second press within 250ms of a decision is ignored. It's a double tap, not a choice about the next person.
 
+## Someone with a spot elsewhere
+An applicant who holds a seat on another open project this term (`committed_elsewhere`) stays in the queue with a grey avatar and a "Has a spot elsewhere" tag. Their details keep full contrast, so only the avatar greys out. Like and → are off, and the Like button says why to screen readers. Pass still works. Owning an open project doesn't count: they can still be liked ([DD-33](../decisions.md)).
+
 ## What happens when someone commits
 1. The role is filled by the first person to commit, and its tab gets a tick.
 2. The role shows "Riley Chen committed", and the other people on it as Closed or Declined.

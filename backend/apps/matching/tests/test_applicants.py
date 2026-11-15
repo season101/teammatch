@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 from apps.core.models import Term
 from apps.matching.models import Application, ApplicationStatus
 from apps.profiles.models import Profile, Skill
-from apps.projects.models import Project, ProjectStatus, Role
+from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 
 pytestmark = pytest.mark.django_db
 
@@ -180,10 +180,62 @@ def test_queue_query_count_does_not_grow_with_applicants(
 ):
     for i in range(5):
         apply(role, f"user{i}@latech.edu")
+    seat(other_project(role.project.term), User.objects.get(email="user0@latech.edu"))
 
     # role, applications page, applicant skills
     with django_assert_max_num_queries(4):
         assert len(queue(owner, role)["results"]) == 5
+
+
+# Bug 40: someone with a seat elsewhere shows in the queue, with Like off
+
+
+def other_project(term, status=ProjectStatus.OPEN):
+    rival = User.objects.create_user(email=f"rival{Project.objects.count()}@latech.edu")
+    return Project.objects.create(owner=rival, term=term, title="Other", pitch="p", status=status)
+
+
+def seat(project, user):
+    return Role.objects.create(
+        project=project, title="Seat", status=RoleStatus.FILLED, filled_by=user
+    )
+
+
+def committed_elsewhere(owner, role):
+    return {a["id"]: a["committed_elsewhere"] for a in queue(owner, role)["results"]}
+
+
+def test_someone_with_a_seat_on_another_open_project_is_committed_elsewhere(owner, role):
+    seated, free = apply(role, "sam@latech.edu"), apply(role, "kim@latech.edu")
+    seat(other_project(role.project.term), seated.applicant)
+
+    assert committed_elsewhere(owner, role) == {seated.id: True, free.id: False}
+    # It's the same check a like makes.
+    response = decide(owner, seated, "like")
+    assert (response.status_code, response.json()["code"]) == (409, "applicant_committed")
+    assert decide(owner, seated, "pass").status_code == 200
+
+
+def test_owning_an_open_project_is_not_committed_elsewhere(owner, role):
+    application = apply(role, "sam@latech.edu")
+    project = other_project(role.project.term)
+    Project.objects.filter(pk=project.pk).update(owner=application.applicant)
+
+    assert committed_elsewhere(owner, role) == {application.id: False}
+    # Owners of an open project can be liked; they close it before committing (DD-33).
+    assert decide(owner, application, "like").status_code == 200
+
+
+def test_a_seat_in_another_term_or_on_a_closed_project_is_not_committed_elsewhere(owner, role):
+    last_term, closed = apply(role, "sam@latech.edu"), apply(role, "kim@latech.edu")
+    today = timezone.localdate()
+    old_term = Term.objects.create(
+        name="Last", start_date=today - timedelta(days=200), end_date=today - timedelta(days=100)
+    )
+    seat(other_project(old_term), last_term.applicant)
+    seat(other_project(role.project.term, ProjectStatus.ARCHIVED), closed.applicant)
+
+    assert committed_elsewhere(owner, role) == {last_term.id: False, closed.id: False}
 
 
 def test_someone_elses_role_returns_403(role):

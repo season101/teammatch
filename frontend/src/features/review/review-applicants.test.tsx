@@ -535,3 +535,49 @@ test("the card shows how many required skills the applicant has, matched ones fi
     "(matched)",
   );
 });
+
+// The queue's applicants, as the API marks someone with a seat on another open project.
+function withSpotElsewhere() {
+  const api = fetch;
+  vi.stubGlobal("fetch", async (request: Request) => {
+    const response = await api(request);
+    if (!new URL(request.url).pathname.startsWith("/api/v1/roles/")) return response;
+    const body = await response.json();
+    body.results = body.results.map((a: object) => ({ ...a, committed_elsewhere: true }));
+    return Response.json(body, { status: response.status });
+  });
+}
+
+test("someone with a spot elsewhere is tagged with Like off, and can still be passed", async () => {
+  const requests = mockApi({ decision: { status: 200, body: { ...sam, status: "passed" } } });
+  withSpotElsewhere();
+  renderPage();
+  const card = await screen.findByRole("article", { name: /Applicant Sam Candidate/ });
+
+  expect(within(card).getByText("Has a spot elsewhere")).toBeInTheDocument();
+  const like = within(card).getByRole("button", { name: "Like Sam Candidate" });
+  expect(like).toHaveAttribute("aria-disabled", "true");
+  expect(like).toHaveAccessibleDescription(
+    "Sam Candidate committed to another project this term, so you can't like them. You can still pass.",
+  );
+
+  // Neither the button nor the right arrow sends a like.
+  fireEvent.click(like);
+  fireEvent.keyDown(document.body, { key: "ArrowRight" });
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  expect(requests.some((r) => r.method === "POST")).toBe(false);
+
+  fireEvent.click(within(card).getByRole("button", { name: "Pass on Sam Candidate" }));
+  expect(await screen.findByRole("status")).toHaveTextContent("Passed on Sam Candidate.");
+});
+
+test("someone without a spot elsewhere has no tag and Like is on", async () => {
+  mockApi();
+  renderPage();
+  const card = await screen.findByRole("article", { name: /Applicant Sam Candidate/ });
+
+  expect(within(card).queryByText("Has a spot elsewhere")).not.toBeInTheDocument();
+  expect(within(card).getByRole("button", { name: "Like Sam Candidate" })).not.toHaveAttribute(
+    "aria-disabled",
+  );
+});
