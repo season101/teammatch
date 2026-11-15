@@ -80,7 +80,7 @@ def test_messages_arrive_live_both_ways_and_history_loads_on_reopen(two_pages, t
 def test_open_team_chat_from_celebration_and_teams_screen(page: Page, team, sign_in):
     project, member, _client = team
     sign_in(page, member)
-    page.goto("/teams")
+    # It shows once, on the page sign-in lands on, and is marked seen then: no goto first.
     celebration = page.get_by_role("dialog", name="It's a Team!")
     expect(celebration).to_be_visible()
     celebration.get_by_role("link", name="Open team chat").click()
