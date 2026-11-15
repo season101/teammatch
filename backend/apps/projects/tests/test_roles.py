@@ -2,6 +2,8 @@ from datetime import timedelta
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -103,6 +105,36 @@ def test_role_needs_at_least_one_skill(owner, project):
     )
     assert response.status_code == 400
     assert Role.objects.count() == 0
+
+
+def test_role_skills_are_capped_at_20_and_must_exist(owner, project, skill):
+    many = [Skill.objects.create(name=f"Cap {i}", slug=f"cap-{i}").id for i in range(21)]
+    response = client_for(owner).post(
+        roles_url(project), {"title": "Dev", "required_skills": many}, format="json"
+    )
+    assert response.status_code == 400
+    assert "required_skills" in response.data
+
+    response = client_for(owner).post(
+        roles_url(project), {"title": "Dev", "required_skills": [skill.id, 999999]}, format="json"
+    )
+    assert response.status_code == 400
+    assert response.data["required_skills"] == ["Unknown skill id."]
+    assert Role.objects.count() == 0
+
+
+def test_role_skills_are_looked_up_in_one_query(owner, project, skill):
+    many = [Skill.objects.create(name=f"Many {i}", slug=f"many-{i}").id for i in range(20)]
+    counts = []
+    for ids in ([skill.id], many):
+        with CaptureQueriesContext(connection) as queries:
+            response = client_for(owner).post(
+                roles_url(project), {"title": "Dev", "required_skills": ids}, format="json"
+            )
+        assert response.status_code == 201
+        assert sorted(response.data["required_skills"]) == sorted(ids)
+        counts.append(len(queries))
+    assert counts[0] == counts[1]
 
 
 def test_role_needs_a_title(owner, project, skill):

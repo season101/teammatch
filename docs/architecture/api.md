@@ -122,8 +122,8 @@ Login, signup, logout, password and Google live under allauth (below).
 | DELETE | `/api/v1/projects/{id}/` | owner | delete draft **(planned)** |
 | POST | `/api/v1/projects/{id}/publish/` | owner | draft to open |
 | POST | `/api/v1/projects/{id}/close/` | owner | archive |
-| POST | `/api/v1/projects/{id}/roles/` | owner | add role |
-| PATCH | `/api/v1/roles/{id}/` | owner | edit role, required skills |
+| POST | `/api/v1/projects/{id}/roles/` | owner | add role with 1-20 `required_skills` ids (unknown id: `400`) |
+| PATCH | `/api/v1/roles/{id}/` | owner | edit role, required skills (1-20 ids) |
 | DELETE | `/api/v1/roles/{id}/` | owner | delete open role (may trigger lock) |
 
 ### matching

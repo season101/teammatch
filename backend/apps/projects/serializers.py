@@ -1,7 +1,8 @@
 from django.utils.text import Truncator
+from drf_spectacular.extensions import OpenApiSerializerFieldExtension
 from rest_framework import serializers
 
-from apps.profiles.models import Skill
+from apps.profiles.serializers import skills_from_ids
 
 from . import services
 from .models import Project, Role
@@ -38,10 +39,37 @@ class ProjectSerializer(serializers.ModelSerializer):
         return services.create_project(owner=self.context["request"].user, **validated_data)
 
 
+MAX_SKILLS = 20  # a role's required skills, the same cap as a profile's skill_ids
+
+
+class SkillIdsField(serializers.ListField):
+    """Skill ids in and out. Reads the role's skills, prefetched where the view does."""
+
+    child = serializers.IntegerField(min_value=1)
+
+    def to_representation(self, skills):
+        return [skill.pk for skill in skills.all()]
+
+
+class SkillIdsFieldSchema(OpenApiSerializerFieldExtension):
+    """The 1-20 rule is on input only: a role saved before the cap, or in admin, can hold
+    more or none, so responses promise just a list of ids. (The cap is checked in
+    RoleSerializer, not as the field's max_length, which spectacular would add to both.)"""
+
+    target_class = SkillIdsField
+
+    def map_serializer_field(self, auto_schema, direction):
+        ids = {"type": "array", "items": {"type": "integer"}}
+        if direction == "request":
+            ids["items"]["minimum"] = 1
+            ids.update(minItems=1, maxItems=MAX_SKILLS)
+        return ids
+
+
 class RoleSerializer(serializers.ModelSerializer):
-    required_skills = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Skill.objects.all(), allow_empty=False
-    )
+    # Capped and looked up in one query (as ProfileSerializer.skill_ids), so a huge list
+    # can't cost one query per id while the view holds the project lock.
+    required_skills = SkillIdsField(allow_empty=False)
 
     class Meta:
         model = Role
@@ -55,6 +83,11 @@ class RoleSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "project", "status", "created_at"]
+
+    def validate_required_skills(self, ids):
+        if len(ids) > MAX_SKILLS:
+            raise serializers.ValidationError(f"Choose at most {MAX_SKILLS} skills.")
+        return skills_from_ids(ids)
 
 
 class ProjectListSerializer(serializers.ModelSerializer):
