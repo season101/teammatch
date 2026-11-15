@@ -1,0 +1,68 @@
+name: E2E
+
+# The Playwright tests in e2e/ against the whole local stack (PL-08, PL-14).
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 8 * * *" # nightly, 2 am Central
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: throwaway .env
+        run: |
+          cp .env.example .env && echo >> .env
+          pw() { openssl rand -hex 16; }
+          for kv in "POSTGRES_PASSWORD=$(pw)" "S3_ACCESS_KEY=$(pw)" "S3_SECRET_KEY=$(pw)" \
+            "SEED_OWNER_EMAIL=e2e.owner@latech.edu" "SEED_OWNER_PASSWORD=$(pw)" \
+            "SEED_CANDIDATE_EMAIL=e2e.candidate@latech.edu" "SEED_CANDIDATE_PASSWORD=$(pw)" \
+            "EMAIL_FILE_PATH=/app/.e2e-mail"; do
+            sed -i "/^${kv%%=*}=/d" .env
+            echo "$kv" >> .env
+          done
+
+      - name: start the stack
+        run: docker compose -f compose.local.yml up -d --build --wait
+
+      - name: migrate and seed
+        run: |
+          docker compose -f compose.local.yml exec -T api python manage.py migrate --noinput
+          docker compose -f compose.local.yml exec -T api python manage.py seed_demo
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: e2e/uv.lock
+
+      - name: install chromium
+        working-directory: e2e
+        run: uv run playwright install --with-deps chromium
+
+      - name: run the tests
+        working-directory: e2e
+        run: uv run pytest
+
+      - name: upload traces, screenshots and videos
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-test-results
+          path: e2e/test-results/
+          retention-days: 14
+
+      - name: api and web logs
+        if: failure()
+        run: docker compose -f compose.local.yml logs --no-color --tail 300 api web
+
+      - name: stop the stack
+        if: always()
+        run: docker compose -f compose.local.yml down -v

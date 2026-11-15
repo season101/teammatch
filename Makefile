@@ -1,7 +1,7 @@
 COMPOSE := docker compose -f compose.local.yml
 
 .DEFAULT_GOAL := help
-.PHONY: help setup up down ps logs reset build migrate seed schema client check check-backend check-frontend
+.PHONY: help setup up down ps logs reset build migrate seed schema client check check-backend check-frontend e2e
 
 help: ## list commands
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
@@ -39,6 +39,9 @@ schema: ## regenerate backend/schema.yml and the TS client
 
 client: ## regenerate packages/api-client from backend/schema.yml
 	cd frontend && pnpm gen:api
+
+e2e: ## run the Playwright tests against the running stack (e2e/README.md; make e2e args=-x)
+	cd e2e && uv run pytest $(args)
 
 check: check-backend check-frontend ## run everything CI runs
 

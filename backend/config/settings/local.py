@@ -9,6 +9,9 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# e2e tests read verification links from files; unset, mail still goes to the console.
+if EMAIL_FILE_PATH := os.environ.get("EMAIL_FILE_PATH"):
+    EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 # Behind the Next rewrite the Host is api:8000; Google's redirect_uri must say localhost:3000.
 USE_X_FORWARDED_HOST = True
 
