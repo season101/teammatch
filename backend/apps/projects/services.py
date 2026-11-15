@@ -144,8 +144,12 @@ def open_projects(today=None, q=""):
 
 
 def my_projects(user):
-    """Projects I own, newest first, with their roles (F4-01 review page)."""
-    return Project.objects.filter(owner=user).prefetch_related("roles")
+    """Projects I own, newest first, with their roles in the order they were added (F4-01).
+
+    The same role order as the project page (visible_projects), so Review's tabs match it.
+    """
+    roles = Role.objects.order_by("created_at")
+    return Project.objects.filter(owner=user).prefetch_related(Prefetch("roles", queryset=roles))
 
 
 def visible_projects(user):

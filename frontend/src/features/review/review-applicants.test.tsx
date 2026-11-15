@@ -23,6 +23,12 @@ const sam = {
   created_at: "2026-10-16T00:00:00Z",
 };
 
+const ava = {
+  ...sam,
+  id: 10,
+  applicant: { ...sam.applicant, id: 4, display_name: "Ava Lee" },
+};
+
 const openProject = {
   id: 4,
   title: "Campus Ride Share",
@@ -69,13 +75,14 @@ const projectDetail = {
 
 type Reply = { status: number; body: unknown };
 
-// A tiny fake API: role 2 has Sam until a decision succeeds. Records every request.
+// A tiny fake API: role 2 has Sam (or `waiting`) until a decision succeeds. Records every request.
 function mockApi({
   projects = [openProject] as unknown[],
   decision = { status: 200, body: { ...sam, status: "liked" } } as Reply,
+  waiting = [sam] as (typeof sam)[],
 } = {}) {
   const requests: Request[] = [];
-  let pending = [sam];
+  let pending = waiting;
   let liked: unknown[] = [];
   vi.stubGlobal(
     "fetch",
@@ -121,10 +128,11 @@ function mockApi({
                   : [],
           },
         };
-      } else if (/^\/api\/v1\/applications\/9\/(like|pass)\/$/.test(path)) {
+      } else if (/^\/api\/v1\/applications\/\d+\/(like|pass)\/$/.test(path)) {
         reply = decision;
         if (decision.status === 200) {
-          pending = [];
+          const id = Number(path.split("/")[4]);
+          pending = pending.filter((application) => application.id !== id);
           if (path.endsWith("/like/")) liked = [decision.body];
         }
       }
@@ -148,8 +156,16 @@ function renderPage() {
   );
 }
 
+const posts = (requests: Request[]) =>
+  requests.filter((r) => r.method === "POST").map((r) => new URL(r.url).pathname);
+
+// Lets a request that was going to start have started.
+const settle = () => new Promise((resolve) => setTimeout(resolve, 50));
+
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  localStorage.clear();
   document.cookie = "csrftoken=; max-age=0";
 });
 
@@ -330,6 +346,25 @@ test("shows the API's message when the application was already decided", async (
   expect(screen.queryByText("Offers out")).not.toBeInTheDocument();
 });
 
+test("after Like or Pass, focus stays on the role, not the page", async () => {
+  mockApi({ waiting: [sam, ava] });
+  renderPage();
+  const like = await screen.findByRole("button", { name: "Like Sam Candidate" });
+  const panel = screen.getByRole("tabpanel", { name: /Frontend developer/ });
+
+  like.focus();
+  fireEvent.click(like);
+  expect(panel).toHaveFocus();
+
+  // Tab from there reaches the next card.
+  await screen.findByRole("article", { name: /Applicant Ava Lee/ });
+  const pass = screen.getByRole("button", { name: "Pass on Ava Lee" });
+  vi.spyOn(Date, "now").mockReturnValue(Date.now() + 1000);
+  pass.focus();
+  fireEvent.click(pass);
+  expect(panel).toHaveFocus();
+});
+
 test("a second press right after a decision is ignored", async () => {
   const requests = mockApi();
   renderPage();
@@ -394,6 +429,51 @@ test("the left arrow passes the first applicant", async () => {
   );
   const pass = requests.find((r) => r.method === "POST");
   expect(new URL(pass!.url).pathname).toBe("/api/v1/applications/9/pass/");
+});
+
+test("holding an arrow key decides once, not on every repeat", async () => {
+  const requests = mockApi({
+    waiting: [sam, ava],
+    decision: { status: 200, body: { ...sam, status: "passed" } },
+  });
+  renderPage();
+  await screen.findByRole("article", { name: /Applicant Sam Candidate/ });
+
+  fireEvent.keyDown(document.body, { key: "ArrowLeft" });
+  await screen.findByRole("article", { name: /Applicant Ava Lee/ });
+  // Well past the double-tap window, so only the repeat check can stop it.
+  vi.spyOn(Date, "now").mockReturnValue(Date.now() + 1000);
+  fireEvent.keyDown(document.body, { key: "ArrowLeft", repeat: true });
+  fireEvent.keyDown(document.body, { key: "ArrowLeft", repeat: true });
+  await settle();
+
+  expect(posts(requests)).toEqual(["/api/v1/applications/9/pass/"]);
+  expect(screen.getByRole("article", { name: /Applicant Ava Lee/ })).toBeInTheDocument();
+
+  // A fresh press still decides.
+  fireEvent.keyDown(document.body, { key: "ArrowLeft" });
+  await waitFor(() =>
+    expect(posts(requests)).toEqual([
+      "/api/v1/applications/9/pass/",
+      "/api/v1/applications/10/pass/",
+    ]),
+  );
+});
+
+test("Settings → Keyboard shortcuts off turns the arrow keys off", async () => {
+  localStorage.setItem("teammatch:keyboard-shortcuts", "off");
+  const requests = mockApi();
+  renderPage();
+  await screen.findByRole("article", { name: /Applicant Sam Candidate/ });
+
+  fireEvent.keyDown(document.body, { key: "ArrowRight" });
+  fireEvent.keyDown(document.body, { key: "ArrowLeft" });
+  await settle();
+
+  expect(posts(requests)).toEqual([]);
+  // The buttons still work.
+  fireEvent.click(screen.getByRole("button", { name: "Like Sam Candidate" }));
+  await waitFor(() => expect(posts(requests)).toEqual(["/api/v1/applications/9/like/"]));
 });
 
 test("arrow keys on a role tab switch tabs instead of deciding", async () => {

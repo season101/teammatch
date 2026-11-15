@@ -7,6 +7,7 @@ import { buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { useProject } from "@/features/projects/queries";
+import { useShortcutsEnabled } from "@/features/shell/preferences";
 import { initials } from "@/features/teams/my-team";
 import { ApplicantCard } from "./applicant-card";
 import {
@@ -178,20 +179,27 @@ function OpenRoleQueue({ role, projectId }: QueueProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const decidedAt = useRef(0);
   const reduce = useReducedMotion();
+  const shortcuts = useShortcutsEnabled();
   const current = applicants.data?.[0];
   const name = current?.applicant.display_name || "Unnamed applicant";
 
   function decideOn(like: boolean) {
     if (!current || Date.now() - decidedAt.current < DOUBLE_TAP) return;
     decidedAt.current = Date.now();
+    // Focus on the leaving card would drop to the page. Like the deck's stack, the role's
+    // panel stays put, and Tab goes on to the next card.
+    if (rootRef.current?.contains(document.activeElement))
+      rootRef.current.closest<HTMLElement>('[role="tabpanel"]')?.focus();
     decide.mutate({ id: current.id, name, like });
   }
 
-  // ← Pass and → Like (docs/design/patterns/review-queue.md). Skipped while typing, on a
-  // role tab (the arrows switch tabs there), behind a dialog, or in a hidden role panel.
+  // ← Pass and → Like (docs/design/patterns/review-queue.md), like the deck: off with
+  // Settings → Keyboard shortcuts, and a held key doesn't keep deciding (a pass can't be
+  // undone). Skipped while typing, on a role tab (the arrows switch tabs there), behind a
+  // dialog, or in a hidden role panel.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.defaultPrevented) return;
+      if (!shortcuts || event.repeat || event.defaultPrevented) return;
       if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
         return;
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
