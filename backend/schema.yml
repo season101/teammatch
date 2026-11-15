@@ -472,7 +472,7 @@ paths:
         name: download
         schema:
           type: boolean
-        description: 1 sends it as an attachment.
+        description: 1 or true sends it as an attachment.
       - in: path
         name: id
         schema:

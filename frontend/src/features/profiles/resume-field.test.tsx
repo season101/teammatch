@@ -90,6 +90,16 @@ test.each([
   expect(requests).toHaveLength(0);
 });
 
+test("a PDF the browser labels octet-stream is sent for the server to check", async () => {
+  const requests = mockApi({ status: 200, body: ADDED });
+  renderField(PROFILE);
+
+  pick(new File([new Uint8Array(10)], "sam-resume.pdf", { type: "application/octet-stream" }));
+
+  expect(await screen.findByRole("status")).toHaveTextContent("Resume added.");
+  expect(requests).toHaveLength(1);
+});
+
 test("the server's resume_not_pdf message shows", async () => {
   mockApi({
     status: 400,

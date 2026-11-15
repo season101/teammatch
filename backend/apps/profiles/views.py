@@ -103,7 +103,9 @@ class MyResumeView(APIView):
 
 
 @extend_schema(
-    parameters=[OpenApiParameter("download", bool, description="1 sends it as an attachment.")],
+    parameters=[
+        OpenApiParameter("download", bool, description="1 or true sends it as an attachment.")
+    ],
     responses={(200, "application/pdf"): OpenApiTypes.BINARY, 403: None, 404: None},
 )
 class ResumeView(APIView):
@@ -122,7 +124,7 @@ class ResumeView(APIView):
         response = FileResponse(
             profile.resume.open("rb"),
             content_type="application/pdf",
-            as_attachment=request.query_params.get("download") == "1",
+            as_attachment=request.query_params.get("download") in ("1", "true"),
             filename=profile.resume_name or "resume.pdf",
         )
         response["Cache-Control"] = "private, no-store"

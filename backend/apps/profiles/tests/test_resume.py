@@ -158,9 +158,10 @@ def test_i_can_read_my_own_resume(client, sam):
     assert response["X-Content-Type-Options"] == "nosniff"
 
 
-def test_download_sends_an_attachment(client, sam):
+@pytest.mark.parametrize("value", ["1", "true"])
+def test_download_sends_an_attachment(client, sam, value):
     upload(client, pdf())
-    response = client.get(resume_url(sam) + "?download=1")
+    response = client.get(resume_url(sam) + f"?download={value}")
     assert response["Content-Disposition"] == 'attachment; filename="sam-resume.pdf"'
 
 

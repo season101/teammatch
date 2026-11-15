@@ -31,7 +31,8 @@ export function ResumeField({ profile }: { profile: MyProfile }) {
     const problem =
       file.size > RESUME_MAX_BYTES
         ? RESUME_TOO_BIG
-        : file.type && file.type !== "application/pdf"
+        : // Some browsers report a real PDF as octet-stream; the server checks the bytes.
+          file.type && !["application/pdf", "application/octet-stream"].includes(file.type)
           ? RESUME_NOT_PDF
           : "";
     setPicked(problem);

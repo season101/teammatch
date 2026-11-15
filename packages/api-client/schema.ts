@@ -1462,7 +1462,7 @@ export interface operations {
     profiles_resume_retrieve: {
         parameters: {
             query?: {
-                /** @description 1 sends it as an attachment. */
+                /** @description 1 or true sends it as an attachment. */
                 download?: boolean;
             };
             header?: never;
