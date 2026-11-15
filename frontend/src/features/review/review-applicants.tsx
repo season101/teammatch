@@ -1,6 +1,5 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { Tabs } from "@/components/ui/tabs";
 import { SkeletonRows } from "@/components/ui/skeleton";
@@ -9,11 +8,6 @@ import { RoleQueue, RoleTabLabel } from "./role-queue";
 
 export function ReviewApplicants() {
   const projects = useMyProjects();
-  // The role tab last open in each project, kept in the query cache so Back from an
-  // applicant's resume (F1-17) returns to the same role and applicant.
-  const queryClient = useQueryClient();
-  const lastRole = (projectId: number) =>
-    queryClient.getQueryData<string>(["review-tab", projectId]);
 
   if (projects.isPending) {
     return <SkeletonRows label="Loading your projects" />;
@@ -73,12 +67,8 @@ export function ReviewApplicants() {
           ) : (
             <Tabs
               label={`Roles of ${project.title}`}
-              defaultTab={
-                project.roles.some((role) => String(role.id) === lastRole(project.id))
-                  ? lastRole(project.id)
-                  : undefined
-              }
-              onSelect={(id) => queryClient.setQueryData(["review-tab", project.id], id)}
+              // Back from an applicant's resume (F1-17) returns to the same role.
+              remember={`review-${project.id}`}
               tabs={project.roles.map((role) => ({
                 id: String(role.id),
                 label: <RoleTabLabel role={role} />,

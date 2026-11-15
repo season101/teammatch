@@ -513,19 +513,14 @@ test("arrow keys on a role tab switch tabs instead of deciding", async () => {
 });
 
 // F1-17: Back from an applicant's resume remounts this page; it opens on the same role.
+// A new query client stands in for a long read, after the cache has dropped what it held.
 test("coming back to Review opens the role tab that was open", async () => {
   mockApi();
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const page = (
-    <QueryClientProvider client={client}>
-      <ReviewApplicants />
-    </QueryClientProvider>
-  );
-  const { unmount } = render(page);
+  const { unmount } = renderPage();
   fireEvent.click(await screen.findByRole("tab", { name: /Backend developer/ }));
   unmount();
 
-  render(page);
+  renderPage();
 
   expect(
     await screen.findByRole("tab", { name: /Backend developer/, selected: true }),

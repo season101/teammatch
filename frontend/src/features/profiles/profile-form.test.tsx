@@ -31,13 +31,13 @@ function renderForm(client = newClient()) {
 }
 
 // GETs return the profile and the skill list; a PATCH gets `patchReply`.
-function mockApi(patchReply: { status: number; body: unknown }) {
+function mockApi(patchReply: { status: number; body: unknown }, profile: object = PROFILE) {
   const patches: Request[] = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(async (request: Request) => {
       let status = 200;
-      let body: unknown = PROFILE;
+      let body: unknown = profile;
       if (request.method === "PATCH") {
         patches.push(request);
         ({ status, body } = patchReply);
@@ -114,6 +114,43 @@ test("saves name, major, bio and skills", async () => {
     github_url: "",
     linkedin_url: "",
   });
+});
+
+// F1-17: the viewer replaces this page, and unsaved edits would go with it (forms.md).
+test("with unsaved edits, opening the resume asks first", async () => {
+  HTMLDialogElement.prototype.showModal = function () {
+    this.setAttribute("open", "");
+  };
+  HTMLDialogElement.prototype.close = function () {
+    this.removeAttribute("open");
+    this.dispatchEvent(new Event("close"));
+  };
+  const withResume = { ...PROFILE, has_resume: true, resume_name: "sam.pdf" };
+  mockApi({ status: 200, body: withResume }, withResume);
+  renderForm();
+  const resume = await screen.findByRole("link", { name: /sam\.pdf/ });
+  const dialog = screen.getByRole("dialog", { hidden: true });
+
+  fireEvent.change(screen.getByLabelText("Bio"), { target: { value: "Draft" } });
+  expect(fireEvent.click(resume)).toBe(false); // the link didn't navigate
+  expect(dialog).toHaveAttribute("open");
+  expect(dialog).toHaveAccessibleName("Leave without saving?");
+  expect(dialog).toHaveTextContent("Your changes to your profile will be lost.");
+  expect(screen.getByRole("link", { name: "Leave" })).toHaveAttribute(
+    "href",
+    "/profiles/7/resume",
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+  expect(dialog).not.toHaveAttribute("open");
+  expect(screen.getByLabelText("Bio")).toHaveValue("Draft");
+
+  // Saved, nothing is lost: the link opens the viewer without asking.
+  fireEvent.click(screen.getByRole("button", { name: "Save profile" }));
+  await screen.findByText("Profile saved.");
+  resume.addEventListener("click", (event) => event.preventDefault()); // jsdom can't navigate
+  fireEvent.click(resume);
+  expect(dialog).not.toHaveAttribute("open");
 });
 
 test("sends GitHub and LinkedIn, and shows the server's message on a bad link", async () => {

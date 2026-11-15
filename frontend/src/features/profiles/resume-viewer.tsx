@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { buttonClasses } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FileIcon } from "@/components/ui/link-card";
@@ -48,6 +48,8 @@ export function ResumeViewer({ profileId }: { profileId: number }) {
       // 403 or 404: nothing was sent, and the person sees why.
       if (!response.ok) return { state: "denied" } as const;
       pdf = await openPdf(await response.arrayBuffer());
+      // Left while it opened: the cleanup ran before there was a document to destroy.
+      if (cancelled) pdf.loadingTask.destroy();
       return { state: "ready", pdf } as const;
     })()
       .catch(() => ({ state: "broken" }) as const)
@@ -71,10 +73,15 @@ export function ResumeViewer({ profileId }: { profileId: number }) {
   const first = name.split(/\s+/)[0] || "this person";
   const download = `${resumeUrl(profileId)}?download=1`;
 
-  // Back to the applicant or profile it was opened from. Opened from a link, there's no
-  // history in the app, so go to my profile or Review.
+  // A page failed to draw: the same as a file PDF.js can't open.
+  const broken = useCallback(() => setLoad({ state: "broken" }), []);
+
+  // Back to the applicant or profile it was opened from. The Navigation API counts only
+  // this site's entries (history.length counts other sites' too), so a new tab, a pasted
+  // address or another site's link goes to my profile or Review instead.
   function back() {
-    if (window.history.length > 1) router.back();
+    const nav = (window as { navigation?: { canGoBack: boolean } }).navigation;
+    if (nav?.canGoBack) router.back();
     else router.push(me.data?.id === profileId ? "/profile" : "/applicants");
   }
 
@@ -131,6 +138,7 @@ export function ResumeViewer({ profileId }: { profileId: number }) {
                   number={i + 1}
                   width={(width - 32) * (ZOOMS[zoom] / 100)}
                   onInView={setCurrent}
+                  onError={broken}
                 />
               ))}
             </div>
@@ -173,11 +181,13 @@ function PdfPage({
   number,
   width,
   onInView,
+  onError,
 }: {
   pdf: PDFDocumentProxy;
   number: number;
   width: number;
   onInView: (number: number) => void;
+  onError: () => void;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
 
@@ -185,24 +195,29 @@ function PdfPage({
     if (width <= 0) return;
     let cancelled = false;
     let task: { cancel: () => void; promise: Promise<unknown> } | undefined;
-    pdf.getPage(number).then((page) => {
-      const element = canvas.current;
-      if (cancelled || !element) return;
-      const ratio = window.devicePixelRatio || 1;
-      const scale = width / page.getViewport({ scale: 1 }).width;
-      const viewport = page.getViewport({ scale: scale * ratio });
-      element.width = viewport.width;
-      element.height = viewport.height;
-      element.style.width = `${viewport.width / ratio}px`;
-      element.style.height = `${viewport.height / ratio}px`;
-      task = page.render({ canvas: element, viewport });
-      task.promise.catch(() => {}); // cancelled by a newer zoom
-    });
+    pdf
+      .getPage(number)
+      .then((page) => {
+        const element = canvas.current;
+        if (cancelled || !element) return;
+        const ratio = window.devicePixelRatio || 1;
+        const scale = width / page.getViewport({ scale: 1 }).width;
+        const viewport = page.getViewport({ scale: scale * ratio });
+        element.width = viewport.width;
+        element.height = viewport.height;
+        element.style.width = `${viewport.width / ratio}px`;
+        element.style.height = `${viewport.height / ratio}px`;
+        task = page.render({ canvas: element, viewport });
+        return task.promise;
+      })
+      // After the cleanup, a failure is this draw being cancelled by a newer zoom or by
+      // leaving; anything else means the page can't be shown.
+      .catch(() => !cancelled && onError());
     return () => {
       cancelled = true;
       task?.cancel();
     };
-  }, [pdf, number, width]);
+  }, [pdf, number, width, onError]);
 
   // The page crossing the middle of the screen is the one "in view".
   useEffect(() => {

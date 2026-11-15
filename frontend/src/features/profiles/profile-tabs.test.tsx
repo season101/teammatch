@@ -106,6 +106,18 @@ test("a profile without a photo or links stops at 80%", async () => {
   expect(screen.getByText("80%")).toBeInTheDocument();
 });
 
+// F1-17: Back from the resume viewer remounts the page, maybe long after the query cache
+// dropped anything it held (a new client here); it still opens on Edit.
+test("coming back to Profile opens the tab that was open", async () => {
+  const { unmount } = renderTabs();
+  fireEvent.click(await screen.findByRole("tab", { name: "Edit" }));
+  unmount();
+
+  renderTabs();
+
+  expect(await screen.findByRole("tab", { name: "Edit", selected: true })).toBeInTheDocument();
+});
+
 test("Preview shows the card owners see; Edit shows the form", async () => {
   renderTabs();
   const preview = await screen.findByRole("tab", { name: "Preview" });

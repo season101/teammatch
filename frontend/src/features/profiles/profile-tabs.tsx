@@ -1,6 +1,5 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import { Chip } from "@/components/ui/chip";
 import { errorClass } from "@/components/ui/form-classes";
 import { ProfileStrength } from "@/components/ui/profile-strength";
@@ -27,7 +26,6 @@ export function profileStrength(profile: MyProfile) {
 // Me → Profile: the strength meter, then Preview | Edit.
 export function ProfileTabs() {
   const profile = useMyProfile();
-  const queryClient = useQueryClient();
 
   if (profile.isPending) {
     return <SkeletonRows label="Loading your profile" />;
@@ -44,9 +42,7 @@ export function ProfileTabs() {
       <ProfileStrength value={profileStrength(profile.data)} />
       <Tabs
         label="Profile"
-        // Kept in the query cache, so Back from the resume viewer (F1-17) opens the same tab.
-        defaultTab={queryClient.getQueryData<string>(["profile-tab"])}
-        onSelect={(id) => queryClient.setQueryData(["profile-tab"], id)}
+        remember="profile"
         tabs={[
           {
             id: "preview",

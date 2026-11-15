@@ -9,18 +9,23 @@ export function Tabs({
   tabs,
   label,
   defaultTab = tabs[0]?.id,
-  onSelect,
+  remember,
 }: {
   tabs: Tab[];
   label: string;
   defaultTab?: string;
-  // Told about every change, e.g. to come back to the same tab later.
-  onSelect?: (id: string) => void;
+  // A key to reopen the last chosen tab for the rest of the browser tab's session, e.g.
+  // on Back from the resume viewer (F1-17). Read on mount, so not for server-rendered tabs.
+  remember?: string;
 }) {
-  const [selected, setSelectedState] = useState(defaultTab);
+  const key = `tm-tab:${remember}`;
+  const [selected, setSelectedState] = useState(() => {
+    const last = remember && storage(() => sessionStorage.getItem(key));
+    return tabs.find((tab) => tab.id === last)?.id ?? defaultTab;
+  });
   function setSelected(id: string) {
     setSelectedState(id);
-    onSelect?.(id);
+    if (remember) storage(() => sessionStorage.setItem(key, id));
   }
   const base = useId();
 
@@ -78,4 +83,13 @@ export function Tabs({
       ))}
     </div>
   );
+}
+
+// Storage can be blocked (private modes, site settings); then tabs just don't remember.
+function storage<T>(access: () => T) {
+  try {
+    return access();
+  } catch {
+    return undefined;
+  }
 }

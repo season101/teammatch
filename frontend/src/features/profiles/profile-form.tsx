@@ -67,12 +67,15 @@ function ProfileFields({
   const [github, setGithub] = useState(profile.github_url ?? "");
   const [linkedin, setLinkedin] = useState(profile.linkedin_url ?? "");
   const save = useSaveProfile();
+  // Edited since the last save, so leaving for the resume viewer asks first (forms.md).
+  const [touched, setTouched] = useState(false);
 
   const errors = save.error?.fields ?? {};
   const unexpected = save.isError && Object.keys(errors).length === 0;
 
   // Any new edit hides the last "saved" or error message.
   function edited() {
+    setTouched(true);
     if (!save.isIdle) save.reset();
   }
 
@@ -201,7 +204,7 @@ function ProfileFields({
         }}
       />
 
-      <ResumeField profile={profile} />
+      <ResumeField profile={profile} unsaved={touched && !save.isSuccess} />
 
       {save.isSuccess && (
         <p role="status" className="text-sm text-success">
