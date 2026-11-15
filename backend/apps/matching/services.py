@@ -12,6 +12,7 @@ from django.db.models import (
     Value,
 )
 from django.db.models.functions import Cast, Coalesce, Extract, NullIf
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 
@@ -224,8 +225,9 @@ def decide(application, status):
     Rows are locked role, applicant, then application, as in commit, so a like and
     a commit on the same role or person wait for each other.
     """
+    # Rows deleted meanwhile (a role and its applications go together): 404, not a 500.
     role = Role.objects.select_related("project__term").select_for_update(of=("self",))
-    role = role.get(pk=application.role_id)
+    role = get_object_or_404(role, pk=application.role_id)
     ensure_term_not_over(role.project.term)
     if status == ApplicationStatus.LIKED:
         get_user_model().objects.select_for_update().get(pk=application.applicant_id)
@@ -240,10 +242,9 @@ def decide(application, status):
             raise ApplicantCommitted()
         if role.status != RoleStatus.OPEN:
             raise RoleNotOpen("This role was just filled.")
-    application = (
-        Application.objects.select_related("applicant__profile")
-        .select_for_update(of=("self",))
-        .get(pk=application.pk)
+    application = get_object_or_404(
+        Application.objects.select_related("applicant__profile").select_for_update(of=("self",)),
+        pk=application.pk,
     )
     if application.status != ApplicationStatus.PENDING:
         raise ApplicationNotPending()
@@ -267,9 +268,9 @@ def commit(application):
     Two commits that each pass the other's application on their own role can still
     deadlock; Postgres then rolls one back.
     """
-    role = Role.objects.select_for_update().get(pk=application.role_id)
+    role = get_object_or_404(Role.objects.select_for_update(), pk=application.role_id)
     get_user_model().objects.select_for_update().get(pk=application.applicant_id)
-    application = Application.objects.select_for_update().get(pk=application.pk)
+    application = get_object_or_404(Application.objects.select_for_update(), pk=application.pk)
     if application.status != ApplicationStatus.LIKED:
         raise OfferNotOpen()
     # Read after the role lock, so a close that held it is seen (see apply).
@@ -308,7 +309,7 @@ def commit(application):
 @transaction.atomic
 def decline(application):
     """The candidate turns an offer down (F4-10). The role stays open."""
-    application = Application.objects.select_for_update().get(pk=application.pk)
+    application = get_object_or_404(Application.objects.select_for_update(), pk=application.pk)
     if application.status != ApplicationStatus.LIKED:
         raise OfferNotOpen()
     application.status = ApplicationStatus.DECLINED
@@ -323,7 +324,7 @@ def withdraw(application):
     It leaves the owner's queue. An offer is declined instead, and a committed seat
     can't be withdrawn (BR-11).
     """
-    application = Application.objects.select_for_update().get(pk=application.pk)
+    application = get_object_or_404(Application.objects.select_for_update(), pk=application.pk)
     if application.status != ApplicationStatus.PENDING:
         raise ApplicationNotPending()
     application.status = ApplicationStatus.WITHDRAWN
@@ -404,7 +405,7 @@ def apply(role, user, note=""):
     The project is read after that lock in its own query: a row joined to the locked
     role would come from before a close that held it committed (F2-05).
     """
-    role = Role.objects.select_for_update().get(pk=role.pk)
+    role = get_object_or_404(Role.objects.select_for_update(), pk=role.pk)
     get_user_model().objects.select_for_update().get(pk=user.pk)
     if is_retired(user):
         raise ProfileRetired()
