@@ -97,11 +97,11 @@ Login, signup, logout, password and Google live under allauth (below).
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | GET | `/api/v1/me/profile/` | user | own profile |
-| PATCH | `/api/v1/me/profile/` | user | update display name, bio, major, skills |
+| PATCH | `/api/v1/me/profile/` | user | update display name, bio, major, skills, `github_url` and `linkedin_url` (F1-15). Links must be `https://github.com/...` or `https://linkedin.com/...`, with or without `www.`, with a path and no port or user; blank clears one. Anything else is a `400` on the field, "Enter a link that starts with https://github.com/" (code `github_url_invalid`) or the LinkedIn one (`linkedin_url_invalid`) |
 | POST | `/api/v1/me/avatar/` | user | upload my avatar as `multipart/form-data`, field `avatar`: JPEG, PNG or WebP of 2 MB or less, checked from the file's bytes with Pillow. It's redrawn at most 512px (dropping EXIF such as location) and saved to SeaweedFS through django-storages; the old file is deleted. Anything else: `400` `invalid_avatar`, and the old avatar stays. Answers with my profile |
 | DELETE | `/api/v1/me/avatar/` | user | remove my avatar and delete its file. Answers with my profile |
 | GET | `/api/v1/profiles/{id}/avatar/` | user | avatar image, streamed by the API from SeaweedFS (`Cache-Control: private`). No avatar: `404`. Profiles give `avatar_url`, this address with `?v=` that changes on each upload, or `null` |
-| GET | `/api/v1/profiles/{id}/` | user | public profile view |
+| GET | `/api/v1/profiles/{id}/` | user | public profile view: name, bio, major, skills, `avatar_url`, `github_url`, `linkedin_url`. The same shape is the `applicant` in Review |
 | PATCH | `/api/v1/profiles/{id}/` | owner | edit your own profile by id (`403` for anyone else) |
 | GET | `/api/v1/skills/?q=` | user | filter skills by name for pickers |
 | POST | `/api/v1/skills/` | user | add a new skill (deduped by name) **(planned)** |

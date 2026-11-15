@@ -689,6 +689,8 @@ export interface components {
             major?: string;
             readonly skills: components["schemas"]["Skill"][];
             readonly avatar_url: string | null;
+            github_url?: string;
+            linkedin_url?: string;
             /** Format: email */
             readonly email: string;
             /** Format: date-time */
@@ -796,12 +798,16 @@ export interface components {
             bio?: string;
             major?: string;
             skill_ids?: number[];
+            github_url?: string;
+            linkedin_url?: string;
         };
         PatchedProfileRequest: {
             display_name?: string;
             bio?: string;
             major?: string;
             skill_ids?: number[];
+            github_url?: string;
+            linkedin_url?: string;
         };
         PatchedProjectRequest: {
             title?: string;
@@ -821,6 +827,8 @@ export interface components {
             major?: string;
             readonly skills: components["schemas"]["Skill"][];
             readonly avatar_url: string | null;
+            github_url?: string;
+            linkedin_url?: string;
         };
         Project: {
             readonly id: number;

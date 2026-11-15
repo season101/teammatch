@@ -2,6 +2,7 @@ import { useId } from "react";
 import { Chip } from "@/components/ui/chip";
 import { buttonClasses } from "@/components/ui/button";
 import { Avatar } from "@/features/profiles/avatar";
+import { ProfileLinks } from "@/features/profiles/profile-links";
 import type { Applicant } from "./queries";
 
 // One candidate for one role, as in docs/design/components/applicant-card.md.
@@ -85,6 +86,8 @@ export function ApplicantCard({
         {applicant.bio && (
           <p className="line-clamp-4 text-sm text-muted">{applicant.bio}</p>
         )}
+
+        <ProfileLinks profile={applicant} compact />
       </div>
 
       {elsewhere && (
