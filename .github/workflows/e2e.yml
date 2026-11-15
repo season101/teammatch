@@ -52,7 +52,17 @@ jobs:
       - name: migrate and seed
         run: |
           docker compose -f compose.local.yml exec -T api python manage.py migrate --noinput
+          docker compose -f compose.local.yml exec -T api python manage.py shell -c "$ACTIVE_TERM"
           docker compose -f compose.local.yml exec -T api python manage.py seed_demo
+        env:
+          # bootstrap only adds real terms. Past the last one, a fresh runner gets a test term
+          # around today, so nightly runs don't stop when a term ends. CI only.
+          ACTIVE_TERM: >-
+            import datetime as d; from django.utils import timezone as tz;
+            from apps.core.models import Term; from apps.projects.services import get_active_term;
+            t = tz.localdate();
+            get_active_term() or Term.objects.create(name=f"E2E {t}",
+            start_date=t - d.timedelta(days=1), end_date=t + d.timedelta(days=30))
 
       - uses: astral-sh/setup-uv@v7
         with:

@@ -13,6 +13,7 @@ from pathlib import Path
 from urllib.parse import unquote
 
 import pytest
+from dotenv import dotenv_values
 from playwright.sync_api import Page, expect
 
 REPO = Path(__file__).resolve().parent.parent
@@ -174,13 +175,10 @@ def verified_user(api, make_user, verify_link):
 @pytest.fixture(scope="session")
 def seed_candidate():
     """The stack's SEED_CANDIDATE_* account (bootstrap makes it, seed_demo fills it)."""
-    env = dict(os.environ)
     env_file = Path(os.environ.get("E2E_ENV_FILE", REPO / ".env")).expanduser()
-    if env_file.is_file():
-        for line in env_file.read_text().splitlines():
-            key, sep, value = line.partition("=")
-            if sep and not key.startswith("#"):
-                env.setdefault(key.strip(), value.strip().strip("\"'"))
+    # A real dotenv parser, so quotes and inline comments read the way Compose reads them.
+    # The environment wins over the file.
+    env = {**dotenv_values(env_file), **os.environ}
     email_, password = env.get("SEED_CANDIDATE_EMAIL"), env.get("SEED_CANDIDATE_PASSWORD")
     if not (email_ and password):
         pytest.skip(f"SEED_CANDIDATE_EMAIL/PASSWORD not set (env or {env_file})")
