@@ -177,8 +177,8 @@ def seed_candidate():
     """The stack's SEED_CANDIDATE_* account (bootstrap makes it, seed_demo fills it)."""
     env_file = Path(os.environ.get("E2E_ENV_FILE", REPO / ".env")).expanduser()
     # A real dotenv parser, so quotes and inline comments read the way Compose reads them.
-    # The environment wins over the file.
-    env = {**dotenv_values(env_file), **os.environ}
+    # No ${VAR} interpolation (shortcut: Compose expands unquoted values; our env files have none). Env wins.
+    env = {**dotenv_values(env_file, interpolate=False), **os.environ}
     email_, password = env.get("SEED_CANDIDATE_EMAIL"), env.get("SEED_CANDIDATE_PASSWORD")
     if not (email_ and password):
         pytest.skip(f"SEED_CANDIDATE_EMAIL/PASSWORD not set (env or {env_file})")
