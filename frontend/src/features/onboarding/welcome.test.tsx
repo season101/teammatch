@@ -120,6 +120,24 @@ test("Team rules lists the four rules, and I agree moves on to step 2", async ()
   ).toEqual(expect.any(String));
 });
 
+test("opens even when the gate just loaded the profile and the app cache holds it 30 s", async () => {
+  mockApi(NEW);
+  // The app's QueryClient (providers.tsx) and what the gate left in it a moment ago.
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: 30_000 } },
+  });
+  client.setQueryData(["my-profile"], NEW);
+  render(
+    <QueryClientProvider client={client}>
+      <RulesStep />
+    </QueryClientProvider>,
+  );
+
+  expect(
+    await screen.findByRole("heading", { name: "Team rules" }),
+  ).toBeVisible();
+});
+
 test("an older account with a full profile goes from I agree to the deck", async () => {
   mockApi({ ...DONE, rules_accepted_at: null });
   renderStep(<RulesStep />);

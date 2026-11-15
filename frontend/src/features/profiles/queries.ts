@@ -44,6 +44,9 @@ export function useMyProfile(enabled = true) {
   return useQuery({
     queryKey: ["my-profile"],
     enabled,
+    // Always refetched on mount, despite the app's 30 s default (PL-17): the welcome
+    // steps and the profile form wait for isFetchedAfterMount, which never comes otherwise.
+    staleTime: 0,
     queryFn: async () => {
       const { data, response } = await api.GET("/api/v1/me/profile/");
       if (!data)
