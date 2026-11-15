@@ -112,7 +112,7 @@ Login, signup, logout, password and Google live under allauth (below).
 |---|---|---|---|
 | GET | `/api/v1/projects/` | user | open projects, cursor-paginated. `?q=` searches title, pitch, open role titles and their required skills, ignoring case (F2-07). The `term`, `skill` and `status` filters are **(planned)** |
 | POST | `/api/v1/projects/` | user | create project (draft) |
-| GET | `/api/v1/projects/mine/` | user | projects I own |
+| GET | `/api/v1/projects/mine/` | user | projects I own, newest first, each with its roles in the order they were added (as on the project page) |
 | GET | `/api/v1/projects/{id}/` | user | project detail with roles |
 | PATCH | `/api/v1/projects/{id}/` | owner | edit title, pitch |
 | DELETE | `/api/v1/projects/{id}/` | owner | delete draft **(planned)** |

@@ -52,6 +52,18 @@ def test_lists_my_projects_with_their_roles(owner, term):
     assert roles == {(backend.id, "Backend dev", "open"), (frontend.id, "Frontend dev", "open")}
 
 
+def test_roles_come_in_the_order_they_were_added_like_the_project_page(owner, term):
+    project = make_project(owner, term)
+    for title in ["First", "Second", "Third"]:
+        Role.objects.create(project=project, title=title)
+
+    [item] = as_user(owner).get(URL).json()
+    page = as_user(owner).get(f"/api/v1/projects/{project.id}/").json()
+
+    assert [role["title"] for role in item["roles"]] == ["First", "Second", "Third"]
+    assert [role["id"] for role in item["roles"]] == [role["id"] for role in page["roles"]]
+
+
 def test_lists_only_my_projects_newest_first(owner, term):
     older = make_project(owner, term, title="Older", status=ProjectStatus.DRAFT)
     newer = make_project(owner, term, title="Newer")
