@@ -48,7 +48,7 @@ const OFFERS = [
 const REST = [
   application(3, "UI designer", "pending"),
   application(4, "Backend developer", "passed"),
-  application(5, "Project manager", "withdrawn"),
+  { ...application(5, "Project manager", "withdrawn"), withdrawn_reason: "applicant" },
   application(6, "Tester", "declined"),
 ];
 const ALL = [...OFFERS, ...REST];
@@ -231,6 +231,28 @@ test("opens on Pending when there are no offers, and Closed holds the rest", asy
   expect(panel()).toHaveTextContent("Priya picked someone else.");
   expect(panel()).toHaveTextContent("You withdrew on Oct 21.");
   expect(panel()).toHaveTextContent("You declined on Oct 21.");
+});
+
+test("a withdrawn application says why it closed, not always that I withdrew", async () => {
+  const withdrawn = (id: number, title: string, withdrawn_reason?: string) => ({
+    ...application(id, title, "withdrawn"),
+    ...(withdrawn_reason === undefined ? {} : { withdrawn_reason }),
+  });
+  mockApi({
+    applications: [
+      withdrawn(21, "Team lock", "team_locked"),
+      withdrawn(22, "Owner closed", "project_closed"),
+      withdrawn(23, "Before reasons"),
+      withdrawn(24, "Empty reason", ""),
+    ],
+  });
+  renderPage();
+
+  fireEvent.click(await screen.findByRole("tab", { name: "Closed" }));
+  expect(panel()).toHaveTextContent("Closed when your team formed.");
+  expect(panel()).toHaveTextContent("Closed when Priya closed the project.");
+  expect(panel()).toHaveTextContent("Closed on Oct 21.");
+  expect(panel()).not.toHaveTextContent("You withdrew");
 });
 
 test("a liked application is an Offer, never Filled", () => {

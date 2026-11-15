@@ -20,7 +20,14 @@ from apps.profiles.services import is_retired, retire
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 from apps.projects.services import ensure_term_not_over
 
-from .models import Application, ApplicationStatus, Membership, RoleDismissal, Team
+from .models import (
+    Application,
+    ApplicationStatus,
+    Membership,
+    RoleDismissal,
+    Team,
+    WithdrawnReason,
+)
 
 # Match % in SQL, rounded half up like serializers.match_percent. 0 when nothing is required.
 MATCH_PERCENT = Coalesce(
@@ -302,7 +309,11 @@ def commit(application):
         status__in=still_open,
         applicant_id=applicant_id,
         role_id__in=Role.objects.filter(project__term_id=project.term_id),
-    ).update(status=ApplicationStatus.WITHDRAWN, updated_at=now)
+    ).update(
+        status=ApplicationStatus.WITHDRAWN,
+        withdrawn_reason=WithdrawnReason.COMMITTED,
+        updated_at=now,
+    )
     return application, try_lock(project)
 
 
@@ -328,7 +339,8 @@ def withdraw(application):
     if application.status != ApplicationStatus.PENDING:
         raise ApplicationNotPending()
     application.status = ApplicationStatus.WITHDRAWN
-    application.save(update_fields=["status", "updated_at"])
+    application.withdrawn_reason = WithdrawnReason.APPLICANT
+    application.save(update_fields=["status", "withdrawn_reason", "updated_at"])
     return application
 
 
@@ -370,7 +382,11 @@ def try_lock(project):
         status__in=[ApplicationStatus.PENDING, ApplicationStatus.LIKED],
         applicant_id__in=members,
         role_id__in=other_roles,
-    ).update(status=ApplicationStatus.WITHDRAWN, updated_at=timezone.now())
+    ).update(
+        status=ApplicationStatus.WITHDRAWN,
+        withdrawn_reason=WithdrawnReason.TEAM_LOCKED,
+        updated_at=timezone.now(),
+    )
     retire(members, project.term.end_date)
     project.status = ProjectStatus.LOCKED
     project.save(update_fields=["status", "updated_at"])

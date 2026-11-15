@@ -50,17 +50,22 @@ export function StatusChip({
 
 // byCommit: withdrawn for me when I committed to another seat.
 function statusLine(
-  { status, role, created_at, updated_at }: MyApplication,
+  { status, role, created_at, updated_at, withdrawn_reason }: MyApplication,
   byCommit: boolean,
 ) {
   const owner = role.project.owner_name;
   if (status === "passed")
     return `${owner || "The owner"} picked someone else.`;
   if (status === "declined") return `You declined on ${day(updated_at)}.`;
-  if (status === "withdrawn")
-    return byCommit
-      ? "Closed when you committed."
-      : `You withdrew on ${day(updated_at)}.`;
+  if (status === "withdrawn") {
+    if (withdrawn_reason === "applicant") return `You withdrew on ${day(updated_at)}.`;
+    if (byCommit) return "Closed when you committed.";
+    if (withdrawn_reason === "team_locked") return "Closed when your team formed.";
+    if (withdrawn_reason === "project_closed")
+      return `Closed when ${owner || "the owner"} closed the project.`;
+    // Closed before the API said why.
+    return `Closed on ${day(updated_at)}.`;
+  }
   return `Waiting on ${owner || "the owner"} · applied ${day(created_at)}`;
 }
 
@@ -204,12 +209,14 @@ export function MyApplications() {
   const pending = withStatus("pending");
   const committed = withStatus("committed");
   const closed = withStatus("declined", "passed", "withdrawn");
-  // The commit withdraws my other applications in the same transaction, so they're stamped after it.
+  // The API says why (withdrawn_reason). Older rows don't: the commit withdraws my other
+  // applications in the same transaction, so they're stamped after it.
   const committedAt = committed[0] && Date.parse(committed[0].updated_at);
   const byCommit = (a: MyApplication) =>
-    Boolean(committedAt) &&
     a.status === "withdrawn" &&
-    Date.parse(a.updated_at) >= committedAt;
+    (a.withdrawn_reason
+      ? a.withdrawn_reason === "committed"
+      : Boolean(committedAt) && Date.parse(a.updated_at) >= committedAt);
   const closedByCommit = closed.filter(byCommit);
 
   const busy = commit.isPending || decline.isPending;

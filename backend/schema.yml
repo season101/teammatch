@@ -988,6 +988,9 @@ components:
           description: JPEG, PNG or WebP, 2 MB or less.
       required:
       - avatar
+    BlankEnum:
+      enum:
+      - ''
     ChatMessage:
       type: object
       description: Same shape as the chat.message socket event, minus client_id.
@@ -1069,6 +1072,10 @@ components:
           maxLength: 300
         status:
           $ref: '#/components/schemas/ApplicationStatusEnum'
+        withdrawn_reason:
+          oneOf:
+          - $ref: '#/components/schemas/WithdrawnReasonEnum'
+          - $ref: '#/components/schemas/BlankEnum'
         created_at:
           type: string
           format: date-time
@@ -1205,6 +1212,10 @@ components:
           maxLength: 300
         status:
           $ref: '#/components/schemas/ApplicationStatusEnum'
+        withdrawn_reason:
+          oneOf:
+          - $ref: '#/components/schemas/WithdrawnReasonEnum'
+          - $ref: '#/components/schemas/BlankEnum'
         created_at:
           type: string
           format: date-time
@@ -1910,6 +1921,18 @@ components:
       required:
       - end_date
       - name
+    WithdrawnReasonEnum:
+      enum:
+      - applicant
+      - committed
+      - team_locked
+      - project_closed
+      type: string
+      description: |-
+        * `applicant` - They withdrew
+        * `committed` - They took a seat on another team
+        * `team_locked` - Their own team locked
+        * `project_closed` - The owner closed the project
   securitySchemes:
     cookieAuth:
       type: apiKey

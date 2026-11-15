@@ -228,11 +228,19 @@ def close_project(project):
     project = Project.objects.select_for_update().get(pk=project.pk)
     ensure_project_editable(project)
 
-    from apps.matching.models import Application, ApplicationStatus  # matching imports projects
+    from apps.matching.models import (  # matching imports projects
+        Application,
+        ApplicationStatus,
+        WithdrawnReason,
+    )
 
     Application.objects.filter(
         role__project=project, status__in=[ApplicationStatus.PENDING, ApplicationStatus.LIKED]
-    ).update(status=ApplicationStatus.WITHDRAWN)
+    ).update(
+        status=ApplicationStatus.WITHDRAWN,
+        withdrawn_reason=WithdrawnReason.PROJECT_CLOSED,
+        updated_at=timezone.now(),  # .update() skips auto_now
+    )
     project.status = ProjectStatus.ARCHIVED
     project.save()
     return project

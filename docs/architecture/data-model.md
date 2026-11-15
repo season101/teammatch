@@ -86,6 +86,7 @@ erDiagram
         bigint applicant_id FK
         string status "pending, liked, committed, declined, passed, withdrawn"
         text note
+        string withdrawn_reason "applicant, committed, team_locked, project_closed, or empty"
     }
     ROLE_DISMISSAL {
         bigint id PK
