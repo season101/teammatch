@@ -56,6 +56,25 @@ test("asks for a title and a pitch without calling the API", async () => {
   expect(await screen.findByText("Title is required.")).toBeInTheDocument();
   expect(screen.getByText("Pitch is required.")).toBeInTheDocument();
   expect(requests).toHaveLength(0);
+  expect(screen.getByLabelText("Title")).toHaveFocus();
+});
+
+test("a failed submit moves focus to the first invalid field", () => {
+  mockFetch({}, 201);
+  renderForm();
+  fireEvent.change(screen.getByLabelText("Title"), { target: { value: "TeamMatch" } });
+  fireEvent.click(screen.getByRole("button", { name: /create project/i }));
+  expect(screen.getByLabelText("Pitch")).toHaveFocus();
+});
+
+test("typing in a field with an error doesn't pull focus to another invalid one", () => {
+  mockFetch({}, 201);
+  renderForm();
+  fireEvent.click(screen.getByRole("button", { name: /create project/i }));
+  const pitch = screen.getByLabelText("Pitch");
+  pitch.focus();
+  fireEvent.change(pitch, { target: { value: "Find a team" } });
+  expect(pitch).toHaveFocus();
 });
 
 test("creates a project and shows the success message", async () => {
@@ -113,6 +132,7 @@ test("a link that isn't to GitHub shows the server's error on the field and keep
 
   expect(await screen.findByText(message)).toHaveAttribute("id", "project-repo-error");
   expect(repo).toHaveAttribute("aria-invalid", "true");
+  expect(repo).toHaveFocus();
   expect(repo).toHaveAccessibleDescription(
     `For software projects. Must be a github.com link. ${message}`,
   );
