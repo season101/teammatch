@@ -281,12 +281,17 @@ function SidebarMode({
     );
   }
 
+  // Both modes render Tabs in the same spot, so React would keep the last page's
+  // selection (Review's Mine on /teams selects nothing). Keyed by the default tab,
+  // they start over when a page wants a different one.
   if (isIn(pathname, ["/projects", "/applicants"])) {
+    const tab = pathname === "/applicants" ? "mine" : "browse";
     return (
       <div className="px-4">
         <Tabs
+          key={tab}
           label="Projects"
-          defaultTab={pathname === "/applicants" ? "mine" : "browse"}
+          defaultTab={tab}
           tabs={[
             {
               id: "browse",
@@ -330,11 +335,13 @@ function SidebarMode({
     );
   }
 
+  const tab = pathname === "/teams" ? "teams" : "applications";
   return (
     <div className="px-4">
       <Tabs
+        key={tab}
         label="Your activity"
-        defaultTab={pathname === "/teams" ? "teams" : "applications"}
+        defaultTab={tab}
         tabs={[
           {
             id: "applications",
