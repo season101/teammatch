@@ -47,7 +47,7 @@ A user can be both an owner and a candidate in the same term, but not on their o
 - Payments, ads, or anything outside of team formation.
 - Public profiles visible to people outside the allowed email domains.
 - Video/voice chat, file sharing in chat.
-- Deferred to the future backlog to fit our capacity (10 h per member per sprint): live notifications (F3-07), account settings such as password change and account delete (F1-09), a full accessibility audit (F2-09), and presigned avatar uploads through a public files host.
+- Deferred to the future backlog to fit our capacity (10 h per member per sprint): live notifications (F3-07), account settings such as password change and account delete (F1-09; Settings does let a student add a password or Google, F1-12), a full accessibility audit (F2-09), and presigned avatar uploads through a public files host.
 
 ## 6. MVP scope
 

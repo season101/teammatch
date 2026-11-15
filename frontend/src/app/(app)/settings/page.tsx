@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
+import { SignInMethods } from "@/features/accounts/sign-in-methods";
 import { SignOutButton } from "@/features/accounts/sign-out-button";
 import { InstallApp } from "@/features/install/install-app";
 import {
@@ -32,6 +33,8 @@ export default function SettingsPage() {
         {() => (
           <>
             <h1 className="text-2xl font-bold">Settings</h1>
+
+            <SignInMethods />
 
             <section id="appearance" aria-labelledby="appearance-heading" className="flex flex-col gap-2">
               <h2 id="appearance-heading" className={sectionHeading}>

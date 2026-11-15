@@ -35,3 +35,12 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         # Social signup never calls clean_email, and a returning login never calls authenticate.
         if not is_allowed_email(claims.get("email", "")):
             raise domain_not_allowed_error()
+        # Connect from Settings (F1-12, DD-36): the Google account has to have the same
+        # email as the signed-in student, so one email stays one account.
+        user = request.user
+        if sociallogin.state.get("process") == "connect" and user.is_authenticated:
+            if claims.get("email", "").lower() != user.email.lower():
+                raise ValidationError(
+                    f"That Google account uses a different email. Use the one for {user.email}.",
+                    code="google_email_mismatch",
+                )
