@@ -20,8 +20,9 @@ from .serializers import (
 
 
 def owned_project(request, pk):
-    """The project, or 404. Not mine: 403."""
-    project = get_object_or_404(Project, pk=pk)
+    """My project. Missing or not visible to me (someone's draft or archived one): 404.
+    Someone's open or locked project: 403."""
+    project = get_object_or_404(Project.objects.filter(services.visible_to(request.user)), pk=pk)
     if project.owner_id != request.user.id:
         raise PermissionDenied()
     return project
@@ -83,7 +84,8 @@ class RoleUpdateView(generics.UpdateAPIView):
     http_method_names = ["patch", "delete", "options"]
 
     def get_object(self):
-        role = get_object_or_404(Role.objects.select_related("project"), pk=self.kwargs["pk"])
+        roles = Role.objects.filter(services.visible_to(self.request.user, "project__"))
+        role = get_object_or_404(roles.select_related("project"), pk=self.kwargs["pk"])
         if role.project.owner_id != self.request.user.id:
             raise PermissionDenied()
         if self.request.method == "PATCH":

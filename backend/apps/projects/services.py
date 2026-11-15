@@ -168,17 +168,24 @@ def my_projects(user):
     return Project.objects.filter(owner=user).prefetch_related(Prefetch("roles", queryset=roles))
 
 
+def visible_to(user, via=""):
+    """Projects this user may see: their own, and anyone's open or locked ones (F2-02).
+
+    via is the lookup path to the project, e.g. "project__" to filter roles.
+    """
+    shown = [ProjectStatus.OPEN, ProjectStatus.LOCKED]
+    return Q(**{f"{via}owner": user}) | Q(**{f"{via}status__in": shown})
+
+
 def visible_projects(user):
-    """Projects this user may open: their own, and anyone's open or locked ones (F2-02)."""
+    """Projects this user may open (visible_to), with their roles."""
     roles = (
         Role.objects.order_by("created_at")
         .select_related("filled_by__profile")
         .prefetch_related("required_skills")
     )
     return (
-        Project.objects.filter(
-            Q(owner=user) | Q(status__in=[ProjectStatus.OPEN, ProjectStatus.LOCKED])
-        )
+        Project.objects.filter(visible_to(user))
         .select_related("owner__profile")
         .prefetch_related(Prefetch("roles", queryset=roles))
     )

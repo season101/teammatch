@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.db.models.functions import Coalesce, Now
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -9,6 +10,7 @@ from rest_framework.views import APIView
 
 from apps.core.pagination import DefaultCursorPagination
 from apps.projects.models import Role
+from apps.projects.services import visible_to
 
 from . import services
 from .models import Application, ApplicationStatus, Membership
@@ -44,7 +46,8 @@ class FeedView(generics.ListAPIView):
     parameters=[OpenApiParameter("status", str, enum=ApplicationStatus.values)],
 )
 class RoleApplicationsView(generics.ListAPIView):
-    """Applicants for one of my roles. Not my project: 403.
+    """Applicants for one of my roles. Someone's open or locked project: 403. A role I
+    can't see (on someone's draft or archived project): 404.
 
     Pending by default, minus retired ones (BR-09), best match first then oldest.
     ?status=liked lists my offers out (F4-10), newest first.
@@ -54,7 +57,8 @@ class RoleApplicationsView(generics.ListAPIView):
     pagination_class = DefaultCursorPagination
 
     def get_queryset(self):
-        role = get_object_or_404(Role.objects.select_related("project"), pk=self.kwargs["pk"])
+        roles = Role.objects.filter(visible_to(self.request.user, "project__"))
+        role = get_object_or_404(roles.select_related("project"), pk=self.kwargs["pk"])
         if role.project.owner_id != self.request.user.id:
             raise PermissionDenied()
         status = self.request.query_params.get("status")
@@ -70,12 +74,14 @@ class ApplicationDecisionView(APIView):
     """Like or pass a pending applicant on my role. A like is an offer (F4-10).
 
     Not pending, the role is filled, or the applicant is on a team or committed: 409.
+    My own application: 403. Someone else's on a role that isn't mine: 404.
     """
 
     decision = None  # set per URL
 
     def post(self, request, pk):
-        application = get_object_or_404(Application.objects.select_related("role__project"), pk=pk)
+        applications = seen_by(request.user).select_related("role__project")
+        application = get_object_or_404(applications, pk=pk)
         if application.role.project.owner_id != request.user.id:
             raise PermissionDenied()
         application, team = services.decide(application, self.decision)
@@ -155,9 +161,15 @@ class WithdrawApplicationView(APIView):
         return Response(MyApplicationSerializer(application).data)
 
 
+def seen_by(user):
+    """Applications this user can see: their own, and those on their projects' roles."""
+    return Application.objects.filter(Q(applicant=user) | Q(role__project__owner=user))
+
+
 def my_offer(request, pk):
-    """The application, if it's mine. Someone else's: 403 (F4-10). Missing: 404."""
-    application = get_object_or_404(Application, pk=pk)
+    """The application, if it's mine (F4-10). One on my own role: 403. Missing or anyone
+    else's: 404."""
+    application = get_object_or_404(seen_by(request.user), pk=pk)
     if application.applicant_id != request.user.id:
         raise PermissionDenied()
     return application

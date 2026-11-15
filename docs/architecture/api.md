@@ -120,7 +120,7 @@ Login, signup, logout, password and Google live under allauth (below).
 | GET | `/api/v1/projects/{id}/` | user | project detail with roles, `repo_url` and `details` (empty strings when not set) |
 | PATCH | `/api/v1/projects/{id}/` | owner | edit title, pitch, `repo_url`, `details`. An empty `repo_url` or `details` clears it. A non-empty `repo_url` that isn't `https://github.com/...` gets `400` with the field error `{"repo_url": ["Enter a link that starts with https://github.com/"]}`. The server raises it as `repo_url_not_github`, but field errors don't carry their code in the body yet (F2-12) |
 | DELETE | `/api/v1/projects/{id}/` | owner | delete draft **(planned)** |
-| POST | `/api/v1/projects/{id}/publish/` | owner | draft to open |
+| POST | `/api/v1/projects/{id}/publish/` | owner | draft to open. The owner-only rows answer `404` for someone else's draft or archived project, `403` for their open or locked one |
 | POST | `/api/v1/projects/{id}/close/` | owner | archive |
 | POST | `/api/v1/projects/{id}/roles/` | owner | add role |
 | PATCH | `/api/v1/roles/{id}/` | owner | edit role, required skills |
@@ -137,11 +137,11 @@ Login, signup, logout, password and Google live under allauth (below).
 | POST | `/api/v1/applications/` | user | apply to a role `{role, note}`. Retired: `403` `profile_retired`. Committed this term: `409` `applicant_committed` |
 | GET | `/api/v1/applications/mine/?status=` | user | my applications. A withdrawn one has `withdrawn_reason`: `applicant` (I withdrew), `committed` (I took a seat elsewhere), `team_locked` (my own team locked) or `project_closed` (the owner closed it); empty on rows withdrawn before it was recorded |
 | POST | `/api/v1/applications/{id}/withdraw/` | applicant | withdraw pending application |
-| GET | `/api/v1/roles/{id}/applications/?status=` | owner | pending applicants for a role, minus retired ones, best `match_percent` first then oldest (`403` if it's not your project). `?status=liked` lists offers out, `?status=committed` who took the seat. Each has `committed_elsewhere`: true when the applicant holds a seat on another open project this term, so a like would get `409` `applicant_committed` |
-| POST | `/api/v1/applications/{id}/like/` | owner | like: sends an offer, the role stays open (F4-10). Applicant on a team or committed: `409` |
-| POST | `/api/v1/applications/{id}/commit/` | applicant | take the seat an offer is for: fills the role, closes my other applications this term, may lock the team. `409` `offer_not_open`, `role_not_open`, `owns_open_project` or `applicant_committed`; someone else's: `403` |
+| GET | `/api/v1/roles/{id}/applications/?status=` | owner | pending applicants for a role, minus retired ones, best `match_percent` first then oldest. Someone else's open or locked project: `403`; their draft or archived one: `404`. `?status=liked` lists offers out, `?status=committed` who took the seat. Each has `committed_elsewhere`: true when the applicant holds a seat on another open project this term, so a like would get `409` `applicant_committed` |
+| POST | `/api/v1/applications/{id}/like/` | owner | like: sends an offer, the role stays open (F4-10). Applicant on a team or committed: `409`. Your own application: `403`; someone else's on a role that isn't yours: `404` |
+| POST | `/api/v1/applications/{id}/commit/` | applicant | take the seat an offer is for: fills the role, closes my other applications this term, may lock the team. `409` `offer_not_open`, `role_not_open`, `owns_open_project` or `applicant_committed`. An offer on your own role: `403`; anyone else's: `404` |
 | POST | `/api/v1/applications/{id}/decline/` | applicant | turn an offer down; the role stays open. Not an open offer: `409` |
-| POST | `/api/v1/applications/{id}/pass/` | owner | pass |
+| POST | `/api/v1/applications/{id}/pass/` | owner | pass (`403`/`404` as for like) |
 | GET | `/api/v1/teams/mine/` | user | my team this term with my `seen_at`: `{"team": {id, project {id, title}, term {name, end_date}, members [{display_name, role}], formed_at, seen_at}}`. `role` is the role title, or `"Owner"`. `formed_at` is when the team locked. No team this term: `200` with `{"team": null}` |
 | GET | `/api/v1/teams/{id}/` | member | team detail with members and roles **(planned)** |
 | POST | `/api/v1/teams/{id}/seen/` | member | mark the "It's a Team!" screen as seen, `204`. Sets my `seen_at` the first time; repeats keep it. Not my team: `404` |

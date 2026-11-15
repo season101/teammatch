@@ -72,6 +72,7 @@ export interface paths {
          * @description Like or pass a pending applicant on my role. A like is an offer (F4-10).
          *
          *     Not pending, the role is filled, or the applicant is on a team or committed: 409.
+         *     My own application: 403. Someone else's on a role that isn't mine: 404.
          */
         post: operations["applications_like_create"];
         delete?: never;
@@ -93,6 +94,7 @@ export interface paths {
          * @description Like or pass a pending applicant on my role. A like is an offer (F4-10).
          *
          *     Not pending, the role is filled, or the applicant is on a team or committed: 409.
+         *     My own application: 403. Someone else's on a role that isn't mine: 404.
          */
         post: operations["applications_pass_create"];
         delete?: never;
@@ -482,7 +484,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * @description Applicants for one of my roles. Not my project: 403.
+         * @description Applicants for one of my roles. Someone's open or locked project: 403. A role I
+         *     can't see (on someone's draft or archived project): 404.
          *
          *     Pending by default, minus retired ones (BR-09), best match first then oldest.
          *     ?status=liked lists my offers out (F4-10), newest first.

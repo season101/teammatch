@@ -255,6 +255,13 @@ def test_someone_elses_role_returns_403(role):
     assert as_user(stranger).get(url(role)).status_code == 403
 
 
+@pytest.mark.parametrize("status", [ProjectStatus.DRAFT, ProjectStatus.ARCHIVED])
+def test_a_role_on_someone_elses_hidden_project_returns_404(role, status):
+    Project.objects.filter(pk=role.project_id).update(status=status)
+    stranger = User.objects.create_user(email="stranger@latech.edu", password="pw")
+    assert as_user(stranger).get(url(role)).status_code == 404
+
+
 def test_requires_sign_in(role):
     assert APIClient().get(url(role)).status_code == 401
 
@@ -308,9 +315,16 @@ def test_deciding_an_unknown_application_returns_404(owner):
     assert as_user(owner).post("/api/v1/applications/999999/like/").status_code == 404
 
 
+@pytest.mark.parametrize("action", ["like", "pass"])
+def test_deciding_someone_elses_application_returns_404(role, action):
+    application = apply(role, "sam@latech.edu")
+    stranger = User.objects.create_user(email="stranger@latech.edu", password="pw")
+
+    assert decide(stranger, application, action).status_code == 404
+    application.refresh_from_db()
+    assert application.status == ApplicationStatus.PENDING
+
+
 def test_deciding_requires_sign_in(role):
     application = apply(role, "sam@latech.edu")
-    assert APIClient().post(f"/api/v1/applications/{application.id}/like/").status_code in (
-        401,
-        403,
-    )
+    assert APIClient().post(f"/api/v1/applications/{application.id}/like/").status_code == 401
