@@ -83,3 +83,54 @@ def test_verifying_in_another_browser_verifies_but_does_not_sign_in(client):
     assert other_browser.get(SESSION).status_code == 401
     # nor does the browser that signed up get signed in by someone else's click
     assert client.get(SESSION).status_code == 401
+
+
+# "Not close to your email" (the sign-up hint): allauth's headless sign-up checked the
+# password without the user, so UserAttributeSimilarityValidator never ran there.
+def too_similar(response):
+    return response.status_code == 400 and any(
+        error["code"] == "password_too_similar" for error in response.json()["errors"]
+    )
+
+
+def test_sign_up_refuses_a_password_close_to_the_email(client):
+    response = client.post(
+        SIGNUP,
+        {"email": "acct1234@latech.edu", "password": "acct12341"},
+        content_type="application/json",
+    )
+
+    assert too_similar(response)
+    assert response.json()["errors"][0]["param"] == "password"  # shows on the field
+    assert not User.objects.filter(email="acct1234@latech.edu").exists()
+    assert mail.outbox == []
+
+
+def test_resetting_to_a_password_close_to_the_email_is_refused(client):
+    User.objects.create_user("acct5678@latech.edu", "a-long-password-123")
+    client.post(
+        "/_allauth/browser/v1/auth/password/request",
+        {"email": "acct5678@latech.edu"},
+        content_type="application/json",
+    )
+    key = re.search(r"/reset-password/(\S+)", mail.outbox[-1].body).group(1)
+
+    response = client.post(
+        "/_allauth/browser/v1/auth/password/reset",
+        {"key": unquote(key), "password": "acct56781"},
+        content_type="application/json",
+    )
+
+    assert too_similar(response)
+
+
+def test_setting_a_password_close_to_the_email_is_refused(client):
+    client.force_login(User.objects.create_user("acct9012@latech.edu"))
+
+    response = client.post(
+        "/_allauth/browser/v1/account/password/change",
+        {"new_password": "acct90121"},
+        content_type="application/json",
+    )
+
+    assert too_similar(response)
