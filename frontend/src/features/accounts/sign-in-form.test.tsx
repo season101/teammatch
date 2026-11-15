@@ -338,6 +338,45 @@ test("hides the Google-only prompt once the email changes", async () => {
   ).not.toBeInTheDocument();
 });
 
+test("a link request that answers after a newer sign-in doesn't open Check your inbox", async () => {
+  const fetchMock = mockGoogleOnly();
+  const googleOnlyAnswer = fetchMock.getMockImplementation()!;
+  let answerFirstRequest: (response: Response) => void = () => {};
+  // The request for sam's link waits until the end; sign-ins answer at once.
+  fetchMock.mockImplementation((input, init) =>
+    String(input).endsWith("/auth/password/request")
+      ? new Promise<Response>((resolve) => (answerFirstRequest = resolve))
+      : googleOnlyAnswer(input, init),
+  );
+  renderForm();
+  fillAndSubmit("sam@email.latech.edu", "any-password");
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Set a password" }),
+  );
+
+  // Meanwhile: another Google-only email gets its own prompt.
+  fillAndSubmit("kim@email.latech.edu", "any-password");
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+  answerFirstRequest(
+    new Response(JSON.stringify({ status: 200 }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }),
+  );
+
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Set a password" }),
+    ).toBeEnabled(),
+  );
+  expect(
+    screen.queryByRole("heading", { name: "Check your inbox" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "This email signs in with Google.",
+  );
+});
+
 test("keeps the prompt and says so when the link can't be sent", async () => {
   mockGoogleOnly(429);
   renderForm();

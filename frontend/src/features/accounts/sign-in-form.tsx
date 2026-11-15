@@ -51,7 +51,10 @@ export function SignInForm({
   // F1-13: the email of a Google-only account, for the Set a password prompt.
   const [googleOnly, setGoogleOnly] = useState("");
   const [requesting, setRequesting] = useState(false);
-  const [linkSent, setLinkSent] = useState(false);
+  // Where the set-password link went; shows Check your inbox when set.
+  const [sentTo, setSentTo] = useState("");
+  // Counts sign-in tries, so a link request can tell a newer one started.
+  const signIns = useRef(0);
   // A refused sign-in: the password field is marked, takes focus and shakes once.
   // `attempt` only restarts the shake; typing clears the mark.
   const [attempt, setAttempt] = useState(0);
@@ -63,6 +66,7 @@ export function SignInForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); // stop the browser from reloading the page
+    signIns.current += 1;
     setSending(true);
     setError("");
     setGoogleOnly("");
@@ -116,31 +120,33 @@ export function SignInForm({
 
   // The same request as Forgot password (screen 36): the emailed link sets one.
   async function requestPassword() {
+    const to = googleOnly;
+    const signIn = signIns.current;
     setRequesting(true);
     setError("");
+    let failure = "";
     try {
-      const result = await allauthPost("/auth/password/request", {
-        email: googleOnly,
-      });
-      if (result.status === 200) {
-        setLinkSent(true);
-      } else {
-        setError(result.errors[0]?.message ?? "Something went wrong. Try again.");
-      }
+      const result = await allauthPost("/auth/password/request", { email: to });
+      if (result.status !== 200)
+        failure = result.errors[0]?.message ?? "Something went wrong. Try again.";
     } catch {
-      setError("Can't reach the server. Try again.");
+      failure = "Can't reach the server. Try again.";
     }
     setRequesting(false);
+    // A sign-in started meanwhile (maybe for another email): this answer is stale.
+    if (signIn !== signIns.current) return;
+    if (failure) setError(failure);
+    else setSentTo(to);
   }
 
-  if (linkSent) {
+  if (sentTo) {
     return (
-      <CheckInbox email={googleOnly}>
+      <CheckInbox email={sentTo}>
         <Button
           variant="cta"
           className="w-full"
           onClick={() => {
-            setLinkSent(false);
+            setSentTo("");
             setGoogleOnly("");
           }}
         >
