@@ -248,6 +248,33 @@ test("opens on the first role with someone waiting, past filled and empty ones",
   ).toBeInTheDocument();
 });
 
+test("an out-of-date cached list doesn't pick the tab; the fresh one does", async () => {
+  mockApi({
+    projects: [
+      {
+        ...openProject,
+        roles: [
+          { id: 1, title: "Backend developer", status: "open" },
+          { id: 2, title: "Frontend developer", status: "open" },
+        ],
+      },
+    ],
+  });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  // An earlier visit saw no one waiting; Sam has applied since.
+  client.setQueryData(["applicants", 1, "pending"], []);
+  client.setQueryData(["applicants", 2, "pending"], []);
+  render(
+    <QueryClientProvider client={client}>
+      <ReviewApplicants />
+    </QueryClientProvider>,
+  );
+
+  expect(
+    await screen.findByRole("tab", { name: /Frontend developer\s*1/ }),
+  ).toHaveAttribute("aria-selected", "true");
+});
+
 test("with no one waiting anywhere, opens on the first role", async () => {
   mockApi({ waiting: [] });
   renderPage();

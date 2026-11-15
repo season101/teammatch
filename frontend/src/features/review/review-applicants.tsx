@@ -2,6 +2,7 @@
 
 import { useQueries } from "@tanstack/react-query";
 import Link from "next/link";
+import { useState } from "react";
 import { Tabs } from "@/components/ui/tabs";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { applicantsQuery, useMyProjects, type MyProject } from "./queries";
@@ -82,16 +83,22 @@ function RoleTabs({ project }: { project: MyProject }) {
   const waiting = useQueries({
     queries: open.map((role) => applicantsQuery(role.id)),
   });
-  if (waiting.some((list) => list.isPending)) {
-    return <SkeletonRows label="Loading applicants" />;
+  // Picked once, after the lists are fetched for this visit: an older cached list can
+  // be missing someone, and the tab mustn't jump when the last person on it is decided.
+  const [picked, setPicked] = useState<number>();
+  let first = picked;
+  if (first === undefined) {
+    if (waiting.some((list) => list.isFetching || list.isPending)) {
+      return <SkeletonRows label="Loading applicants" />;
+    }
+    first = (open.find((_, i) => waiting[i].data?.length) ?? project.roles[0]).id;
+    setPicked(first);
   }
-  const first =
-    open.find((_, i) => waiting[i].data?.length) ?? project.roles[0];
 
   return (
     <Tabs
       label={`Roles of ${project.title}`}
-      defaultTab={String(first.id)}
+      defaultTab={String(first)}
       // Back from an applicant's resume (F1-17) returns to the same role.
       remember={`review-${project.id}`}
       tabs={project.roles.map((role) => ({
