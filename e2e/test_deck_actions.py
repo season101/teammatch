@@ -106,7 +106,11 @@ def test_a_short_drag_springs_back(page, deck):
     page.mouse.down()
     page.mouse.move(x + box["width"] * 0.1, y, steps=10)
     page.mouse.up()
-    page.wait_for_timeout(800)  # the spring-back takes half a second
+    # The card springs back to where it started.
+    page.wait_for_function(
+        "x => Math.abs(document.querySelector('article').getBoundingClientRect().x - x) < 2",
+        arg=box["x"],
+    )
     expect_top(page, f"A {t}")
     assert my_apps(deck, cand) == [] or ids[0] not in [a["role"]["id"] for a in my_apps(deck, cand)]
 
@@ -196,6 +200,7 @@ def test_pass_toast_undo_restores_the_card(page, deck):
     expect_top(page, f"B {t}")
     page.get_by_role("button", name="Undo", exact=True).click()
     expect_top(page, f"A {t}")
+    expect(page.get_by_role("status").filter(has_text=f"A {t} is back.")).to_be_attached()
     assert ids[0] in [r["id"] for r in deck.feed(cand)]
     expect(passed_toast(page, f"A {t}")).to_have_count(0)
 
@@ -220,6 +225,7 @@ def test_undo_button_and_z_key(page, deck):
     expect(undo).to_be_enabled()
     undo.click()
     expect_top(page, f"A {t}")
+    expect(page.get_by_role("status").filter(has_text=f"A {t} is back.")).to_be_attached()
     expect(undo).to_be_disabled()
     # Z does the same.
     pass_button(page, f"A {t}").click()
@@ -227,6 +233,7 @@ def test_undo_button_and_z_key(page, deck):
     focus_deck(page)
     page.keyboard.press("z")
     expect_top(page, f"A {t}")
+    expect(page.get_by_role("status").filter(has_text=f"A {t} is back.")).to_be_attached()
     assert ids[0] in [r["id"] for r in deck.feed(cand)]
 
 
@@ -239,6 +246,7 @@ def test_undo_brings_back_only_the_last_pass(page, deck):
     expect_top(page, f"C {t}")
     page.get_by_role("button", name="Undo your last pass").click()
     expect_top(page, f"B {t}")
+    expect(page.get_by_role("status").filter(has_text=f"B {t} is back.")).to_be_attached()
     expect(page.get_by_role("button", name="Undo your last pass")).to_be_disabled()
     feed = [r["id"] for r in deck.feed(cand)]
     assert ids[1] in feed and ids[0] not in feed

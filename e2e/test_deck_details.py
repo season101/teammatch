@@ -235,6 +235,10 @@ def test_unknown_role_falls_back_to_the_project_page(page, deck):
     login(page, cand)
     page.goto(f"/projects/{proj.id}?role=999999999")
     expect(page.get_by_text(f"Pitch text {t}")).to_be_visible()
+    # The whole project page, not a role's details: no role heading, no Back to the deck link.
+    expect(page.get_by_role("heading", level=1, name=f"First {t}")).to_have_count(0)
+    expect(page.get_by_role("link", name="Back to the deck")).to_have_count(0)
+    expect(page.get_by_text(f"First {t}").first).to_be_visible()
 
 
 def test_details_buttons_sit_above_the_phone_tab_bar(page, deck):
