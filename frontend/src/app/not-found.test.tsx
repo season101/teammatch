@@ -1,19 +1,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import NotFound from "./not-found";
 
-function renderPage(status: number, body: unknown) {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(
-      async () =>
-        new Response(JSON.stringify(body), {
-          status,
-          headers: { "Content-Type": "application/json" },
-        }),
-    ),
-  );
+const reply = (status: number, body: unknown) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+const signedIn = () =>
+  reply(200, { status: 200, data: { user: { id: 1, email: "sam@latech.edu" } } });
+
+function renderPage(session: () => Promise<Response>) {
+  vi.stubGlobal("fetch", vi.fn(session));
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
@@ -25,20 +24,32 @@ function renderPage(status: number, body: unknown) {
 afterEach(() => vi.unstubAllGlobals());
 
 test("a signed-out visitor gets a way back to the landing page", async () => {
-  renderPage(401, { status: 401 });
+  renderPage(async () => reply(401, { status: 401 }));
   expect(
     screen.getByRole("heading", { name: "We couldn't find that page" }),
   ).toBeInTheDocument();
-  await waitFor(() => expect(fetch).toHaveBeenCalled());
-  expect(screen.getByRole("link", { name: "Back to TeamMatch" })).toHaveAttribute("href", "/");
+  expect(await screen.findByRole("link", { name: "Back to TeamMatch" })).toHaveAttribute(
+    "href",
+    "/",
+  );
 });
 
 test("a signed-in student goes back to Discover", async () => {
-  renderPage(200, { status: 200, data: { user: { id: 1, email: "sam@latech.edu" } } });
-  await waitFor(() =>
-    expect(screen.getByRole("link", { name: "Back to TeamMatch" })).toHaveAttribute(
-      "href",
-      "/feed",
-    ),
+  renderPage(async () => signedIn());
+  expect(await screen.findByRole("link", { name: "Back to TeamMatch" })).toHaveAttribute(
+    "href",
+    "/feed",
+  );
+});
+
+test("the link waits for the session check, so it can't send a student to the landing page", async () => {
+  let answer: (response: Response) => void = () => {};
+  renderPage(() => new Promise((resolve) => (answer = resolve)));
+  expect(screen.queryByRole("link")).not.toBeInTheDocument();
+
+  answer(signedIn());
+  expect(await screen.findByRole("link", { name: "Back to TeamMatch" })).toHaveAttribute(
+    "href",
+    "/feed",
   );
 });
