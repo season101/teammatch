@@ -75,7 +75,7 @@ export async function getProviders(): Promise<string[]> {
   });
   if (!response.ok)
     throw new Error(`Could not load sign-in options (${response.status}).`);
-  const data = await response.json().catch(() => ({}));
+  const data = await response.json();
   const providers: { id: string }[] = data.data?.socialaccount?.providers ?? [];
   return providers.map((provider) => provider.id);
 }
