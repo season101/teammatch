@@ -84,7 +84,8 @@ jobs:
           BASE: ${{ github.base_ref }}
         run: |
           if [ "$EVENT" = pull_request ]; then
-            changed=$(git diff --name-only --diff-filter=AM "origin/$BASE...HEAD" -- 'e2e/test_*.py' | sed 's#^e2e/##')
+            # --relative: paths and the pathspec are relative to e2e/, the working directory
+            changed=$(git diff --name-only --relative --diff-filter=AMR "origin/$BASE...HEAD" -- 'test_*.py')
             uv run pytest test_smoke.py test_golden_path.py $changed
           else
             uv run pytest
