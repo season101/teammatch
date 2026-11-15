@@ -244,6 +244,20 @@ test("the sidebar's Teams tab links to my team once I have one", () => {
   expect(within(sidebar).queryByText(/once every role is filled/)).not.toBeInTheDocument();
 });
 
+test("a closed project stays under Mine → Archived, without making me a reviewer", () => {
+  renderShell("/projects", {
+    projects: [{ ...project, id: 5, title: "Old idea", status: "archived" }],
+  });
+  fireEvent.click(within(sidebar()).getByRole("tab", { name: "Mine" }));
+
+  const archived = within(sidebar()).getByRole("region", { name: "Archived" });
+  expect(within(archived).getByRole("link", { name: /Old idea/ })).toHaveAttribute(
+    "href",
+    "/projects/5",
+  );
+  expect(within(sidebar()).queryByRole("link", { name: "Review applicants" })).toBeNull();
+});
+
 test("the sidebar opens each page's own tab, not the last page's", () => {
   const go = renderShell("/applicants");
   const selected = () =>

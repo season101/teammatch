@@ -138,8 +138,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { data: user } = useSession();
   const projects = useMyProjects(Boolean(user));
-  const owned =
-    projects.data?.filter((project) => project.status !== "archived") ?? [];
+  const mine = projects.data ?? [];
+  // Closed projects still list under Mine, but leave nothing to review.
+  const owned = mine.filter((project) => project.status !== "archived");
   const shown = (item: NavItem) => !item.ownerOnly || owned.length > 0;
   const tabs = TABS.filter(shown);
   const counts = useMySummary(Boolean(user)).data;
@@ -207,7 +208,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
         <div className="flex w-80 shrink-0 flex-col overflow-y-auto pt-3">
-          <SidebarMode pathname={pathname} owned={owned} team={team} />
+          <SidebarMode
+            pathname={pathname}
+            mine={mine}
+            owned={owned}
+            team={team}
+          />
         </div>
       </aside>
 
@@ -254,10 +260,12 @@ const rowLink =
 // What the sidebar lists in each mode. Team chat rows arrive with F4-08.
 function SidebarMode({
   pathname,
+  mine,
   owned,
   team,
 }: {
   pathname: string;
+  mine: MyProject[];
   owned: MyProject[];
   team?: MyTeam | null;
 }) {
@@ -320,7 +328,7 @@ function SidebarMode({
                       you close it or it locks.
                     </p>
                   )}
-                  <MyProjectsList projects={owned} />
+                  <MyProjectsList projects={mine} />
                   {owned.length > 0 && (
                     <Link href="/applicants" className={rowLink}>
                       Review applicants
