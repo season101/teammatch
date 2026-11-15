@@ -14,4 +14,4 @@ USE_X_FORWARDED_HOST = True
 
 # uvicorn does not serve static like runserver does; with DEBUG on, WhiteNoise
 # reads straight from the app dirs so admin and /api/docs work without collectstatic.
-MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+MIDDLEWARE.insert(2, "whitenoise.middleware.WhiteNoiseMiddleware")  # after GZip

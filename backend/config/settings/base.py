@@ -41,7 +41,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    # First, so it compresses the finished response: JSON is gzipped when the
+    # First, so it times and tags every response (logq's `request finished` line).
+    "config.request_log.RequestLogMiddleware",
+    # Next, so it compresses the finished response: JSON is gzipped when the
     # browser accepts it (PL-17). Responses under 200 bytes are left alone.
     "django.middleware.gzip.GZipMiddleware",
     "django.middleware.security.SecurityMiddleware",

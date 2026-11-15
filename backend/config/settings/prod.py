@@ -11,7 +11,7 @@ SECURE_HSTS_SECONDS = env.int("DJANGO_HSTS_SECONDS", default=3600)
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # admin and DRF static files, collected into the image at build time
-MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+MIDDLEWARE.insert(2, "whitenoise.middleware.WhiteNoiseMiddleware")  # after GZip
 STORAGES["staticfiles"] = {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"}
 
 # EMAIL_URL like smtp+tls://user:pass@host:587 sets EMAIL_BACKEND, EMAIL_HOST, etc.
