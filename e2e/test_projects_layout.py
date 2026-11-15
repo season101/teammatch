@@ -73,11 +73,6 @@ def test_project_page_with_long_content_fits_a_phone(browser, owner, rich):
     context.close()
 
 
-@pytest.mark.xfail(
-    reason="BUG: a long word with no spaces (title, pitch or role title) is not wrapped, so the "
-    "project page scrolls sideways on a phone",
-    strict=True,
-)
 @pytest.mark.parametrize("which", ["title", "pitch", "role title"])
 def test_unbroken_long_words_do_not_scroll_the_page_sideways(browser, make_api_user, which):
     _, client = make_api_user("Proj Unbroken")

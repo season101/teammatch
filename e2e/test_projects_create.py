@@ -72,11 +72,6 @@ def test_error_clears_when_typing(owner_page):
     expect(owner_page.get_by_text("Pitch is required.")).to_be_visible()
 
 
-@pytest.mark.xfail(
-    reason="BUG: after a failed submit focus stays on the button; forms.md says move it to "
-    "the first invalid field",
-    strict=True,
-)
 def test_failed_submit_moves_focus_to_first_invalid_field(owner_page):
     submit(owner_page)
     expect(owner_page.get_by_label("Title")).to_be_focused()
