@@ -192,7 +192,9 @@ STORAGES = {
 }
 
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
+# Terms are Louisiana Tech dates: "today" (timezone.localdate) rolls over at midnight Central,
+# not 6 pm. Datetimes are still stored in UTC (USE_TZ); the API writes them with this offset.
+TIME_ZONE = "America/Chicago"
 USE_I18N = True
 USE_TZ = True
 

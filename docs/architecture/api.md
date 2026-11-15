@@ -9,7 +9,7 @@ The source of truth is the OpenAPI schema, not this page. This page is the overv
 | Topic | Rule |
 |---|---|
 | Base path | `/api/v1/` |
-| Format | JSON, `snake_case` fields, ISO 8601 UTC timestamps |
+| Format | JSON, `snake_case` fields, ISO 8601 timestamps with their offset, in Central time (`2026-11-15T01:44:00-06:00`; stored in UTC). Dates such as a term's are Central calendar dates |
 | Auth | Session cookie from allauth headless (`browser` client). Unsafe methods need the `X-CSRFToken` header. Future mobile app sends `X-Session-Token` (`app` client). |
 | Authz | Every object endpoint checks ownership or membership. Objects the user cannot see return `404`. Acting on something you can see but don't own returns `403` (for example editing someone else's profile). |
 | IDs | Integer ids in paths |
