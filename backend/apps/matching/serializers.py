@@ -60,10 +60,20 @@ class RoleApplicationSerializer(serializers.ModelSerializer):
     # Public profile only (name, major, skills), never the applicant's email.
     applicant = ProfileSerializer(source="applicant.profile", read_only=True)
     match_percent = serializers.SerializerMethodField()
+    # A seat on another open project this term, so Like is refused (applicant_committed).
+    committed_elsewhere = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Application
-        fields = ["id", "applicant", "note", "status", "created_at", "match_percent"]
+        fields = [
+            "id",
+            "applicant",
+            "note",
+            "status",
+            "created_at",
+            "match_percent",
+            "committed_elsewhere",
+        ]
 
     def get_match_percent(self, application) -> int | None:
         return match_percent(application)
@@ -111,7 +121,7 @@ class ApplySerializer(serializers.ModelSerializer):
 class ApplicationDecisionSerializer(RoleApplicationSerializer):
     """A like or pass. A like no longer locks a team (F4-10), so team_locked is false."""
 
-    match_percent = None  # only the list query works it out
+    match_percent = committed_elsewhere = None  # only the list query works them out
     team_locked = serializers.SerializerMethodField()
     team_id = serializers.SerializerMethodField()
 

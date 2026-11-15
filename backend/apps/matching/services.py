@@ -1,6 +1,16 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import BigIntegerField, Count, ExpressionWrapper, F, Prefetch, Q, Value
+from django.db.models import (
+    BigIntegerField,
+    Count,
+    Exists,
+    ExpressionWrapper,
+    F,
+    OuterRef,
+    Prefetch,
+    Q,
+    Value,
+)
 from django.db.models.functions import Cast, Coalesce, Extract, NullIf
 from django.utils import timezone
 from rest_framework.exceptions import APIException
@@ -98,6 +108,8 @@ def role_applications(role, status=ApplicationStatus.PENDING):
     The queue leaves out retired applicants (BR-09). Other statuses don't, so the owner
     still sees offers out and who committed after the team locks (F4-10).
     Each comes with the applicant's match for this role; queue_key sorts by it (QUEUE_ORDERING).
+    committed_elsewhere: they hold a seat on another open project this term, so a like
+    is refused with ApplicantCommitted (see decide).
     """
     applications = role.applications.filter(status=status)
     if status == ApplicationStatus.PENDING:
@@ -113,6 +125,11 @@ def role_applications(role, status=ApplicationStatus.PENDING):
                 "role__required_skills",
                 filter=Q(role__required_skills__profiles__user=F("applicant")),
                 distinct=True,
+            ),
+            committed_elsewhere=Exists(
+                seats(term_id=role.project.term_id)
+                .filter(filled_by=OuterRef("applicant"))
+                .exclude(pk=role.pk)
             ),
         )
         .annotate(
@@ -175,20 +192,23 @@ class OwnsOpenProject(APIException):
     default_code = "owns_open_project"
 
 
-def holds_seat(user_id, term_id=None, today=None):
-    """Does this person hold a seat on an open project this term (one seat per term, F4-10)?
+def seats(term_id=None, today=None):
+    """Filled roles on open projects in a term: the seats (one per person per term, F4-10).
 
-    A seat is a role they fill. Once the project locks, they're retired instead (BR-08).
+    Once the project locks, its people are retired instead (BR-08).
     Pass term_id, or today to mean the term running then.
     """
-    user_id = getattr(user_id, "pk", user_id)
-    seats = Role.objects.filter(filled_by_id=user_id, project__status=ProjectStatus.OPEN)
+    filled = Role.objects.filter(filled_by__isnull=False, project__status=ProjectStatus.OPEN)
     if term_id is not None:
-        return seats.filter(project__term_id=term_id).exists()
+        return filled.filter(project__term_id=term_id)
     today = today or timezone.localdate()
-    return seats.filter(
-        project__term__start_date__lte=today, project__term__end_date__gte=today
-    ).exists()
+    return filled.filter(project__term__start_date__lte=today, project__term__end_date__gte=today)
+
+
+def holds_seat(user_id, term_id=None, today=None):
+    """Does this person hold a seat on an open project this term (see seats)?"""
+    user_id = getattr(user_id, "pk", user_id)
+    return seats(term_id, today).filter(filled_by_id=user_id).exists()
 
 
 @transaction.atomic

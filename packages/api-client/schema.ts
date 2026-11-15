@@ -835,6 +835,7 @@ export interface components {
             /** Format: date-time */
             readonly created_at: string;
             readonly match_percent: number | null;
+            readonly committed_elsewhere: boolean;
         };
         RoleDetail: {
             readonly id: number;

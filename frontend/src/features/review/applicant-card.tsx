@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Chip } from "@/components/ui/chip";
 import { buttonClasses } from "@/components/ui/button";
 import { initials } from "@/features/teams/my-team";
@@ -21,6 +22,11 @@ export function ApplicantCard({
 }) {
   const { applicant } = application;
   const name = applicant.display_name || "Unnamed applicant";
+  // A seat on another open project this term: a like would be refused (applicant_committed).
+  const elsewhere = application.committed_elsewhere;
+  const whyNoLike = useId();
+  // Greyed out, but the tag and its reason below stay at full contrast.
+  const dim = elsewhere ? "opacity-60 grayscale" : "";
   const matched = applicant.skills.filter((skill) =>
     requiredSkillIds.includes(skill.id),
   );
@@ -33,7 +39,7 @@ export function ApplicantCard({
       aria-label={`Applicant ${name} for ${roleTitle}`}
       className="mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-card border border-border bg-surface"
     >
-      <header className="flex items-center gap-3 bg-surface-2 p-5">
+      <header className={`flex items-center gap-3 bg-surface-2 p-5 ${dim}`}>
         <span
           aria-hidden="true"
           className="grid size-14 shrink-0 place-items-center rounded-full bg-cta text-lg font-bold text-on-cta"
@@ -46,7 +52,7 @@ export function ApplicantCard({
         </div>
       </header>
 
-      <div className="flex flex-col gap-4 p-5">
+      <div className={`flex flex-col gap-4 p-5 ${dim}`}>
         {requiredSkillIds.length > 0 && (
           <p className="text-sm text-muted">
             Has {matched.length} of {requiredSkillIds.length} required{" "}
@@ -82,6 +88,16 @@ export function ApplicantCard({
         )}
       </div>
 
+      {elsewhere && (
+        <div className="flex flex-col items-start gap-2 px-5 pb-5">
+          <Chip variant="selected">Has a spot elsewhere</Chip>
+          <p id={whyNoLike} className="text-sm text-muted">
+            {name} committed to another project this term, so you can&apos;t like them. You
+            can still pass.
+          </p>
+        </div>
+      )}
+
       <div className="flex gap-3 border-t border-border p-5">
         <button
           type="button"
@@ -94,8 +110,11 @@ export function ApplicantCard({
         <button
           type="button"
           aria-label={`Like ${name}`}
-          className={`${buttonClasses("cta")} flex-1 hover:bg-apply hover:text-on-apply active:bg-apply active:text-on-apply`}
-          onClick={onLike}
+          // aria-disabled, not disabled, so the button and its reason stay reachable.
+          aria-disabled={elsewhere || undefined}
+          aria-describedby={elsewhere ? whyNoLike : undefined}
+          className={`${buttonClasses("cta")} flex-1 ${elsewhere ? "cursor-not-allowed opacity-50" : "hover:bg-apply hover:text-on-apply active:bg-apply active:text-on-apply"}`}
+          onClick={elsewhere ? undefined : onLike}
         >
           Like
         </button>

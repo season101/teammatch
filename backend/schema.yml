@@ -1649,8 +1649,12 @@ components:
           type: integer
           nullable: true
           readOnly: true
+        committed_elsewhere:
+          type: boolean
+          readOnly: true
       required:
       - applicant
+      - committed_elsewhere
       - created_at
       - id
       - match_percent
