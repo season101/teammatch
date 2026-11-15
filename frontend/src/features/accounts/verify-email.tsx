@@ -7,7 +7,9 @@ import { StatusIcon } from "./auth-layout";
 import { buttonClasses } from "@/components/ui/button";
 import { PendingLabel } from "@/components/ui/pending-label";
 
-type Status = "idle" | "sending" | "verified" | "failed";
+// "signed-in": verified in the browser that signed up. "verified": verified
+// elsewhere (another browser, or the sign-up was too long ago), so sign in next.
+type Status = "idle" | "sending" | "signed-in" | "verified" | "failed";
 
 // A button instead of verifying on page load, so link scanners in email apps
 // can't use up the key before the student clicks it.
@@ -23,14 +25,18 @@ export function VerifyEmail({ verificationKey }: { verificationKey: string }) {
       });
       // 200 = verified and signed in; 401 = verified, but this browser still needs to sign in
       setStatus(
-        result.status === 200 || result.status === 401 ? "verified" : "failed",
+        result.status === 200
+          ? "signed-in"
+          : result.status === 401
+            ? "verified"
+            : "failed",
       );
     } catch {
       setStatus("failed");
     }
   }
 
-  if (status === "verified") {
+  if (status === "signed-in") {
     return (
       <section className="flex flex-col items-center gap-3 text-center">
         <StatusIcon name="check" />
@@ -43,6 +49,23 @@ export function VerifyEmail({ verificationKey }: { verificationKey: string }) {
         {/* The gate on /feed sends a new account to Team rules (DD-47). */}
         <Link href="/feed" className={`${buttonClasses("cta")} w-full`}>
           Continue
+        </Link>
+      </section>
+    );
+  }
+
+  if (status === "verified") {
+    return (
+      <section className="flex flex-col items-center gap-3 text-center">
+        <StatusIcon name="check" />
+        <h1 className="font-display text-2xl font-extrabold">
+          You&apos;re verified
+        </h1>
+        <p role="status" className="text-muted">
+          Sign in with your school email and password to finish setting up.
+        </p>
+        <Link href="/login" className={`${buttonClasses("cta")} w-full`}>
+          Sign in
         </Link>
       </section>
     );

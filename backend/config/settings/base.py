@@ -102,6 +102,9 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*"]
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+# The verify link signs you in, but only in the browser that signed up (allauth checks the
+# pending sign-up in the session), so a leaked or forwarded link never does.
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_ADAPTER = "apps.accounts.adapter.AccountAdapter"
 # BR-01: only these domains may sign up or sign in (comma-separated in .env).
