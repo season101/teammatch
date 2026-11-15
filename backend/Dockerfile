@@ -18,7 +18,7 @@ ENV UV_COMPILE_BYTECODE=1 DJANGO_SETTINGS_MODULE=config.settings.prod
 COPY pyproject.toml uv.lock .python-version ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY . .
-RUN DJANGO_SECRET_KEY=build-only python manage.py collectstatic --noinput
+RUN DJANGO_SECRET_KEY=build-only EMAIL_URL=consolemail:// python manage.py collectstatic --noinput
 RUN useradd --system --uid 10001 app
 USER app
 EXPOSE 8000

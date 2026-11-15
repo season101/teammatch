@@ -15,4 +15,5 @@ MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
 STORAGES["staticfiles"] = {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"}
 
 # EMAIL_URL like smtp+tls://user:pass@host:587 sets EMAIL_BACKEND, EMAIL_HOST, etc.
-globals().update(env.email_url("EMAIL_URL", default="consolemail://"))
+# No default: a missing line would send verification links to the logs instead of inboxes.
+globals().update(env.email_url("EMAIL_URL"))

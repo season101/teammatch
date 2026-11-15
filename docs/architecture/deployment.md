@@ -119,7 +119,7 @@ Names only; see `.env.example` and [deploy/README.md](../../deploy/README.md). V
 | `ALLOWED_EMAIL_DOMAINS` | api | comma separated (F1-06) |
 | `GOOGLE_CLIENT_ID` | api | empty hides Google sign-in |
 | `GOOGLE_CLIENT_SECRET` | api | required when `GOOGLE_CLIENT_ID` is set |
-| `EMAIL_URL` | api | `smtp+tls://...`, or `consolemail://` to log emails |
+| `EMAIL_URL` | api | required in prod: `smtp+tls://...`, or `consolemail://` to log emails |
 | `DEFAULT_FROM_EMAIL` | api | |
 | `S3_ENDPOINT_URL` | api | internal, `http://teammatch-storage:8333` (set by the compose file) |
 | `S3_BUCKET` | api, storage-init | |

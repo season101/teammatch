@@ -37,7 +37,7 @@ S3_BUCKET=teammatch-media
 S3_ACCESS_KEY=teammatch
 S3_SECRET_KEY=change-me
 
-EMAIL_URL=consolemail://         # smtp+tls://user:pass@host:587 once email is set up
+EMAIL_URL=smtp+tls://user:pass@host:587   # required; consolemail:// logs emails instead of sending
 DEFAULT_FROM_EMAIL=TeamMatch <verification@teammatch.sijancodes.com>
 
 # optional demo accounts, created verified on every deploy (leave a pair empty to skip it)
@@ -49,7 +49,7 @@ SEED_CANDIDATE_EMAIL=sam.student@latech.edu
 SEED_CANDIDATE_PASSWORD=change-me
 ```
 
-`DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, and `TEAMMATCH_VERSION` have no defaults, so compose refuses to start without them.
+`DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `EMAIL_URL`, and `TEAMMATCH_VERSION` have no defaults, so compose refuses to start without them.
 
 After `migrate`, `teammatch-migrate` runs `python manage.py bootstrap`, so this happens on every deploy:
 - It adds the terms listed in `backend/apps/core/management/commands/bootstrap.py`, starting with Fall 2026. A term that already exists keeps the dates an admin set.
