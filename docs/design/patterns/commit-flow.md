@@ -78,7 +78,7 @@ Reuse what's in `frontend/src/components/ui/`. Nothing new is needed.
 | Two people commit at once | The role row lock lets one through. The other gets `role_not_open`. |
 | You committed elsewhere in another tab | Commit returns 409 `applicant_committed`. |
 | The project closes while an offer is out | The offer closes too. `close_project` has to withdraw `liked` rows as well as `pending` ones. |
-| An owner likes someone who already committed | Review shows them greyed out with "Has a spot elsewhere" and Like off (`committed_elsewhere`); Pass still works. A like from a stale page gets 409 `applicant_committed`. |
+| An owner likes someone who already committed | Review shows them with a grey avatar, "Has a spot elsewhere" and Like off (`committed_elsewhere`); Pass still works. A like from a stale page gets 409 `applicant_committed`. |
 | The last open role fills on a commit | The team locks in the same transaction and "It's a Team!" shows as usual. |
 
 There are no live notifications, so offers are found through the banner and the tab count, which refetch when the app regains focus.

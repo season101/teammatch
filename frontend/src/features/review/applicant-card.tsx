@@ -25,8 +25,6 @@ export function ApplicantCard({
   // A seat on another open project this term: a like would be refused (applicant_committed).
   const elsewhere = application.committed_elsewhere;
   const whyNoLike = useId();
-  // Greyed out, but the tag and its reason below stay at full contrast.
-  const dim = elsewhere ? "opacity-60 grayscale" : "";
   const matched = applicant.skills.filter((skill) =>
     requiredSkillIds.includes(skill.id),
   );
@@ -39,10 +37,12 @@ export function ApplicantCard({
       aria-label={`Applicant ${name} for ${roleTitle}`}
       className="mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-card border border-border bg-surface"
     >
-      <header className={`flex items-center gap-3 bg-surface-2 p-5 ${dim}`}>
+      <header className="flex items-center gap-3 bg-surface-2 p-5">
+        {/* Only the avatar greys out. Text keeps its contrast (WCAG 1.4.3); the tag and
+            the turned-off Like carry the signal. */}
         <span
           aria-hidden="true"
-          className="grid size-14 shrink-0 place-items-center rounded-full bg-cta text-lg font-bold text-on-cta"
+          className={`grid size-14 shrink-0 place-items-center rounded-full text-lg font-bold ${elsewhere ? "border border-border bg-surface text-muted" : "bg-cta text-on-cta"}`}
         >
           {initials(name)}
         </span>
@@ -52,7 +52,7 @@ export function ApplicantCard({
         </div>
       </header>
 
-      <div className={`flex flex-col gap-4 p-5 ${dim}`}>
+      <div className="flex flex-col gap-4 p-5">
         {requiredSkillIds.length > 0 && (
           <p className="text-sm text-muted">
             Has {matched.length} of {requiredSkillIds.length} required{" "}

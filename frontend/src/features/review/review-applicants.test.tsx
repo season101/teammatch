@@ -548,7 +548,7 @@ function withSpotElsewhere() {
   });
 }
 
-test("someone with a spot elsewhere is greyed out with Like off, and can still be passed", async () => {
+test("someone with a spot elsewhere is tagged with Like off, and can still be passed", async () => {
   const requests = mockApi({ decision: { status: 200, body: { ...sam, status: "passed" } } });
   withSpotElsewhere();
   renderPage();
