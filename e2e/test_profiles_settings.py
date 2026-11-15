@@ -208,18 +208,241 @@ def test_settings_account_section_phone_has_profile_link_and_sign_out(
     ctx.close()
 
 
-# ---------- avatar (F1-07, PR #249) ----------
+# ---------- avatar (F1-07), links (F1-15), resume (F1-16) ----------
 
 
-def test_avatar_upload_ui(page, signed):
-    signed()
+@pytest.fixture
+def files(tmp_path):
+    from test_profiles_profile import PDF, PNG
+
+    out = {}
+    for name, data in {
+        "me.png": PNG,
+        "cv.pdf": PDF,
+        "cv2.pdf": PDF + b"% second\n",
+        "notes.txt": b"hello",
+        "fake.png": b"not an image at all",
+        "fake.pdf": b"not a pdf at all",
+    }.items():
+        (tmp_path / name).write_bytes(data)
+        out[name] = str(tmp_path / name)
+    return out
+
+
+def edit(page):
     page.goto("/profile")
     page.get_by_role("tab", name="Edit").click()
-    if not page.get_by_label(re.compile("photo|avatar", re.I)).count():
-        pytest.skip("F1-07 not merged")
-    # If it has landed, a file input must exist and accept images only.
-    accept = page.get_by_label(re.compile("photo|avatar", re.I)).first.get_attribute("accept")
-    assert accept and "image" in accept
+
+
+def preview_avatar(page):
+    return page.get_by_role("article").locator("img")
+
+
+def test_avatar_upload_replaces_initials_and_persists(page, signed, files):
+    signed()
+    edit(page)
+    expect(page.get_by_role("button", name="Upload a photo")).to_be_visible()
+    page.get_by_label("Photo file").set_input_files(files["me.png"])
+    expect(page.get_by_text("Photo updated.")).to_be_visible()
+    expect(page.get_by_role("button", name="Change photo")).to_be_visible()
+    page.get_by_role("tab", name="Preview").click()
+    expect(preview_avatar(page)).to_have_count(1)
+    page.reload()
+    page.get_by_role("tab", name="Preview").click()
+    expect(preview_avatar(page)).to_have_count(1)
+    assert page.evaluate(
+        "new Promise(r => { const i = document.querySelector('article img'); "
+        "i.complete ? r(i.naturalWidth) : i.onload = () => r(i.naturalWidth) })"
+    ) > 0
+
+
+def test_avatar_wrong_type_is_refused_and_old_photo_kept(page, signed, files):
+    signed()
+    edit(page)
+    page.get_by_label("Photo file").set_input_files(files["me.png"])
+    expect(page.get_by_text("Photo updated.")).to_be_visible()
+    page.get_by_label("Photo file").set_input_files(files["notes.txt"])
+    expect(page.get_by_role("alert").filter(has_text="Choose a JPEG, PNG or WebP image")).to_be_visible()
+    expect(page.get_by_role("button", name="Change photo")).to_be_visible()
+
+
+def test_avatar_fake_image_is_refused_by_the_server_and_old_photo_kept(page, signed, files):
+    signed()
+    edit(page)
+    page.get_by_label("Photo file").set_input_files(files["me.png"])
+    expect(page.get_by_text("Photo updated.")).to_be_visible()
+    page.get_by_label("Photo file").set_input_files(files["fake.png"])
+    expect(page.get_by_role("alert")).to_be_visible()
+    expect(page.get_by_role("button", name="Change photo")).to_be_visible()
+    page.reload()
+    page.get_by_role("tab", name="Edit").click()
+    expect(page.get_by_role("button", name="Change photo")).to_be_visible()
+
+
+def test_avatar_too_big_is_refused(page, signed, tmp_path):
+    signed()
+    edit(page)
+    big = tmp_path / "big.png"
+    big.write_bytes(b"\x89PNG" + b"0" * (2 * 1024 * 1024 + 10))
+    page.get_by_label("Photo file").set_input_files(str(big))
+    expect(page.get_by_role("alert").filter(has_text="2 MB or less")).to_be_visible()
+    expect(page.get_by_role("button", name="Upload a photo")).to_be_visible()
+
+
+def test_avatar_remove(page, signed, files):
+    signed()
+    edit(page)
+    page.get_by_label("Photo file").set_input_files(files["me.png"])
+    expect(page.get_by_text("Photo updated.")).to_be_visible()
+    page.get_by_role("button", name="Remove photo").click()
+    expect(page.get_by_text("Photo removed.")).to_be_visible()
+    expect(page.get_by_role("button", name="Upload a photo")).to_be_visible()
+    page.get_by_role("tab", name="Preview").click()
+    expect(preview_avatar(page)).to_have_count(0)
+
+
+def test_avatar_is_served_only_to_signed_in_users(page, signed, files, api):
+    signed()
+    edit(page)
+    page.get_by_label("Photo file").set_input_files(files["me.png"])
+    expect(page.get_by_text("Photo updated.")).to_be_visible()
+    me = page.request.get("/api/v1/me/profile/").json()
+    assert me["avatar_url"]
+    assert api().send("GET", me["avatar_url"]).status in (401, 403)
+
+
+def test_links_save_and_show_as_cards_in_preview(page, signed):
+    signed()
+    edit(page)
+    page.get_by_label("GitHub").fill("https://github.com/e2e-user")
+    page.get_by_label("LinkedIn").fill("https://www.linkedin.com/in/e2e-user")
+    page.get_by_role("button", name="Save profile").click()
+    expect(page.get_by_text("Profile saved.")).to_be_visible()
+    page.get_by_role("tab", name="Preview").click()
+    links = page.get_by_role("list", name="Links")
+    github = links.get_by_role("link", name=re.compile("GitHub"))
+    expect(github).to_have_attribute("href", "https://github.com/e2e-user")
+    expect(github).to_have_attribute("target", "_blank")
+    expect(links.get_by_role("link", name=re.compile("LinkedIn"))).to_have_attribute(
+        "href", "https://www.linkedin.com/in/e2e-user"
+    )
+    page.reload()
+    page.get_by_role("tab", name="Edit").click()
+    expect(page.get_by_label("GitHub")).to_have_value("https://github.com/e2e-user")
+
+
+def test_no_links_list_without_any_link(page, signed):
+    signed()
+    page.goto("/profile")
+    expect(page.get_by_role("meter", name="Profile strength")).to_be_visible()
+    expect(page.get_by_role("list", name="Links")).to_have_count(0)
+
+
+@pytest.mark.parametrize(
+    "field,bad",
+    [
+        ("GitHub", "http://github.com/x"),
+        ("GitHub", "https://gitlab.com/x"),
+        ("GitHub", "https://github.com.evil.com/x"),
+        ("GitHub", "https://user:pw@github.com/x"),
+        ("GitHub", "javascript:alert(1)"),
+        ("GitHub", "github.com/x"),
+        ("LinkedIn", "https://github.com/x"),
+        ("LinkedIn", "http://linkedin.com/in/x"),
+    ],
+)
+def test_bad_links_are_refused_with_one_message(page, signed, field, bad):
+    signed()
+    edit(page)
+    page.get_by_label(field).fill(bad)
+    page.get_by_role("button", name="Save profile").click()
+    site = "github.com" if field == "GitHub" else "linkedin.com"
+    message = f"Enter a link that starts with https://{site}/"
+    expect(page.get_by_role("alert").filter(has_text=message)).to_be_visible()
+    page.reload()
+    page.get_by_role("tab", name="Edit").click()
+    expect(page.get_by_label(field)).to_have_value("")
+
+
+def test_clearing_a_link_removes_it(page, signed):
+    signed()
+    edit(page)
+    page.get_by_label("GitHub").fill("https://github.com/e2e-user")
+    page.get_by_role("button", name="Save profile").click()
+    expect(page.get_by_text("Profile saved.")).to_be_visible()
+    page.get_by_label("GitHub").fill("")
+    page.get_by_role("button", name="Save profile").click()
+    expect(page.get_by_text("Profile saved.")).to_be_visible()
+    page.get_by_role("tab", name="Preview").click()
+    expect(page.get_by_role("list", name="Links")).to_have_count(0)
+
+
+def test_resume_upload_replace_remove(page, signed, files):
+    signed()
+    edit(page)
+    expect(page.get_by_role("button", name="Add your resume")).to_be_visible()
+    page.get_by_label("Resume file").set_input_files(files["cv.pdf"])
+    expect(page.get_by_text("Resume added.")).to_be_visible()
+    expect(page.get_by_role("link", name=re.compile("cv.pdf"))).to_be_visible()
+    page.reload()
+    page.get_by_role("tab", name="Edit").click()
+    expect(page.get_by_role("link", name=re.compile("cv.pdf"))).to_be_visible()
+    page.get_by_label("Resume file").set_input_files(files["cv2.pdf"])
+    expect(page.get_by_text("Resume added.")).to_be_visible()
+    expect(page.get_by_role("link", name=re.compile("cv2.pdf"))).to_be_visible()
+    page.get_by_role("button", name="Remove", exact=True).click()
+    expect(page.get_by_text("Resume removed.")).to_be_visible()
+    expect(page.get_by_role("button", name="Add your resume")).to_be_visible()
+
+
+def test_resume_shows_in_preview_links(page, signed, files):
+    signed()
+    edit(page)
+    page.get_by_label("Resume file").set_input_files(files["cv.pdf"])
+    expect(page.get_by_text("Resume added.")).to_be_visible()
+    page.get_by_role("tab", name="Preview").click()
+    links = page.get_by_role("list", name="Links")
+    expect(links.get_by_role("link", name=re.compile("Resume"))).to_be_visible()
+
+
+def test_resume_non_pdf_is_refused(page, signed, files):
+    signed()
+    edit(page)
+    page.get_by_label("Resume file").set_input_files(files["notes.txt"])
+    expect(page.get_by_role("alert").filter(has_text="Only PDF files can be uploaded.")).to_be_visible()
+    expect(page.get_by_role("button", name="Add your resume")).to_be_visible()
+
+
+def test_resume_fake_pdf_is_refused_by_the_server_and_old_kept(page, signed, files):
+    signed()
+    edit(page)
+    page.get_by_label("Resume file").set_input_files(files["cv.pdf"])
+    expect(page.get_by_text("Resume added.")).to_be_visible()
+    page.get_by_label("Resume file").set_input_files(files["fake.pdf"])
+    expect(page.get_by_role("alert")).to_be_visible()
+    expect(page.get_by_role("link", name=re.compile("cv.pdf"))).to_be_visible()
+
+
+def test_resume_over_5mb_is_refused(page, signed, tmp_path):
+    signed()
+    edit(page)
+    big = tmp_path / "big.pdf"
+    big.write_bytes(b"%PDF-1.4\n" + b"0" * (5 * 1024 * 1024 + 10))
+    page.get_by_label("Resume file").set_input_files(str(big))
+    expect(page.get_by_role("alert").filter(has_text="over 5 MB")).to_be_visible()
+
+
+def test_resume_is_private_to_other_students(verified_user, api, page, sign_in, files):
+    a = verified_user("profiles cv a")
+    b = verified_user("profiles cv b")
+    sign_in(page, a)
+    edit(page)
+    page.get_by_label("Resume file").set_input_files(files["cv.pdf"])
+    expect(page.get_by_text("Resume added.")).to_be_visible()
+    pid = page.request.get("/api/v1/me/profile/").json()["id"]
+    assert api().sign_in(a).send("GET", f"/api/v1/profiles/{pid}/resume/").status == 200
+    assert api().sign_in(b).send("GET", f"/api/v1/profiles/{pid}/resume/").status == 403
+    assert api().send("GET", f"/api/v1/profiles/{pid}/resume/").status in (401, 403)
 
 
 # ---------- phone width and dark theme on every profile/settings screen ----------

@@ -1,5 +1,6 @@
 """Profiles: My profile (edit, validation, persistence), skills, preview, strength, public API."""
 
+import base64
 import re
 
 import pytest
@@ -17,6 +18,17 @@ def session(page: Page, verified_user, sign_in):
         return user, page
 
     return make
+
+
+PNG = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+)
+PDF = (
+    b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"
+    b"2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n"
+    b"3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]>>endobj\n"
+    b"trailer<</Root 1 0 R/Size 4>>\n%%EOF\n"
+)
 
 
 def edit_tab(page):
@@ -389,14 +401,22 @@ def test_strength_follows_major_skills_bio(session):
     assert strength(page) == 20
 
 
-def test_strength_below_100_until_avatar_lands(session):
-    _, page = session(skills=["Python", "Django"])
+def test_strength_reaches_100_with_links_and_resume(session, tmp_path):
+    """DD-43: major 20, skills 40, bio 20, GitHub 5, LinkedIn 5, resume 10; the photo doesn't count."""
+    _, page = session(skills=["Python"])
     edit_tab(page)
     page.get_by_label("Bio").fill("Full profile.")
+    page.get_by_label("GitHub").fill("https://github.com/e2e-user")
     save(page)
-    if page.get_by_role("button", name=re.compile("photo|avatar", re.I)).count():
-        pytest.skip("F1-07 merged; weights changed")
-    assert strength(page) < 100
+    assert strength(page) == 85
+    page.get_by_label("LinkedIn").fill("https://www.linkedin.com/in/e2e-user")
+    save(page)
+    assert strength(page) == 90
+    pdf = tmp_path / "cv.pdf"
+    pdf.write_bytes(PDF)
+    page.get_by_label("Resume file").set_input_files(str(pdf))
+    expect(page.get_by_text("Resume added.")).to_be_visible()
+    expect(page.get_by_role("meter", name="Profile strength")).to_have_attribute("aria-valuenow", "100")
 
 
 def test_strength_is_zero_for_a_bare_profile(verified_user, api):
