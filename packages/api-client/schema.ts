@@ -13,7 +13,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Apply to an open role with an optional note. My own project, or I'm retired: 403. */
+        /**
+         * @description Apply to an open role with an optional note. My own project, or I'm retired: 403.
+         *
+         *     Rate limited per user (the apply rate in DEFAULT_THROTTLE_RATES): 429 throttled.
+         */
         post: operations["applications_create"];
         delete?: never;
         options?: never;

@@ -158,6 +158,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "apps.core.exceptions.exception_handler",
+    # Per user, for views with a throttle_scope. Test and local settings raise them.
+    "DEFAULT_THROTTLE_RATES": {"apply": "60/hour"},
 }
 
 SPECTACULAR_SETTINGS = {
