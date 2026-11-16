@@ -129,6 +129,9 @@ export function Feed() {
   }
 
   const offers = summary?.offers ?? 0;
+  // With no skills every match is 0%, so the deck is newest first (F3-04). One banner at a
+  // time, offers first, so the deck still fits a short phone.
+  const noSkills = !offers && profile.data?.skills.length === 0;
   const deck = feed.data.filter((role) => !gone.includes(role.id));
   const top = deck[0];
 
@@ -216,6 +219,8 @@ export function Feed() {
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.repeat) return;
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    // A banner link above the deck isn't the deck: → there mustn't apply.
+    if (event.target instanceof HTMLAnchorElement && !stack.current?.contains(event.target)) return;
     // Z works on an empty deck too: the last card may be the one to bring back.
     if (shortcuts && event.key.toLowerCase() === "z") {
       event.preventDefault();
@@ -244,7 +249,7 @@ export function Feed() {
       className="flex flex-col gap-4"
       onKeyDown={onKeyDown}
       // The banner's height plus the gap under it; RoleCard takes it off its own height.
-      style={offers > 0 ? ({ "--deck-banner": "5.25rem" } as CSSProperties) : undefined}
+      style={offers > 0 || noSkills ? ({ "--deck-banner": "5.25rem" } as CSSProperties) : undefined}
     >
       <p role="status" className="sr-only">
         {announcement}
@@ -276,6 +281,20 @@ export function Feed() {
             <span className="block text-sm text-muted">
               Pick the one you want before it fills.
             </span>
+          </span>
+          <span aria-hidden="true" className="text-muted">
+            ›
+          </span>
+        </Link>
+      )}
+      {noSkills && (
+        <Link
+          href="/welcome/skills"
+          className="flex min-h-11 items-center gap-3 rounded-row border border-border bg-surface-2 px-4 py-3 hover:bg-surface"
+        >
+          <span className="flex-1">
+            <span className="block font-semibold">Add your skills</span>
+            <span className="block text-sm text-muted">So the best-fit roles come first.</span>
           </span>
           <span aria-hidden="true" className="text-muted">
             ›
