@@ -80,10 +80,10 @@ export function ProjectsList() {
             className={`rounded-card border border-border bg-surface p-5 ${arrived && !search ? "motion-safe:animate-row-in" : ""}`}
           >
             <h2 className="text-lg font-semibold">
-              {/* py-3: a 44px touch target; padding on an inline link doesn't move the line. */}
+              {/* -my-3 py-3 min-w-11: a 44px touch target, even for a short title, at no extra room. */}
               <Link
                 href={`/projects/${project.id}`}
-                className="py-3 hover:underline"
+                className="-my-3 inline-block min-w-11 py-3 hover:underline"
               >
                 {project.title}
               </Link>

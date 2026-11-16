@@ -14,6 +14,7 @@ from teams_support import (  # noqa: F401  (fixtures)
     owned,
     patient_user,
     role_id,
+    role_title,
     team_of,
 )
 
@@ -180,10 +181,19 @@ def test_main_routes_with_content_fit_a_360px_phone(page: Page, owned, candidate
         "/profile",
         "/settings",
     ]
+    # Content each route must show before it's measured, so a pending request can't pass as a skeleton.
+    ready = {
+        f"/projects/{p.id}": p.title,
+        f"/projects/{p.id}?role={role_id(p)}": role_title(p),
+        f"/projects/{draft_id}": f"Draft {long}",
+        f"/teams/{team_id}/chat": long * 3,
+    }
     bad = []
 
     def check(path):
         settle(page, path)
+        if text := ready.get(path):
+            expect(page.get_by_text(text).locator("visible=true").first).to_be_visible()
         if overflow(page) > 0:
             bad.append(f"{path} scrolls sideways by {overflow(page)}px")
         if small := page.evaluate(SMALL_JS):
