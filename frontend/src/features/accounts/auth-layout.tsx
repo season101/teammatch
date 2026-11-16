@@ -8,7 +8,8 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <header className="border-b border-border bg-surface px-4 py-3 sm:px-6">
-        <Link href="/" aria-label="TeamMatch home">
+        {/* -my-3 py-3: the header's full height is the touch target, at no extra room. */}
+        <Link href="/" aria-label="TeamMatch home" className="-my-3 block w-fit py-3">
           <Logo className="text-lg" />
         </Link>
       </header>

@@ -227,7 +227,7 @@ function Info({ profile }: { profile: MyProfile }) {
             disabled={save.isPending}
             aria-invalid={Boolean(errors.display_name)}
             aria-describedby="welcome-name-help"
-            className={`${inputClass} min-h-11`}
+            className={inputClass}
             onChange={(event) => setDisplayName(event.target.value)}
           />
           <p id="welcome-name-help" className={helperClass}>
@@ -251,7 +251,7 @@ function Info({ profile }: { profile: MyProfile }) {
             maxLength={MAJOR_MAX}
             disabled={save.isPending}
             aria-invalid={Boolean(errors.major)}
-            className={`${inputClass} min-h-11`}
+            className={inputClass}
             onChange={(event) => setMajor(event.target.value)}
           />
           {errors.major && (

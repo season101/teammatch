@@ -69,7 +69,8 @@ export function SkillPicker({
             No skills yet. Search below to add some.
           </p>
         ) : (
-          <ul aria-label="My skills" className="flex flex-wrap gap-2">
+          // 16px between rows on a phone, so the chips' 44px remove zones don't overlap.
+          <ul aria-label="My skills" className="flex flex-wrap gap-x-2 gap-y-4 sm:gap-y-2">
             {chosen.map((skill) => (
               <motion.li key={skill.id} {...travel(skill.id, selected.length)}>
                 <Chip

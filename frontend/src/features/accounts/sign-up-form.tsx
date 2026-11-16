@@ -96,7 +96,7 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
+          className="min-h-11 rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
         />
       </div>
 
@@ -113,7 +113,7 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           aria-describedby="password-hint"
-          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
+          className="min-h-11 rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
         />
         <p id="password-hint" className="text-xs text-muted">
           8 or more characters. Not all numbers, and not close to your email.
