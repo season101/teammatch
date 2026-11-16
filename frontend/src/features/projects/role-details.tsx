@@ -211,7 +211,8 @@ export function RoleDetails({
     <div className="flex flex-col gap-6">
       <Link
         href="/feed"
-        className="self-start text-sm text-primary hover:underline"
+        // -my-3 py-3: a 44px touch target that takes no more room than the text.
+        className="-my-3 self-start py-3 text-sm text-primary hover:underline"
         onClick={(event) => {
           event.preventDefault();
           back();

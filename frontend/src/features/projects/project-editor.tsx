@@ -24,8 +24,9 @@ import { noticeClass, successClass } from "@/components/ui/form-classes";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { PendingLabel } from "@/components/ui/pending-label";
 
+// 44px tall on a phone, the minimum touch target; 38px (its padding) from 640px up.
 const buttonClass =
-  "rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-surface-2";
+  "min-h-11 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-surface-2 sm:min-h-0";
 
 export function ProjectEditor({
   projectId,
@@ -75,7 +76,11 @@ export function ProjectEditor({
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
-        <Link href="/projects" className="text-sm text-primary hover:underline">
+        {/* -my-3 py-3: a 44px touch target that takes no more room than the text. */}
+        <Link
+          href="/projects"
+          className="-my-3 py-3 text-sm text-primary hover:underline"
+        >
           ← All projects
         </Link>
         {locked && (

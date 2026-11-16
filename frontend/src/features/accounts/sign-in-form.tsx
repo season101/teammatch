@@ -186,7 +186,7 @@ export function SignInForm({
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
+          className="min-h-11 rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
         />
       </div>
 
@@ -209,7 +209,7 @@ export function SignInForm({
             setPassword(e.target.value);
             setRefused(false);
           }}
-          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass"
+          className="min-h-11 rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass"
         />
         <Link
           href="/reset-password"
@@ -250,7 +250,8 @@ export function SignInForm({
 
       <p className="text-center text-sm text-muted">
         New here?{" "}
-        <Link href="/signup" className="font-medium text-primary underline">
+        {/* py-3.5: a 44px touch target; padding on an inline link doesn't move the line. */}
+        <Link href="/signup" className="py-3.5 font-medium text-primary underline">
           Create account
         </Link>
       </p>

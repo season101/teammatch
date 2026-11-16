@@ -96,7 +96,7 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
+          className="min-h-11 rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
         />
       </div>
 
@@ -113,7 +113,7 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           aria-describedby="password-hint"
-          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
+          className="min-h-11 rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
         />
         <p id="password-hint" className="text-xs text-muted">
           8 or more characters. Not all numbers, and not close to your email.
@@ -128,9 +128,10 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
         </ul>
       )}
       {emailTaken && (
+        // -my-3 py-3: a 44px touch target that takes no more room than the text.
         <Link
           href="/login"
-          className="text-sm font-medium text-primary underline"
+          className="-my-3 py-3 text-sm font-medium text-primary underline"
         >
           Go to sign in
         </Link>
@@ -146,7 +147,8 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
 
       <p className="text-center text-sm text-muted">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-primary underline">
+        {/* py-3.5: a 44px touch target; padding on an inline link doesn't move the line. */}
+        <Link href="/login" className="py-3.5 font-medium text-primary underline">
           Sign in
         </Link>
       </p>

@@ -91,7 +91,7 @@ function SetPasswordForm({
           value={password}
           onChange={(e) => setValue(e.target.value)}
           aria-describedby="new-password-hint"
-          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
+          className="min-h-11 rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
         />
         <p id="new-password-hint" className="text-xs text-muted">
           8 or more characters. Not all numbers, and not close to your email.

@@ -25,9 +25,10 @@ export function ReviewApplicants() {
     return (
       <p className="text-muted">
         You don&apos;t own any projects yet.{" "}
+        {/* py-3.5: a 44px touch target; padding on an inline link doesn't move the line. */}
         <Link
           href="/projects/new"
-          className="font-medium text-primary hover:underline"
+          className="py-3.5 font-medium text-primary hover:underline"
         >
           Create one
         </Link>
@@ -42,9 +43,10 @@ export function ReviewApplicants() {
     return (
       <p className="text-muted">
         No open project to review yet. Publish a draft from{" "}
+        {/* py-3.5: a 44px touch target; padding on an inline link doesn't move the line. */}
         <Link
           href="/projects"
-          className="font-medium text-primary hover:underline"
+          className="py-3.5 font-medium text-primary hover:underline"
         >
           Projects
         </Link>{" "}
