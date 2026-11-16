@@ -129,9 +129,9 @@ export function Feed() {
   }
 
   const offers = summary?.offers ?? 0;
-  // With no skills every match is 0%, so the deck is newest first (F3-04).
-  const noSkills = profile.data?.skills.length === 0;
-  const banners = Number(offers > 0) + Number(noSkills);
+  // With no skills every match is 0%, so the deck is newest first (F3-04). One banner at a
+  // time, offers first, so the deck still fits a short phone.
+  const noSkills = !offers && profile.data?.skills.length === 0;
   const deck = feed.data.filter((role) => !gone.includes(role.id));
   const top = deck[0];
 
@@ -219,6 +219,8 @@ export function Feed() {
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.repeat) return;
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    // A banner link above the deck isn't the deck: → there mustn't apply.
+    if (event.target instanceof HTMLAnchorElement && !stack.current?.contains(event.target)) return;
     // Z works on an empty deck too: the last card may be the one to bring back.
     if (shortcuts && event.key.toLowerCase() === "z") {
       event.preventDefault();
@@ -246,8 +248,8 @@ export function Feed() {
     <div
       className="flex flex-col gap-4"
       onKeyDown={onKeyDown}
-      // Each banner's height plus the gap under it; RoleCard takes it off its own height.
-      style={banners ? ({ "--deck-banner": `${banners * 5.25}rem` } as CSSProperties) : undefined}
+      // The banner's height plus the gap under it; RoleCard takes it off its own height.
+      style={offers > 0 || noSkills ? ({ "--deck-banner": "5.25rem" } as CSSProperties) : undefined}
     >
       <p role="status" className="sr-only">
         {announcement}

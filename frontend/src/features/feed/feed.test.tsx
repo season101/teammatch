@@ -648,6 +648,29 @@ test("with no skills, the deck prompts me to add some; with skills it doesn't", 
   expect(skillsPrompt()).not.toBeInTheDocument();
 });
 
+test("offers take the banner spot from the skills prompt", async () => {
+  mockApi({
+    me: { ...profile, skills: [] },
+    summary: () => ({ offers: 1, applicants_waiting: 0, deck: "open" }),
+  });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  renderFeed(client);
+  expect(await screen.findByRole("link", { name: /1 project wants you\./ })).toBeInTheDocument();
+  await waitFor(() => expect(client.getQueryData(["my-profile"])).toBeDefined());
+  expect(skillsPrompt()).not.toBeInTheDocument();
+});
+
+test("→ on the skills prompt doesn't apply", async () => {
+  const { applies } = mockApi({ me: { ...profile, skills: [] } });
+  renderFeed();
+  await applyButton();
+  fireEvent.keyDown(await screen.findByRole("link", { name: /Add your skills/ }), {
+    key: "ArrowRight",
+  });
+  expect(screen.getByRole("article", { name: "Backend dev" })).toBeInTheDocument();
+  expect(applies).toHaveLength(0);
+});
+
 test("after a commit the deck is closed, which isn't benched or caught up", async () => {
   mockApi({ roles: [], summary: () => ({ offers: 0, applicants_waiting: 0, deck: "committed" }) });
   renderFeed();

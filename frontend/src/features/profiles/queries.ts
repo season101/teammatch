@@ -101,6 +101,8 @@ export function useSaveProfile() {
             }
           : profile,
       );
+      // Skills set the deck's match % and order (F3-04).
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
     },
   });
 }
