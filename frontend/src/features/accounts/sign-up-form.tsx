@@ -128,9 +128,10 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
         </ul>
       )}
       {emailTaken && (
+        // -my-3 py-3: a 44px touch target that takes no more room than the text.
         <Link
           href="/login"
-          className="text-sm font-medium text-primary underline"
+          className="-my-3 py-3 text-sm font-medium text-primary underline"
         >
           Go to sign in
         </Link>
@@ -146,7 +147,8 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
 
       <p className="text-center text-sm text-muted">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-primary underline">
+        {/* py-3.5: a 44px touch target; padding on an inline link doesn't move the line. */}
+        <Link href="/login" className="py-3.5 font-medium text-primary underline">
           Sign in
         </Link>
       </p>

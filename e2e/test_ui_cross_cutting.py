@@ -95,7 +95,6 @@ def test_app_routes_no_horizontal_scroll(owner_page: Page, path):
 SMALL_JS = """() => [...document.querySelectorAll('button, a[href], [role=tab]')]
   .filter(e => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e);
     return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !e.closest('[aria-hidden=true]')
-      && !(e.tagName === 'A' && e.closest('p, li') && s.display === 'inline')
       && (r.height < 43.5 || r.width < 43.5); })
   .map(e => (e.getAttribute('aria-label') || e.textContent).trim().slice(0,30))"""
 

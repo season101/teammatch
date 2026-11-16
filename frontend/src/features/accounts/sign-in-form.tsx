@@ -250,7 +250,8 @@ export function SignInForm({
 
       <p className="text-center text-sm text-muted">
         New here?{" "}
-        <Link href="/signup" className="font-medium text-primary underline">
+        {/* py-3.5: a 44px touch target; padding on an inline link doesn't move the line. */}
+        <Link href="/signup" className="py-3.5 font-medium text-primary underline">
           Create account
         </Link>
       </p>
