@@ -468,7 +468,7 @@ Sprint S2 | 3 h | Must | UC-09
 
 ### F3-04 Rank roles by skill overlap
 As a candidate, I want roles that match my skills first so that I see the best fits early.
-- Given my skills and a role's required skills, then the feed sorts by number of overlapping skills, then by newest.
+- Given my skills and a role's required skills, then the feed sorts by match % (overlapping skills / required skills), then by newest.
 - Given I have no skills, then I am prompted to add skills and the feed sorts by newest.
 
 Sprint S3 | 3 h | Should | UC-07
