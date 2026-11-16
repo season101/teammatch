@@ -25,7 +25,8 @@ permissions:
 
 jobs:
   e2e:
-    runs-on: ubuntu-latest
+    # shortcut: Playwright 1.59 has no chromium for ubuntu 26.04; back to ubuntu-latest when Playwright supports it
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7
