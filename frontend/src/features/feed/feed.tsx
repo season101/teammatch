@@ -129,6 +129,9 @@ export function Feed() {
   }
 
   const offers = summary?.offers ?? 0;
+  // With no skills every match is 0%, so the deck is newest first (F3-04).
+  const noSkills = profile.data?.skills.length === 0;
+  const banners = Number(offers > 0) + Number(noSkills);
   const deck = feed.data.filter((role) => !gone.includes(role.id));
   const top = deck[0];
 
@@ -243,8 +246,8 @@ export function Feed() {
     <div
       className="flex flex-col gap-4"
       onKeyDown={onKeyDown}
-      // The banner's height plus the gap under it; RoleCard takes it off its own height.
-      style={offers > 0 ? ({ "--deck-banner": "5.25rem" } as CSSProperties) : undefined}
+      // Each banner's height plus the gap under it; RoleCard takes it off its own height.
+      style={banners ? ({ "--deck-banner": `${banners * 5.25}rem` } as CSSProperties) : undefined}
     >
       <p role="status" className="sr-only">
         {announcement}
@@ -276,6 +279,20 @@ export function Feed() {
             <span className="block text-sm text-muted">
               Pick the one you want before it fills.
             </span>
+          </span>
+          <span aria-hidden="true" className="text-muted">
+            ›
+          </span>
+        </Link>
+      )}
+      {noSkills && (
+        <Link
+          href="/welcome/skills"
+          className="flex min-h-11 items-center gap-3 rounded-row border border-border bg-surface-2 px-4 py-3 hover:bg-surface"
+        >
+          <span className="flex-1">
+            <span className="block font-semibold">Add your skills</span>
+            <span className="block text-sm text-muted">So the best-fit roles come first.</span>
           </span>
           <span aria-hidden="true" className="text-muted">
             ›

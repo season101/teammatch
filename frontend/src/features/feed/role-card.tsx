@@ -31,7 +31,7 @@ export function RoleCard({ role, mySkillIds }: { role: FeedRole; mySkillIds: num
       aria-labelledby={headingId}
       // Same height on every card, so Pass and Apply never move. The viewport minus the
       // page header, padding, buttons and phone tab bar puts them just above the tab bar.
-      // --deck-banner is the offers banner's height when the deck shows one.
+      // --deck-banner is the height of the banners (offers, add skills) the deck shows.
       className={`flex flex-col gap-3 overflow-hidden rounded-card border border-border bg-surface p-5 ${deckCardHeight}`}
     >
       <header>

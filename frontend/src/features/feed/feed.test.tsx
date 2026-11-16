@@ -58,6 +58,7 @@ function mockApi({
   wait = Promise.resolve(),
   team = (): unknown => null,
   summary = (): unknown => ({ offers: 0, applicants_waiting: 0, deck: "open" }),
+  me = profile,
 } = {}) {
   let open = [...roles];
   let passed: typeof roles = [];
@@ -73,7 +74,7 @@ function mockApi({
       let status = 200;
       let body: unknown = {};
       if (path === "/api/v1/feed/") body = { next: null, previous: null, results: open };
-      else if (path === "/api/v1/me/profile/") body = profile;
+      else if (path === "/api/v1/me/profile/") body = me;
       else if (path === "/api/v1/teams/mine/") body = { team: team() };
       else if (path === "/api/v1/me/summary/") body = summary();
       else if (path === "/api/v1/applications/mine/")
@@ -628,6 +629,23 @@ test("one offer reads in the singular, and no offers means no banner", async () 
   renderFeed();
   await applyButton();
   expect(offersBanner()).not.toBeInTheDocument();
+});
+
+const skillsPrompt = () => screen.queryByRole("link", { name: /Add your skills/ });
+
+test("with no skills, the deck prompts me to add some; with skills it doesn't", async () => {
+  mockApi({ me: { ...profile, skills: [] } });
+  const { unmount } = renderFeed();
+  const prompt = await screen.findByRole("link", { name: /Add your skills/ });
+  expect(prompt).toHaveTextContent("So the best-fit roles come first.");
+  expect(prompt).toHaveAttribute("href", "/welcome/skills");
+  unmount();
+
+  mockApi();
+  renderFeed();
+  // The profile has loaded once my skill is marked on the card.
+  await screen.findByText("(you have this skill)");
+  expect(skillsPrompt()).not.toBeInTheDocument();
 });
 
 test("after a commit the deck is closed, which isn't benched or caught up", async () => {
