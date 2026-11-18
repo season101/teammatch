@@ -249,7 +249,8 @@ def edit(page):
 
 
 def preview_avatar(page):
-    return page.get_by_role("article").locator("img")
+    # The photo button; the larger copy inside its closed dialog is a second img.
+    return page.get_by_role("article").locator("button > img")
 
 
 def test_avatar_upload_replaces_initials_and_persists(page, signed, files):
