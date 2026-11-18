@@ -514,6 +514,7 @@ def test_dark_theme_profile_form_text_is_readable(page, signed):
     page.get_by_text("Dark", exact=True).click()
     page.goto("/profile")
     page.get_by_role("tab", name="Edit").click()
+    expect(page.locator("#bio")).to_be_visible()
     bg, fg = (
         page.evaluate(f"getComputedStyle(document.getElementById('bio')).{prop}")
         for prop in ("backgroundColor", "color")

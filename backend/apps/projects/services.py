@@ -207,7 +207,10 @@ def visible_to(user, via=""):
     """
     shown = [ProjectStatus.OPEN, ProjectStatus.LOCKED]
     # A subquery, so a project with several moderators isn't repeated.
-    moderated = ProjectModerator.objects.filter(user=user).values("project_id")
+    # user__is_moderator: a link left behind by a demotion grants nothing.
+    moderated = ProjectModerator.objects.filter(user=user, user__is_moderator=True).values(
+        "project_id"
+    )
     return (
         Q(**{f"{via}owner": user})
         | Q(**{f"{via}status__in": shown})

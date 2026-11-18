@@ -17,7 +17,11 @@ def is_member(user, team_id):
     """
     return (
         Membership.objects.filter(team_id=team_id, user_id=user.id).exists()
-        or ProjectModerator.objects.filter(project__team=team_id, user_id=user.id).exists()
+        # The flag too: a link left behind by a demotion grants nothing.
+        or (
+            user.is_moderator
+            and ProjectModerator.objects.filter(project__team=team_id, user_id=user.id).exists()
+        )
     )
 
 

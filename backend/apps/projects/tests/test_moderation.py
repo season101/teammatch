@@ -228,6 +228,19 @@ def test_chat_opens_for_an_assigned_moderator_only(mod, team):
     assert as_user(mod).get(messages).status_code == 200
 
 
+def test_a_link_left_by_a_demotion_grants_nothing(mod, team, fall, marco):
+    # The Django admin clears the flag without going through set_moderator.
+    draft = Project.objects.create(owner=marco, term=fall, title="Draft", pitch="P")
+    for project in (team.project, draft):
+        ProjectModerator.objects.create(project=project, user=mod)
+    mod.is_moderator = False
+    mod.save()
+
+    assert not is_member(mod, team.id)
+    assert as_user(mod).get(f"/api/v1/teams/{team.id}/messages/").status_code == 404
+    assert as_user(mod).get(f"/api/v1/projects/{draft.id}/").status_code == 404
+
+
 # --- moderators and admins don't act as students
 
 
