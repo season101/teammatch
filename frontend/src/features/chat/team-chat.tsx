@@ -117,7 +117,8 @@ function ChatRoom({ team, userId }: { team: Room; userId: number }) {
         <Link
           href="/teams"
           aria-label="Back to Teams"
-          className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-surface-2"
+          // A phone pattern: from tablet up the Teams tab is on screen.
+          className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-surface-2 sm:hidden"
         >
           <BackIcon />
         </Link>
@@ -126,7 +127,7 @@ function ChatRoom({ team, userId }: { team: Room; userId: number }) {
           <p className="text-xs text-muted">{team.members.length} members</p>
         </div>
         {/* same width as the back link, so the title sits in the middle */}
-        <span aria-hidden="true" className="size-11 shrink-0" />
+        <span aria-hidden="true" className="size-11 shrink-0 sm:hidden" />
       </header>
 
       {socket.status.state === "reconnecting" && (

@@ -206,8 +206,12 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={tab.href}
               href={tab.href}
               aria-current={isIn(pathname, tab.paths) ? "page" : undefined}
-              className="relative flex min-h-14 items-center gap-1.5 px-3 text-sm font-semibold text-muted transition-colors duration-fast after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:scale-x-0 after:rounded-pill after:bg-primary hover:text-text aria-[current=page]:text-text aria-[current=page]:after:scale-x-100"
+              className="group relative flex min-h-14 items-center gap-2 px-3 text-sm font-semibold text-muted transition-colors duration-fast after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:scale-x-0 after:rounded-pill after:bg-primary hover:text-text aria-[current=page]:text-text aria-[current=page]:after:scale-x-100"
             >
+              {/* The same icons as the phone tab bar and the desktop nav, once five fit (768px). */}
+              <span className="hidden group-aria-[current=page]:text-primary md:block">
+                <tab.icon />
+              </span>
               {tab.label}
               <Badge item={tab} counts={counts} />
             </Link>
