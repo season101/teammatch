@@ -4,16 +4,8 @@ import Link from "next/link";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonRows } from "@/components/ui/skeleton";
+import { Avatar } from "@/features/profiles/avatar";
 import { useMyTeam, type MyTeam } from "./queries";
-
-export function initials(name: string) {
-  const letters = name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0]);
-  return letters.join("").toUpperCase() || "?";
-}
 
 // "2026-12-12" -> "Dec 12". Parsed as a local date so it doesn't slip a day.
 export function termEnd(team: MyTeam) {
@@ -71,12 +63,11 @@ export function MyTeamView() {
             key={index}
             className="flex items-center gap-3 rounded-row border border-border bg-surface p-3"
           >
-            <span
-              aria-hidden="true"
-              className="grid size-11 shrink-0 place-items-center rounded-full bg-surface-2 font-bold"
-            >
-              {initials(member.display_name)}
-            </span>
+            <Avatar
+              name={member.display_name}
+              url={member.avatar_url}
+              className="size-11 bg-surface-2"
+            />
             <div>
               <p className="font-semibold">{member.display_name || "Unnamed member"}</p>
               <p className="text-sm text-muted">{member.role}</p>

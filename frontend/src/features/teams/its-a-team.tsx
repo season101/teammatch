@@ -4,7 +4,8 @@ import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { buttonClasses } from "@/components/ui/button";
-import { initials, termEnd } from "./my-team";
+import { Avatar } from "@/features/profiles/avatar";
+import { termEnd } from "./my-team";
 import { useMarkSeen, useMyTeam, type MyTeam } from "./queries";
 
 const STANDARD = [0.2, 0.8, 0.2, 1] as const;
@@ -89,12 +90,11 @@ export function ItsATeam({ team, onClose }: { team: MyTeam; onClose: () => void 
               transition={{ delay: index * STAGGER, type: "spring", duration: 0.5, bounce: 0.25 }}
               className="flex w-20 flex-col items-center gap-1"
             >
-              <span
-                aria-hidden="true"
-                className="grid size-14 place-items-center rounded-full bg-cta text-lg font-bold text-on-cta"
-              >
-                {initials(member.display_name)}
-              </span>
+              <Avatar
+                name={member.display_name}
+                url={member.avatar_url}
+                className="size-14 bg-cta text-lg text-on-cta"
+              />
               <span className="text-sm font-semibold">{member.display_name || "Unnamed"}</span>
               <span className="text-xs">{member.role}</span>
             </motion.li>

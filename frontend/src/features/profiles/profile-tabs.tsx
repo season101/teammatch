@@ -8,6 +8,7 @@ import { SkeletonRows } from "@/components/ui/skeleton";
 import { Avatar } from "./avatar";
 import { ProfileForm } from "./profile-form";
 import { ProfileLinks } from "./profile-links";
+import { setProfileTab, useProfileTab } from "./profile-tab";
 import { useMyProfile, type MyProfile } from "./queries";
 
 // DD-43: major 20, skills 40, bio 20, GitHub 5, LinkedIn 5, resume 10. The photo no
@@ -26,6 +27,7 @@ export function profileStrength(profile: MyProfile) {
 // Me → Profile: the strength meter, then Preview | Edit.
 export function ProfileTabs() {
   const profile = useMyProfile();
+  const tab = useProfileTab();
 
   if (profile.isPending) {
     return <SkeletonRows label="Loading your profile" />;
@@ -42,7 +44,10 @@ export function ProfileTabs() {
       <ProfileStrength value={profileStrength(profile.data)} />
       <Tabs
         label="Profile"
-        remember="profile"
+        selected={tab}
+        onSelect={setProfileTab}
+        // On desktop the shell's side pane has these two tabs instead.
+        listClassName="lg:hidden"
         tabs={[
           {
             id: "preview",

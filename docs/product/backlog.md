@@ -163,8 +163,8 @@ Sprint S2 | 3 h | Must | UC-11
 
 ### F1-07 Upload an avatar
 As a user, I want to upload a profile picture so that people recognize me.
-- Given I pick a JPEG/PNG/WebP under 2 MB, when I upload, then the file is sent to the API as multipart, saved to SeaweedFS through django-storages, and my profile shows the new avatar.
-- Given a non-image or a file over 2 MB, then the API rejects it with `invalid_avatar` and my old avatar stays.
+- Given I pick a JPEG/PNG/WebP under 10 MB, when I upload, then the file is sent to the API as multipart, saved to SeaweedFS through django-storages, and my profile shows the new avatar.
+- Given a non-image or a file over 10 MB, then the API rejects it with `invalid_avatar` and my old avatar stays.
 
 Design: [forms](../design/patterns/forms.md), screen [24](../design/screens/img/24-profile.png)
 
