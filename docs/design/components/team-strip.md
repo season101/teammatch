@@ -7,7 +7,7 @@ A row of thin segments, one per role in a project. It shows at a glance how clos
 |---|---|---|
 | `filled` | Solid `apply` | Someone has this seat |
 | `open` | 1px white outline at 55% | Still open |
-| `current` | Solid white, gently pulsing | The role on this card |
+| `current` | 2px solid white outline, gently pulsing | The role on this card |
 
 ## Where it goes
 **Only on a project cover** (the coloured band at the top of a role card, project card or project header). That's why open and current are white. Covers come from the approved set in [color.md](../foundations/color.md#project-covers), which keeps white and lime readable.
@@ -28,6 +28,7 @@ A row of thin segments, one per role in a project. It shows at a glance how clos
 - **Do** show it wherever a project appears: role cards, project cards, project headers, the teams list.
 - **Don't** draw it on `surface` or `bg`, where white segments disappear.
 - **Don't** use more than one `current` segment.
+- **Don't** fill the `current` segment. Only filled seats are solid, so the strip agrees with "1 of 5 roles filled".
 
 ## Example
 ```tsx
