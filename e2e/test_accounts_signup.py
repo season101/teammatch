@@ -17,16 +17,21 @@ def tag():
 def fill_signup(page: Page, email: str, password: str):
     page.goto("/signup")
     page.get_by_label("School email").fill(email)
+    page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill(password)
     page.get_by_role("button", name="Create account").click()
 
 
 def test_signup_page_content(page: Page):
     page.goto("/signup")
-    expect(page.get_by_role("heading", name="Find your team.")).to_be_visible()
+    expect(page.get_by_role("heading", name="Log in or sign up")).to_be_visible()
     expect(page.get_by_text("Use your @latech.edu or @email.latech.edu email.")).to_be_visible()
+    page.get_by_label("School email").fill(f"acct-{tag()}@latech.edu")
+    page.get_by_role("button", name="Continue with email").click()
+    expect(page.get_by_role("heading", name="Find your team.")).to_be_visible()
     expect(page.get_by_text("8 or more characters. Not all numbers")).to_be_visible()
-    expect(page.get_by_role("link", name="Sign in")).to_have_attribute("href", "/login")
+    page.get_by_role("button", name="Sign in").click()
+    expect(page.get_by_role("heading", name="Welcome back.")).to_be_visible()
 
 
 @pytest.mark.parametrize("domain", ["latech.edu", "email.latech.edu"])
@@ -77,14 +82,16 @@ def test_short_password_is_refused_by_the_api(api):
 
 
 def test_invalid_email_is_blocked_by_the_form(page: Page):
-    fill_signup(page, "not-an-email", f"acct-{uuid.uuid4().hex}")
+    page.goto("/signup")
+    page.get_by_label("School email").fill("not-an-email")
+    page.get_by_role("button", name="Continue with email").click()
     assert page.get_by_label("School email").evaluate("e => e.validity.typeMismatch")
-    expect(page.get_by_role("heading", name="Check your inbox")).to_have_count(0)
+    expect(page.get_by_label("Password")).to_have_count(0)
 
 
 def test_empty_fields_are_blocked(page: Page):
     page.goto("/signup")
-    page.get_by_role("button", name="Create account").click()
+    page.get_by_role("button", name="Continue with email").click()
     assert page.get_by_label("School email").evaluate("e => e.validity.valueMissing")
 
 

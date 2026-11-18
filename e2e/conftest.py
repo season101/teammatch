@@ -203,6 +203,7 @@ def sign_in():
             page.goto("/login")
         wait_hydrated(page)
         page.get_by_label("School email").fill(user.email)
+        page.get_by_role("button", name="Continue with email").click()
         page.get_by_label("Password").fill(user.password)
         page.get_by_role("button", name="Sign in", exact=True).click()
         expect(page).not_to_have_url(re.compile(r"/login"))
@@ -215,6 +216,7 @@ def sign_up(verify_link):
     def do(page: Page, user: User):
         page.goto("/signup")
         page.get_by_label("School email").fill(user.email)
+        page.get_by_role("button", name="Continue with email").click()
         page.get_by_label("Password").fill(user.password)
         page.get_by_role("button", name="Create account").click()
         expect(page.get_by_role("heading", name="Check your inbox")).to_be_visible()

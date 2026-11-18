@@ -30,6 +30,8 @@ def test_forgot_password_page_content(page: Page):
 
 def test_forgot_password_link_on_login_opens_it(page: Page):
     page.goto("/login")
+    page.get_by_label("School email").fill(f"acct-{uuid.uuid4().hex[:6]}@latech.edu")
+    page.get_by_role("button", name="Continue with email").click()
     page.get_by_role("link", name="Forgot password?").click()
     expect(page).to_have_url(re.compile(r"/reset-password$"))
 
@@ -50,6 +52,7 @@ def test_full_reset_flow_then_sign_in_with_the_new_password(page: Page, verified
 
     # old password no longer works, the new one does
     page.get_by_label("School email").fill(user.email)
+    page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill(user.password)
     page.get_by_role("button", name="Sign in", exact=True).click()
     expect(alerts(page)).to_have_text("Email or password is incorrect.")
@@ -139,6 +142,7 @@ def test_google_only_account_is_offered_a_password_at_sign_in(page: Page, verifi
     make_google_only(user)
     page.goto("/login")
     page.get_by_label("School email").fill(user.email)
+    page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill("any-password-at-all-1")
     page.get_by_role("button", name="Sign in", exact=True).click()
     expect(page.get_by_text("This email signs in with Google. Want to set a password too?")).to_be_visible()
@@ -159,6 +163,7 @@ def test_google_only_account_is_offered_a_password_at_sign_in(page: Page, verifi
     expect(page.get_by_role("heading", name="Your password is set")).to_be_visible()
     page.get_by_role("link", name="Sign in").click()
     page.get_by_label("School email").fill(user.email)
+    page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill(new_password)
     page.get_by_role("button", name="Sign in", exact=True).click()
     expect(page).to_have_url(re.compile(r"/feed|/welcome/rules"))
@@ -169,6 +174,7 @@ def test_google_only_offer_goes_away_when_the_email_changes(page: Page, verified
     make_google_only(user)
     page.goto("/login")
     page.get_by_label("School email").fill(user.email)
+    page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill("any-password-at-all-1")
     page.get_by_role("button", name="Sign in", exact=True).click()
     expect(page.get_by_role("button", name="Set a password")).to_be_visible()
@@ -182,6 +188,7 @@ def test_google_only_message_for_any_password_even_the_old_one(page: Page, verif
     make_google_only(user)
     page.goto("/login")
     page.get_by_label("School email").fill(user.email)
+    page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill(old)
     page.get_by_role("button", name="Sign in", exact=True).click()
     expect(page.get_by_role("button", name="Set a password")).to_be_visible()
@@ -190,6 +197,7 @@ def test_google_only_message_for_any_password_even_the_old_one(page: Page, verif
 def test_ordinary_unknown_email_never_shows_the_google_offer(page: Page):
     page.goto("/login")
     page.get_by_label("School email").fill(f"acct-none-{uuid.uuid4().hex[:6]}@latech.edu")
+    page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill("any-password-at-all-1")
     page.get_by_role("button", name="Sign in", exact=True).click()
     expect(alerts(page)).to_have_text("Email or password is incorrect.")

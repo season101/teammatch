@@ -12,6 +12,7 @@ BASE = "http://localhost:3000"
 def start_signup(page: Page, user, verify_link):
     page.goto("/signup")
     page.get_by_label("School email").fill(user.email)
+    page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill(user.password)
     page.get_by_role("button", name="Create account").click()
     expect(page.get_by_role("heading", name="Check your inbox")).to_be_visible()
@@ -57,6 +58,7 @@ def test_other_browser_sees_verified_with_a_sign_in_button(
     other.get_by_role("link", name="Sign in").click()
     expect(other).to_have_url(re.compile(r"/login$"))
     other.get_by_label("School email").fill(user.email)
+    other.get_by_role("button", name="Continue with email").click()
     other.get_by_label("Password").fill(user.password)
     other.get_by_role("button", name="Sign in", exact=True).click()
     expect(other).to_have_url(re.compile(r"/welcome/rules$"))
@@ -106,6 +108,7 @@ def test_unverified_sign_in_says_verify_first(page: Page, make_user, verify_link
     start_signup(page, user, verify_link)
     page.goto("/login")
     page.get_by_label("School email").fill(user.email)
+    page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill(user.password)
     page.get_by_role("button", name="Sign in", exact=True).click()
     expect(alerts(page)).to_have_text(

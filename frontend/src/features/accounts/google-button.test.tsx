@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import { GoogleButton } from "./google-button";
-import { SignInForm } from "./sign-in-form";
+import { AuthForm } from "./auth-form";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn() }) }));
 
@@ -154,6 +154,6 @@ test.each([
   ["something_new", "Couldn't sign in with Google. Try again."],
 ])("the sign-in page explains ?error=%s", (code, message) => {
   mockConfig([]);
-  renderWithClient(<SignInForm googleError={code} />);
+  renderWithClient(<AuthForm googleError={code} />);
   expect(screen.getByRole("alert")).toHaveTextContent(message);
 });

@@ -19,17 +19,22 @@ WRONG = "Email or password is incorrect."
 def attempt(page: Page, email: str, password: str):
     page.goto("/login")
     page.get_by_label("School email").fill(email)
+    page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill(password)
     page.get_by_role("button", name="Sign in", exact=True).click()
 
 
 def test_login_page_content(page: Page):
     page.goto("/login")
+    expect(page.get_by_role("heading", name="Log in or sign up")).to_be_visible()
+    page.get_by_label("School email").fill(f"acct-{uuid.uuid4().hex[:6]}@latech.edu")
+    page.get_by_role("button", name="Continue with email").click()
     expect(page.get_by_role("heading", name="Welcome back.")).to_be_visible()
     expect(page.get_by_role("link", name="Forgot password?")).to_have_attribute(
         "href", "/reset-password"
     )
-    expect(page.get_by_role("link", name="Create account")).to_have_attribute("href", "/signup")
+    page.get_by_role("button", name="Create account").click()
+    expect(page.get_by_role("heading", name="Find your team.")).to_be_visible()
 
 
 def test_sign_in_lands_on_the_deck(page: Page, verified_user, sign_in):
@@ -100,7 +105,7 @@ def test_wrong_password_does_not_offer_google(page: Page, verified_user):
 def test_signed_out_app_routes_redirect_to_login_with_next(page: Page, route):
     page.goto(route)
     expect(page).to_have_url(re.compile(r"/login\?next=" + re.escape(route.replace("/", "%2F")) + r"$"))
-    expect(page.get_by_role("heading", name="Welcome back.")).to_be_visible()
+    expect(page.get_by_role("heading", name="Log in or sign up")).to_be_visible()
 
 
 @pytest.mark.parametrize("route", ["/projects", "/settings", "/applications"])
@@ -109,6 +114,7 @@ def test_next_returns_you_after_sign_in(page: Page, verified_user, route):
     page.goto(route)
     expect(page).to_have_url(re.compile(r"/login\?next="))
     page.get_by_label("School email").fill(user.email)
+    page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill(user.password)
     page.get_by_role("button", name="Sign in", exact=True).click()
     expect(page).to_have_url(re.compile(re.escape(route) + r"$"))
@@ -119,6 +125,7 @@ def test_next_to_another_site_goes_to_the_deck(page: Page, verified_user, next_u
     user = verified_user("Acct Open")
     page.goto("/login?next=" + next_url)
     page.get_by_label("School email").fill(user.email)
+    page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill(user.password)
     page.get_by_role("button", name="Sign in", exact=True).click()
     expect(page).to_have_url(re.compile(r"/feed"))
@@ -157,7 +164,7 @@ def test_keyboard_only_sign_in(page: Page, verified_user):
     page.goto("/login")
     page.get_by_label("School email").focus()
     page.keyboard.type(user.email)
-    page.keyboard.press("Tab")
+    page.keyboard.press("Enter")
     expect(page.get_by_label("Password")).to_be_focused()
     page.keyboard.type(user.password)
     page.keyboard.press("Enter")
@@ -166,13 +173,15 @@ def test_keyboard_only_sign_in(page: Page, verified_user):
 
 def test_keyboard_tab_order_reaches_every_control(page: Page):
     page.goto("/login")
-    page.get_by_label("School email").focus()
+    page.get_by_label("School email").fill(f"acct-{uuid.uuid4().hex[:6]}@latech.edu")
     page.keyboard.press("Tab")
+    expect(page.get_by_role("button", name="Continue with email")).to_be_focused()
+    page.keyboard.press("Enter")
     expect(page.get_by_label("Password")).to_be_focused()
     for role, name in (
         ("link", "Forgot password?"),
         ("button", "Sign in"),
-        ("link", "Create account"),
+        ("button", "Create account"),
     ):
         page.keyboard.press("Tab")
         expect(page.get_by_role(role, name=name, exact=True)).to_be_focused()
@@ -183,7 +192,8 @@ def test_keyboard_wrong_password_keeps_focus_in_the_password_field(page: Page, v
     page.goto("/login")
     page.get_by_label("School email").focus()
     page.keyboard.type(user.email)
-    page.keyboard.press("Tab")
+    page.keyboard.press("Enter")
+    expect(page.get_by_label("Password")).to_be_focused()
     page.keyboard.type("wrong-wrong-123")
     page.keyboard.press("Enter")
     expect(alerts(page)).to_have_text(WRONG)

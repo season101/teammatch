@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent } from "react";
 import { allauthPost, type AllauthError } from "./allauth";
 import { StatusIcon } from "./auth-layout";
 import { buttonClasses } from "@/components/ui/button";
@@ -15,9 +15,16 @@ function errorText(error: AllauthError) {
   return error.message;
 }
 
-// The page passes the Google button as `google`, shown under the title.
-export function SignUpForm({ google }: { google?: ReactNode }) {
-  const [email, setEmail] = useState("");
+// Log in or sign up passes the email from its first step, and swaps this form
+// for sign-in in place so the email isn't typed twice.
+export function SignUpForm({
+  initialEmail = "",
+  onSwitch,
+}: {
+  initialEmail?: string;
+  onSwitch?: (email: string) => void;
+}) {
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errors, setErrors] = useState<AllauthError[]>([]);
@@ -83,7 +90,6 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
           Use your @latech.edu or @email.latech.edu email.
         </p>
       </div>
-      {google}
 
       <div className="flex flex-col gap-1">
         <label htmlFor="email" className="text-sm font-medium">
@@ -110,6 +116,8 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
           required
           minLength={8}
           autoComplete="new-password"
+          // The email is already filled in, so the password is what's left.
+          autoFocus={Boolean(initialEmail)}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           aria-describedby="password-hint"
@@ -146,9 +154,19 @@ export function SignUpForm({ google }: { google?: ReactNode }) {
 
       <p className="text-center text-sm text-muted">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-primary underline">
-          Sign in
-        </Link>
+        {onSwitch ? (
+          <button
+            type="button"
+            onClick={() => onSwitch(email)}
+            className="font-medium text-primary underline"
+          >
+            Sign in
+          </button>
+        ) : (
+          <Link href="/login" className="font-medium text-primary underline">
+            Sign in
+          </Link>
+        )}
       </p>
     </form>
   );
