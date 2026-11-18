@@ -215,10 +215,10 @@ sequenceDiagram
     participant S as SeaweedFS (internal)
 
     U->>W: pick image
-    W->>W: check type jpeg/png/webp and size under 2 MB
+    W->>W: check type jpeg/png/webp and size under 5 MB
     W->>A: POST /api/v1/me/avatar/ multipart file
     A->>A: check size, then type from the bytes (Pillow), redraw at 512px, build key avatars/{user_id}/{uuid}.{ext}
-    alt not an image or over 2 MB
+    alt not an image or over 5 MB
         A-->>W: 400 invalid_avatar
     else ok
         A->>S: save via django-storages (S3 API)

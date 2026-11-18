@@ -252,7 +252,7 @@ paths:
   /api/v1/me/avatar/:
     post:
       operationId: me_avatar_create
-      description: 'JPEG, PNG or WebP, 2 MB or less. Anything else: 400 invalid_avatar,
+      description: 'JPEG, PNG or WebP, 5 MB or less. Anything else: 400 invalid_avatar,
         old one kept.'
       tags:
       - me
@@ -1065,7 +1065,7 @@ components:
         avatar:
           type: string
           format: binary
-          description: JPEG, PNG or WebP, 2 MB or less.
+          description: JPEG, PNG or WebP, 5 MB or less.
       required:
       - avatar
     BlankEnum:

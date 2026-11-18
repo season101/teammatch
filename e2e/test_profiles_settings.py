@@ -297,9 +297,9 @@ def test_avatar_too_big_is_refused(page, signed, tmp_path):
     signed()
     edit(page)
     big = tmp_path / "big.png"
-    big.write_bytes(b"\x89PNG" + b"0" * (2 * 1024 * 1024 + 10))
+    big.write_bytes(b"\x89PNG" + b"0" * (5 * 1024 * 1024 + 10))
     page.get_by_label("Photo file").set_input_files(str(big))
-    expect(page.get_by_role("alert").filter(has_text="2 MB or less")).to_be_visible()
+    expect(page.get_by_role("alert").filter(has_text="5 MB or less")).to_be_visible()
     expect(page.get_by_role("button", name="Upload a photo")).to_be_visible()
 
 

@@ -109,7 +109,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class AvatarUploadSerializer(serializers.Serializer):
-    avatar = serializers.FileField(help_text="JPEG, PNG or WebP, 2 MB or less.")
+    avatar = serializers.FileField(help_text="JPEG, PNG or WebP, 5 MB or less.")
 
 
 class ResumeUploadSerializer(serializers.Serializer):

@@ -109,8 +109,8 @@ export function useSaveProfile() {
 
 // The server's own rule (F1-07); the picker checks it first so nothing big is sent.
 export const AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
-export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
-export const AVATAR_HINT = "Choose a JPEG, PNG or WebP image of 2 MB or less.";
+export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+export const AVATAR_HINT = "Choose a JPEG, PNG or WebP image of 5 MB or less.";
 
 // A file uploads a new photo; null removes it. Either way the API answers with my profile.
 export function useSetAvatar() {

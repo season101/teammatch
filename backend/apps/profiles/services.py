@@ -12,7 +12,7 @@ from apps.matching.models import Application
 
 from .models import Profile
 
-AVATAR_MAX_BYTES = 2 * 1024 * 1024
+AVATAR_MAX_BYTES = 5 * 1024 * 1024
 # Pillow's format name -> the extension we store it under.
 AVATAR_FORMATS = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
 # Bigger than any phone photo; stops a tiny file that decodes to gigabytes.
@@ -26,7 +26,7 @@ RESUME_MAX_BYTES = 5 * 1024 * 1024
 
 class InvalidAvatar(APIException):
     status_code = 400
-    default_detail = "Choose a JPEG, PNG or WebP image of 2 MB or less."
+    default_detail = "Choose a JPEG, PNG or WebP image of 5 MB or less."
     default_code = "invalid_avatar"
 
 

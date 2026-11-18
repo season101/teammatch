@@ -72,7 +72,7 @@ test("picking a photo uploads it as multipart and updates my profile", async () 
 
 test.each([
   ["a GIF", new File(["gif"], "a.gif", { type: "image/gif" })],
-  ["over 2 MB", new File([new Uint8Array(2 * 1024 * 1024 + 1)], "big.png", { type: "image/png" })],
+  ["over 5 MB", new File([new Uint8Array(5 * 1024 * 1024 + 1)], "big.png", { type: "image/png" })],
 ])("%s is refused before anything is sent", (_, file) => {
   const requests = mockApi();
   renderField(PROFILE);
@@ -80,7 +80,7 @@ test.each([
   pick(file);
 
   expect(screen.getByRole("alert")).toHaveTextContent(
-    "Choose a JPEG, PNG or WebP image of 2 MB or less.",
+    "Choose a JPEG, PNG or WebP image of 5 MB or less.",
   );
   expect(requests).toHaveLength(0);
 });
@@ -92,7 +92,7 @@ test("the server's invalid_avatar shows the same hint", async () => {
   pick(new File(["not really"], "fake.png", { type: "image/png" }));
 
   expect(await screen.findByRole("alert")).toHaveTextContent(
-    "Choose a JPEG, PNG or WebP image of 2 MB or less.",
+    "Choose a JPEG, PNG or WebP image of 5 MB or less.",
   );
 });
 

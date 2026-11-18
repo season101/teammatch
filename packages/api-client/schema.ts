@@ -203,7 +203,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description JPEG, PNG or WebP, 2 MB or less. Anything else: 400 invalid_avatar, old one kept. */
+        /** @description JPEG, PNG or WebP, 5 MB or less. Anything else: 400 invalid_avatar, old one kept. */
         post: operations["me_avatar_create"];
         /** @description Remove my avatar and delete its file. */
         delete: operations["me_avatar_destroy"];
@@ -648,7 +648,7 @@ export interface components {
         AvatarUploadRequest: {
             /**
              * Format: binary
-             * @description JPEG, PNG or WebP, 2 MB or less.
+             * @description JPEG, PNG or WebP, 5 MB or less.
              */
             avatar: string;
         };
