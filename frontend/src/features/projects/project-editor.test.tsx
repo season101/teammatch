@@ -210,7 +210,7 @@ test("deletes a role after the owner confirms", async () => {
   renderEditor();
   fireEvent.click(await screen.findByRole("button", { name: "Delete role" }));
   const dialog = screen.getByRole("dialog");
-  expect(dialog).toHaveAccessibleName("Delete this role?");
+  expect(dialog).toHaveAccessibleName(/^Delete .+\?$/);
   fireEvent.click(within(dialog).getByRole("button", { name: "Delete role" }));
 
   await vi.waitFor(() =>

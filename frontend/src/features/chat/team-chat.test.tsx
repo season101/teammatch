@@ -134,7 +134,7 @@ test("shows the header, the formed line and history oldest first", async () => {
   expect(screen.getByRole("heading", { name: "Bulldog Bites" })).toBeInTheDocument();
   expect(screen.getByText("4 members")).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Back to Teams" })).toHaveAttribute("href", "/teams");
-  expect(screen.getByText("Team formed Oct 24. Say hi!")).toBeInTheDocument();
+  expect(screen.getByText("Team formed Oct 24. Say hi.")).toBeInTheDocument();
   expect(await screen.findByText("Works for me.")).toBeInTheDocument();
   expect(bubbles()).toEqual(["MarcoWelcome, all. Kickoff Thursday?", "AvaWorks for me."]);
   expect(new URL(fetchMock.mock.calls[0][0].url).pathname).toBe("/api/v1/teams/3/messages/");

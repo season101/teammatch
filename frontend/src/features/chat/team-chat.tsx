@@ -149,7 +149,7 @@ function ChatRoom({ team, userId }: { team: Room; userId: number }) {
         className="flex flex-1 flex-col gap-3 overflow-y-auto p-4"
       >
         <p className="mt-auto text-center text-xs text-muted">
-          Team formed {formed}. Say hi!
+          Team formed {formed}. Say hi.
         </p>
         {history.isError && (
           <p role="alert" className="text-center text-sm text-pass">

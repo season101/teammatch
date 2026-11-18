@@ -5,6 +5,7 @@ import { useUpdateProject } from "./queries";
 import { buttonClasses } from "@/components/ui/button";
 import {
   errorClass,
+  helperClass,
   inputClass,
   noticeClass,
 } from "@/components/ui/form-classes";
@@ -95,6 +96,9 @@ export function ProjectDetailsForm({
             {titleError}
           </p>
         )}
+        <p className={helperClass}>
+          {title.length}/{TITLE_MAX} characters
+        </p>
       </div>
       <div>
         <label htmlFor="edit-pitch" className="font-medium">
@@ -118,6 +122,9 @@ export function ProjectDetailsForm({
             {pitchError}
           </p>
         )}
+        <p className={helperClass}>
+          {pitch.length}/{PITCH_MAX} characters
+        </p>
       </div>
       <RepoDetailsFields
         idPrefix="edit"

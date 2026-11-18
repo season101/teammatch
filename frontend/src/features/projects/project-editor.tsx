@@ -292,7 +292,8 @@ export function ProjectEditor({
       <Modal
         open={deleting !== null}
         onClose={() => setDeleting(null)}
-        title="Delete this role?"
+        // Names the role, so the right one is being deleted.
+        title={`Delete ${data.roles.find((role) => role.id === deleting)?.title ?? "this role"}?`}
         ctaLabel="Keep role"
         onCta={() => setDeleting(null)}
         escapeLabel="Delete role"

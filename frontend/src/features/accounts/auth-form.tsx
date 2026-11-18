@@ -42,11 +42,11 @@ export function AuthForm({
   }
 
   return (
-    <div className="flex flex-col gap-6 text-center">
+    <div className="flex flex-col gap-6">
       {googleError && (
         <p
           role="alert"
-          className="rounded-card border border-pass bg-surface-2 p-3 text-left text-sm text-text"
+          className="rounded-card border border-pass bg-surface-2 p-3 text-sm text-text"
         >
           {googleErrorText(googleError)}
         </p>
@@ -62,7 +62,7 @@ export function AuthForm({
       </div>
       <GoogleButton next={next} />
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3 text-left">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div>
           <label htmlFor="email" className="text-sm font-medium">
             School email

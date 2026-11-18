@@ -197,8 +197,15 @@ export function SignInForm({
             setPassword(e.target.value);
             setRefused(false);
           }}
+          aria-describedby={refused ? "password-error" : undefined}
           className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass"
         />
+        {/* A refused password is about this field, so it says so here, with what to do. */}
+        {refused && error && (
+          <p id="password-error" role="alert" className="text-sm text-pass">
+            {error} <span>Try again or reset your password.</span>
+          </p>
+        )}
         <Link
           href="/reset-password"
           className="inline-flex min-h-11 items-center self-end text-sm font-medium text-primary underline"
@@ -226,7 +233,7 @@ export function SignInForm({
         </div>
       )}
 
-      {error && (
+      {error && !refused && (
         <p role="alert" className="text-sm text-pass">
           {error}
         </p>
