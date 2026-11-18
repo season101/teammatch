@@ -336,3 +336,18 @@ test("no setup card before the profile loads", () => {
   expect(screen.queryByRole("region", { name: "Finish setup" })).toBeNull();
   expect(screen.getAllByRole("link", { name: "Discover" })).toHaveLength(3);
 });
+
+test("on /profile the side pane's Preview | Edit tabs drive the page's panels", async () => {
+  const { ProfileTabs } = await import("@/features/profiles/profile-tabs");
+  renderShell("/profile", { children: <ProfileTabs /> });
+  // The pane's row comes first; the page keeps its own for phones and tablets.
+  const [pane, page] = screen.getAllByRole("tablist", { name: "Profile" });
+  expect(page).toHaveClass("lg:hidden");
+  expect(within(page).getByRole("tab", { name: "Preview" })).toHaveAttribute("aria-selected", "true");
+
+  fireEvent.click(within(pane).getByRole("tab", { name: "Edit" }));
+
+  expect(within(page).getByRole("tab", { name: "Edit" })).toHaveAttribute("aria-selected", "true");
+  expect(sessionStorage.getItem("tm-tab:profile")).toBe("edit");
+  expect(screen.queryByRole("heading", { name: "Settings" })).toBeNull();
+});

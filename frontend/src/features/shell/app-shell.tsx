@@ -13,6 +13,7 @@ import { ApplicationsPanel } from "@/features/applications/my-applications";
 import { MyProjectsList } from "@/features/projects/my-projects-list";
 import { Logo } from "@/features/landing/logo";
 import { FinishSetup } from "@/features/onboarding/finish-setup";
+import { setProfileTab, useProfileTab } from "@/features/profiles/profile-tab";
 import { useMyProjects, type MyProject } from "@/features/review/queries";
 import { TeamCelebration } from "@/features/teams/its-a-team";
 import { useMyTeam, type MyTeam } from "@/features/teams/queries";
@@ -273,7 +274,34 @@ function SidebarMode({
   owned: MyProject[];
   team?: MyTeam | null;
 }) {
-  if (isIn(pathname, ["/settings", "/profile"])) {
+  const profileTab = useProfileTab();
+  // The profile's Preview | Edit: the tabs are here, their panels in the page.
+  if (pathname === "/profile") {
+    const hint = (text: string) => <p className="px-3 text-sm text-muted">{text}</p>;
+    return (
+      <div className="px-4">
+        <Tabs
+          label="Profile"
+          selected={profileTab}
+          onSelect={setProfileTab}
+          tabs={[
+            {
+              id: "preview",
+              label: "Preview",
+              panel: hint("How your card looks to project owners."),
+            },
+            {
+              id: "edit",
+              label: "Edit",
+              panel: hint("Update your details, photo, links and resume."),
+            },
+          ]}
+        />
+      </div>
+    );
+  }
+
+  if (isIn(pathname, ["/settings"])) {
     return (
       <div className="flex flex-col gap-2 p-4">
         <h2 className="px-3 text-lg font-bold">Settings</h2>

@@ -10,21 +10,32 @@ export function Tabs({
   label,
   defaultTab = tabs[0]?.id,
   remember,
+  selected: controlled,
+  onSelect,
+  listClassName = "",
 }: {
   tabs: Tab[];
   label: string;
   defaultTab?: string;
+  // Set both when something outside owns the choice (the profile's tabs on desktop sit
+  // in the side pane, its panels in the page).
+  selected?: string;
+  onSelect?: (id: string) => void;
+  // Extra classes for the tab row, e.g. to hide it where another row drives the panels.
+  listClassName?: string;
   // A key to reopen the last chosen tab for the rest of the browser tab's session, e.g.
   // on Back from the resume viewer (F1-17). Read on mount, so not for server-rendered tabs.
   remember?: string;
 }) {
   const key = `tm-tab:${remember}`;
-  const [selected, setSelectedState] = useState(() => {
+  const [own, setSelectedState] = useState(() => {
     const last = remember && storage(() => sessionStorage.getItem(key));
     return tabs.find((tab) => tab.id === last)?.id ?? defaultTab;
   });
+  const selected = controlled ?? own;
   function setSelected(id: string) {
     setSelectedState(id);
+    onSelect?.(id);
     if (remember) storage(() => sessionStorage.setItem(key, id));
   }
   const base = useId();
@@ -53,7 +64,7 @@ export function Tabs({
       <div
         role="tablist"
         aria-label={label}
-        className="flex overflow-x-auto shadow-[inset_0_-1px_0_var(--color-border)]"
+        className={`flex overflow-x-auto shadow-[inset_0_-1px_0_var(--color-border)] ${listClassName}`}
       >
         {tabs.map((tab, i) => {
           const active = tab.id === selected;
