@@ -105,6 +105,8 @@ test("a profile without a photo or links stops at 80%", async () => {
   const meter = await screen.findByRole("meter", { name: "Profile strength" });
   expect(meter).toHaveAttribute("aria-valuenow", "80");
   expect(screen.getByText("80%")).toBeInTheDocument();
+  // It names the first thing still missing.
+  expect(screen.getByText(/^Next: add /)).toBeInTheDocument();
 });
 
 // F1-17: Back from the resume viewer remounts the page, maybe long after the query cache

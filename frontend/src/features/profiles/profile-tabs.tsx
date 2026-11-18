@@ -24,6 +24,19 @@ export function profileStrength(profile: MyProfile) {
   );
 }
 
+// The first thing still missing, biggest gain first.
+export function strengthHint(profile: MyProfile) {
+  const missing = [
+    [profile.skills.length > 0, "your skills"],
+    [Boolean(profile.major), "your major"],
+    [Boolean(profile.bio), "a bio"],
+    [Boolean(profile.has_resume), "your resume"],
+    [Boolean(profile.github_url), "your GitHub link"],
+    [Boolean(profile.linkedin_url), "your LinkedIn link"],
+  ].find(([have]) => !have);
+  return missing ? `Next: add ${missing[1]}.` : undefined;
+}
+
 // Me → Profile: the strength meter, then Preview | Edit.
 export function ProfileTabs() {
   const profile = useMyProfile();
@@ -41,7 +54,7 @@ export function ProfileTabs() {
   }
   return (
     <>
-      <ProfileStrength value={profileStrength(profile.data)} />
+      <ProfileStrength value={profileStrength(profile.data)} hint={strengthHint(profile.data)} />
       <Tabs
         label="Profile"
         selected={tab}

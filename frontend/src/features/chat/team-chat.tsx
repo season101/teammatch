@@ -255,7 +255,8 @@ function ChatRoom({ team, userId }: { team: Room; userId: number }) {
           type="submit"
           aria-label="Send"
           disabled={!open}
-          className="grid size-11 shrink-0 place-items-center rounded-full bg-cta text-on-cta transition duration-fast hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          // Quiet until there's something to send.
+          className={`grid size-11 shrink-0 place-items-center rounded-full bg-cta text-on-cta transition duration-fast hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 ${draft.trim() ? "" : "opacity-50"}`}
         >
           <SendIcon />
         </button>

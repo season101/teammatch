@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { Chip } from "@/components/ui/chip";
 import { buttonClasses } from "@/components/ui/button";
+import { MatchBadge } from "@/components/ui/match-badge";
 import { Avatar } from "@/features/profiles/avatar";
 import { ProfileLinks } from "@/features/profiles/profile-links";
 import type { Applicant } from "./queries";
@@ -54,7 +55,8 @@ export function ApplicantCard({
 
       <div className="flex flex-col gap-4 p-5">
         {requiredSkillIds.length > 0 && (
-          <p className="text-sm text-muted">
+          <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
+            <MatchBadge percent={(matched.length / requiredSkillIds.length) * 100} />
             Has {matched.length} of {requiredSkillIds.length} required{" "}
             {requiredSkillIds.length === 1 ? "skill" : "skills"}
           </p>

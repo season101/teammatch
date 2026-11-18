@@ -80,7 +80,8 @@ export function ItsATeam({ team, onClose }: { team: MyTeam; onClose: () => void 
         <p className="max-w-sm">
           Every role is filled. You&apos;re a team until {termEnd(team)}.
         </p>
-        <ul aria-label="Members" className="flex flex-wrap justify-center gap-3">
+        {/* Three across on a phone, so six members make two even rows. */}
+        <ul aria-label="Members" className="grid grid-cols-3 justify-items-center gap-3 sm:flex sm:flex-wrap sm:justify-center">
           {team.members.map((member, index) => (
             <motion.li
               key={index}
@@ -95,7 +96,7 @@ export function ItsATeam({ team, onClose }: { team: MyTeam; onClose: () => void 
                 url={member.avatar_url}
                 className="size-14 bg-cta text-lg text-on-cta"
               />
-              <span className="text-sm font-semibold">{member.display_name || "Unnamed"}</span>
+              <span className="line-clamp-2 min-h-10 text-center text-sm font-semibold">{member.display_name || "Unnamed"}</span>
               <span className="text-xs">{member.role}</span>
             </motion.li>
           ))}

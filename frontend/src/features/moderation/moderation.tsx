@@ -45,6 +45,10 @@ function Problem({ error }: { error: Error | null }) {
 
 // The admin's page: add a term, choose the moderators, put them on projects.
 // The API refuses everyone else (403), so this only decides what to draw.
+// "2026-08-24" → "Aug 24". Noon, so the date doesn't slip a day in any US time zone.
+const day = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
 export function Moderation() {
   const role = useMyRole();
   const admin = role === "admin";
@@ -79,7 +83,7 @@ export function Moderation() {
             <li key={term.id} className={rowClass}>
               <span className="font-semibold">{term.name}</span>
               <span className="text-sm text-muted">
-                {term.start_date} to {term.end_date}
+                {day(term.start_date)} – {day(term.end_date)}, {term.end_date.slice(0, 4)}
               </span>
             </li>
           ))}

@@ -122,8 +122,18 @@ export function ProjectEditor({
                 {data.title}
               </h1>
             </div>
-            <p className="text-sm text-muted">
-              {data.status} · by {data.owner_name || "an unnamed owner"}
+            {/* Status as a chip, and how full the team is in words (principle 2). */}
+            <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
+              <Chip variant={data.status === "open" ? "selected" : "default"}>
+                <span className="capitalize">{data.status}</span>
+              </Chip>
+              {data.roles.length > 0 && (
+                <span>
+                  {data.roles.filter((role) => role.status === "filled").length} of{" "}
+                  {data.roles.length} roles filled ·
+                </span>
+              )}
+              <span>by {data.owner_name || "an unnamed owner"}</span>
             </p>
             {data.moderators.length > 0 && (
               <p className="text-sm text-muted">
@@ -141,9 +151,10 @@ export function ProjectEditor({
                 >
                   Edit details
                 </button>
+                {/* Destructive, so red text and set apart from Edit (README rule 3). */}
                 <button
                   type="button"
-                  className={buttonClass}
+                  className={`${buttonClasses("danger", "sm")} ml-auto`}
                   onClick={() => {
                     closeProject.reset();
                     setClosing(true);
@@ -241,7 +252,7 @@ export function ProjectEditor({
                       </button>
                       <button
                         type="button"
-                        className={buttonClass}
+                        className={`${buttonClasses("danger", "sm")} ml-auto`}
                         onClick={() => {
                           deleteRole.reset();
                           setDeleting(role.id);

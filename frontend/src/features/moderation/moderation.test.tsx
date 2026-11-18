@@ -61,7 +61,7 @@ test("an admin sees the terms, the moderators and each project's moderators", as
   renderPage("admin");
 
   expect(await screen.findByRole("list", { name: "Terms" })).toHaveTextContent(
-    "Fall 20262026-08-24 to 2026-12-12",
+    "Fall 2026Aug 24 – Dec 12, 2026",
   );
   const moderators = screen.getByRole("list", { name: "Moderators" });
   expect(within(moderators).getByText("Dr. Lee")).toBeInTheDocument();

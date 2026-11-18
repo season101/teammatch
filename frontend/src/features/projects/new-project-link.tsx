@@ -9,7 +9,8 @@ export function NewProjectLink() {
   const role = useMyRole();
   if (role === "moderator" || role === "admin") return null;
   return (
-    <Link href="/projects/new" className={buttonClasses("cta", "sm")}>
+    // Secondary: on a screen for finding a project, creating one isn't the main action.
+    <Link href="/projects/new" className={buttonClasses("secondary", "sm")}>
       New project
     </Link>
   );
