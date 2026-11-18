@@ -6,7 +6,6 @@ import { ProfileTabs } from "@/features/profiles/profile-tabs";
 export default function ProfilePage() {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-col gap-6 px-4 py-12">
-      <title>My profile · TeamMatch</title>
       <RequireSignIn>
         {(user) => (
           <>

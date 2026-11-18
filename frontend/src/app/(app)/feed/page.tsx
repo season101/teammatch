@@ -13,7 +13,6 @@ export default function FeedPage() {
     <div className="flex w-full flex-col overflow-x-clip">
       {/* Tight on phones, so Pass and Apply sit just above the tab bar (RoleCard's height). */}
       <main className="mx-auto flex w-full max-w-xl flex-col gap-6 px-4 py-4 sm:py-12">
-        <title>Discover · TeamMatch</title>
         <RequireSignIn>
           {() => (
             <>

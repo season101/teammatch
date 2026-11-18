@@ -11,7 +11,6 @@ export default function ResumePage() {
 
   return (
     <main className="flex flex-1 flex-col">
-      <title>Resume · TeamMatch</title>
       <RequireSignIn>
         {() =>
           Number.isInteger(profileId) ? (
