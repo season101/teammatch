@@ -151,10 +151,14 @@ class TeamMemberSerializer(serializers.ModelSerializer):
     # display name only, never the member's email
     display_name = serializers.CharField(source="user.profile.display_name", read_only=True)
     role = serializers.SerializerMethodField()
+    avatar_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Membership
-        fields = ["display_name", "role"]
+        fields = ["display_name", "role", "avatar_url"]
+
+    def get_avatar_url(self, membership) -> str | None:
+        return ProfileSerializer().get_avatar_url(membership.user.profile)
 
     def get_role(self, membership) -> str:
         return membership.role.title if membership.role else "Owner"

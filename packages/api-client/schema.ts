@@ -1000,6 +1000,7 @@ export interface components {
         TeamMember: {
             readonly display_name: string;
             readonly role: string;
+            readonly avatar_url: string | null;
         };
         TeamProject: {
             readonly id: number;
