@@ -118,7 +118,7 @@ export function ProjectEditor({
           <>
             <div className="flex flex-col gap-6 rounded-card bg-linear-to-br from-cover-indigo to-[color-mix(in_oklab,var(--color-cover-indigo)_62%,black)] p-6 text-white">
               {segments.length > 0 && <TeamStrip segments={segments} />}
-              <h1 className="text-3xl font-bold tracking-tight">
+              <h1 className="font-display text-3xl font-extrabold">
                 {data.title}
               </h1>
             </div>

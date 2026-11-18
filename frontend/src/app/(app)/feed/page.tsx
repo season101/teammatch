@@ -17,7 +17,7 @@ export default function FeedPage() {
           {() => (
             <>
               <div className="flex items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold">Open roles</h1>
+                <h1 className="font-display text-3xl font-extrabold">Open roles</h1>
                 {/* Phone and tablet; the desktop sidebar lists applications instead. */}
                 <Link
                   href="/applications"

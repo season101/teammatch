@@ -228,7 +228,11 @@ function OpenRoleQueue({ role, projectId }: QueueProps) {
   }
 
   return (
-    <div ref={rootRef} className="flex flex-col gap-4 pt-4">
+    <div
+      ref={rootRef}
+      aria-keyshortcuts={shortcuts && current ? "ArrowLeft ArrowRight" : undefined}
+      className="flex flex-col gap-4 pt-4"
+    >
       {decide.variables && !decide.isError && (
         <p role="status" className="text-sm text-success">
           {decide.variables.like

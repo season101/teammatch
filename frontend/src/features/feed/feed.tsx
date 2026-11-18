@@ -314,7 +314,7 @@ export function Feed() {
         ref={stack}
         role="group"
         aria-label="Deck of open roles"
-        aria-keyshortcuts={shortcuts ? "ArrowLeft ArrowRight ArrowUp Z" : undefined}
+        aria-keyshortcuts={shortcuts && top ? "ArrowLeft ArrowRight ArrowUp Z" : undefined}
         tabIndex={top ? 0 : -1}
         className="isolate grid grid-cols-1 rounded-card"
       >

@@ -314,6 +314,11 @@ function SidebarMode({
   useEffect(() => {
     if (!inProjects) setProjectsTab("browse");
   }, [inProjects]);
+  // My own project's page belongs under Mine.
+  const onMine = mine.some((project) => isIn(pathname, [`/projects/${project.id}`]));
+  useEffect(() => {
+    if (onMine) setProjectsTab("mine");
+  }, [onMine]);
   // The profile's Preview | Edit: the tabs are here, their panels in the page.
   if (pathname === "/profile") {
     const hint = (text: string) => <p className="px-3 text-sm text-muted">{text}</p>;
@@ -344,16 +349,17 @@ function SidebarMode({
   if (isIn(pathname, ["/settings"])) {
     return (
       <div className="flex flex-col gap-2 p-4">
-        <h2 className="px-3 text-lg font-bold">Settings</h2>
-        <Link
-          href="/settings#appearance"
-          className={`${rowLink} font-semibold`}
-        >
-          Appearance
-        </Link>
-        <Link href="/settings#keyboard" className={`${rowLink} font-semibold`}>
-          Keyboard shortcuts
-        </Link>
+        {/* One row per section of the page, in its order. The page has the title. */}
+        {[
+          ["sign-in", "Ways to sign in"],
+          ["appearance", "Appearance"],
+          ["keyboard", "Keyboard shortcuts"],
+          ["install", "App"],
+        ].map(([id, label]) => (
+          <Link key={id} href={`/settings#${id}`} className={`${rowLink} font-semibold`}>
+            {label}
+          </Link>
+        ))}
         <div className="px-3 pt-2">
           <SignOutButton />
         </div>
@@ -441,7 +447,7 @@ function SidebarMode({
     );
   }
 
-  const tab = pathname === "/teams" ? "teams" : "applications";
+  const tab = isIn(pathname, ["/teams"]) ? "teams" : "applications";
   return (
     <div className="px-4">
       <Tabs

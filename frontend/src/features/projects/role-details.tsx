@@ -220,7 +220,7 @@ export function RoleDetails({
         <h1
           ref={heading}
           tabIndex={-1}
-          className="text-3xl font-bold tracking-tight focus:outline-none"
+          className="font-display text-3xl font-extrabold focus:outline-none"
         >
           {role.title}
         </h1>

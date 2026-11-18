@@ -68,7 +68,7 @@ export function ProjectDetailsForm({
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Edit project</h1>
+      <h1 className="font-display text-3xl font-extrabold">Edit project</h1>
       {otherFailure && (
         <p role="alert" className={noticeClass}>
           {otherFailure}
