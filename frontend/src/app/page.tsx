@@ -7,10 +7,9 @@ import { RoleCardPreview } from "@/features/landing/role-card-preview";
 import { Splash } from "@/features/landing/splash";
 
 const steps = [
-  ["Post a project", "List the roles it needs and the skills for each."],
-  ["Swipe on roles", "Apply to roles that fit your skills, best match first."],
-  ["Like per role", "Owners like or pass on candidates, one role at a time."],
-  ["Team locks", "When every role is filled, the team locks and team chat opens."],
+  ["Apply to roles", "Ranked by how many required skills you have."],
+  ["Get an offer", "Hold several, then commit to one."],
+  ["Lock the team", "Every role filled, chat opens."],
 ];
 
 export default function Home() {
@@ -37,46 +36,45 @@ export default function Home() {
         <div className="flex flex-col items-start gap-6">
           <Chip pill>For LA Tech students</Chip>
           <h1 className="font-display text-hero font-black text-balance">
-            Swipe on roles, not <em>people</em>.
+            Build the team, <em>one role</em> at a time.
           </h1>
           <p className="max-w-prose text-lg text-muted">
-            Post a project with the roles it needs, or swipe on roles that need
-            your skills. When every role has a yes, your team locks and team
-            chat opens.
+            Swipe on open roles that fit your skills. Owners like you back.
+            When every seat is filled, the team locks and chat opens.
           </p>
-          <Link
-            href="/login"
-            className={`${buttonClasses("cta", "lg")} w-full sm:w-auto`}
-          >
-            Get started
-          </Link>
-          <p className="text-sm text-muted">
-            Use your @latech.edu or @email.latech.edu email.
-          </p>
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+            <Link href="/login" className={buttonClasses("cta", "lg")}>
+              Get started
+            </Link>
+            <p className="text-sm text-muted">
+              Use your @latech.edu or @email.latech.edu email.
+            </p>
+          </div>
+          <section aria-labelledby="how-heading" className="w-full max-w-2xl">
+            <h2 id="how-heading" className="sr-only">
+              How it works
+            </h2>
+            <ol className="grid gap-3 sm:grid-cols-3">
+              {steps.map(([title, body], i) => (
+                <li
+                  key={title}
+                  className="flex flex-col gap-2 rounded-row bg-surface p-4"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="text-xs font-semibold text-muted"
+                  >
+                    {i + 1}
+                  </span>
+                  <strong>{title}</strong>
+                  <span className="text-xs text-muted">{body}</span>
+                </li>
+              ))}
+            </ol>
+          </section>
         </div>
         <RoleCardPreview />
       </main>
-
-      <section aria-labelledby="how-heading" className="border-t border-border">
-        <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-          <h2 id="how-heading" className="sr-only">
-            How it works
-          </h2>
-          <ol className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {steps.map(([title, body], i) => (
-              <li key={title} className="flex gap-3">
-                <span aria-hidden="true" className="font-mono text-lg text-muted">
-                  {i + 1}
-                </span>
-                <p>
-                  <span className="font-semibold">{title}.</span>{" "}
-                  <span className="text-muted">{body}</span>
-                </p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
     </>
   );
 }
