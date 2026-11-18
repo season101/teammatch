@@ -46,7 +46,9 @@ export function CoachMarks() {
       ref={dialogRef}
       aria-labelledby={titleId}
       onClose={close}
-      className="sheet mx-auto mt-auto w-full max-w-md rounded-t-sheet border border-border bg-surface p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-text shadow-modal backdrop:bg-scrim open:flex open:flex-col open:gap-4"
+      // A bottom sheet on phones. From tablet up it's centred, clear of Pass and Apply, and on
+      // desktop over the stage rather than the window (the two side columns are 33rem).
+      className="sheet mx-auto mt-auto w-full max-w-md rounded-t-sheet sm:mb-auto sm:rounded-card lg:mr-0 lg:ml-[calc(50vw+2.5rem)] border border-border bg-surface p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-text shadow-modal backdrop:bg-scrim open:flex open:flex-col open:gap-4"
     >
       <StepProgress step={4} />
       <h2 id={titleId} className="font-display text-2xl font-extrabold">

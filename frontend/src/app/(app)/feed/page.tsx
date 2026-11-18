@@ -11,8 +11,9 @@ export default function FeedPage() {
   return (
     // Clips a dragged or flying card at the stage edge rather than the column edge.
     <div className="flex w-full flex-col overflow-x-clip">
-      {/* Tight on phones, so Pass and Apply sit just above the tab bar (RoleCard's height). */}
-      <main className="mx-auto flex w-full max-w-xl flex-col gap-6 px-4 py-4 sm:py-12">
+      {/* Tight on phones, so Pass and Apply sit just above the tab bar (RoleCard's height).
+          The card is 420px at most on tablet and 380px on desktop (layout.md). */}
+      <main className="mx-auto flex w-full flex-col gap-6 px-4 py-4 sm:max-w-[28rem] sm:py-12 lg:max-w-[25.75rem]">
         <RequireSignIn>
           {() => (
             <>

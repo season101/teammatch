@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { ActionButton } from "@/components/ui/action-button";
 import { buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
+import { MatchBadge } from "@/components/ui/match-badge";
 import { noticeClass } from "@/components/ui/form-classes";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { StatusChip } from "@/features/applications/my-applications";
@@ -203,6 +204,9 @@ export function RoleDetails({
     );
   }
 
+  const have = role.required_skills.filter((id) => mySkillIds.includes(id)).length;
+  const seatRow = "flex min-h-11 items-center justify-between gap-3 py-1.5";
+
   return (
     <div className="flex flex-col gap-6">
       <Link
@@ -227,6 +231,13 @@ export function RoleDetails({
         <p className="text-sm text-muted">
           {data.title} · by {data.owner_name || "a classmate"}
         </p>
+        {/* The same match the card showed, with its basis (match-badge.md). */}
+        {role.required_skills.length > 0 && mySkillIds.length > 0 && (
+          <p className="flex items-center gap-2 pt-1 text-sm text-muted">
+            <MatchBadge percent={(have / role.required_skills.length) * 100} />
+            {have} of {role.required_skills.length} skills
+          </p>
+        )}
       </header>
 
       {role.required_skills.length > 0 && (
@@ -256,13 +267,24 @@ export function RoleDetails({
       <RepoAndDetails project={data} />
 
       <Section title="Team so far">
-        <ul className="flex flex-col gap-1 text-text">
-          <li>{data.owner_name || "The owner"}, owner</li>
+        <ul className="flex flex-col divide-y divide-border text-text">
+          <li className={seatRow}>
+            <span>{data.owner_name || "The owner"}</span>
+            <span className="text-sm text-muted">Owner</span>
+          </li>
           {others.map((each) => (
-            <li key={each.id}>
-              {each.status === "filled"
-                ? `${each.filled_by_name || "A classmate"}, ${each.title}`
-                : `${each.title}, open`}
+            <li key={each.id} className={seatRow}>
+              <span>
+                {each.title}
+                {each.status === "filled" && (
+                  <span className="text-muted"> · {each.filled_by_name || "A classmate"}</span>
+                )}
+              </span>
+              {each.status === "filled" ? (
+                <span className="text-sm font-medium text-apply-text">Filled</span>
+              ) : (
+                <span className="text-sm text-muted">Open</span>
+              )}
             </li>
           ))}
         </ul>

@@ -127,9 +127,10 @@ test("shows the role, the project, its code, more from the owner and the team so
   expect(code).toHaveAttribute("href", "https://github.com/olive/campus-eats");
   expect(code).toHaveAttribute("target", "_blank");
   expect(screen.getByText("We meet Tuesdays")).toBeInTheDocument();
-  expect(screen.getByText("Olive Nguyen, owner")).toBeInTheDocument();
-  expect(screen.getByText("Sam Lee, Backend developer")).toBeInTheDocument();
-  expect(screen.getByText("Tester, open")).toBeInTheDocument();
+  const team = screen.getByRole("heading", { name: "Team so far" }).parentElement!;
+  expect(team).toHaveTextContent("Olive NguyenOwner");
+  expect(team).toHaveTextContent("Backend developer · Sam LeeFilled");
+  expect(team).toHaveTextContent("TesterOpen");
   expect(await screen.findByRole("button", { name: "Apply to UI designer on Campus Eats" }))
     .toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Pass on UI designer" })).toBeInTheDocument();
@@ -159,7 +160,9 @@ test("a filled role offers no Apply or Pass, and its member is in the team", asy
   api({ details: project({ roles: [{ ...ROLE, status: "filled", filled_by_name: "Kim" }] }) });
   renderDetails();
   expect(await screen.findByText("This role is filled.")).toBeInTheDocument();
-  expect(screen.getByText("Kim, UI designer")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Team so far" }).parentElement).toHaveTextContent(
+    "UI designer · KimFilled",
+  );
   expect(screen.queryByRole("button", { name: /Apply to/ })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /Pass on/ })).not.toBeInTheDocument();
 });

@@ -87,7 +87,8 @@ test("shows the match, how full the team is and the term", () => {
 
   const card = screen.getByRole("article", { name: "Backend dev" });
   expect(within(card).getByText("50% match")).toBeInTheDocument();
-  expect(within(card).getByText("1 of 3 roles filled · Fall 2026")).toBeInTheDocument();
+  expect(within(card).getByText("1 of 3 roles filled")).toBeInTheDocument();
+  expect(within(card).getByText("Fall 2026")).toBeInTheDocument();
 });
 
 test("no match badge when the role asks for no skills", () => {
@@ -106,4 +107,12 @@ test("with no skills, a 0% match becomes a prompt to add skills", () => {
   render(<RoleCard role={{ ...makeRole(), match_percent: 0 }} mySkillIds={[]} />);
   expect(screen.getByText("Add skills to see your match")).toBeInTheDocument();
   expect(screen.queryByText(/% match/)).toBeNull();
+});
+
+test("says why you fit once you have skills", () => {
+  const role = makeRole();
+  render(<RoleCard role={role} mySkillIds={[role.required_skills[0].id]} />);
+  expect(
+    screen.getByText(`You have 1 of the ${role.required_skills.length} skills this role needs.`),
+  ).toBeInTheDocument();
 });
