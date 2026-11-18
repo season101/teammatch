@@ -174,7 +174,7 @@ export function SignInForm({
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
+          className="min-h-11 rounded-input border border-border-control bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
         />
       </div>
 
@@ -198,7 +198,7 @@ export function SignInForm({
             setRefused(false);
           }}
           aria-describedby={refused ? "password-error" : undefined}
-          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass"
+          className="min-h-11 rounded-input border border-border-control bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass"
         />
         {/* A refused password is about this field, so it says so here, with what to do. */}
         {refused && error && (
@@ -249,12 +249,12 @@ export function SignInForm({
           <button
             type="button"
             onClick={() => onSwitch(email)}
-            className="font-medium text-primary underline"
+            className="inline-flex min-h-11 items-center font-medium text-primary underline"
           >
             Sign up
           </button>
         ) : (
-          <Link href="/signup" className="font-medium text-primary underline">
+          <Link href="/signup" className="inline-flex min-h-11 items-center font-medium text-primary underline">
             Sign up
           </Link>
         )}

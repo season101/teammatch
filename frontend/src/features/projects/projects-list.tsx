@@ -78,12 +78,13 @@ export function ProjectsList() {
             key={project.id}
             // The first six are 40ms apart; the rest come in with the sixth.
             style={arrived && !search ? { animationDelay: `${Math.min(i, 5) * 40}ms` } : undefined}
-            className={`rounded-card border border-border bg-surface p-5 ${arrived && !search ? "motion-safe:animate-row-in" : ""}`}
+            className={`relative rounded-card border border-border bg-surface p-5 hover:bg-surface-2 ${arrived && !search ? "motion-safe:animate-row-in" : ""}`}
           >
             <h2 className="text-lg font-semibold">
               <Link
                 href={`/projects/${project.id}`}
-                className="hover:underline"
+                // The whole card is the link's target, not just the 23px title.
+                className="after:absolute after:inset-0 after:rounded-card"
               >
                 {project.title}
               </Link>

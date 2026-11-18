@@ -290,7 +290,7 @@ function ProjectRow({
         >
           <select
             aria-label={`Moderator for ${project.title}`}
-            className={`${inputClass} mt-0 min-h-11 flex-1 sm:min-h-9`}
+            className={`${inputClass} mt-0 min-h-11 flex-1 lg:min-h-9`}
             value={picked}
             onChange={(event) => setPicked(event.target.value)}
           >

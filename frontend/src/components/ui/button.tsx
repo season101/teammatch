@@ -10,8 +10,8 @@ const variants = {
 };
 
 const sizes = {
-  // 44px on a phone, the minimum touch target (accessibility.md); 36px from 640px up.
-  sm: "min-h-11 px-4 text-sm sm:min-h-9",
+  // 44px on phones and tablets, the minimum touch target (accessibility.md); 36px on desktop.
+  sm: "min-h-11 px-4 text-sm lg:min-h-9",
   md: "min-h-11 px-5 text-base",
   lg: "min-h-13 px-7 text-lg",
 };

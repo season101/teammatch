@@ -51,10 +51,8 @@ export function StatusChip({
     ) : (
       <Chip>Closed</Chip>
     );
-  const closed = status !== "liked" && status !== "committed" && status !== "pending";
-  return (
-    <span className={`shrink-0 whitespace-nowrap ${closed ? "opacity-60" : ""}`}>{chip}</span>
-  );
+  // No dimming: the muted chip is already the quietest that passes contrast.
+  return <span className="shrink-0 whitespace-nowrap">{chip}</span>;
 }
 
 // byCommit: withdrawn for me when I committed to another seat.

@@ -159,7 +159,7 @@ export function SignUpForm({
           onChange={(e) => setEmail(e.target.value)}
           aria-invalid={emailErrors.length > 0}
           aria-describedby="email-error"
-          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass"
+          className="min-h-11 rounded-input border border-border-control bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass"
         />
         <FieldErrors id="email-error" errors={emailErrors} />
       </div>
@@ -180,7 +180,7 @@ export function SignUpForm({
           onChange={(e) => setPassword(e.target.value)}
           aria-invalid={passwordErrors.length > 0}
           aria-describedby="password-hint password-error"
-          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass"
+          className="min-h-11 rounded-input border border-border-control bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass"
         />
         <FieldErrors id="password-error" errors={passwordErrors} />
         <p id="password-hint" className="text-xs text-muted">
@@ -198,7 +198,7 @@ export function SignUpForm({
       {emailTaken && (
         <Link
           href="/login"
-          className="text-sm font-medium text-primary underline"
+          className="inline-flex min-h-11 items-center self-start text-sm font-medium text-primary underline"
         >
           Go to sign in
         </Link>
@@ -218,12 +218,12 @@ export function SignUpForm({
           <button
             type="button"
             onClick={() => onSwitch(email)}
-            className="font-medium text-primary underline"
+            className="inline-flex min-h-11 items-center font-medium text-primary underline"
           >
             Sign in
           </button>
         ) : (
-          <Link href="/login" className="font-medium text-primary underline">
+          <Link href="/login" className="inline-flex min-h-11 items-center font-medium text-primary underline">
             Sign in
           </Link>
         )}
