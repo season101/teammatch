@@ -281,6 +281,7 @@ function SidebarMode({
     return (
       <div className="px-4">
         <Tabs
+          vertical
           label="Profile"
           selected={profileTab}
           onSelect={setProfileTab}
@@ -329,6 +330,7 @@ function SidebarMode({
     return (
       <div className="px-4">
         <Tabs
+          vertical
           key={tab}
           label="Projects"
           defaultTab={tab}
@@ -379,6 +381,7 @@ function SidebarMode({
   return (
     <div className="px-4">
       <Tabs
+        vertical
         key={tab}
         label="Your activity"
         defaultTab={tab}
