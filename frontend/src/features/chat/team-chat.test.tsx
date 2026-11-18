@@ -102,12 +102,13 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-function renderChat() {
+function renderChat(mine: unknown = team, moderated?: unknown) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity } },
   });
   client.setQueryData(["session"], { id: me.id, email: "sam@latech.edu" });
-  client.setQueryData(["my-team"], team);
+  client.setQueryData(["my-team"], mine);
+  if (moderated) client.setQueryData(["moderated-projects"], moderated);
   return render(
     <QueryClientProvider client={client}>
       <TeamChatPage />
@@ -412,4 +413,19 @@ test("the draft survives a reconnect", async () => {
   expect(socket().sent).toEqual([
     { type: "chat.send", data: { body: "half a thought", client_id: expect.any(String) } },
   ]);
+});
+
+test("a moderator opens the chat of a team they moderate", () => {
+  const { id, members, formed_at } = team;
+  renderChat(null, [{ id: 4, title: "Bulldog Bites", team: { id, members, formed_at } }]);
+
+  expect(screen.getByRole("heading", { name: "Bulldog Bites" })).toBeInTheDocument();
+  expect(socket().url).toBe(`ws://${location.host}/ws/teams/3/`);
+});
+
+test("someone on no team and moderating none is told so, with no socket", () => {
+  renderChat(null, []);
+
+  expect(screen.getByRole("alert")).toHaveTextContent("You're not on this team.");
+  expect(FakeSocket.all).toHaveLength(0);
 });

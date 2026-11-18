@@ -1,18 +1,24 @@
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.accounts.permissions import IsStudent
+from apps.core.models import Term
 from apps.core.pagination import DefaultCursorPagination
+from apps.core.serializers import TermSerializer
 from apps.profiles.permissions import RulesAccepted
 
 from . import services
-from .models import Project, Role
+from .models import Project, ProjectModerator, Role
 from .serializers import (
+    ModerationProjectSerializer,
+    ModeratorSerializer,
     MyProjectSerializer,
     ProjectDetailSerializer,
     ProjectListSerializer,
@@ -46,10 +52,11 @@ def owned_project(request, pk):
 class ProjectListCreateView(generics.ListCreateAPIView):
     """GET: open projects in the current term, newest first. ?q= searches them (F2-07).
     POST: create a draft. Team rules not accepted: 403 rules_not_accepted.
+    A moderator or admin: 403 not_a_student.
     """
 
     pagination_class = DefaultCursorPagination
-    permission_classes = [IsAuthenticated, RulesAccepted]
+    permission_classes = [IsAuthenticated, IsStudent, RulesAccepted]
 
     def get_queryset(self):
         return services.open_projects(q=self.request.query_params.get("q", ""))
@@ -112,9 +119,9 @@ class RoleUpdateView(generics.UpdateAPIView):
 @extend_schema(tags=["projects"], request=None, responses=ProjectSerializer)
 class ProjectPublishView(APIView):
     """Open my draft project for applications. Blocked when it has no roles.
-    Team rules not accepted: 403 rules_not_accepted."""
+    Team rules not accepted: 403 rules_not_accepted. A moderator or admin: 403 not_a_student."""
 
-    permission_classes = [IsAuthenticated, RulesAccepted]
+    permission_classes = [IsAuthenticated, IsStudent, RulesAccepted]
 
     def post(self, request, pk):
         project = services.publish_project(owned_project(request, pk))
@@ -173,3 +180,74 @@ class ProjectCloseView(APIView):
     def post(self, request, pk):
         project = services.close_project(owned_project(request, pk))
         return Response(ProjectSerializer(project).data)
+
+
+# The admin's moderation page. Everything below is admin (is_staff) only: 403 for anyone else.
+
+
+@extend_schema(tags=["moderation"])
+class ModerationTermsView(generics.ListCreateAPIView):
+    """GET: every term, newest first. POST: add one; dates that overlap another term: 400."""
+
+    permission_classes = [IsAdminUser]
+    serializer_class = TermSerializer
+    queryset = Term.objects.all()
+
+
+@extend_schema(tags=["moderation"])
+class ModeratorsView(generics.ListCreateAPIView):
+    """GET: the moderators. POST {email}: make that account a moderator (again is fine)."""
+
+    permission_classes = [IsAdminUser]
+    serializer_class = ModeratorSerializer
+
+    def get_queryset(self):
+        users = get_user_model().objects.filter(is_moderator=True, is_staff=False)
+        return users.select_related("profile").order_by("email")
+
+
+@extend_schema(tags=["moderation"], request=None, responses={204: None})
+class ModeratorView(APIView):
+    """DELETE: a student again, and off every project they moderated."""
+
+    permission_classes = [IsAdminUser]
+
+    def delete(self, request, pk):
+        services.set_moderator(get_object_or_404(get_user_model(), pk=pk, is_moderator=True), False)
+        return Response(status=204)
+
+
+@extend_schema(tags=["moderation"])
+class ModerationProjectsView(generics.ListAPIView):
+    """Every project that isn't archived, newest first, with its moderators."""
+
+    # shortcut: not paginated or searchable, fine for a class's worth of projects per term;
+    # page it and add ?q= when the list outgrows one screen.
+    permission_classes = [IsAdminUser]
+    serializer_class = ModerationProjectSerializer
+
+    def get_queryset(self):
+        return (
+            Project.objects.exclude(status="archived")
+            .select_related("owner__profile", "term")
+            .prefetch_related(services.MODERATORS)
+        )
+
+
+@extend_schema(tags=["moderation"], request=None, responses={204: None})
+class ProjectModeratorView(APIView):
+    """PUT: put a moderator on a project (again is fine). DELETE: take them off.
+    No such project, or the user isn't a moderator: 404."""
+
+    permission_classes = [IsAdminUser]
+
+    def put(self, request, pk, user_pk):
+        ProjectModerator.objects.get_or_create(
+            project=get_object_or_404(Project, pk=pk),
+            user=get_object_or_404(get_user_model(), pk=user_pk, is_moderator=True),
+        )
+        return Response(status=204)
+
+    def delete(self, request, pk, user_pk):
+        ProjectModerator.objects.filter(project_id=pk, user_id=user_pk).delete()
+        return Response(status=204)

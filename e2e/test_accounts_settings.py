@@ -42,6 +42,7 @@ def test_google_only_account_sets_a_password_from_settings(page: Page, verified_
     page.context.clear_cookies()
     page.goto("/login")
     page.get_by_label("School email").fill(user.email)
+    page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill(password)
     page.get_by_role("button", name="Sign in", exact=True).click()
     expect(page).not_to_have_url(re.compile(r"/login"))

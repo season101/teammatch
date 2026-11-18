@@ -2,17 +2,17 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Logo } from "@/features/landing/logo";
 
-// Sign in, sign up and verify email (screens 2–4): the logo bar, then one
-// narrow column. These pages sit outside the app's navigation.
+// Log in or sign up, verify email and password reset: the logo, then one
+// narrow column in the middle. These pages sit outside the app's navigation.
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <header className="border-b border-border bg-surface px-4 py-3 sm:px-6">
+      <header className="px-4 py-4 sm:px-6">
         <Link href="/" aria-label="TeamMatch home">
           <Logo className="text-lg" />
         </Link>
       </header>
-      <main className="mx-auto w-full max-w-sm flex-1 px-4 py-12">
+      <main className="mx-auto flex w-full max-w-100 flex-1 flex-col justify-center px-4 py-12">
         {children}
       </main>
     </>

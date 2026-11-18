@@ -13,6 +13,9 @@ import { ApplicationsPanel } from "@/features/applications/my-applications";
 import { MyProjectsList } from "@/features/projects/my-projects-list";
 import { Logo } from "@/features/landing/logo";
 import { FinishSetup } from "@/features/onboarding/finish-setup";
+import { STAFF_HOME } from "@/features/onboarding/gate";
+import { useMyProfile } from "@/features/profiles/queries";
+import { setProfileTab, useProfileTab } from "@/features/profiles/profile-tab";
 import { useMyProjects, type MyProject } from "@/features/review/queries";
 import { TeamCelebration } from "@/features/teams/its-a-team";
 import { useMyTeam, type MyTeam } from "@/features/teams/queries";
@@ -37,9 +40,14 @@ type NavItem = {
   // Which count shows as a badge, and the words a screen reader hears after it.
   badge?: { count: keyof Counts; label: string };
   ownerOnly?: boolean;
+  // Who gets it. Everyone when left out.
+  roles?: Role[];
 };
 
-// The four places everyone goes. Review is only for students who own a project.
+type Role = "admin" | "moderator" | "student";
+
+// The four places a student goes. Review is only for students who own a project.
+// Moderators get Projects and Teams; admins get Projects and Moderation.
 const PLACES: NavItem[] = [
   {
     href: "/feed",
@@ -47,6 +55,7 @@ const PLACES: NavItem[] = [
     icon: DeckIcon,
     paths: ["/feed", "/applications"],
     badge: { count: "offers", label: "offers" },
+    roles: ["student"],
   },
   {
     href: "/projects",
@@ -61,8 +70,22 @@ const PLACES: NavItem[] = [
     paths: ["/applicants"],
     badge: { count: "applicants_waiting", label: "applicants waiting" },
     ownerOnly: true,
+    roles: ["student"],
   },
-  { href: "/teams", label: "Teams", icon: TeamIcon, paths: ["/teams"] },
+  {
+    href: "/teams",
+    label: "Teams",
+    icon: TeamIcon,
+    paths: ["/teams"],
+    roles: ["student", "moderator"],
+  },
+  {
+    href: "/moderation",
+    label: "Moderation",
+    icon: ReviewIcon,
+    paths: ["/moderation"],
+    roles: ["admin"],
+  },
 ];
 
 // Phone and tablet tabs: Me holds Profile and Settings.
@@ -141,7 +164,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const mine = projects.data ?? [];
   // Closed projects still list under Mine, but leave nothing to review.
   const owned = mine.filter((project) => project.status !== "archived");
-  const shown = (item: NavItem) => !item.ownerOnly || owned.length > 0;
+  // A student until the profile says otherwise, so the usual nav never flashes away.
+  const role: Role = useMyProfile(Boolean(user)).data?.role ?? "student";
+  const shown = (item: NavItem) =>
+    (!item.roles || item.roles.includes(role)) && (!item.ownerOnly || owned.length > 0);
+  const home = role === "student" ? "/feed" : STAFF_HOME[role];
   const tabs = TABS.filter(shown);
   const counts = useMySummary(Boolean(user)).data;
   const team = useMyTeam(Boolean(user)).data;
@@ -189,8 +216,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="hidden border-r border-border bg-surface lg:sticky lg:top-[env(safe-area-inset-top)] lg:flex lg:h-[calc(100dvh-env(safe-area-inset-top))] lg:shrink-0">
         <div className="flex w-52 shrink-0 flex-col gap-1 border-r border-border p-3">
           <Link
-            href="/feed"
-            aria-label="TeamMatch, go to Discover"
+            href={home}
+            aria-label={role === "student" ? "TeamMatch, go to Discover" : "TeamMatch, go home"}
             className="flex min-h-11 items-center px-3 pb-2"
           >
             <Logo className="text-lg" />
@@ -211,6 +238,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <div className="flex w-80 shrink-0 flex-col overflow-y-auto pt-3">
           <SidebarMode
+            role={role}
             pathname={pathname}
             mine={mine}
             owned={owned}
@@ -226,7 +254,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {legend && <KeyboardLegend key={pathname} keys={legend} />}
       </div>
 
-      {user && <TeamCelebration />}
+      {user && role === "student" && <TeamCelebration />}
 
       <nav
         aria-label="Main"
@@ -263,17 +291,47 @@ const rowLink =
 
 // What the sidebar lists in each mode. Team chat rows arrive with F4-08.
 function SidebarMode({
+  role,
   pathname,
   mine,
   owned,
   team,
 }: {
+  role: Role;
   pathname: string;
   mine: MyProject[];
   owned: MyProject[];
   team?: MyTeam | null;
 }) {
-  if (isIn(pathname, ["/settings", "/profile"])) {
+  const profileTab = useProfileTab();
+  // The profile's Preview | Edit: the tabs are here, their panels in the page.
+  if (pathname === "/profile") {
+    const hint = (text: string) => <p className="px-3 text-sm text-muted">{text}</p>;
+    return (
+      <div className="px-4">
+        <Tabs
+          vertical
+          label="Profile"
+          selected={profileTab}
+          onSelect={setProfileTab}
+          tabs={[
+            {
+              id: "preview",
+              label: "Preview",
+              panel: hint("How your card looks to project owners."),
+            },
+            {
+              id: "edit",
+              label: "Edit",
+              panel: hint("Update your details, photo, links and resume."),
+            },
+          ]}
+        />
+      </div>
+    );
+  }
+
+  if (isIn(pathname, ["/settings"])) {
     return (
       <div className="flex flex-col gap-2 p-4">
         <h2 className="px-3 text-lg font-bold">Settings</h2>
@@ -293,6 +351,23 @@ function SidebarMode({
     );
   }
 
+  // Moderators and admins have no projects, applications or team of their own to list.
+  if (role !== "student") {
+    return (
+      <div className="flex flex-col gap-2 p-4">
+        <h2 className="px-3 text-lg font-bold">
+          {role === "admin" ? "Admin" : "Moderator"}
+        </h2>
+        <Link href={STAFF_HOME[role]} className={`${rowLink} font-semibold`}>
+          {role === "admin" ? "Terms, moderators and projects" : "Projects you moderate"}
+        </Link>
+        <Link href="/projects" className={rowLink}>
+          Open projects this term
+        </Link>
+      </div>
+    );
+  }
+
   // Both modes render Tabs in the same spot, so React would keep the last page's
   // selection (Review's Mine on /teams selects nothing). Keyed by the default tab,
   // they start over when a page wants a different one.
@@ -301,6 +376,7 @@ function SidebarMode({
     return (
       <div className="px-4">
         <Tabs
+          vertical
           key={tab}
           label="Projects"
           defaultTab={tab}
@@ -351,6 +427,7 @@ function SidebarMode({
   return (
     <div className="px-4">
       <Tabs
+        vertical
         key={tab}
         label="Your activity"
         defaultTab={tab}

@@ -6,10 +6,9 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { SkeletonCard } from "@/components/ui/skeleton";
-import { Avatar } from "@/features/profiles/avatar";
+import { Avatar, initials } from "@/features/profiles/avatar";
 import { useProject } from "@/features/projects/queries";
 import { useShortcutsEnabled } from "@/features/shell/preferences";
-import { initials } from "@/features/teams/my-team";
 import { ApplicantCard } from "./applicant-card";
 import {
   useApplicants,

@@ -30,6 +30,8 @@ class User(AbstractUser):
     first_name = None
     last_name = None
     email = models.EmailField(unique=True)
+    # Staff on projects an admin assigns them to (projects.ProjectModerator). Admin is is_staff.
+    is_moderator = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -38,3 +40,10 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+    @property
+    def role(self):
+        """admin, moderator or student. Only students post projects, apply and hold seats."""
+        if self.is_staff:
+            return "admin"
+        return "moderator" if self.is_moderator else "student"

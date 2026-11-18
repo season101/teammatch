@@ -3,8 +3,11 @@ import { render, waitFor } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import { OnboardingGate } from "./gate";
 
-const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
+const { replace, nav } = vi.hoisted(() => ({ replace: vi.fn(), nav: { pathname: "/feed" } }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => nav.pathname,
+  useRouter: () => ({ replace }),
+}));
 
 const USER = { id: 1, email: "sam@latech.edu" };
 
@@ -56,4 +59,34 @@ test("no redirect and no profile request for a signed-out visitor", () => {
 test("a signed-out visitor isn't moved by a profile left in the cache", () => {
   renderGate(null, { rules_accepted_at: null });
   expect(replace).not.toHaveBeenCalled();
+});
+
+const AGREED = "2026-11-11T10:00:00Z";
+
+test.each([
+  ["admin", "/feed", "/moderation"],
+  ["moderator", "/feed", "/teams"],
+  ["moderator", "/projects/new", "/teams"],
+])("a %s on %s goes to %s", async (role, pathname, home) => {
+  nav.pathname = pathname;
+  renderGate(USER, { rules_accepted_at: AGREED, role });
+  await waitFor(() => expect(replace).toHaveBeenCalledWith(home));
+  nav.pathname = "/feed";
+});
+
+test.each([
+  ["student", "/feed"],
+  ["moderator", "/projects"],
+  ["admin", "/moderation"],
+])("a %s on %s stays there", (role, pathname) => {
+  nav.pathname = pathname;
+  renderGate(USER, { rules_accepted_at: AGREED, role });
+  expect(replace).not.toHaveBeenCalled();
+  nav.pathname = "/feed";
+});
+
+test("the rules come before a moderator's own page", async () => {
+  renderGate(USER, { rules_accepted_at: null, role: "moderator" });
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/welcome/rules"));
+  expect(replace).not.toHaveBeenCalledWith("/teams");
 });

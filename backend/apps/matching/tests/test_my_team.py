@@ -78,9 +78,10 @@ def test_a_member_gets_their_team_with_seen_at_empty(team, fall, ava):
         "project": {"id": team.project_id, "title": "Bulldog Bites"},
         "term": {"name": "Fall 2026", "end_date": fall.end_date.isoformat()},
         "members": [
-            {"display_name": "Marco", "role": "Owner"},
-            {"display_name": "Ava", "role": "Backend developer"},
+            {"display_name": "Marco", "role": "Owner", "avatar_url": None},
+            {"display_name": "Ava", "role": "Backend developer", "avatar_url": None},
         ],
+        "moderators": [],
         "formed_at": timezone.localtime(team.created_at).isoformat(),  # Central, with its offset
         "seen_at": None,
     }
@@ -99,7 +100,17 @@ def test_the_owner_gets_their_team(team, marco):
     body = my_team(marco)
 
     assert body["id"] == team.id
-    assert body["members"][0] == {"display_name": "Marco", "role": "Owner"}
+    assert body["members"][0] == {"display_name": "Marco", "role": "Owner", "avatar_url": None}
+
+
+def test_members_carry_their_avatar_url(team, marco, ava):
+    profile = ava.profile
+    profile.avatar.name = f"avatars/{ava.id}/abc123.png"  # the row only; nothing is read
+    profile.save(update_fields=["avatar"])
+
+    members = my_team(marco)["members"]
+
+    assert members[1]["avatar_url"] == f"/api/v1/profiles/{profile.id}/avatar/?v=abc123"
 
 
 def test_no_team_is_200_with_team_null(fall, marco):

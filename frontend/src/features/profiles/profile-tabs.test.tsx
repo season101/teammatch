@@ -20,6 +20,7 @@ const PROFILE = {
   has_resume: false,
   resume_name: "",
   email: "sam@latech.edu",
+  role: "student" as const,
   rules_accepted_at: null,
 };
 

@@ -62,6 +62,12 @@ export function useMyProfile(enabled = true) {
   });
 }
 
+// admin, moderator or student, read from the profile the app shell already loads. It never
+// starts a request of its own, so it's undefined until that one lands.
+export function useMyRole() {
+  return useQuery<MyProfile>({ queryKey: ["my-profile"], enabled: false }).data?.role;
+}
+
 // The whole list (about 20 skills), searched in the browser. It only changes with a migration.
 export function useSkills() {
   return useQuery({
@@ -109,8 +115,8 @@ export function useSaveProfile() {
 
 // The server's own rule (F1-07); the picker checks it first so nothing big is sent.
 export const AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
-export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
-export const AVATAR_HINT = "Choose a JPEG, PNG or WebP image of 2 MB or less.";
+export const AVATAR_MAX_BYTES = 10 * 1024 * 1024;
+export const AVATAR_HINT = "Choose a JPEG, PNG or WebP image of 10 MB or less.";
 
 // A file uploads a new photo; null removes it. Either way the API answers with my profile.
 export function useSetAvatar() {

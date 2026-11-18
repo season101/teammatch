@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useSkills } from "@/features/profiles/queries";
+import { useMyRole, useSkills } from "@/features/profiles/queries";
 import {
   useAddRole,
   useCloseProject,
@@ -36,6 +36,7 @@ export function ProjectEditor({
 }) {
   const project = useProject(projectId);
   const skills = useSkills();
+  const role = useMyRole();
   const addRole = useAddRole(projectId);
   const updateRole = useUpdateRole(projectId);
   const publish = usePublishProject(projectId);
@@ -63,6 +64,8 @@ export function ProjectEditor({
 
   const data = project.data;
   const isOwner = data.owner === userId;
+  // Moderators and admins don't apply; the API refuses them too.
+  const staff = role === "moderator" || role === "admin";
   const canEdit =
     isOwner && (data.status === "draft" || data.status === "open");
   const skillName = (id: number) =>
@@ -109,6 +112,11 @@ export function ProjectEditor({
             <p className="text-sm text-muted">
               {data.status} · by {data.owner_name || "an unnamed owner"}
             </p>
+            {data.moderators.length > 0 && (
+              <p className="text-sm text-muted">
+                Moderated by {data.moderators.map((name) => name || "a moderator").join(", ")}
+              </p>
+            )}
             <p className="text-text">{data.pitch}</p>
             <RepoAndDetails project={data} />
             {canEdit && (
@@ -197,7 +205,7 @@ export function ProjectEditor({
                       </li>
                     ))}
                   </ul>
-                  {!isOwner && (
+                  {!isOwner && !staff && (
                     <ApplyToRole
                       roleId={role.id}
                       roleTitle={role.title}

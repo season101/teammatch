@@ -55,3 +55,16 @@ test("arrow keys move the selection and focus, wrapping at the ends", () => {
   expect(applications).toHaveAttribute("aria-selected", "true");
   expect(applications).toHaveFocus();
 });
+
+test("vertical tabs stack, and Up and Down move between them", () => {
+  render(<Tabs label="Your activity" tabs={tabs} vertical />);
+  const list = screen.getByRole("tablist", { name: "Your activity" });
+  expect(list).toHaveAttribute("aria-orientation", "vertical");
+  expect(list).toHaveClass("flex-col");
+  const [first, second] = screen.getAllByRole("tab");
+
+  fireEvent.keyDown(first, { key: "ArrowDown" });
+  expect(second).toHaveAttribute("aria-selected", "true");
+  fireEvent.keyDown(second, { key: "ArrowUp" });
+  expect(first).toHaveAttribute("aria-selected", "true");
+});

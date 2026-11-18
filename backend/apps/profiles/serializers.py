@@ -109,7 +109,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class AvatarUploadSerializer(serializers.Serializer):
-    avatar = serializers.FileField(help_text="JPEG, PNG or WebP, 2 MB or less.")
+    avatar = serializers.FileField(help_text="JPEG, PNG or WebP, 10 MB or less.")
 
 
 class ResumeUploadSerializer(serializers.Serializer):
@@ -119,7 +119,17 @@ class ResumeUploadSerializer(serializers.Serializer):
 class MyProfileSerializer(ProfileSerializer):
     # Only the owner sees their own email and resume file name.
     email = serializers.EmailField(source="user.email", read_only=True)
+    # What the app shows me: only students get the deck, admins get the moderation page.
+    role = serializers.ChoiceField(
+        choices=["admin", "moderator", "student"], source="user.role", read_only=True
+    )
 
     class Meta(ProfileSerializer.Meta):
-        fields = [*ProfileSerializer.Meta.fields, "email", "rules_accepted_at", "resume_name"]
+        fields = [
+            *ProfileSerializer.Meta.fields,
+            "email",
+            "role",
+            "rules_accepted_at",
+            "resume_name",
+        ]
         read_only_fields = ["id", "email", "rules_accepted_at", "resume_name"]

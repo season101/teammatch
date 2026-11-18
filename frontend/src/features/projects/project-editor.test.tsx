@@ -61,6 +61,7 @@ const project = (overrides: Record<string, unknown> = {}) => ({
   status: "draft",
   owner: 1,
   owner_name: "Owner Name",
+  moderators: [] as string[],
   roles: [],
   created_at: "2026-10-17T00:00:00Z",
   ...overrides,
@@ -688,4 +689,32 @@ test("shows the server's message when applying fails", async () => {
   expect(
     await screen.findByText("This role was just filled."),
   ).toBeInTheDocument();
+});
+
+test.each(["moderator", "admin"])("a %s gets no Apply, only the roles", async (role) => {
+  applyApi();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  client.setQueryData(["my-profile"], { role });
+  renderEditor(1, client);
+
+  expect(await screen.findByText("Backend dev")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Apply to Backend dev" }),
+  ).not.toBeInTheDocument();
+});
+
+test("names the project's moderators", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (request: Request) => {
+      const skills = new URL(request.url).pathname === "/api/v1/skills/";
+      const body = skills ? SKILLS : project({ moderators: ["Dr. Lee", ""] });
+      return new Response(JSON.stringify(body), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }),
+  );
+  renderEditor(1);
+
+  expect(await screen.findByText("Moderated by Dr. Lee, a moderator")).toBeInTheDocument();
 });

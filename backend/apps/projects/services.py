@@ -7,7 +7,7 @@ from rest_framework.exceptions import APIException
 
 from apps.core.models import Term
 
-from .models import Project, ProjectStatus, Role, RoleStatus
+from .models import Project, ProjectModerator, ProjectStatus, Role, RoleStatus
 
 
 class NoActiveTerm(APIException):
@@ -62,6 +62,35 @@ class TermOver(APIException):
     status_code = 409
     default_detail = "This project's term is over."
     default_code = "term_over"
+
+
+# A project's moderators with their profiles, for moderator_names.
+MODERATORS = Prefetch(
+    "moderator_links", queryset=ProjectModerator.objects.select_related("user__profile")
+)
+
+
+def moderator_names(project):
+    """Display names of a project's moderators, never their emails."""
+    names = []
+    for link in project.moderator_links.all():
+        profile = getattr(link.user, "profile", None)
+        names.append(profile.display_name if profile else "")
+    return names
+
+
+def set_moderator(user, on):
+    """Make someone a moderator, or a student again (which takes them off their projects).
+
+    shortcut: a student's projects, applications and seat stay as they are when promoted;
+    clear them here if moderators must start clean.
+    """
+    with transaction.atomic():
+        user.is_moderator = on
+        user.save(update_fields=["is_moderator"])
+        if not on:
+            ProjectModerator.objects.filter(user=user).delete()
+    return user
 
 
 def ensure_term_not_over(term, today=None):
@@ -171,12 +200,22 @@ def my_projects(user):
 
 
 def visible_to(user, via=""):
-    """Projects this user may see: their own, and anyone's open or locked ones (F2-02).
+    """Projects this user may see: their own, the ones they moderate, and anyone's open
+    or locked ones (F2-02).
 
     via is the lookup path to the project, e.g. "project__" to filter roles.
     """
     shown = [ProjectStatus.OPEN, ProjectStatus.LOCKED]
-    return Q(**{f"{via}owner": user}) | Q(**{f"{via}status__in": shown})
+    # A subquery, so a project with several moderators isn't repeated.
+    # user__is_moderator: a link left behind by a demotion grants nothing.
+    moderated = ProjectModerator.objects.filter(user=user, user__is_moderator=True).values(
+        "project_id"
+    )
+    return (
+        Q(**{f"{via}owner": user})
+        | Q(**{f"{via}status__in": shown})
+        | Q(**{f"{via}pk__in": moderated})
+    )
 
 
 def visible_projects(user):
@@ -189,7 +228,7 @@ def visible_projects(user):
     return (
         Project.objects.filter(visible_to(user))
         .select_related("owner__profile")
-        .prefetch_related(Prefetch("roles", queryset=roles))
+        .prefetch_related(Prefetch("roles", queryset=roles), MODERATORS)
     )
 
 

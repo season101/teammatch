@@ -38,7 +38,7 @@ export interface paths {
          * @description Take the seat this offer is for (F4-10). Closes my other applications this term.
          *
          *     409: offer_not_open, role_not_open, owns_open_project or applicant_committed.
-         *     Team rules not accepted: 403 rules_not_accepted.
+         *     Team rules not accepted: 403 rules_not_accepted. A moderator or admin: 403 not_a_student.
          */
         post: operations["applications_commit_create"];
         delete?: never;
@@ -203,7 +203,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description JPEG, PNG or WebP, 2 MB or less. Anything else: 400 invalid_avatar, old one kept. */
+        /** @description JPEG, PNG or WebP, 10 MB or less. Anything else: 400 invalid_avatar, old one kept. */
         post: operations["me_avatar_create"];
         /** @description Remove my avatar and delete its file. */
         delete: operations["me_avatar_destroy"];
@@ -286,6 +286,100 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/moderation/moderators/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET: the moderators. POST {email}: make that account a moderator (again is fine). */
+        get: operations["moderation_moderators_list"];
+        put?: never;
+        /** @description GET: the moderators. POST {email}: make that account a moderator (again is fine). */
+        post: operations["moderation_moderators_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/moderation/moderators/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description DELETE: a student again, and off every project they moderated. */
+        delete: operations["moderation_moderators_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/moderation/projects/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Every project that isn't archived, newest first, with its moderators. */
+        get: operations["moderation_projects_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/moderation/projects/{id}/moderators/{user_pk}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * @description PUT: put a moderator on a project (again is fine). DELETE: take them off.
+         *     No such project, or the user isn't a moderator: 404.
+         */
+        put: operations["moderation_projects_moderators_update"];
+        post?: never;
+        /**
+         * @description PUT: put a moderator on a project (again is fine). DELETE: take them off.
+         *     No such project, or the user isn't a moderator: 404.
+         */
+        delete: operations["moderation_projects_moderators_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/moderation/terms/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET: every term, newest first. POST: add one; dates that overlap another term: 400. */
+        get: operations["moderation_terms_list"];
+        put?: never;
+        /** @description GET: every term, newest first. POST: add one; dates that overlap another term: 400. */
+        post: operations["moderation_terms_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/profiles/{id}/": {
         parameters: {
             query?: never;
@@ -353,12 +447,14 @@ export interface paths {
         /**
          * @description GET: open projects in the current term, newest first. ?q= searches them (F2-07).
          *     POST: create a draft. Team rules not accepted: 403 rules_not_accepted.
+         *     A moderator or admin: 403 not_a_student.
          */
         get: operations["projects_list"];
         put?: never;
         /**
          * @description GET: open projects in the current term, newest first. ?q= searches them (F2-07).
          *     POST: create a draft. Team rules not accepted: 403 rules_not_accepted.
+         *     A moderator or admin: 403 not_a_student.
          */
         post: operations["projects_create"];
         delete?: never;
@@ -425,7 +521,7 @@ export interface paths {
         put?: never;
         /**
          * @description Open my draft project for applications. Blocked when it has no roles.
-         *     Team rules not accepted: 403 rules_not_accepted.
+         *     Team rules not accepted: 403 rules_not_accepted. A moderator or admin: 403 not_a_student.
          */
         post: operations["projects_publish_create"];
         delete?: never;
@@ -603,6 +699,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/teams/moderating/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The projects I moderate, each with its team once formed. Empty for anyone else. */
+        get: operations["teams_moderating_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -648,7 +761,7 @@ export interface components {
         AvatarUploadRequest: {
             /**
              * Format: binary
-             * @description JPEG, PNG or WebP, 2 MB or less.
+             * @description JPEG, PNG or WebP, 10 MB or less.
              */
             avatar: string;
         };
@@ -728,6 +841,39 @@ export interface components {
          * @enum {string}
          */
         HealthStatusEnum: "ok" | "degraded";
+        /** @description A project I moderate. team is null until every role is filled. */
+        ModeratedProject: {
+            readonly id: number;
+            title: string;
+            status?: components["schemas"]["ProjectStatusEnum"];
+            readonly term: components["schemas"]["TeamTerm"];
+            readonly moderators: string[];
+            readonly team: components["schemas"]["ModeratedTeam"] | null;
+        };
+        ModeratedTeam: {
+            readonly id: number;
+            readonly members: components["schemas"]["TeamMember"][];
+            /** Format: date-time */
+            readonly formed_at: string;
+        };
+        ModerationProject: {
+            readonly id: number;
+            title: string;
+            status?: components["schemas"]["ProjectStatusEnum"];
+            readonly term: string;
+            readonly owner_name: string;
+            readonly moderators: components["schemas"]["Moderator"][];
+        };
+        Moderator: {
+            readonly id: number;
+            /** Format: email */
+            email: string;
+            readonly display_name: string;
+        };
+        ModeratorRequest: {
+            /** Format: email */
+            email: string;
+        };
         MyApplication: {
             readonly id: number;
             readonly role: components["schemas"]["ApplicationRole"];
@@ -751,6 +897,7 @@ export interface components {
             readonly has_resume: boolean;
             /** Format: email */
             readonly email: string;
+            readonly role: components["schemas"]["RoleEnum"];
             /** Format: date-time */
             readonly rules_accepted_at: string | null;
             readonly resume_name: string;
@@ -779,6 +926,7 @@ export interface components {
             readonly project: components["schemas"]["TeamProject"];
             readonly term: components["schemas"]["TeamTerm"];
             readonly members: components["schemas"]["TeamMember"][];
+            readonly moderators: string[];
             /** Format: date-time */
             readonly formed_at: string;
             /** Format: date-time */
@@ -912,6 +1060,7 @@ export interface components {
             owner: number;
             readonly owner_name: string;
             readonly roles: components["schemas"]["RoleDetail"][];
+            readonly moderators: string[];
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -977,6 +1126,13 @@ export interface components {
             readonly created_at: string;
             readonly filled_by_name: string;
         };
+        /**
+         * @description * `admin` - admin
+         *     * `moderator` - moderator
+         *     * `student` - student
+         * @enum {string}
+         */
+        RoleEnum: "admin" | "moderator" | "student";
         RoleRequest: {
             title: string;
             description?: string;
@@ -1000,6 +1156,7 @@ export interface components {
         TeamMember: {
             readonly display_name: string;
             readonly role: string;
+            readonly avatar_url: string | null;
         };
         TeamProject: {
             readonly id: number;
@@ -1007,6 +1164,21 @@ export interface components {
         };
         TeamTerm: {
             name: string;
+            /** Format: date */
+            end_date: string;
+        };
+        Term: {
+            readonly id: number;
+            name: string;
+            /** Format: date */
+            start_date: string;
+            /** Format: date */
+            end_date: string;
+        };
+        TermRequest: {
+            name: string;
+            /** Format: date */
+            start_date: string;
             /** Format: date */
             end_date: string;
         };
@@ -1404,6 +1576,175 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MySummary"];
+                };
+            };
+        };
+    };
+    moderation_moderators_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Moderator"][];
+                };
+            };
+        };
+    };
+    moderation_moderators_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModeratorRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ModeratorRequest"];
+                "multipart/form-data": components["schemas"]["ModeratorRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Moderator"];
+                };
+            };
+        };
+    };
+    moderation_moderators_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    moderation_projects_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModerationProject"][];
+                };
+            };
+        };
+    };
+    moderation_projects_moderators_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                user_pk: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    moderation_projects_moderators_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                user_pk: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    moderation_terms_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Term"][];
+                };
+            };
+        };
+    };
+    moderation_terms_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TermRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TermRequest"];
+                "multipart/form-data": components["schemas"]["TermRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Term"];
                 };
             };
         };
@@ -1908,6 +2249,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MyTeamResponse"];
+                };
+            };
+        };
+    };
+    teams_moderating_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModeratedProject"][];
                 };
             };
         };

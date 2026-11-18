@@ -95,3 +95,22 @@ class Role(TimeStampedModel):
 
     def __str__(self):
         return f"{self.title} ({self.project})"
+
+
+# A moderator an admin put on a project. Not a seat: they see the team and its chat only.
+class ProjectModerator(TimeStampedModel):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="moderator_links")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="moderated_links",
+    )
+
+    class Meta:
+        ordering = ["id"]
+        constraints = [
+            models.UniqueConstraint(fields=["project", "user"], name="project_moderator_once"),
+        ]
+
+    def __str__(self):
+        return f"{self.user} moderates {self.project}"

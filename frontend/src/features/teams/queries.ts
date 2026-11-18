@@ -17,6 +17,19 @@ export function useMyTeam(enabled = true) {
   });
 }
 
+// The projects I moderate, each with its team once formed. Empty for a student.
+export function useModeratedProjects(enabled = true) {
+  return useQuery({
+    queryKey: ["moderated-projects"],
+    enabled,
+    queryFn: async () => {
+      const { data, response } = await api.GET("/api/v1/teams/moderating/");
+      if (!data) throw new Error(`Could not load your projects (${response.status}).`);
+      return data;
+    },
+  });
+}
+
 // The cache marks it seen straight away, so "It's a Team!" doesn't come back this visit.
 export function useMarkSeen() {
   const queryClient = useQueryClient();

@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from apps.accounts.permissions import IsStudent
 from apps.core.pagination import DefaultCursorPagination
 from apps.profiles.permissions import RulesAccepted
 from apps.projects.models import Role
@@ -22,6 +23,7 @@ from .serializers import (
     ApplySerializer,
     CommitSerializer,
     FeedRoleSerializer,
+    ModeratedProjectSerializer,
     MyApplicationSerializer,
     MySummarySerializer,
     MyTeamResponseSerializer,
@@ -112,8 +114,8 @@ class ApplyView(generics.CreateAPIView):
             role, self.request.user, serializer.validated_data.get("note", "")
         )
 
-    # Team rules not accepted: 403 rules_not_accepted.
-    permission_classes = [IsAuthenticated, RulesAccepted]
+    # Team rules not accepted: 403 rules_not_accepted. A moderator or admin: 403 not_a_student.
+    permission_classes = [IsAuthenticated, IsStudent, RulesAccepted]
 
 
 @extend_schema(tags=["feed"], request=None, responses={204: None})
@@ -193,10 +195,10 @@ class CommitView(APIView):
     """Take the seat this offer is for (F4-10). Closes my other applications this term.
 
     409: offer_not_open, role_not_open, owns_open_project or applicant_committed.
-    Team rules not accepted: 403 rules_not_accepted.
+    Team rules not accepted: 403 rules_not_accepted. A moderator or admin: 403 not_a_student.
     """
 
-    permission_classes = [IsAuthenticated, RulesAccepted]
+    permission_classes = [IsAuthenticated, IsStudent, RulesAccepted]
 
     def post(self, request, pk):
         application, team = services.commit(my_offer(request, pk))
@@ -230,6 +232,17 @@ class MyTeamView(APIView):
     def get(self, request):
         seat = services.my_team_seat(request.user)
         return Response(MyTeamResponseSerializer({"team": seat}).data)
+
+
+@extend_schema(tags=["teams"])
+class ModeratedProjectsView(generics.ListAPIView):
+    """The projects I moderate, each with its team once formed. Empty for anyone else."""
+
+    # shortcut: not paginated, a moderator has a handful of projects; page it if that grows
+    serializer_class = ModeratedProjectSerializer
+
+    def get_queryset(self):
+        return services.moderated_projects(self.request.user)
 
 
 @extend_schema(tags=["teams"], request=None, responses={204: None})

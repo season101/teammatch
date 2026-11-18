@@ -249,7 +249,8 @@ def edit(page):
 
 
 def preview_avatar(page):
-    return page.get_by_role("article").locator("img")
+    # The photo button; the larger copy inside its closed dialog is a second img.
+    return page.get_by_role("article").locator("button > img")
 
 
 def test_avatar_upload_replaces_initials_and_persists(page, signed, files):
@@ -297,9 +298,9 @@ def test_avatar_too_big_is_refused(page, signed, tmp_path):
     signed()
     edit(page)
     big = tmp_path / "big.png"
-    big.write_bytes(b"\x89PNG" + b"0" * (2 * 1024 * 1024 + 10))
+    big.write_bytes(b"\x89PNG" + b"0" * (10 * 1024 * 1024 + 10))
     page.get_by_label("Photo file").set_input_files(str(big))
-    expect(page.get_by_role("alert").filter(has_text="2 MB or less")).to_be_visible()
+    expect(page.get_by_role("alert").filter(has_text="10 MB or less")).to_be_visible()
     expect(page.get_by_role("button", name="Upload a photo")).to_be_visible()
 
 
@@ -513,6 +514,7 @@ def test_dark_theme_profile_form_text_is_readable(page, signed):
     page.get_by_text("Dark", exact=True).click()
     page.goto("/profile")
     page.get_by_role("tab", name="Edit").click()
+    expect(page.locator("#bio")).to_be_visible()
     bg, fg = (
         page.evaluate(f"getComputedStyle(document.getElementById('bio')).{prop}")
         for prop in ("backgroundColor", "color")

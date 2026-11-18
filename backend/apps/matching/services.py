@@ -18,7 +18,7 @@ from rest_framework.exceptions import APIException
 
 from apps.profiles.services import is_retired, retire
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
-from apps.projects.services import ensure_term_not_over
+from apps.projects.services import MODERATORS, ensure_term_not_over
 
 from .models import (
     Application,
@@ -47,7 +47,8 @@ def feed_roles(user, today=None):
     Skips the user's own projects (BR-04) and roles they already applied to
     (any status, since an application is one per user per role) or passed, and the projects
     of owners an admin deactivated (PL-07).
-    Empty while they're retired (BR-09) or hold a seat they committed to (F4-10).
+    Empty while they're retired (BR-09) or hold a seat they committed to (F4-10),
+    and always for a moderator or admin.
     """
     today = today or timezone.localdate()
     roles = (
@@ -85,7 +86,7 @@ def feed_roles(user, today=None):
         )
     )
     # none() on the annotated queryset, so the view can still order it by rank_key
-    if is_retired(user, today) or holds_seat(user, today=today):
+    if user.role != "student" or is_retired(user, today) or holds_seat(user, today=today):
         return roles.none()
     return roles
 
@@ -153,15 +154,18 @@ def role_applications(role, status=ApplicationStatus.PENDING):
     )
 
 
+# A team's seats, owner first.
+MEMBERS = Membership.objects.select_related("user__profile", "role").order_by(
+    F("role").asc(nulls_first=True), "id"
+)
+
+
 def my_team_seat(user, today=None):
     """My seat on a team in the current term, or None (F4-05).
 
     Comes with the team's project, term and members, owner first.
     """
     today = today or timezone.localdate()
-    members = Membership.objects.select_related("user__profile", "role").order_by(
-        F("role").asc(nulls_first=True), "id"
-    )
     return (
         Membership.objects.filter(
             user=user,
@@ -169,9 +173,23 @@ def my_team_seat(user, today=None):
             team__project__term__end_date__gte=today,
         )
         .select_related("team__project__term")
-        .prefetch_related(Prefetch("team__memberships", queryset=members))
+        .prefetch_related(
+            Prefetch("team__memberships", queryset=MEMBERS),
+            Prefetch("team__project__moderator_links", queryset=MODERATORS.queryset),
+        )
         .order_by("-team__created_at")
         .first()
+    )
+
+
+def moderated_projects(user):
+    """The projects an admin put this moderator on, newest first, each with its team
+    (members, owner first) once it has formed."""
+    teams = Team.objects.prefetch_related(Prefetch("memberships", queryset=MEMBERS))
+    return (
+        Project.objects.filter(moderator_links__user=user)
+        .select_related("term")
+        .prefetch_related(Prefetch("team", queryset=teams), MODERATORS)
     )
 
 

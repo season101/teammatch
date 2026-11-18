@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { buttonClasses } from "@/components/ui/button";
+import { NewProjectLink } from "@/features/projects/new-project-link";
 import { SignedInProjects } from "@/features/projects/projects-list";
 
 export const metadata: Metadata = { title: "Projects · TeamMatch" };
@@ -15,9 +14,7 @@ export default function ProjectsPage() {
             Find a project to join, or manage your own.
           </p>
         </div>
-        <Link href="/projects/new" className={buttonClasses("cta", "sm")}>
-          New project
-        </Link>
+        <NewProjectLink />
       </header>
       <SignedInProjects />
     </main>

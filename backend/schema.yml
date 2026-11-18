@@ -41,7 +41,7 @@ paths:
         Take the seat this offer is for (F4-10). Closes my other applications this term.
 
         409: offer_not_open, role_not_open, owns_open_project or applicant_committed.
-        Team rules not accepted: 403 rules_not_accepted.
+        Team rules not accepted: 403 rules_not_accepted. A moderator or admin: 403 not_a_student.
       parameters:
       - in: path
         name: id
@@ -252,7 +252,7 @@ paths:
   /api/v1/me/avatar/:
     post:
       operationId: me_avatar_create
-      description: 'JPEG, PNG or WebP, 2 MB or less. Anything else: 400 invalid_avatar,
+      description: 'JPEG, PNG or WebP, 10 MB or less. Anything else: 400 invalid_avatar,
         old one kept.'
       tags:
       - me
@@ -390,6 +390,177 @@ paths:
               schema:
                 $ref: '#/components/schemas/MySummary'
           description: ''
+  /api/v1/moderation/moderators/:
+    get:
+      operationId: moderation_moderators_list
+      description: 'GET: the moderators. POST {email}: make that account a moderator
+        (again is fine).'
+      tags:
+      - moderation
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Moderator'
+          description: ''
+    post:
+      operationId: moderation_moderators_create
+      description: 'GET: the moderators. POST {email}: make that account a moderator
+        (again is fine).'
+      tags:
+      - moderation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModeratorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ModeratorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ModeratorRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Moderator'
+          description: ''
+  /api/v1/moderation/moderators/{id}/:
+    delete:
+      operationId: moderation_moderators_destroy
+      description: 'DELETE: a student again, and off every project they moderated.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - moderation
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/moderation/projects/:
+    get:
+      operationId: moderation_projects_list
+      description: Every project that isn't archived, newest first, with its moderators.
+      tags:
+      - moderation
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ModerationProject'
+          description: ''
+  /api/v1/moderation/projects/{id}/moderators/{user_pk}/:
+    put:
+      operationId: moderation_projects_moderators_update
+      description: |-
+        PUT: put a moderator on a project (again is fine). DELETE: take them off.
+        No such project, or the user isn't a moderator: 404.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: user_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - moderation
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+    delete:
+      operationId: moderation_projects_moderators_destroy
+      description: |-
+        PUT: put a moderator on a project (again is fine). DELETE: take them off.
+        No such project, or the user isn't a moderator: 404.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: user_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - moderation
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/moderation/terms/:
+    get:
+      operationId: moderation_terms_list
+      description: 'GET: every term, newest first. POST: add one; dates that overlap
+        another term: 400.'
+      tags:
+      - moderation
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Term'
+          description: ''
+    post:
+      operationId: moderation_terms_create
+      description: 'GET: every term, newest first. POST: add one; dates that overlap
+        another term: 400.'
+      tags:
+      - moderation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TermRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TermRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TermRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Term'
+          description: ''
   /api/v1/profiles/{id}/:
     get:
       operationId: profiles_retrieve
@@ -507,6 +678,7 @@ paths:
       description: |-
         GET: open projects in the current term, newest first. ?q= searches them (F2-07).
         POST: create a draft. Team rules not accepted: 403 rules_not_accepted.
+        A moderator or admin: 403 not_a_student.
       parameters:
       - name: cursor
         required: false
@@ -542,6 +714,7 @@ paths:
       description: |-
         GET: open projects in the current term, newest first. ?q= searches them (F2-07).
         POST: create a draft. Team rules not accepted: 403 rules_not_accepted.
+        A moderator or admin: 403 not_a_student.
       tags:
       - projects
       requestBody:
@@ -654,7 +827,7 @@ paths:
       operationId: projects_publish_create
       description: |-
         Open my draft project for applications. Blocked when it has no roles.
-        Team rules not accepted: 403 rules_not_accepted.
+        Team rules not accepted: 403 rules_not_accepted. A moderator or admin: 403 not_a_student.
       parameters:
       - in: path
         name: id
@@ -956,6 +1129,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/MyTeamResponse'
           description: ''
+  /api/v1/teams/moderating/:
+    get:
+      operationId: teams_moderating_list
+      description: The projects I moderate, each with its team once formed. Empty
+        for anyone else.
+      tags:
+      - teams
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ModeratedProject'
+          description: ''
 components:
   schemas:
     ApplicationDecision:
@@ -1065,7 +1256,7 @@ components:
         avatar:
           type: string
           format: binary
-          description: JPEG, PNG or WebP, 2 MB or less.
+          description: JPEG, PNG or WebP, 10 MB or less.
       required:
       - avatar
     BlankEnum:
@@ -1277,6 +1468,112 @@ components:
       description: |-
         * `ok` - ok
         * `degraded` - degraded
+    ModeratedProject:
+      type: object
+      description: A project I moderate. team is null until every role is filled.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        status:
+          $ref: '#/components/schemas/ProjectStatusEnum'
+        term:
+          allOf:
+          - $ref: '#/components/schemas/TeamTerm'
+          readOnly: true
+        moderators:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        team:
+          allOf:
+          - $ref: '#/components/schemas/ModeratedTeam'
+          nullable: true
+          readOnly: true
+      required:
+      - id
+      - moderators
+      - team
+      - term
+      - title
+    ModeratedTeam:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamMember'
+          readOnly: true
+        formed_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - formed_at
+      - id
+      - members
+    ModerationProject:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        status:
+          $ref: '#/components/schemas/ProjectStatusEnum'
+        term:
+          type: string
+          readOnly: true
+        owner_name:
+          type: string
+          readOnly: true
+        moderators:
+          type: array
+          items:
+            $ref: '#/components/schemas/Moderator'
+          readOnly: true
+      required:
+      - id
+      - moderators
+      - owner_name
+      - term
+      - title
+    Moderator:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        display_name:
+          type: string
+          readOnly: true
+      required:
+      - display_name
+      - email
+      - id
+    ModeratorRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+      required:
+      - email
     MyApplication:
       type: object
       properties:
@@ -1346,6 +1643,10 @@ components:
           type: string
           format: email
           readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          readOnly: true
         rules_accepted_at:
           type: string
           format: date-time
@@ -1360,6 +1661,7 @@ components:
       - has_resume
       - id
       - resume_name
+      - role
       - rules_accepted_at
       - skills
     MyProject:
@@ -1438,6 +1740,11 @@ components:
           items:
             $ref: '#/components/schemas/TeamMember'
           readOnly: true
+        moderators:
+          type: array
+          items:
+            type: string
+          readOnly: true
         formed_at:
           type: string
           format: date-time
@@ -1451,6 +1758,7 @@ components:
       - formed_at
       - id
       - members
+      - moderators
       - project
       - seen_at
       - term
@@ -1763,6 +2071,11 @@ components:
           items:
             $ref: '#/components/schemas/RoleDetail'
           readOnly: true
+        moderators:
+          type: array
+          items:
+            type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -1770,6 +2083,7 @@ components:
       required:
       - created_at
       - id
+      - moderators
       - owner
       - owner_name
       - pitch
@@ -1956,6 +2270,16 @@ components:
       - required_skills
       - status
       - title
+    RoleEnum:
+      enum:
+      - admin
+      - moderator
+      - student
+      type: string
+      description: |-
+        * `admin` - admin
+        * `moderator` - moderator
+        * `student` - student
     RoleRequest:
       type: object
       properties:
@@ -2025,7 +2349,12 @@ components:
         role:
           type: string
           readOnly: true
+        avatar_url:
+          type: string
+          nullable: true
+          readOnly: true
       required:
+      - avatar_url
       - display_name
       - role
     TeamProject:
@@ -2052,6 +2381,43 @@ components:
       required:
       - end_date
       - name
+    Term:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+      required:
+      - end_date
+      - id
+      - name
+      - start_date
+    TermRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+      required:
+      - end_date
+      - name
+      - start_date
     WithdrawnReasonEnum:
       enum:
       - applicant

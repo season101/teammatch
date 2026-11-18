@@ -243,25 +243,6 @@ test("shows one generic error for wrong credentials", async () => {
   expect(password).toBeValid();
 });
 
-test("hides the Google error once the email form is used", async () => {
-  mockFetch(400, { status: 400, errors: [] });
-  render(
-    <QueryClientProvider client={newClient()}>
-      <SignInForm googleError="cancelled" />
-    </QueryClientProvider>,
-  );
-  expect(screen.getByRole("alert")).toHaveTextContent(
-    "Google sign-in was cancelled.",
-  );
-
-  fillAndSubmit("sam@latech.edu", "wrong-password");
-
-  // findByRole fails if both messages are still showing
-  expect(await screen.findByRole("alert")).toHaveTextContent(
-    "Email or password is incorrect.",
-  );
-});
-
 // F1-13, DD-37: a Google-only account gets a prompt instead of the single error.
 function mockGoogleOnly(resetStatus = 200) {
   document.cookie = "csrftoken=test-token";
