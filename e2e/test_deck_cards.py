@@ -25,7 +25,7 @@ def test_card_shows_role_project_owner_match_progress_and_term(page, deck):
     expect(card).to_contain_text(f"CardProj {t} · by {proj.owner.user.name}")
     expect(card.get_by_text("50% match")).to_be_visible()
     expect(card.get_by_text(f"A pitch about {t}.")).to_be_visible()
-    expect(card.get_by_text(re.compile(r"0 of 2 roles filled · .+"))).to_be_visible()
+    expect(card.get_by_text("0 of 2 roles filled")).to_be_visible()
     skills = card.get_by_role("list", name="Required skills")
     expect(skills).to_contain_text("Python")
     expect(skills).to_contain_text("Figma")

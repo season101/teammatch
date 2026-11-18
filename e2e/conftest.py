@@ -16,6 +16,8 @@ import pytest
 from dotenv import dotenv_values
 from playwright.sync_api import Page, expect
 
+# Step 2 of onboarding: "Tell owners who you are" on a blank profile, else "Confirm your info".
+INFO_STEP = re.compile(r"^(Tell owners who you are|Confirm your info)$")
 REPO = Path(__file__).resolve().parent.parent
 # The api container's EMAIL_FILE_PATH (/app/.e2e-mail) is backend/.e2e-mail through the bind mount.
 MAIL_DIR = Path(os.environ.get("E2E_MAIL_DIR", REPO / "backend" / ".e2e-mail"))
@@ -238,7 +240,7 @@ def onboard():
         expect(page.get_by_role("heading", name="Team rules")).to_be_visible()
         page.get_by_role("button", name="I agree").click()
 
-        expect(page.get_by_role("heading", name="Confirm your info")).to_be_visible()
+        expect(page.get_by_role("heading", name=INFO_STEP)).to_be_visible()
         page.get_by_label("Name", exact=True).fill(user.name)
         page.get_by_label("Major", exact=True).fill(user.major)
         page.get_by_role("button", name="Continue").click()

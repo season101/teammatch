@@ -31,7 +31,7 @@ def test_publish_without_roles_is_refused_with_a_message(page: Page, make_api_us
     page.goto(f"/projects/{project['id']}")
     page.get_by_role("button", name="Publish project").click()
     expect(page.get_by_role("alert").filter(has_text="Add at least one role before publishing.")).to_be_visible()
-    expect(page.get_by_text("draft · by")).to_be_visible()
+    expect(page.get_by_role("main").get_by_text("Draft", exact=True)).to_be_visible()
     r = client.send("POST", f"/api/v1/projects/{project['id']}/publish/")
     assert r.status == 409 and "project_needs_roles" in r.text()
 
@@ -44,7 +44,7 @@ def test_publish_with_a_role_opens_the_project(page: Page, make_api_user):
     page.goto(f"/projects/{project['id']}")
     page.get_by_role("button", name="Publish project").click()
     expect(page.get_by_text("Published. Your project is now open for applications.")).to_be_visible()
-    expect(page.get_by_text("open · by")).to_be_visible()
+    expect(page.get_by_role("main").get_by_text("Open", exact=True)).to_be_visible()
     expect(page.get_by_role("button", name="Publish project")).to_have_count(0)
     # it is in the browse list now
     page.goto("/projects")
@@ -71,7 +71,7 @@ def test_second_publish_is_refused_while_one_is_open_br14(page: Page, make_api_u
             has_text="You already have an open project. Close it or wait until it locks."
         )
     ).to_be_visible()
-    expect(page.get_by_text("draft · by")).to_be_visible()
+    expect(page.get_by_role("main").get_by_text("Draft", exact=True)).to_be_visible()
     # not in the browse list
     page.goto("/projects")
     expect(page.get_by_role("link", name=first["title"])).to_be_visible()
@@ -124,7 +124,7 @@ def test_close_asks_first_and_keep_cancels(page: Page, make_api_user):
     expect(dialog).to_be_visible()
     dialog.get_by_role("button", name="Keep project").click()
     expect(dialog).to_have_count(0)
-    expect(page.get_by_text("open · by")).to_be_visible()
+    expect(page.get_by_role("main").get_by_text("Open", exact=True)).to_be_visible()
 
 
 def test_close_moves_it_to_archived_group_in_mine_and_is_read_only(page: Page, make_api_user):
@@ -137,7 +137,7 @@ def test_close_moves_it_to_archived_group_in_mine_and_is_read_only(page: Page, m
     page.get_by_role("button", name="Close project").click()
     page.get_by_role("dialog", name="Close this project?").get_by_role("button", name="Close project").click()
     # without a reload: the status line, the Mine groups and the controls all change
-    expect(page.get_by_text("archived · by")).to_be_visible()
+    expect(page.get_by_role("main").get_by_text("Archived", exact=True)).to_be_visible()
     archived = page.get_by_role("region", name="Archived")
     expect(archived.get_by_role("link", name=re.compile(re.escape(project["title"])))).to_be_visible()
     expect(page.get_by_role("region", name="Open")).to_have_count(0)
@@ -147,7 +147,9 @@ def test_close_moves_it_to_archived_group_in_mine_and_is_read_only(page: Page, m
     page.goto("/projects")
     mine_tab(page)
     page.get_by_role("region", name="Archived").get_by_role("link", name=re.compile(re.escape(project["title"]))).click()
-    expect(page.get_by_text("archived · by")).to_be_visible()
+    # Wait for the project page: the Mine list it came from also says "Archived".
+    expect(page).to_have_url(re.compile(r"/projects/\d+$"))
+    expect(page.get_by_role("main").get_by_text("Archived", exact=True)).to_be_visible()
     expect(page.get_by_role("button", name="Add a role")).to_have_count(0)
     expect(page.get_by_role("button", name="Edit details")).to_have_count(0)
 

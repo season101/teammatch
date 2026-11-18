@@ -125,7 +125,7 @@ export function ProjectEditor({
             {/* Status as a chip, and how full the team is in words (principle 2). */}
             <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
               <Chip variant={data.status === "open" ? "selected" : "default"}>
-                <span className="capitalize">{data.status}</span>
+                {(data.status ?? "").replace(/^./, (first) => first.toUpperCase())}
               </Chip>
               {data.roles.length > 0 && (
                 <span>

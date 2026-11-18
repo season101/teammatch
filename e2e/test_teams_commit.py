@@ -19,6 +19,9 @@ from teams_support import (  # noqa: F401  (fixtures)
     waiting,
 )
 
+# An empty tab of My applications says what lands there.
+EMPTY_TAB = re.compile(r"^(No offers yet|Nothing pending|No commitment yet|Nothing closed)$")
+
 
 def confirm_commit(page: Page, project_title):
     dialog = page.get_by_role("dialog", name=f"Commit to {project_title}?")
@@ -53,7 +56,7 @@ def test_candidate_sees_offer_and_declines_it(page: Page, owned, candidate, sign
     page.get_by_role("dialog", name="Decline this offer?").get_by_role(
         "button", name="Decline", exact=True
     ).click()
-    expect(page.get_by_role("tabpanel").get_by_text("Nothing here.")).to_be_visible()
+    expect(page.get_by_role("tabpanel").get_by_role("heading", name=EMPTY_TAB)).to_be_visible()
     page.get_by_role("tab", name="Closed").click()
     expect(page.get_by_role("tabpanel").get_by_text("You declined on")).to_be_visible()
     # The role stays open and the owner sees the decline.
@@ -110,7 +113,7 @@ def test_commit_dialog_guards_then_commit_closes_everything_else(
     page.get_by_role("tab", name="Closed").click()
     expect(page.get_by_role("tabpanel").get_by_text("Closed when you committed.")).to_have_count(2)
     page.get_by_role("tab", name="Offers").click()
-    expect(page.get_by_role("tabpanel").get_by_text("Nothing here.")).to_be_visible()
+    expect(page.get_by_role("tabpanel").get_by_role("heading", name=EMPTY_TAB)).to_be_visible()
 
     # Deck closed (screen 32), badges cleared.
     page.goto("/feed")
@@ -315,7 +318,7 @@ def test_deleting_the_last_open_role_locks_the_team(two_pages, owned, candidate,
     back = role_title(project, "Back")
     row = owner_page.get_by_role("listitem").filter(has=owner_page.get_by_role("heading", name=back))
     row.get_by_role("button", name="Delete role").click()
-    owner_page.get_by_role("dialog", name="Delete this role?").get_by_role(
+    owner_page.get_by_role("dialog", name=re.compile(r"^Delete .+\?$")).get_by_role(
         "button", name="Delete role"
     ).click()
     # Fixed in PR #243: the celebration shows without a reload.

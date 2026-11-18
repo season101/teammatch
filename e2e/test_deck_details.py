@@ -42,7 +42,7 @@ def test_tapping_the_card_opens_the_role(page, deck):
     page.get_by_role("article").first.click(position={"x": 60, "y": 150})
     expect_details(page, proj, ids[0], f"First {t}")
     expect(page.get_by_text(f"Pitch text {t}")).to_be_visible()
-    expect(page.get_by_text(f"Second {t}, open")).to_be_visible()  # team so far
+    expect(page.get_by_role("listitem").filter(has_text=f"Second {t}")).to_contain_text("Open")  # team so far
     expect(page.get_by_role("link", name="Back to the deck")).to_be_visible()
 
 
@@ -225,7 +225,7 @@ def test_filled_role_offers_no_apply_or_pass(page, deck):
     page.goto(f"/projects/{proj.id}?role={rid}")
     expect(page.get_by_role("heading", level=1, name=f"Gone {t}")).to_be_visible()
     expect(page.get_by_text("This role is filled.")).to_be_visible()
-    expect(page.get_by_text(f"{taker.user.name}, Gone {t}")).to_be_visible()
+    expect(page.get_by_role("listitem").filter(has_text=f"Gone {t}")).to_contain_text(f"{taker.user.name}Filled")
     expect(page.get_by_role("button", name=re.compile("^Apply to"))).to_have_count(0)
 
 

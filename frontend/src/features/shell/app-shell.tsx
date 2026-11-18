@@ -430,13 +430,14 @@ function SidebarMode({
                     </Link>
                   )}
                   {/* BR-14 blocks publishing a second open project, not drafting one. */}
-                  {owned.some((project) => project.status === "open") && (
+                  {pathname !== "/projects" && owned.some((project) => project.status === "open") && (
                     <p className="px-3 text-xs text-muted">
                       You have an open project, so a new one stays a draft until
                       you close it or it locks.
                     </p>
                   )}
-                  <MyProjectsList projects={mine} />
+                  {/* On the Projects page the stage lists them. */}
+                  {pathname !== "/projects" && <MyProjectsList projects={mine} />}
                   {owned.length > 0 && (
                     <Link href="/applicants" className={rowLink}>
                       Review applicants

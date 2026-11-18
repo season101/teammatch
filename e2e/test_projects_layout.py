@@ -280,5 +280,5 @@ def test_keyboard_escape_closes_the_close_dialog_without_closing(browser, make_a
     expect(dialog).to_be_visible()
     page.keyboard.press("Escape")
     expect(dialog).to_have_count(0)
-    expect(page.get_by_text("open · by")).to_be_visible()
+    expect(page.get_by_role("main").get_by_text("Open", exact=True)).to_be_visible()
     context.close()

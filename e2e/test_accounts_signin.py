@@ -13,7 +13,7 @@ def log_out(page: Page):
     expect(page).not_to_have_url(re.compile(r"/settings"))
 
 
-WRONG = "Email or password is incorrect."
+WRONG = "Email or password is incorrect. Try again or reset your password."
 
 
 def attempt(page: Page, email: str, password: str):

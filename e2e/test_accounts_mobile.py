@@ -3,6 +3,7 @@
 import uuid
 
 import pytest
+from conftest import INFO_STEP
 from accounts_support import RESET, alerts, mail_links, new_link
 from playwright.sync_api import Page, expect
 
@@ -91,7 +92,7 @@ def test_verify_screens_fit(phone: Page, make_user, verify_link):
     expect(phone.get_by_role("heading", name="Team rules")).to_be_visible()
     no_sideways_scroll(phone)
     phone.get_by_role("button", name="I agree").click()
-    expect(phone.get_by_role("heading", name="Confirm your info")).to_be_visible()
+    expect(phone.get_by_role("heading", name=INFO_STEP)).to_be_visible()
     no_sideways_scroll(phone)
     phone.get_by_label("Name", exact=True).fill(user.name)
     phone.get_by_label("Major", exact=True).fill(user.major)

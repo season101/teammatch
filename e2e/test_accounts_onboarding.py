@@ -3,6 +3,7 @@
 import re
 
 import pytest
+from conftest import INFO_STEP
 from playwright.sync_api import Page, expect
 
 
@@ -61,9 +62,9 @@ def test_reload_after_the_rules_resumes_at_info(page: Page, verified_user, sign_
     user = verified_user("Acct Resume", onboarded=False)
     sign_in(page, user)
     page.get_by_role("button", name="I agree").click()
-    expect(page.get_by_role("heading", name="Confirm your info")).to_be_visible()
+    expect(page.get_by_role("heading", name=INFO_STEP)).to_be_visible()
     page.reload()
-    expect(page.get_by_role("heading", name="Confirm your info")).to_be_visible()
+    expect(page.get_by_role("heading", name=INFO_STEP)).to_be_visible()
     # back to the rules screen skips ahead to where they left off
     page.goto("/welcome/rules")
     expect(page).to_have_url(re.compile(r"/welcome/profile$"))
@@ -89,20 +90,20 @@ def test_resume_in_a_new_session_after_signing_out_mid_way(page: Page, verified_
     user = verified_user("Acct Resume3", onboarded=False)
     sign_in(page, user)
     page.get_by_role("button", name="I agree").click()
-    expect(page.get_by_role("heading", name="Confirm your info")).to_be_visible()
+    expect(page.get_by_role("heading", name=INFO_STEP)).to_be_visible()
     page.context.clear_cookies()
     page.goto("/welcome/profile")
     expect(page).to_have_url(re.compile(r"/login\?next="))
     sign_in(page, user)
     expect(page).to_have_url(re.compile(r"/welcome/profile$"))
-    expect(page.get_by_role("heading", name="Confirm your info")).to_be_visible()
+    expect(page.get_by_role("heading", name=INFO_STEP)).to_be_visible()
 
 
 def test_info_requires_a_name_and_major(page: Page, verified_user, sign_in):
     user = verified_user("Acct Info", onboarded=False)
     sign_in(page, user)
     page.get_by_role("button", name="I agree").click()
-    expect(page.get_by_role("heading", name="Confirm your info")).to_be_visible()
+    expect(page.get_by_role("heading", name=INFO_STEP)).to_be_visible()
     page.get_by_label("Name", exact=True).fill("")
     page.get_by_label("Major", exact=True).fill("")
     expect(page.get_by_role("button", name="Continue")).to_be_disabled()
@@ -156,4 +157,4 @@ def test_rules_keyboard_only(page: Page, verified_user, sign_in):
     sign_in(page, user)
     page.get_by_role("button", name="I agree").focus()
     page.keyboard.press("Enter")
-    expect(page.get_by_role("heading", name="Confirm your info")).to_be_visible()
+    expect(page.get_by_role("heading", name=INFO_STEP)).to_be_visible()

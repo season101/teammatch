@@ -55,7 +55,7 @@ def test_messages_arrive_live_both_ways_and_history_loads_on_reopen(two_pages, t
         page.goto(f"/teams/{team_id}/chat")
         expect(page.get_by_role("heading", name=project.title)).to_be_visible()
         expect(page.get_by_text("2 members")).to_be_visible()
-        expect(page.get_by_text("Say hi!")).to_be_visible()
+        expect(page.get_by_text("Say hi.")).to_be_visible()
         expect(page.get_by_role("button", name="Send")).to_be_enabled()
 
     t = tag()
@@ -93,7 +93,7 @@ def test_open_team_chat_from_celebration_and_teams_screen(page: Page, team, sign
     expect(celebration).to_be_visible()
     celebration.get_by_role("link", name="Open team chat").click()
     expect(page).to_have_url(re.compile(r"/teams/\d+/chat"))
-    page.get_by_role("link", name="Back to Teams").click()
+    page.get_by_role("link", name="Teams", exact=True).click()
     expect(page).to_have_url(re.compile(r"/teams$"))
     page.get_by_role("link", name="Open team chat").click()
     expect(page).to_have_url(re.compile(r"/teams/\d+/chat"))

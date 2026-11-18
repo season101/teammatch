@@ -287,7 +287,8 @@ test("the sidebar's Teams tab links to my team once I have one", () => {
 });
 
 test("a closed project stays under Mine → Archived, without making me a reviewer", () => {
-  renderShell("/projects", {
+  // Beside a project: on /projects itself the stage lists them, not the sidebar.
+  renderShell("/projects/9", {
     projects: [{ ...project, id: 5, title: "Old idea", status: "archived" }],
   });
   fireEvent.click(within(sidebar()).getByRole("tab", { name: "Mine" }));
