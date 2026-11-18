@@ -35,7 +35,7 @@ export function SignInForm({
   onSwitch,
 }: {
   next?: string;
-  // Log in or sign up passes the email from its first step, and swaps this
+  // Sign in or sign up passes the email from its first step, and swaps this
   // form for sign-up in place so the email isn't typed twice.
   initialEmail?: string;
   onSwitch?: (email: string) => void;
@@ -251,11 +251,11 @@ export function SignInForm({
             onClick={() => onSwitch(email)}
             className="font-medium text-primary underline"
           >
-            Create account
+            Sign up
           </button>
         ) : (
           <Link href="/signup" className="font-medium text-primary underline">
-            Create account
+            Sign up
           </Link>
         )}
       </p>

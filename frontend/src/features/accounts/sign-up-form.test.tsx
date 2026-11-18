@@ -23,7 +23,7 @@ function fillAndSubmit(email: string, password: string) {
   fireEvent.change(screen.getByLabelText("Password"), {
     target: { value: password },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+  fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
 }
 
 afterEach(() => vi.unstubAllGlobals());

@@ -20,14 +20,14 @@ export default function Home() {
         <Logo className="text-xl" />
         <div className="flex gap-2">
           <Link href="/login" className={buttonClasses("secondary")}>
-            Log in
+            Sign in
           </Link>
           {/* The hero has the same button, so a phone's header keeps to one. */}
           <Link
             href="/login"
             className={`${buttonClasses("cta")} max-sm:hidden`}
           >
-            Get started
+            Sign up
           </Link>
         </div>
       </header>
@@ -44,7 +44,7 @@ export default function Home() {
           </p>
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
             <Link href="/login" className={buttonClasses("cta", "lg")}>
-              Get started
+              Sign up
             </Link>
             <p className="text-sm text-muted">
               Use your @latech.edu or @email.latech.edu email.

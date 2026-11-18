@@ -9,7 +9,7 @@ import { helperClass, inputClass } from "@/components/ui/form-classes";
 
 type Step = "email" | "signin" | "signup";
 
-// Log in or sign up: one screen for both. Google, or the school email first and
+// Sign in or sign up: one screen for both. Google, or the school email first and
 // the password next. The server never says whether an email has an account
 // (F1-02), so the password step opens on `start` and offers the other in place.
 export function AuthForm({
@@ -54,7 +54,7 @@ export function AuthForm({
 
       <div className="flex flex-col gap-3">
         <h1 className="font-display text-3xl font-extrabold sm:text-4xl">
-          Log in or sign up
+          Sign in or sign up
         </h1>
         <p className="text-muted">
           One step for both. Start with your school email.

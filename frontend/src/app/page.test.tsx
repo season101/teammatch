@@ -7,8 +7,8 @@ test("leads with the hero, one way in and the three steps", () => {
   expect(
     screen.getByRole("heading", { level: 1, name: "Build the team, one role at a time." }),
   ).toBeInTheDocument();
-  // Log in and Get started open the same screen: Log in or sign up.
-  for (const link of screen.getAllByRole("link", { name: /Log in|Get started/ })) {
+  // Sign in and Sign up open the same screen: Sign in or sign up.
+  for (const link of screen.getAllByRole("link", { name: /Sign in|Sign up/ })) {
     expect(link).toHaveAttribute("href", "/login");
   }
   const steps = within(screen.getByRole("region", { name: "How it works" }));

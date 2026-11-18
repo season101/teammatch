@@ -1,7 +1,7 @@
 import { AuthForm } from "@/features/accounts/auth-form";
 import { AuthLayout } from "@/features/accounts/auth-layout";
 
-export const metadata = { title: "Log in · TeamMatch" };
+export const metadata = { title: "Sign in · TeamMatch" };
 
 export default async function SignInPage({
   searchParams,

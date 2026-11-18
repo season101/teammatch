@@ -27,8 +27,8 @@ def phone(page: Page):
 @pytest.mark.parametrize(
     "path,heading",
     [
-        ("/login", "Log in or sign up"),
-        ("/signup", "Log in or sign up"),
+        ("/login", "Sign in or sign up"),
+        ("/signup", "Sign in or sign up"),
         ("/reset-password", "Forgot your password?"),
         ("/verify-email/garbage", "Verify your email"),
         ("/reset-password/garbage", "This link has expired"),
@@ -55,7 +55,7 @@ def test_error_and_check_inbox_states_fit(phone: Page, verified_user):
     phone.get_by_label("School email").fill(long_email)
     phone.get_by_role("button", name="Continue with email").click()
     phone.get_by_label("Password").fill(f"acct-{uuid.uuid4().hex}")
-    phone.get_by_role("button", name="Create account").click()
+    phone.get_by_role("button", name="Sign up").click()
     expect(phone.get_by_role("heading", name="Check your inbox")).to_be_visible()
     no_sideways_scroll(phone)
 
@@ -81,7 +81,7 @@ def test_verify_screens_fit(phone: Page, make_user, verify_link):
     phone.get_by_label("School email").fill(user.email)
     phone.get_by_role("button", name="Continue with email").click()
     phone.get_by_label("Password").fill(user.password)
-    phone.get_by_role("button", name="Create account").click()
+    phone.get_by_role("button", name="Sign up").click()
     expect(phone.get_by_role("heading", name="Check your inbox")).to_be_visible()
     phone.goto(verify_link(user.email))
     phone.get_by_role("button", name="Verify my email").click()
@@ -106,7 +106,7 @@ def test_phone_sign_in_then_settings_fit(phone: Page, verified_user, sign_in):
     phone.goto("/settings")
     expect(phone.get_by_role("heading", name="Settings")).to_be_visible()
     no_sideways_scroll(phone)
-    expect(phone.get_by_role("button", name="Log out")).to_be_visible()
+    expect(phone.get_by_role("button", name="Sign out")).to_be_visible()
 
 
 def test_phone_buttons_are_big_enough_to_tap(phone: Page):

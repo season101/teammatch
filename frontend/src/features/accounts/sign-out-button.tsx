@@ -8,7 +8,7 @@ import { buttonClasses } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { PendingLabel } from "@/components/ui/pending-label";
 
-// Settings → Log out (UI-04). It asks first, then ends the session and goes to the landing page.
+// Settings → Sign out (UI-04). It asks first, then ends the session and goes to the landing page.
 export function SignOutButton() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -33,13 +33,13 @@ export function SignOutButton() {
         disabled={sending}
         className={buttonClasses("secondary")}
       >
-        <PendingLabel pending={sending} label="Logging out">Log out</PendingLabel>
+        <PendingLabel pending={sending} label="Signing out">Sign out</PendingLabel>
       </button>
       <Modal
         open={asking}
         onClose={() => setAsking(false)}
-        title="Log out of TeamMatch?"
-        ctaLabel="Log out"
+        title="Sign out of TeamMatch?"
+        ctaLabel="Sign out"
         onCta={logOut}
         escapeLabel="Cancel"
         escapeVariant="ghost"

@@ -14,7 +14,7 @@ def start_signup(page: Page, user, verify_link):
     page.get_by_label("School email").fill(user.email)
     page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill(user.password)
-    page.get_by_role("button", name="Create account").click()
+    page.get_by_role("button", name="Sign up").click()
     expect(page.get_by_role("heading", name="Check your inbox")).to_be_visible()
     return verify_link(user.email)
 

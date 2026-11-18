@@ -24,7 +24,7 @@ function FieldErrors({ id, errors }: { id: string; errors: AllauthError[] }) {
   );
 }
 
-// Log in or sign up passes the email from its first step, and swaps this form
+// Sign in or sign up passes the email from its first step, and swaps this form
 // for sign-in in place so the email isn't typed twice.
 export function SignUpForm({
   initialEmail = "",
@@ -209,7 +209,7 @@ export function SignUpForm({
         disabled={status === "sending"}
         className={buttonClasses("cta")}
       >
-        <PendingLabel pending={status === "sending"} label="Creating account">Create account</PendingLabel>
+        <PendingLabel pending={status === "sending"} label="Creating account">Sign up</PendingLabel>
       </button>
 
       <p className="text-center text-sm text-muted">

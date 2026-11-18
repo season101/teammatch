@@ -48,10 +48,10 @@ afterEach(() => {
 test("asks first, then ends the session and goes to the landing page", async () => {
   const { fetchMock } = renderButton();
 
-  fireEvent.click(screen.getByRole("button", { name: "Log out" }));
-  const dialog = screen.getByRole("dialog", { name: "Log out of TeamMatch?" });
+  fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+  const dialog = screen.getByRole("dialog", { name: "Sign out of TeamMatch?" });
   expect(dialog).toHaveTextContent("You can sign back in with the same email.");
-  fireEvent.click(within(dialog).getByRole("button", { name: "Log out" }));
+  fireEvent.click(within(dialog).getByRole("button", { name: "Sign out" }));
 
   await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
   const [url, init] = fetchMock.mock.calls[0];
@@ -63,9 +63,9 @@ test("asks first, then ends the session and goes to the landing page", async () 
 test("forgets everything cached for the signed-out user", async () => {
   const { client } = renderButton();
 
-  fireEvent.click(screen.getByRole("button", { name: "Log out" }));
+  fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
   fireEvent.click(
-    within(screen.getByRole("dialog")).getByRole("button", { name: "Log out" }),
+    within(screen.getByRole("dialog")).getByRole("button", { name: "Sign out" }),
   );
 
   await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
@@ -76,7 +76,7 @@ test("forgets everything cached for the signed-out user", async () => {
 test("Cancel keeps you signed in", () => {
   const { fetchMock } = renderButton();
 
-  fireEvent.click(screen.getByRole("button", { name: "Log out" }));
+  fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

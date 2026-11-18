@@ -56,7 +56,7 @@ test("asks for the school email first, with no password field yet", () => {
   renderForm();
 
   expect(
-    screen.getByRole("heading", { level: 1, name: "Log in or sign up" }),
+    screen.getByRole("heading", { level: 1, name: "Sign in or sign up" }),
   ).toBeInTheDocument();
   expect(screen.getByLabelText("School email")).toHaveAccessibleDescription(
     "Use your @latech.edu or @email.latech.edu email.",
@@ -82,17 +82,17 @@ test("Continue with email carries the email to the password step and signs in", 
   });
 });
 
-test("someone new switches to Create account without typing the email again", async () => {
+test("someone new switches to Sign up without typing the email again", async () => {
   const fetchMock = mockFetch(401, { status: 401 });
   renderForm();
   continueWithEmail("sam@latech.edu");
-  fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+  fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
 
   expect(screen.getByLabelText("School email")).toHaveValue("sam@latech.edu");
   fireEvent.change(screen.getByLabelText("Password"), {
     target: { value: "a-long-password" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+  fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
 
   expect(await screen.findByText("Check your inbox")).toBeInTheDocument();
   expect(lastPost(fetchMock)).toEqual({
@@ -101,13 +101,13 @@ test("someone new switches to Create account without typing the email again", as
   });
 });
 
-test("/signup opens the password step on Create account, and can switch back", () => {
+test("/signup opens the password step on Sign up, and can switch back", () => {
   mockFetch(200);
   renderForm({ start: "signup" });
   continueWithEmail("sam@latech.edu");
 
   expect(
-    screen.getByRole("button", { name: "Create account" }),
+    screen.getByRole("button", { name: "Sign up" }),
   ).toHaveAttribute("type", "submit");
   fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
   expect(screen.getByRole("button", { name: "Sign in" })).toHaveAttribute(
