@@ -3,6 +3,8 @@
 import { useQueries } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
+import { buttonClasses } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs } from "@/components/ui/tabs";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { applicantsQuery, useMyProjects, type MyProject } from "./queries";
@@ -23,16 +25,16 @@ export function ReviewApplicants() {
   }
   if (projects.data.length === 0) {
     return (
-      <p className="text-muted">
-        You don&apos;t own any projects yet.{" "}
-        <Link
-          href="/projects/new"
-          className="font-medium text-primary hover:underline"
-        >
-          Create one
-        </Link>
-        .
-      </p>
+      <EmptyState
+        title="No project to review"
+        action={
+          <Link href="/projects/new" className={buttonClasses()}>
+            New project
+          </Link>
+        }
+      >
+        Post a project and the roles it needs. Applicants show up here.
+      </EmptyState>
     );
   }
 
@@ -40,16 +42,16 @@ export function ReviewApplicants() {
   const open = projects.data.filter((project) => project.status === "open");
   if (open.length === 0) {
     return (
-      <p className="text-muted">
-        No open project to review yet. Publish a draft from{" "}
-        <Link
-          href="/projects"
-          className="font-medium text-primary hover:underline"
-        >
-          Projects
-        </Link>{" "}
-        to start getting applicants.
-      </p>
+      <EmptyState
+        title="No open project to review yet"
+        action={
+          <Link href="/projects" className={buttonClasses()}>
+            Go to Projects
+          </Link>
+        }
+      >
+        Publish a draft to start getting applicants.
+      </EmptyState>
     );
   }
 

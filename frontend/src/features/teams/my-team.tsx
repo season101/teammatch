@@ -5,6 +5,7 @@ import { Button, buttonClasses } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { Avatar } from "@/features/profiles/avatar";
+import { useMySummary } from "@/features/shell/queries";
 import { useMyTeam, type MyTeam } from "./queries";
 
 // "2026-12-12" -> "Dec 12". Parsed as a local date so it doesn't slip a day.
@@ -17,6 +18,8 @@ export function termEnd(team: MyTeam) {
 
 export function MyTeamView() {
   const team = useMyTeam();
+  // Cached by the shell, which loads it for the nav badges.
+  const summary = useMySummary().data;
 
   if (team.isPending) {
     return <SkeletonRows label="Loading your team" />;
@@ -32,12 +35,18 @@ export function MyTeamView() {
     );
   }
   if (!team.data) {
+    // The nearest step to a team: an offer to answer, applicants to review, else the deck.
+    const [href, label] = summary?.offers
+      ? ["/applications", summary.offers === 1 ? "See your offer" : "See your offers"]
+      : summary?.applicants_waiting
+        ? ["/applicants", "Review applicants"]
+        : ["/feed", "Go to Discover"];
     return (
       <EmptyState
         title="No team yet"
         action={
-          <Link href="/feed" className={buttonClasses()}>
-            Go to Discover
+          <Link href={href} className={buttonClasses()}>
+            {label}
           </Link>
         }
       >

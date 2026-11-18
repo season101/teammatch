@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Modal } from "@/components/ui/modal";
 import { PendingLabel } from "@/components/ui/pending-label";
 import { Tabs } from "@/components/ui/tabs";
@@ -171,7 +172,16 @@ function Row({
   );
 }
 
-const NOTHING = <p className="text-sm text-muted">Nothing here.</p>;
+// An empty tab says what lands there, in the same layout as every other empty screen.
+const EMPTY = {
+  offers: ["No offers yet", "When an owner likes your application, their offer shows up here."],
+  pending: ["Nothing pending", "Roles you applied to wait here until the owner decides."],
+  committed: ["No commitment yet", "When you commit to an offer, your seat shows up here."],
+  closed: ["Nothing closed", "Applications you withdrew, declined or weren't picked for end up here."],
+};
+const nothing = (tab: keyof typeof EMPTY) => (
+  <EmptyState title={EMPTY[tab][0]}>{EMPTY[tab][1]}</EmptyState>
+);
 
 export function MyApplications() {
   const applications = useMyApplications();
@@ -261,7 +271,7 @@ export function MyApplications() {
             label: offers.length > 0 ? `Offers ${offers.length}` : "Offers",
             panel:
               offers.length === 0 ? (
-                NOTHING
+                nothing("offers")
               ) : (
                 <div className="flex flex-col gap-4">
                   <p className="text-muted">
@@ -321,7 +331,7 @@ export function MyApplications() {
             label: "Pending",
             panel:
               pending.length === 0 ? (
-                NOTHING
+                nothing("pending")
               ) : (
                 <ul className="flex flex-col gap-3">
                   {pending.map((application) => (
@@ -339,7 +349,7 @@ export function MyApplications() {
             label: "Committed",
             panel:
               committed.length === 0 ? (
-                NOTHING
+                nothing("committed")
               ) : (
                 <div className="flex flex-col gap-6">
                   {committed.map((application) => (
@@ -399,7 +409,7 @@ export function MyApplications() {
             label: "Closed",
             panel:
               closed.length === 0 ? (
-                NOTHING
+                nothing("closed")
               ) : (
                 <ul className="flex flex-col gap-3">
                   {closed.map((application) => (

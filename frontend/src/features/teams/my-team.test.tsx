@@ -111,3 +111,13 @@ test("a moderator on no project is told an admin assigns them", () => {
     screen.getByText("Projects show up here once an admin puts you on them."),
   ).toBeInTheDocument();
 });
+
+test("without a team, the button points at the nearest step to one", () => {
+  renderPage(null, { "my-summary": { offers: 1, applicants_waiting: 2 } });
+  expect(screen.getByRole("link", { name: "See your offer" })).toHaveAttribute("href", "/applications");
+});
+
+test("an owner with applicants waiting is sent to Review", () => {
+  renderPage(null, { "my-summary": { offers: 0, applicants_waiting: 2 } });
+  expect(screen.getByRole("link", { name: "Review applicants" })).toHaveAttribute("href", "/applicants");
+});
