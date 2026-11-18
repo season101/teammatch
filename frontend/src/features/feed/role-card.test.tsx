@@ -94,3 +94,16 @@ test("no match badge when the role asks for no skills", () => {
   render(<RoleCard role={{ ...makeRole(), required_skills: [], match_percent: null }} mySkillIds={[]} />);
   expect(screen.queryByText(/% match/)).toBeNull();
 });
+
+test("the match badge is lime from 50% and neutral under it", () => {
+  const { rerender } = render(<RoleCard role={makeRole()} mySkillIds={[]} />);
+  expect(screen.getByText("50% match")).toHaveClass("bg-apply");
+  rerender(<RoleCard role={{ ...makeRole(), match_percent: 49 }} mySkillIds={[]} />);
+  expect(screen.getByText("49% match")).not.toHaveClass("bg-apply");
+});
+
+test("with no skills, a 0% match becomes a prompt to add skills", () => {
+  render(<RoleCard role={{ ...makeRole(), match_percent: 0 }} mySkillIds={[]} />);
+  expect(screen.getByText("Add skills to see your match")).toBeInTheDocument();
+  expect(screen.queryByText(/% match/)).toBeNull();
+});

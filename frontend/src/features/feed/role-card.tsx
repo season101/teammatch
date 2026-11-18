@@ -42,7 +42,12 @@ export function RoleCard({ role, mySkillIds }: { role: FeedRole; mySkillIds: num
           {/* Null when the role asks for no skills, so there's nothing to match (DD-20). */}
           {role.match_percent !== null && (
             <span className="shrink-0">
-              <MatchBadge percent={role.match_percent} />
+              {/* 0% with no skills says nothing about the role, so prompt instead. */}
+              {role.match_percent === 0 && mySkillIds.length === 0 ? (
+                <span className="text-xs text-muted">Add skills to see your match</span>
+              ) : (
+                <MatchBadge percent={role.match_percent} />
+              )}
             </span>
           )}
         </div>

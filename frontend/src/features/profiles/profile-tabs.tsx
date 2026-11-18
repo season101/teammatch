@@ -95,7 +95,16 @@ function ProfilePreview({ profile }: { profile: MyProfile }) {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted">No skills yet.</p>
+              <p className="text-sm text-muted">
+                No skills yet.{" "}
+                <button
+                  type="button"
+                  onClick={() => setProfileTab("edit")}
+                  className="font-medium text-text underline"
+                >
+                  Add skills
+                </button>
+              </p>
             )}
           </section>
           <section className="flex flex-col gap-2">
