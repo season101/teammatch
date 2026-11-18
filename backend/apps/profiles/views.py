@@ -56,7 +56,7 @@ class MyAvatarView(APIView):
         responses=MyProfileSerializer,
     )
     def post(self, request):
-        """JPEG, PNG or WebP, 5 MB or less. Anything else: 400 invalid_avatar, old one kept."""
+        """JPEG, PNG or WebP, 10 MB or less. Anything else: 400 invalid_avatar, old one kept."""
         profile = my_profile(request.user)
         set_avatar(profile, request.FILES.get("avatar"))
         return Response(MyProfileSerializer(profile).data)

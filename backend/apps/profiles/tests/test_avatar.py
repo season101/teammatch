@@ -88,9 +88,9 @@ def test_bad_files_are_refused_and_the_old_avatar_stays(client, sam, file):
     assert default_storage.exists(before)
 
 
-def test_over_5_mb_is_refused(client, sam):
-    # A real PNG padded past 5 MB: Pillow alone would accept it.
-    big = SimpleUploadedFile("big.png", image_file().read() + b"\0" * (5 * 1024 * 1024))
+def test_over_10_mb_is_refused(client, sam):
+    # A real PNG padded past 10 MB: Pillow alone would accept it.
+    big = SimpleUploadedFile("big.png", image_file().read() + b"\0" * (10 * 1024 * 1024))
 
     response = upload(client, big)
 
