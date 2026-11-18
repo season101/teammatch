@@ -26,6 +26,7 @@ const NEW = {
   has_resume: false,
   resume_name: "",
   email: "sam@latech.edu",
+  role: "student" as const,
   rules_accepted_at: null as string | null,
 };
 const AGREED = { ...NEW, rules_accepted_at: "2026-11-11T10:00:00Z" };

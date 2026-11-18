@@ -16,6 +16,7 @@ const PROFILE: MyProfile = {
   has_resume: false,
   resume_name: "",
   email: "sam@latech.edu",
+  role: "student",
   rules_accepted_at: null,
 };
 const ADDED = { ...PROFILE, has_resume: true, resume_name: "sam-resume.pdf" };

@@ -56,6 +56,7 @@ const project = (overrides: Record<string, unknown> = {}) => ({
   status: "open",
   owner: 2,
   owner_name: "Olive Nguyen",
+  moderators: [] as string[],
   roles: [
     ROLE,
     { ...ROLE, id: 4, title: "Backend developer", status: "filled", filled_by_name: "Sam Lee" },

@@ -1,5 +1,7 @@
+from django.contrib.auth import get_user_model
 from django.utils.text import Truncator
 from drf_spectacular.extensions import OpenApiSerializerFieldExtension
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.profiles.serializers import skills_from_ids
@@ -144,6 +146,7 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
     # Public info only: the owner's display name, never their email.
     owner_name = serializers.CharField(source="owner.profile.display_name", read_only=True)
     roles = RoleDetailSerializer(many=True, read_only=True)
+    moderators = serializers.SerializerMethodField()
 
     class Meta:
         model = Project
@@ -157,5 +160,46 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
             "owner",
             "owner_name",
             "roles",
+            "moderators",
             "created_at",
         ]
+
+    def get_moderators(self, project) -> list[str]:
+        return services.moderator_names(project)
+
+
+# The serializers below are for the admin's moderation page only: they show emails.
+class ModeratorSerializer(serializers.ModelSerializer):
+    display_name = serializers.CharField(source="profile.display_name", read_only=True)
+
+    class Meta:
+        model = get_user_model()
+        fields = ["id", "email", "display_name"]
+        read_only_fields = ["id", "display_name"]
+        extra_kwargs = {"email": {"validators": []}}  # an existing account, so not unique
+
+    def validate_email(self, email):
+        self.user = get_user_model().objects.filter(email__iexact=email).first()
+        if self.user is None:
+            raise serializers.ValidationError("No account uses that email.")
+        if self.user.is_staff:
+            raise serializers.ValidationError("That account is an admin.")
+        return email
+
+    def create(self, validated_data):
+        return services.set_moderator(self.user, True)
+
+
+class ModerationProjectSerializer(serializers.ModelSerializer):
+    owner_name = serializers.CharField(source="owner.profile.display_name", read_only=True)
+    term = serializers.CharField(source="term.name", read_only=True)
+    moderators = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Project
+        fields = ["id", "title", "status", "term", "owner_name", "moderators"]
+
+    @extend_schema_field(ModeratorSerializer(many=True))
+    def get_moderators(self, project):
+        users = [link.user for link in project.moderator_links.all()]
+        return ModeratorSerializer(users, many=True).data

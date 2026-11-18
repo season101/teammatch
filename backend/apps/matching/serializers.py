@@ -1,10 +1,12 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.core.models import Term
 from apps.profiles.serializers import ProfileSerializer, SkillSerializer
 from apps.projects.models import Project, Role
+from apps.projects.services import moderator_names
 
-from .models import Application, Membership
+from .models import Application, Membership, Team
 
 
 def match_percent(obj) -> int | None:
@@ -167,12 +169,45 @@ class MyTeamSerializer(serializers.ModelSerializer):
     project = TeamProjectSerializer(source="team.project", read_only=True)
     term = TeamTermSerializer(source="team.project.term", read_only=True)
     members = TeamMemberSerializer(source="team.memberships", many=True, read_only=True)
+    moderators = serializers.SerializerMethodField()
     formed_at = serializers.DateTimeField(source="team.created_at", read_only=True)
 
     class Meta:
         model = Membership
-        fields = ["id", "project", "term", "members", "formed_at", "seen_at"]
+        fields = ["id", "project", "term", "members", "moderators", "formed_at", "seen_at"]
         read_only_fields = ["seen_at"]
+
+    def get_moderators(self, membership) -> list[str]:
+        return moderator_names(membership.team.project)
+
+
+class ModeratedTeamSerializer(serializers.ModelSerializer):
+    members = TeamMemberSerializer(source="memberships", many=True, read_only=True)
+    formed_at = serializers.DateTimeField(source="created_at", read_only=True)
+
+    class Meta:
+        model = Team
+        fields = ["id", "members", "formed_at"]
+
+
+class ModeratedProjectSerializer(serializers.ModelSerializer):
+    """A project I moderate. team is null until every role is filled."""
+
+    term = TeamTermSerializer(read_only=True)
+    moderators = serializers.SerializerMethodField()
+    team = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Project
+        fields = ["id", "title", "status", "term", "moderators", "team"]
+
+    def get_moderators(self, project) -> list[str]:
+        return moderator_names(project)
+
+    @extend_schema_field(ModeratedTeamSerializer(allow_null=True))
+    def get_team(self, project):
+        team = getattr(project, "team", None)  # a missing one-to-one raises, so getattr
+        return ModeratedTeamSerializer(team).data if team else None
 
 
 class MyTeamResponseSerializer(serializers.Serializer):

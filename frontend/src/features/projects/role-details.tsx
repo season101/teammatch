@@ -13,7 +13,7 @@ import { useMyApplications } from "@/features/applications/queries";
 import { NoteField } from "@/features/feed/note-field";
 import { useApply, useDismiss, type ApiError } from "@/features/feed/queries";
 import { deckHandoff } from "@/features/feed/role-card";
-import { useMyProfile, useSkills } from "@/features/profiles/queries";
+import { useMyProfile, useMyRole, useSkills } from "@/features/profiles/queries";
 import { ProjectEditor, RepoAndDetails } from "./project-editor";
 import { useProject } from "./queries";
 
@@ -69,6 +69,7 @@ export function RoleDetails({
   // Only to tick the skills I have, so nothing waits for it.
   const mySkillIds = useMyProfile().data?.skills.map((skill) => skill.id) ?? [];
   const applications = useMyApplications();
+  const myRole = useMyRole(); // moderators and admins don't apply or pass
   const apply = useApply();
   const dismiss = useDismiss();
   const back = useBackToDeck(roleId);
@@ -150,7 +151,7 @@ export function RoleDetails({
 
   // Apply and Pass aren't offered on my own project, a role I applied to or a filled one.
   let decision: ReactNode;
-  if (data.owner === userId || applications.isPending) {
+  if (data.owner === userId || applications.isPending || (myRole && myRole !== "student")) {
     decision = alert;
   } else if (applied) {
     decision = (

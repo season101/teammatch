@@ -336,3 +336,19 @@ test("no setup card before the profile loads", () => {
   expect(screen.queryByRole("region", { name: "Finish setup" })).toBeNull();
   expect(screen.getAllByRole("link", { name: "Discover" })).toHaveLength(3);
 });
+
+const AGREED = { rules_accepted_at: "2026-11-11T10:00:00Z", skills: [{ id: 1 }] };
+
+test.each([
+  ["admin", ["Projects", "Moderation", "Me"], "/moderation"],
+  ["moderator", ["Projects", "Teams", "Me"], "/teams"],
+])("a %s gets their own places, not the student ones", (role, places, home) => {
+  renderShell("/projects", { profile: { ...AGREED, role } });
+  const [, sideNav, bottomBar] = screen.getAllByRole("navigation", { name: "Main" });
+
+  expect(within(bottomBar).getAllByRole("link").map((link) => link.textContent)).toEqual(places);
+  expect(within(sideNav).queryByRole("link", { name: "Discover" })).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "TeamMatch, go home" })).toHaveAttribute("href", home);
+  // No "New project" or applications in the sidebar either.
+  expect(within(sidebar()).queryByRole("link", { name: "New project" })).not.toBeInTheDocument();
+});

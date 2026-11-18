@@ -15,16 +15,18 @@ const team = {
     { display_name: "Marco Rossi", role: "Owner" },
     { display_name: "", role: "Backend developer" },
   ],
+  moderators: ["Dr. Lee"],
   formed_at: "2026-10-24T18:00:00Z",
   seen_at: "2026-10-30T12:00:00Z",
 };
 
-function renderPage(myTeam: typeof team | null) {
+function renderPage(myTeam: typeof team | null, cache: Record<string, unknown> = {}) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity } },
   });
   client.setQueryData(["session"], { id: 1, email: "sam@latech.edu" });
   client.setQueryData(["my-team"], myTeam);
+  for (const [key, data] of Object.entries(cache)) client.setQueryData([key], data);
   render(
     <QueryClientProvider client={client}>
       <TeamsPage />
@@ -60,4 +62,52 @@ test("without a team it says when one shows up", () => {
     screen.getByText("Your team shows up here once every role is filled. Team chat opens then."),
   ).toBeInTheDocument();
   expect(screen.queryByRole("list")).not.toBeInTheDocument();
+});
+
+test("names the team's moderators under the lineup", () => {
+  renderPage(team);
+
+  expect(screen.getByText("Moderated by Dr. Lee")).toBeInTheDocument();
+});
+
+test("a moderator sees the projects they moderate, with chat once the team forms", () => {
+  const { id, members, formed_at } = team;
+  renderPage(null, {
+    "my-profile": { role: "moderator" },
+    "moderated-projects": [
+      {
+        id: 4,
+        title: "Bulldog Bites",
+        status: "locked",
+        term: team.term,
+        moderators: ["Dr. Lee"],
+        team: { id, members, formed_at },
+      },
+      { id: 9, title: "Thesis Tracker", status: "open", term: team.term, moderators: [], team: null },
+    ],
+  });
+
+  expect(screen.getByRole("heading", { name: "Bulldog Bites" })).toBeInTheDocument();
+  expect(screen.getByRole("list", { name: "Team for Bulldog Bites" })).toHaveTextContent(
+    "Marco Rossi · Owner",
+  );
+  expect(
+    screen.getByRole("link", { name: "Open team chat for Bulldog Bites" }),
+  ).toHaveAttribute("href", "/teams/3/chat");
+  expect(screen.getByRole("link", { name: "View Thesis Tracker" })).toHaveAttribute(
+    "href",
+    "/projects/9",
+  );
+  expect(
+    screen.queryByRole("link", { name: "Open team chat for Thesis Tracker" }),
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText("No team yet")).not.toBeInTheDocument();
+});
+
+test("a moderator on no project is told an admin assigns them", () => {
+  renderPage(null, { "my-profile": { role: "moderator" }, "moderated-projects": [] });
+
+  expect(
+    screen.getByText("Projects show up here once an admin puts you on them."),
+  ).toBeInTheDocument();
 });

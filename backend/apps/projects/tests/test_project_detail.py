@@ -152,7 +152,7 @@ def test_member_names_do_not_add_queries_per_role(other, project, django_assert_
     for i in range(3):
         user = get_user_model().objects.create_user(email=f"m{i}@latech.edu", password="pw")
         fill_role(project, user)
-    with django_assert_max_num_queries(3):
+    with django_assert_max_num_queries(4):
         client_for(other).get(url(project))
 
 

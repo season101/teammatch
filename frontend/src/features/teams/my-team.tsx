@@ -84,6 +84,11 @@ export function MyTeamView() {
           </li>
         ))}
       </ul>
+      {team.data.moderators.length > 0 && (
+        <p className="text-sm text-muted">
+          Moderated by {team.data.moderators.map((name) => name || "a moderator").join(", ")}
+        </p>
+      )}
       <Link
         href={`/teams/${team.data.id}/chat`}
         className={`${buttonClasses()} w-full sm:w-auto sm:self-start`}

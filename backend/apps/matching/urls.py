@@ -33,5 +33,6 @@ urlpatterns = [
     path("applications/<int:pk>/commit/", views.CommitView.as_view(), name="application-commit"),
     path("applications/<int:pk>/decline/", views.DeclineView.as_view(), name="application-decline"),
     path("teams/mine/", views.MyTeamView.as_view(), name="my-team"),
+    path("teams/moderating/", views.ModeratedProjectsView.as_view(), name="moderated-projects"),
     path("teams/<int:pk>/seen/", views.TeamSeenView.as_view(), name="team-seen"),
 ]

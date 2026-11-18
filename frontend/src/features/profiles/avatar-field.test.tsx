@@ -14,6 +14,7 @@ const PROFILE: MyProfile = {
   has_resume: false,
   resume_name: "",
   email: "sam@latech.edu",
+  role: "student",
   rules_accepted_at: null,
 };
 const WITH_PHOTO = { ...PROFILE, avatar_url: "/api/v1/profiles/7/avatar/?v=abc" };

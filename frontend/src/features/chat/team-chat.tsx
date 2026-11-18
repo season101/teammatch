@@ -7,14 +7,18 @@ import { buttonClasses } from "@/components/ui/button";
 import { inputClass, noticeClass } from "@/components/ui/form-classes";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { BackIcon, SendIcon } from "@/features/shell/icons";
-import { useMyTeam, type MyTeam } from "@/features/teams/queries";
+import { useModeratedProjects, useMyTeam, type MyTeam } from "@/features/teams/queries";
 import { useTeamMessages, type ChatMessage } from "./queries";
 import { useTeamSocket } from "./use-team-socket";
 
 export function TeamChat({ teamId, userId }: { teamId: number; userId: number }) {
   const team = useMyTeam();
+  const mine = team.data?.id === teamId ? team.data : undefined;
+  // Not my own team: it may be one I moderate. Only then is that list asked for.
+  const moderated = useModeratedProjects(team.isSuccess && !mine);
+  const project = moderated.data?.find((each) => each.team?.id === teamId);
 
-  if (team.isPending) {
+  if (team.isPending || (team.isSuccess && !mine && moderated.isPending)) {
     return (
       <div className="p-4">
         <SkeletonRows label="Loading your team" />
@@ -28,11 +32,13 @@ export function TeamChat({ teamId, userId }: { teamId: number; userId: number })
       </p>
     );
   }
-  // Only my own team's chat opens a socket. The server refuses anyone else too (BR-12).
-  if (!team.data || team.data.id !== teamId) {
+  // Only my own team's chat, or one I moderate, opens a socket. The server refuses
+  // anyone else too (BR-12).
+  const room = mine ?? (project?.team && { ...project.team, project });
+  if (!room) {
     return <NotOnTeam />;
   }
-  return <ChatRoom team={team.data} userId={userId} />;
+  return <ChatRoom team={room} userId={userId} />;
 }
 
 function NotOnTeam() {
@@ -46,7 +52,9 @@ function NotOnTeam() {
   );
 }
 
-function ChatRoom({ team, userId }: { team: MyTeam; userId: number }) {
+type Room = Pick<MyTeam, "id" | "members" | "formed_at"> & { project: { title: string } };
+
+function ChatRoom({ team, userId }: { team: Room; userId: number }) {
   const router = useRouter();
   const pathname = usePathname();
   const history = useTeamMessages(team.id);
