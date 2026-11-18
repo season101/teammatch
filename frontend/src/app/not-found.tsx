@@ -13,6 +13,7 @@ export default function NotFound() {
   return (
     <main className="flex flex-1 flex-col">
       <EmptyState
+        heading="h1"
         title="We couldn't find that page"
         action={
           !isPending && (

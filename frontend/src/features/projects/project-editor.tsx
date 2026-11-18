@@ -19,7 +19,8 @@ import { ProjectDetailsForm } from "./project-details-form";
 import { Chip } from "@/components/ui/chip";
 import { GitHubIcon, LinkCard } from "@/components/ui/link-card";
 import { TeamStrip, type Segment } from "@/components/ui/team-strip";
-import { buttonClasses } from "@/components/ui/button";
+import { Button, buttonClasses } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { noticeClass, successClass } from "@/components/ui/form-classes";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { PendingLabel } from "@/components/ui/pending-label";
@@ -54,11 +55,23 @@ export function ProjectEditor({
   if (project.isError || skills.isError) {
     const notFound = project.error?.status === 404;
     return (
-      <p role="alert" className={noticeClass}>
+      <EmptyState
+        heading="h1"
+        title={notFound ? "We couldn't find that project" : "Couldn't load this project"}
+        action={
+          notFound ? (
+            <Link href="/projects" className={buttonClasses()}>
+              Back to projects
+            </Link>
+          ) : (
+            <Button onClick={() => { project.refetch(); skills.refetch(); }}>Try again</Button>
+          )
+        }
+      >
         {notFound
-          ? "We couldn't find that project."
-          : "Could not load the project. Refresh the page to try again."}
-      </p>
+          ? "It may have been closed, or the link may be old."
+          : "Check your connection and try again."}
+      </EmptyState>
     );
   }
 

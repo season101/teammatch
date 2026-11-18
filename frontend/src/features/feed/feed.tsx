@@ -13,7 +13,8 @@ import {
 } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { useBump } from "@/components/ui/bump";
-import { buttonClasses } from "@/components/ui/button";
+import { Button, buttonClasses } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { useMyApplications } from "@/features/applications/queries";
 import { useMyProfile } from "@/features/profiles/queries";
@@ -122,9 +123,12 @@ export function Feed() {
   }
   if (feed.isError) {
     return (
-      <p role="alert" className="text-pass">
-        Couldn&apos;t load roles. Refresh the page to try again.
-      </p>
+      <EmptyState
+        title="Couldn't load roles"
+        action={<Button onClick={() => feed.refetch()}>Try again</Button>}
+      >
+        Check your connection and try again.
+      </EmptyState>
     );
   }
 

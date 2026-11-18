@@ -106,13 +106,8 @@ export function RoleDetails({
     return <SkeletonRows label="Loading the role" rows={6} />;
   }
   if (project.isError || skills.isError) {
-    return (
-      <p role="alert" className={noticeClass}>
-        {project.error?.status === 404
-          ? "We couldn't find that project."
-          : "Could not load the role. Refresh the page to try again."}
-      </p>
-    );
+    // Same not-found and retry screen as the project page.
+    return <ProjectEditor projectId={projectId} userId={userId} />;
   }
   if (!role) return <ProjectEditor projectId={projectId} userId={userId} />;
 

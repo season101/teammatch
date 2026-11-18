@@ -38,13 +38,21 @@ export function StatusChip({
 }: {
   status?: MyApplication["status"];
 }) {
-  if (status === "liked") return <Chip variant="selected">Offer</Chip>;
-  if (status === "committed") return <Chip variant="matched">Committed</Chip>;
-  if (status === "pending") return <Chip>Pending</Chip>;
-  return (
-    <span className="opacity-60">
+  // The wrapper keeps the chip whole next to a long role title; without it the
+  // label broke mid-word in the desktop list column.
+  const chip =
+    status === "liked" ? (
+      <Chip variant="selected">Offer</Chip>
+    ) : status === "committed" ? (
+      <Chip variant="matched">Committed</Chip>
+    ) : status === "pending" ? (
+      <Chip>Pending</Chip>
+    ) : (
       <Chip>Closed</Chip>
-    </span>
+    );
+  const closed = status !== "liked" && status !== "committed" && status !== "pending";
+  return (
+    <span className={`shrink-0 whitespace-nowrap ${closed ? "opacity-60" : ""}`}>{chip}</span>
   );
 }
 
@@ -151,6 +159,7 @@ function Row({
         {onWithdraw && (
           <Button
             variant="danger"
+            className="shrink-0 whitespace-nowrap"
             aria-label={`Withdraw from ${application.role.title}`}
             onClick={onWithdraw}
           >
