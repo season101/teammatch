@@ -84,7 +84,11 @@ export function Tabs({
               aria-selected={active}
               aria-controls={`${base}-panel-${tab.id}`}
               tabIndex={active ? 0 : -1}
-              onClick={() => setSelected(tab.id)}
+              onClick={(event) => {
+                setSelected(tab.id);
+                // A tab cut off by the row's edge slides fully into view (jsdom has no scrollIntoView).
+                event.currentTarget.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+              }}
               onKeyDown={(event) => handleKeyDown(event, i)}
               className={
                 vertical

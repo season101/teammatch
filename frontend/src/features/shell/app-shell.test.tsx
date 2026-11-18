@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { afterEach, vi } from "vitest";
 import SettingsPage from "@/app/(app)/settings/page";
 import { AppShell } from "./app-shell";
+import { setProjectsTab, useProjectsTab } from "@/features/projects/projects-tab";
 import { applySavedTheme } from "./theme-script";
 
 const nav = vi.hoisted(() => ({ pathname: "/feed" }));
@@ -53,6 +54,7 @@ const sidebar = () =>
   screen.getAllByRole("navigation", { name: "Main" })[1].closest("aside")!;
 
 afterEach(() => {
+  setProjectsTab("browse");
   vi.unstubAllGlobals();
   localStorage.clear();
   delete document.documentElement.dataset.theme;
@@ -366,4 +368,27 @@ test("on /profile the side pane's Preview | Edit tabs drive the page's panels", 
   expect(within(page).getByRole("tab", { name: "Edit" })).toHaveAttribute("aria-selected", "true");
   expect(sessionStorage.getItem("tm-tab:profile")).toBe("edit");
   expect(screen.queryByRole("heading", { name: "Settings" })).toBeNull();
+});
+
+test("the sidebar's Mine tab drives the Projects page, and its own New project button steps aside", () => {
+  const Stage = () => <p>Showing {useProjectsTab()}</p>;
+  const go = renderShell("/projects", { children: <Stage /> });
+  expect(screen.getByText("Showing browse")).toBeInTheDocument();
+
+  fireEvent.click(within(sidebar()).getByRole("tab", { name: "Mine" }));
+  expect(screen.getByText("Showing mine")).toBeInTheDocument();
+  // The page header has the button on /projects; elsewhere the sidebar keeps its own.
+  expect(within(sidebar()).queryByRole("link", { name: "New project" })).toBeNull();
+  go("/projects/4");
+  expect(within(sidebar()).getByRole("link", { name: "New project" })).toBeInTheDocument();
+
+  // Leaving Projects and coming back starts on Browse again.
+  go("/feed");
+  go("/projects");
+  expect(screen.getByText("Showing browse")).toBeInTheDocument();
+});
+
+test("no page while the Team rules redirect is on its way", () => {
+  renderShell("/feed", { profile: { rules_accepted_at: null, skills: [] } });
+  expect(screen.queryByText("Stage")).toBeNull();
 });

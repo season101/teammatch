@@ -11,6 +11,7 @@ import { PendingLabel } from "@/components/ui/pending-label";
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
 import { useMyProjects } from "@/features/review/queries";
 import { MyProjectsList } from "./my-projects-list";
+import { useProjectsTab } from "./projects-tab";
 import { useOpenProjects } from "./queries";
 
 export function ProjectsList() {
@@ -132,9 +133,10 @@ export function ProjectsList() {
 }
 
 // Phone and tablet get Browse | Mine tabs here. On desktop the sidebar has those
-// tabs, so only the Browse list shows. The two layouts switch by CSS at 1024 px.
+// tabs, and the list here follows the one picked there. The two layouts switch by CSS at 1024 px.
 function ProjectsView() {
   const mine = useMyProjects();
+  const tab = useProjectsTab();
 
   return (
     <>
@@ -164,7 +166,11 @@ function ProjectsView() {
         />
       </div>
       <div className="hidden lg:block">
-        <ProjectsList />
+        {tab === "mine" ? (
+          <MyProjectsList projects={mine.data ?? []} withOpenNote />
+        ) : (
+          <ProjectsList />
+        )}
       </div>
     </>
   );

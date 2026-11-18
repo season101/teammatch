@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { KeyboardEvent, ReactNode } from "react";
+import { useEffect, type KeyboardEvent, type ReactNode } from "react";
 
 import { buttonClasses } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
@@ -11,6 +11,7 @@ import { useSession } from "@/features/accounts/require-sign-in";
 import { SignOutButton } from "@/features/accounts/sign-out-button";
 import { ApplicationsPanel } from "@/features/applications/my-applications";
 import { MyProjectsList } from "@/features/projects/my-projects-list";
+import { setProjectsTab, useProjectsTab } from "@/features/projects/projects-tab";
 import { Logo } from "@/features/landing/logo";
 import { FinishSetup } from "@/features/onboarding/finish-setup";
 import { STAFF_HOME } from "@/features/onboarding/gate";
@@ -165,7 +166,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Closed projects still list under Mine, but leave nothing to review.
   const owned = mine.filter((project) => project.status !== "archived");
   // A student until the profile says otherwise, so the usual nav never flashes away.
-  const role: Role = useMyProfile(Boolean(user)).data?.role ?? "student";
+  const profile = useMyProfile(Boolean(user)).data;
+  const role: Role = profile?.role ?? "student";
   const shown = (item: NavItem) =>
     (!item.roles || item.roles.includes(role)) && (!item.ownerOnly || owned.length > 0);
   const home = role === "student" ? "/feed" : STAFF_HOME[role];
@@ -250,7 +252,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* min-w-0: on desktop this column sits in a row, and without it wide content (a
           row of role tabs) would widen the column past the screen instead of scrolling. */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {children}
+        {/* The gate is sending them to the Team rules (DD-47): no page, so the deck and
+            its coach marks never flash first. */}
+        {profile?.rules_accepted_at === null ? null : children}
         {legend && <KeyboardLegend key={pathname} keys={legend} />}
       </div>
 
@@ -304,6 +308,12 @@ function SidebarMode({
   team?: MyTeam | null;
 }) {
   const profileTab = useProfileTab();
+  const projectsTab = useProjectsTab();
+  const inProjects = isIn(pathname, ["/projects", "/applicants"]);
+  // Coming back to Projects from elsewhere starts on Browse again.
+  useEffect(() => {
+    if (!inProjects) setProjectsTab("browse");
+  }, [inProjects]);
   // The profile's Preview | Edit: the tabs are here, their panels in the page.
   if (pathname === "/profile") {
     const hint = (text: string) => <p className="px-3 text-sm text-muted">{text}</p>;
@@ -371,8 +381,11 @@ function SidebarMode({
   // Both modes render Tabs in the same spot, so React would keep the last page's
   // selection (Review's Mine on /teams selects nothing). Keyed by the default tab,
   // they start over when a page wants a different one.
-  if (isIn(pathname, ["/projects", "/applicants"])) {
-    const tab = pathname === "/applicants" ? "mine" : "browse";
+  if (inProjects) {
+    // Review is always Mine. Elsewhere the choice is shared with the Projects page,
+    // whose desktop stage shows the list for the tab picked here.
+    const review = pathname === "/applicants";
+    const tab = review ? "mine" : "browse";
     return (
       <div className="px-4">
         <Tabs
@@ -380,6 +393,8 @@ function SidebarMode({
           key={tab}
           label="Projects"
           defaultTab={tab}
+          selected={review ? undefined : projectsTab}
+          onSelect={setProjectsTab}
           tabs={[
             {
               id: "browse",
@@ -395,12 +410,15 @@ function SidebarMode({
               label: "Mine",
               panel: (
                 <div className="flex flex-col gap-2">
-                  <Link
-                    href="/projects/new"
-                    className={buttonClasses("secondary", "sm")}
-                  >
-                    New project
-                  </Link>
+                  {/* The Projects page has its own New project button. */}
+                  {pathname !== "/projects" && (
+                    <Link
+                      href="/projects/new"
+                      className={buttonClasses("secondary", "sm")}
+                    >
+                      New project
+                    </Link>
+                  )}
                   {/* BR-14 blocks publishing a second open project, not drafting one. */}
                   {owned.some((project) => project.status === "open") && (
                     <p className="px-3 text-xs text-muted">
