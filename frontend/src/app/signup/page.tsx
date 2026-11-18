@@ -1,11 +1,11 @@
+import { AuthForm } from "@/features/accounts/auth-form";
 import { AuthLayout } from "@/features/accounts/auth-layout";
-import { GoogleButton } from "@/features/accounts/google-button";
-import { SignUpForm } from "@/features/accounts/sign-up-form";
 
+// The same screen as /login; the password step opens on Create account.
 export default function SignUpPage() {
   return (
     <AuthLayout>
-      <SignUpForm google={<GoogleButton />} />
+      <AuthForm start="signup" />
     </AuthLayout>
   );
 }

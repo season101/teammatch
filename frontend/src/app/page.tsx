@@ -19,9 +19,18 @@ export default function Home() {
       <Splash />
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <Logo className="text-xl" />
-        <Link href="/login" className={buttonClasses("secondary")}>
-          Sign in
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/login" className={buttonClasses("secondary")}>
+            Log in
+          </Link>
+          {/* The hero has the same button, so a phone's header keeps to one. */}
+          <Link
+            href="/login"
+            className={`${buttonClasses("cta")} max-sm:hidden`}
+          >
+            Get started
+          </Link>
+        </div>
       </header>
 
       <main className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-4 pt-6 pb-12 sm:px-6 lg:grid-cols-[1fr_auto] lg:gap-16 lg:py-12">
@@ -36,16 +45,13 @@ export default function Home() {
             chat opens.
           </p>
           <Link
-            href="/signup"
+            href="/login"
             className={`${buttonClasses("cta", "lg")} w-full sm:w-auto`}
           >
-            Create account
+            Get started
           </Link>
-          <p className="hidden text-sm text-muted lg:block">
-            Already have an account?{" "}
-            <Link href="/login" className="text-text underline underline-offset-4">
-              Sign in
-            </Link>
+          <p className="text-sm text-muted">
+            Use your @latech.edu or @email.latech.edu email.
           </p>
         </div>
         <RoleCardPreview />

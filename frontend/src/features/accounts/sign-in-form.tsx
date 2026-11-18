@@ -3,10 +3,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { allauthPost, getSessionUser, signOut } from "./allauth";
 import { CheckInbox } from "./forgot-password-form";
-import { googleErrorText } from "./google-button";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { PendingLabel } from "@/components/ui/pending-label";
 
@@ -32,22 +31,21 @@ export function safeNext(next: string | undefined) {
 
 export function SignInForm({
   next,
-  google,
-  googleError,
+  initialEmail = "",
+  onSwitch,
 }: {
   next?: string;
-  // The page passes the Google button, shown under the title.
-  google?: ReactNode;
-  // ?error= from a Google sign-in that didn't work (/auth/callback sends it here)
-  googleError?: string;
+  // Log in or sign up passes the email from its first step, and swaps this
+  // form for sign-up in place so the email isn't typed twice.
+  initialEmail?: string;
+  onSwitch?: (email: string) => void;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [submitted, setSubmitted] = useState(false);
   // F1-13: the email of a Google-only account, for the Set a password prompt.
   const [googleOnly, setGoogleOnly] = useState("");
   const [requesting, setRequesting] = useState(false);
@@ -60,9 +58,10 @@ export function SignInForm({
   const [attempt, setAttempt] = useState(0);
   const [refused, setRefused] = useState(false);
   const passwordRef = useRef<HTMLInputElement>(null);
+  // Also on arrival with the email already filled in: the password is what's left.
   useEffect(() => {
-    if (attempt) passwordRef.current?.focus();
-  }, [attempt]);
+    if (attempt || initialEmail) passwordRef.current?.focus();
+  }, [attempt, initialEmail]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); // stop the browser from reloading the page
@@ -70,7 +69,6 @@ export function SignInForm({
     setSending(true);
     setError("");
     setGoogleOnly("");
-    setSubmitted(true); // the Google error is about an earlier try, so hide it now
     try {
       let result = await allauthPost("/auth/login", { email, password });
       // 409: the password was right, but someone else is still signed in on this
@@ -158,22 +156,12 @@ export function SignInForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {googleError && !submitted && (
-        <p
-          role="alert"
-          className="rounded-card border border-pass bg-surface-2 p-3 text-sm text-text"
-        >
-          {googleErrorText(googleError)}
-        </p>
-      )}
-
       <div className="flex flex-col gap-1">
         <h1 className="font-display text-3xl font-extrabold">Welcome back.</h1>
         <p className="text-sm text-muted">
           Sign in with your @latech.edu or @email.latech.edu account.
         </p>
       </div>
-      {google}
 
       <div className="flex flex-col gap-1">
         <label htmlFor="email" className="text-sm font-medium">
@@ -250,9 +238,19 @@ export function SignInForm({
 
       <p className="text-center text-sm text-muted">
         New here?{" "}
-        <Link href="/signup" className="font-medium text-primary underline">
-          Create account
-        </Link>
+        {onSwitch ? (
+          <button
+            type="button"
+            onClick={() => onSwitch(email)}
+            className="font-medium text-primary underline"
+          >
+            Create account
+          </button>
+        ) : (
+          <Link href="/signup" className="font-medium text-primary underline">
+            Create account
+          </Link>
+        )}
       </p>
     </form>
   );
