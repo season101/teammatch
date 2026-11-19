@@ -110,9 +110,13 @@ export async function getSignInMethods(): Promise<{
   };
 }
 
-// Signed in with no password yet: save one directly, no current password or link.
-export function setPassword(newPassword: string) {
-  return allauthPost("/account/password/change", { new_password: newPassword });
+// Signed in: save a new password. With no password yet (a Google account) there is
+// no current one to give; otherwise the server asks for it.
+export function setPassword(newPassword: string, currentPassword?: string) {
+  return allauthPost("/account/password/change", {
+    new_password: newPassword,
+    ...(currentPassword ? { current_password: currentPassword } : {}),
+  });
 }
 
 // Sends the browser to Google. A real form POST, not fetch, so allauth can

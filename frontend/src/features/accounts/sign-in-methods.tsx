@@ -31,13 +31,18 @@ function connectErrorText(code: string, email: string) {
 const canUseGoogle = (email: string) =>
   email.toLowerCase().endsWith("@email.latech.edu");
 
+// With `onCancel` it changes a password the account already has, so it asks for
+// the current one first.
 function SetPasswordForm({
   email,
   onSaved,
+  onCancel,
 }: {
   email: string;
   onSaved: () => void;
+  onCancel?: () => void;
 }) {
+  const [current, setCurrent] = useState("");
   const [password, setValue] = useState("");
   const [sending, setSending] = useState(false);
   const [errors, setErrors] = useState<AllauthError[]>([]);
@@ -47,7 +52,7 @@ function SetPasswordForm({
     setSending(true);
     setErrors([]);
     try {
-      const result = await setPassword(password);
+      const result = await setPassword(password, onCancel ? current : undefined);
       if (result.status === 200) {
         onSaved();
         return;
@@ -73,12 +78,28 @@ function SetPasswordForm({
     >
       <div className="flex flex-col gap-0.5">
         <h3 id="set-password-heading" className="font-semibold">
-          Set a password
+          {onCancel ? "Change your password" : "Set a password"}
         </h3>
-        <p className="text-sm text-muted">
-          Sign in with {email} and this password. Google keeps working.
-        </p>
+        {!onCancel && (
+          <p className="text-sm text-muted">
+            Sign in with {email} and this password. Google keeps working.
+          </p>
+        )}
       </div>
+      {onCancel && (
+        <div className="flex flex-col gap-1">
+          <label htmlFor="current-password" className="text-sm font-medium">
+            Current password
+          </label>
+          <PasswordInput
+            id="current-password"
+            required
+            autoComplete="current-password"
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+          />
+        </div>
+      )}
       <div className="flex flex-col gap-1">
         <label htmlFor="new-password" className="text-sm font-medium">
           New password
@@ -110,6 +131,15 @@ function SetPasswordForm({
       >
         {sending ? "Saving…" : "Save password"}
       </button>
+      {onCancel && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className={`${buttonClasses("secondary")} w-full`}
+        >
+          Cancel
+        </button>
+      )}
     </form>
   );
 }
@@ -153,13 +183,36 @@ export function SignInMethods() {
   const { email, password, google, googleAvailable } = methods.data;
 
   const passwordRow = password ? (
-    <div className={`${card} flex items-center justify-between gap-4`}>
-      <span className="flex flex-col gap-0.5">
-        <span className="font-semibold">Email and password</span>
-        <span className="text-sm text-muted">{email}</span>
-      </span>
-      <span className="text-sm font-semibold text-muted">On</span>
-    </div>
+    settingPassword ? (
+      <SetPasswordForm
+        email={email}
+        onCancel={() => setSettingPassword(false)}
+        onSaved={() => {
+          setSettingPassword(false);
+          setSaved(true);
+        }}
+      />
+    ) : (
+      <div className={`${card} flex items-center justify-between gap-4`}>
+        <span className="flex flex-col gap-0.5">
+          <span className="font-semibold">Email and password</span>
+          <span className="text-sm text-muted">{email}</span>
+        </span>
+        <span className="flex items-center gap-3">
+          <span className="text-sm font-semibold text-muted">On</span>
+          <button
+            type="button"
+            onClick={() => {
+              setSaved(false);
+              setSettingPassword(true);
+            }}
+            className={buttonClasses("secondary", "sm")}
+          >
+            Change password
+          </button>
+        </span>
+      </div>
+    )
   ) : settingPassword ? (
     <SetPasswordForm
       email={email}
@@ -236,7 +289,8 @@ export function SignInMethods() {
       )}
       {saved && (
         <p role="status" className="text-sm text-muted">
-          Password saved. You can sign in with {email} and it, or with Google.
+          Password saved. You can sign in with {email} and it
+          {google ? ", or with Google" : ""}.
         </p>
       )}
       {/* The way you already use comes first (screens 42 and 43). */}
