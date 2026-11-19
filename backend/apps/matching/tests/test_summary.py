@@ -116,3 +116,15 @@ def test_deck_is_committed_while_i_hold_a_seat(me, project):
     Role.objects.create(project=project, title="Mine", status=RoleStatus.FILLED, filled_by=me)
 
     assert client_for(me).get(URL).json()["deck"] == "committed"
+
+
+def test_a_finished_term_leaves_no_badges(me, owner, project):
+    role = Role.objects.create(project=project, title="Role")
+    Application.objects.create(role=role, applicant=me, status=ApplicationStatus.LIKED)
+    Application.objects.create(role=role, applicant=user("waiting"))
+    Term.objects.filter(pk=project.term_id).update(
+        end_date=timezone.localdate() - timedelta(days=1)
+    )
+
+    assert client_for(me).get(URL).json()["offers"] == 0
+    assert client_for(owner).get(URL).json()["applicants_waiting"] == 0

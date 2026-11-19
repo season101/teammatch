@@ -294,3 +294,11 @@ def test_a_student_still_sees_the_deck(fall, marco, ava):
     Role.objects.create(project=project, title="Dev")
 
     assert len(as_user(ava).get("/api/v1/feed/").json()["results"]) == 1
+
+
+def test_a_demoted_moderator_lists_no_projects(mod, team):
+    ProjectModerator.objects.create(project=team.project, user=mod)
+    mod.is_moderator = False
+    mod.save()
+
+    assert as_user(mod).get(MODERATING).json() == []

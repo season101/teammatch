@@ -56,3 +56,18 @@ def test_the_term_form_refuses_dates_that_overlap_another_term(client):
     assert response.status_code == 200  # the form again, with the error
     assert "overlap Fall" in response.content.decode()
     assert not Term.objects.filter(name="Winter").exists()
+
+
+def test_moving_a_terms_end_moves_its_teams_bench_date(rf):
+    term = Term.objects.create(
+        name="Fall", start_date=date(2026, 9, 1), end_date=date(2026, 11, 20)
+    )
+    benched = User.objects.create_user("benched@latech.edu")
+    benched.profile.retired_until = term.end_date
+    benched.profile.save()
+
+    term.end_date = date(2026, 12, 18)
+    model_admin("core/term").save_model(rf.post("/"), term, form=None, change=True)
+
+    benched.profile.refresh_from_db()
+    assert benched.profile.retired_until == date(2026, 12, 18)

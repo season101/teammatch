@@ -18,7 +18,7 @@ from rest_framework.exceptions import APIException
 
 from apps.profiles.services import is_retired, retire
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
-from apps.projects.services import MODERATORS, ensure_term_not_over
+from apps.projects.services import MODERATORS, ensure_term_not_over, get_active_term
 
 from .models import (
     Application,
@@ -110,8 +110,13 @@ def my_summary(user, today=None):
         role__project__owner=user,
         role__project__status=ProjectStatus.OPEN,
         applicant__is_active=True,
+        role__project__term__end_date__gte=today,  # a past term takes no like or pass
     ).exclude(applicant__profile__retired_until__gte=today)
-    offers = Application.objects.filter(applicant=user, status=ApplicationStatus.LIKED)
+    offers = Application.objects.filter(
+        applicant=user,
+        status=ApplicationStatus.LIKED,
+        role__project__term__end_date__gte=today,
+    )
     return {"offers": offers.count(), "applicants_waiting": waiting.count(), "deck": deck}
 
 
@@ -165,14 +170,12 @@ def my_team_seat(user, today=None):
 
     Comes with the team's project, term and members, owner first.
     """
-    today = today or timezone.localdate()
+    seats = Membership.objects.filter(user=user)
+    # Between terms the last team and its chat stay reachable; a new term starts clean.
+    if term := get_active_term(today):
+        seats = seats.filter(team__project__term=term)
     return (
-        Membership.objects.filter(
-            user=user,
-            team__project__term__start_date__lte=today,
-            team__project__term__end_date__gte=today,
-        )
-        .select_related("team__project__term")
+        seats.select_related("team__project__term")
         .prefetch_related(
             Prefetch("team__memberships", queryset=MEMBERS),
             Prefetch("team__project__moderator_links", queryset=MODERATORS.queryset),
@@ -186,8 +189,10 @@ def moderated_projects(user):
     """The projects an admin put this moderator on, newest first, each with its team
     (members, owner first) once it has formed."""
     teams = Team.objects.prefetch_related(Prefetch("memberships", queryset=MEMBERS))
+    # The flag too: a link left behind by a demotion grants nothing (as in chat's is_member).
+    links = {"moderator_links__user": user} if user.is_moderator else {"pk": None}
     return (
-        Project.objects.filter(moderator_links__user=user)
+        Project.objects.filter(**links)
         .select_related("term")
         .prefetch_related(Prefetch("team", queryset=teams), MODERATORS)
     )

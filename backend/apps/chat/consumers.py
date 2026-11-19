@@ -56,6 +56,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         # echoed to the whole team, so only a short string
         client_id = data.get("client_id")
         client_id = client_id[:64] if isinstance(client_id, str) else None
+        # Again on every post: a moderator taken off the project keeps no open socket.
+        if not await database_sync_to_async(services.is_member)(self.scope["user"], self.team_id):
+            self.joined = False
+            await self.channel_layer.group_discard(self.group, self.channel_name)
+            await self.close(code=4404)
+            return
         if not await database_sync_to_async(rules_accepted)(self.scope["user"]):
             await self.send_error(RulesAccepted.message, client_id, RulesAccepted.code)
             return

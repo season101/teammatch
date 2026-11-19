@@ -13,6 +13,7 @@ from django.test import Client
 
 from apps.chat.models import ChatMessage
 from apps.chat.services import post_message
+from apps.matching.models import Membership
 from apps.matching.tests.test_fill_and_lock import committed
 from apps.matching.tests.test_my_team import locked_team, user
 from config.asgi import application
@@ -127,6 +128,19 @@ async def test_a_refused_socket_cannot_post(team, outsider):
     await socket.disconnect()
 
     assert await count_messages() == 0
+
+
+@run_async
+async def test_a_socket_opened_before_losing_the_seat_cannot_post(team, ava):
+    socket = await joined(team.id, ava)
+    await database_sync_to_async(Membership.objects.filter(user=ava).delete)()
+
+    await socket.send_json_to({"type": "chat.send", "data": {"body": "still here"}})
+    frame = await socket.receive_output()
+
+    assert (frame["type"], frame["code"]) == ("websocket.close", 4404)
+    assert await count_messages() == 0
+    await socket.disconnect()
 
 
 @run_async
