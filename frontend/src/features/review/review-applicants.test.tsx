@@ -466,6 +466,17 @@ test("a draft project is not listed, and the page says there is nothing to revie
   expect(requests.some((r) => r.url.includes("/applications/"))).toBe(false);
 });
 
+test("a locked project says the team is formed, not to publish a draft", async () => {
+  mockApi({ projects: [{ ...openProject, status: "locked" }] });
+  renderPage();
+
+  expect(
+    await screen.findByRole("heading", { name: "Your team is formed" }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Go to your team" })).toHaveAttribute("href", "/teams");
+  expect(screen.queryByText(/Publish a draft/)).not.toBeInTheDocument();
+});
+
 test("says so when I own no projects", async () => {
   mockApi({ projects: [] });
   renderPage();

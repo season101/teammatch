@@ -435,6 +435,30 @@ test("the card leaves again when the undo fails", async () => {
   expect(await passButton("Pass on Frontend dev")).toBeInTheDocument();
 });
 
+// The deck refetches when it runs out; that answer was made before the undo.
+test("an undo isn't wiped by the deck's refetch that is still on its way", async () => {
+  mockApi();
+  const api = globalThis.fetch;
+  let answer = () => {};
+  const held = new Promise<void>((resolve) => (answer = resolve));
+  let feeds = 0;
+  vi.stubGlobal("fetch", async (request: Request) => {
+    const response = await api(request);
+    if (new URL(request.url).pathname === "/api/v1/feed/" && ++feeds === 2) await held;
+    return response;
+  });
+  renderFeed();
+
+  fireEvent.click(await passButton());
+  await waitFor(() => expect(feeds).toBe(2));
+  fireEvent.click(await undoButton());
+  expect(await screen.findByRole("article", { name: "Backend dev" })).toBeInTheDocument();
+  answer();
+
+  await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+  expect(screen.getByRole("article", { name: "Backend dev" })).toBeInTheDocument();
+});
+
 // Otherwise pressing View details could swipe the card away.
 test("a drag that starts on View details doesn't swipe", async () => {
   const { applies } = mockApi();
