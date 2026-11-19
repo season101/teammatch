@@ -2357,9 +2357,13 @@ components:
           type: string
           nullable: true
           readOnly: true
+        is_me:
+          type: boolean
+          readOnly: true
       required:
       - avatar_url
       - display_name
+      - is_me
       - role
     TeamProject:
       type: object

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Button, buttonClasses } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { Avatar } from "@/features/profiles/avatar";
@@ -84,6 +85,11 @@ export function MyTeamView() {
               <p className="font-semibold">{member.display_name || "Unnamed member"}</p>
               <p className="text-sm text-muted">{member.role}</p>
             </div>
+            {member.is_me && (
+              <span className="ml-auto">
+                <Chip>You</Chip>
+              </span>
+            )}
           </li>
         ))}
       </ul>

@@ -1158,6 +1158,7 @@ export interface components {
             readonly display_name: string;
             readonly role: string;
             readonly avatar_url: string | null;
+            readonly is_me: boolean;
         };
         TeamProject: {
             readonly id: number;
