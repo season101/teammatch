@@ -4,6 +4,8 @@ Narrated screen recording for CSC 5323 "Advances": logq used in TeamMatch on bra
 
 Every command below was dry-run on 2026-11-18 against the `teammatch-logq` stack. The outputs shown come from that run; trace IDs and times will differ on the day.
 
+Slides, diagrams and backup screenshots (1920×1080 PNGs) are in `~/Documents/LA Tech/Academics/Year 1/Fall 2026/CSC 5323/Advances demo assets/`. Its `README.md` maps each file to a part below.
+
 Screen layout: **left**, Claude Code (`claude`, started in the worktree root); **right**, a shell in the worktree root; a browser for Jaeger. "Say" lines are suggested wording for what the tool does. Your own opinions go only where it says **⟦YOUR VIEW⟧**.
 
 ## Before recording (checklist)
@@ -31,6 +33,7 @@ Off camera, in this order.
 10. Notifications off: turn on Do Not Disturb, close email, chat and other Claude windows. Browser: only the Jaeger tab, bookmarks bar hidden.
 11. Never show `~/.cache/teammatch-logq/logq.env`, `docker compose config`, a full `docker inspect` or `docker exec … env`: they print the generated passwords. The helper scripts never print them.
 12. OBS: record a 10 s test take; check the mic level and that the right screen is captured.
+13. OBS: add the asset PNGs as image sources (one scene per slide is easiest), or open `slides/logq-slides.html` full screen (F11) in a browser window you can switch to.
 
 ## Time budget
 
