@@ -184,7 +184,7 @@ Run from the worktree root, in this order. Each step lists what it shows on scre
 2. `docker compose -p teammatch-logq -f compose.local.yml -f compose.logq.yml --env-file ~/.cache/teammatch-logq/logq.env up -d --wait api`
    Brings up db, redis, storage and the api. `--wait` returns once the api is healthy.
 3. `logq ps -p teammatch-logq`
-   One row per container with state and health; a container that is exited, restarting or unhealthy starts with `!` (`storage-init` shows as exited 0, which is expected).
+   One row per container with state and health; a container that is exited, restarting or unhealthy starts with `!`. Four rows: api, db, redis, storage (`up api` does not start `storage-init`, which nothing in the pilot needs).
 4. `curl -si http://localhost:8010/api/v1/health/`
    The response headers include `x-request-id: <32 hex>`. Copy it.
 5. `logq query -p teammatch-logq --trace <id>`
@@ -193,9 +193,11 @@ Run from the worktree root, in this order. Each step lists what it shows on scre
 7. `docker stop teammatch-logq-redis-1`, then `curl -si http://localhost:8010/readyz`
    The curl returns 503. In Claude Code the Monitor shows `! teammatch-logq-redis-1 died exit=0` and `api ERROR 503 … Service Unavailable: /readyz trace=…`.
 8. `docker start teammatch-logq-redis-1`
-   The Monitor shows `redis-1 started`; `/readyz` returns 200 again. Stop the Monitor.
+   The Monitor shows `! teammatch-logq-redis-1 started`, then Redis's WARN line about running without a password. `/readyz` returns 200 again (it can still be 503 for a second while Redis starts). Stop the Monitor.
 9. Open the Jaeger link from step 5 in a browser (http://localhost:16686).
-   The trace's span tree: the Django root span with its `SELECT 1` and redis `PING` children and their timings. Search service `api` to show other traces (a chat post shows the WebSocket span with its redis and SQL children).
+   The trace's span tree: the Django root span with its `SELECT 1` and redis `PING` children and their timings. Search service `api` to show other traces: operation `HTTP /ws/teams/1/` is a chat post, with the WebSocket spans and their redis and SQL children. Jaeger keeps traces in memory, so after it restarts post one first with `python3 ~/.cache/teammatch-logq/login.py owner` and `python3 ~/.cache/teammatch-logq/ws_chat.py 1`.
 10. In Claude Code: "Use the Jaeger tools to show the topology and critical path of trace `<id>`."
     It calls `mcp__jaeger__get_trace_topology` and `mcp__jaeger__get_critical_path` and answers from the spans. Start that Claude Code session after step 1: the `jaeger` MCP server fails to connect if Jaeger is down at startup (reconnect it with `/mcp`).
 11. Optional: section 5's results table, to close with the experiment.
+
+The narrated script with timings and a pre-recording checklist is [logq-demo-script.md](logq-demo-script.md).
