@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { GoogleButton, googleErrorText } from "./google-button";
+import { GoogleButton, googleErrorText, useProviders } from "./google-button";
 import { SignInForm } from "./sign-in-form";
 import { SignUpForm } from "./sign-up-form";
 import { buttonClasses } from "@/components/ui/button";
@@ -24,6 +24,10 @@ export function AuthForm({
 }) {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<Step>("email");
+  // No Google button on this server: "try again" would point at nothing.
+  const providers = useProviders();
+  const googleHidden =
+    !providers.isPending && !providers.data?.includes("google");
   const go = (to: Step) => (current: string) => {
     setEmail(current);
     setStep(to);
@@ -48,7 +52,9 @@ export function AuthForm({
           role="alert"
           className="rounded-card border border-pass bg-surface-2 p-3 text-sm text-text"
         >
-          {googleErrorText(googleError)}
+          {googleHidden
+            ? "Google sign-in didn't work. Continue with your school email."
+            : googleErrorText(googleError)}
         </p>
       )}
 
