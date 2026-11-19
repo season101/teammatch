@@ -60,11 +60,15 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 // Ends the session. allauth answers 401 ("no longer signed in") when it worked.
 export async function signOut(): Promise<void> {
   await ensureCsrfToken();
-  await fetch(`${BASE}/auth/session`, {
+  const response = await fetch(`${BASE}/auth/session`, {
     method: "DELETE",
     credentials: "same-origin",
     headers: { "X-CSRFToken": getCsrfToken() },
   });
+  // allauth answers a finished sign-out with 401 ("not signed in"). Anything else
+  // that isn't ok (a 503, say) left the session alive, so the caller can retry.
+  if (!response.ok && response.status !== 401)
+    throw new Error(`Sign out failed: ${response.status}`);
 }
 
 // Which sign-in providers (like Google) the server has keys for. Empty when none.

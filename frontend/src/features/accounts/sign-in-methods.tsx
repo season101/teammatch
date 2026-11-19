@@ -134,6 +134,7 @@ function SetPasswordForm({
       {onCancel && (
         <button
           type="button"
+          disabled={sending}
           onClick={onCancel}
           className={`${buttonClasses("secondary")} w-full`}
         >
