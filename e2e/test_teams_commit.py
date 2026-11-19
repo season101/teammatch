@@ -23,6 +23,21 @@ from teams_support import (  # noqa: F401  (fixtures)
 EMPTY_TAB = re.compile(r"^(No offers yet|Nothing pending|No commitment yet|Nothing closed)$")
 
 
+# On desktop the tab row is hidden: the list column groups applications by status,
+# and a row there opens its group on the stage.
+def group(page, name):
+    return page.get_by_role("region", name=name, exact=True)
+
+
+def open_group(page, name):
+    group(page, name).get_by_role("link").first.click()
+
+
+def group_heading(page, name):
+    # Level 2: the list column's own group headings are level 3.
+    return page.get_by_role("tabpanel").get_by_role("heading", name=name, exact=True, level=2)
+
+
 def confirm_commit(page: Page, project_title):
     dialog = page.get_by_role("dialog", name=f"Commit to {project_title}?")
     dialog.get_by_role("button", name=f"Commit to {project_title}").click()
@@ -38,7 +53,7 @@ def test_candidate_sees_offer_and_declines_it(page: Page, owned, candidate, sign
     sign_in(page, user)
     page.goto("/applications")
     # Offers opens first when there are offers.
-    expect(page.get_by_role("tab", name="Offers 1")).to_have_attribute("aria-selected", "true")
+    expect(group_heading(page, "Offers")).to_be_visible()
     expect(page.get_by_text("Commit to one. Your other offers close when you do.")).to_be_visible()
     seat = page.get_by_role("article", name=f"{role_title(project)} on {project.title}")
     expect(seat.get_by_text("liked you")).to_be_visible()
@@ -57,7 +72,7 @@ def test_candidate_sees_offer_and_declines_it(page: Page, owned, candidate, sign
         "button", name="Decline", exact=True
     ).click()
     expect(page.get_by_role("tabpanel").get_by_role("heading", name=EMPTY_TAB)).to_be_visible()
-    page.get_by_role("tab", name="Closed").click()
+    open_group(page, "Closed")
     expect(page.get_by_role("tabpanel").get_by_text("You declined on")).to_be_visible()
     # The role stays open and the owner sees the decline.
     assert [a["applicant"]["display_name"] for a in waiting(project, rid, "declined")] == [user.name]
@@ -84,7 +99,7 @@ def test_commit_dialog_guards_then_commit_closes_everything_else(
     expect(page.get_by_text("2 projects want you.")).to_be_visible()
     expect(page.get_by_text(", 2 offers").first).to_be_attached()
     page.goto("/applications")
-    expect(page.get_by_role("tab", name="Offers 2")).to_be_visible()
+    expect(group(page, "Offers").get_by_role("link")).to_have_count(2)
     front = role_title(target, "Front")
     page.get_by_role("button", name=f"Commit to {front} on {target.title}").click()
     dialog = page.get_by_role("dialog", name=f"Commit to {target.title}?")
@@ -105,15 +120,15 @@ def test_commit_dialog_guards_then_commit_closes_everything_else(
     page.get_by_role("button", name=f"Commit to {front} on {target.title}").click()
     confirm_commit(page, target.title)
     # Lands on Committed with the seat, what's left, and what closed.
-    expect(page.get_by_role("tab", name="Committed")).to_have_attribute("aria-selected", "true")
+    expect(group_heading(page, "Committed")).to_be_visible()
     expect(page.get_by_text("You're in. Team chat opens when the last role fills.")).to_be_visible()
     expect(page.get_by_text(f"1 role left: {role_title(target, 'Back')}")).to_be_visible()
     expect(page.get_by_text("Closed when you committed", exact=True).first).to_be_visible()
     expect(page.get_by_role("tabpanel").get_by_text("Closed when you committed.")).to_have_count(2)
-    page.get_by_role("tab", name="Closed").click()
+    open_group(page, "Closed")
     expect(page.get_by_role("tabpanel").get_by_text("Closed when you committed.")).to_have_count(2)
-    page.get_by_role("tab", name="Offers").click()
-    expect(page.get_by_role("tabpanel").get_by_role("heading", name=EMPTY_TAB)).to_be_visible()
+    # No offers are left, so the list column has no Offers group to open.
+    expect(group(page, "Offers")).to_have_count(0)
 
     # Deck closed (screen 32), badges cleared.
     page.goto("/feed")
@@ -183,7 +198,7 @@ def test_loser_sees_picked_someone_else_and_stale_commit_is_refused(
     confirm_commit(page, project.title)
     expect(page.get_by_role("alert")).to_be_visible()
     page.reload()
-    page.get_by_role("tab", name="Closed").click()
+    open_group(page, "Closed")
     expect(page.get_by_text("picked someone else.")).to_be_visible()
     # No Commit button for a closed offer.
     expect(page.get_by_role("button", name=re.compile("^Commit to"))).to_have_count(0)
@@ -203,7 +218,7 @@ def test_two_owners_like_same_candidate_first_commit_wins(
     page, owner_two_page = two_pages()
     sign_in(page, user)
     page.goto("/applications")
-    expect(page.get_by_role("tab", name="Offers 2")).to_be_visible()
+    expect(group(page, "Offers").get_by_role("link")).to_have_count(2)
     sign_in(owner_two_page, two.owner)
     owner_two_page.goto("/applicants")
     expect(
@@ -361,5 +376,5 @@ def test_committed_member_cannot_apply_and_deck_stays_closed_after_lock(
     page.goto("/feed")
     expect(page.get_by_role("button", name=re.compile(r"^Apply to "))).to_have_count(0)
     page.goto("/applications")
-    page.get_by_role("tab", name="Committed").click()
+    open_group(page, "Committed")
     expect(page.get_by_text("You're in. Every role is filled.")).to_be_visible()

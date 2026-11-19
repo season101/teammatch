@@ -8,6 +8,7 @@ import { buttonClasses } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
 import { useBump } from "@/components/ui/bump";
 import { useSession } from "@/features/accounts/require-sign-in";
+import { setApplicationsTab } from "@/features/applications/applications-tab";
 import { ApplicationsPanel } from "@/features/applications/my-applications";
 import { MyProjectsList } from "@/features/projects/my-projects-list";
 import { setProjectsTab, useProjectsTab } from "@/features/projects/projects-tab";
@@ -331,6 +332,11 @@ function SidebarMode({
   useEffect(() => {
     if (!inProjects) setProjectsTab("browse");
   }, [inProjects]);
+  // Leaving My applications forgets the group picked here, so it opens on its own next time.
+  const onApplications = pathname === "/applications";
+  useEffect(() => {
+    if (!onApplications) setApplicationsTab(null);
+  }, [onApplications]);
   // My own project's page belongs under Mine.
   const onMine = mine.some((project) => isIn(pathname, [`/projects/${project.id}`]));
   useEffect(() => {

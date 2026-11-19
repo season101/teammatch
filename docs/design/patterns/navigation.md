@@ -38,7 +38,7 @@ Two columns sit left of the stage (DD-46).
 
 | Place | List column | Stage |
 |---|---|---|
-| **Discover**, **Teams** | Tabs **Applications \| Teams**. Application rows show a status chip. Team rows show the latest message. | The deck, or the team's chat. |
+| **Discover**, **Teams** | Tabs **Applications \| Teams**. Application rows are grouped by status and show a status chip; on My applications a row opens its group on the stage. Team rows show the latest message. | The deck, or the team's chat. |
 | **Projects**, **Review** | Tabs **Browse \| Mine**. Mine lists your project with each role and how many are waiting. | Browse: the selected project's details. Review: the selected role's queue ([review-queue.md](review-queue.md)). |
 | **Profile**, **Settings** | The settings list: Appearance, Keyboard shortcuts, Sign out | The profile form, or the selected setting |
 
