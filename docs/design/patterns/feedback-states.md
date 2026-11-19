@@ -59,8 +59,11 @@ Shown when the last role fills and the project locks.
 ## Deck closed
 After a commit, until the team locks: the deck shows "You're committed to **CampusEats**. Your deck stays closed while you hold this seat. Team chat opens when the last role fills." with See your commitment. The other offers and pending applications are closed.
 
+The screen is titled **Your commitment**, not Open roles, and the deck's place shows how full the team is ("2 of 5 roles filled"). Teams' empty state points at See your commitment too.
+
 ## Benched
 After a team locks, its members are benched until the term ends:
 - They drop out of other decks and review queues.
 - Their other pending applications are withdrawn.
 - The deck shows "You're on **CampusEats**. You're on a team until Dec 12. Your other applications were withdrawn." with Open team chat.
+- The Discover screen is titled **Your team**, and Projects says "You're on CampusEats until Dec 12, so you can't apply to another role this term."

@@ -122,7 +122,7 @@ test.each([403, 404])("a %i shows You can't open this resume, and PDF.js never r
   renderViewer();
 
   expect(await screen.findByRole("heading", { name: "You can't open this resume" })).toBeInTheDocument();
-  expect(await screen.findByText("Only owners of projects Sam applied to can read it.")).toBeInTheDocument();
+  expect(await screen.findByText("Only the owner of a project Sam applied to can open it.")).toBeInTheDocument();
   expect(pdf.openPdf).not.toHaveBeenCalled();
   expect(screen.queryByRole("link", { name: /Download/ })).not.toBeInTheDocument();
 });

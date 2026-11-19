@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { Button, buttonClasses } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { Avatar } from "@/features/profiles/avatar";
+import { useMySummary } from "@/features/shell/queries";
 import { useMyTeam, type MyTeam } from "./queries";
 
 // "2026-12-12" -> "Dec 12". Parsed as a local date so it doesn't slip a day.
@@ -17,6 +19,8 @@ export function termEnd(team: MyTeam) {
 
 export function MyTeamView() {
   const team = useMyTeam();
+  // Cached by the shell, which loads it for the nav badges.
+  const summary = useMySummary().data;
 
   if (team.isPending) {
     return <SkeletonRows label="Loading your team" />;
@@ -32,12 +36,21 @@ export function MyTeamView() {
     );
   }
   if (!team.data) {
+    // The nearest step to a team: my commitment (the deck is closed then), an offer to
+    // answer, applicants to review, else the deck.
+    const [href, label] = summary?.deck === "committed"
+      ? ["/applications", "See your commitment"]
+      : summary?.offers
+        ? ["/applications", summary.offers === 1 ? "See your offer" : "See your offers"]
+        : summary?.applicants_waiting
+          ? ["/applicants", "Review applicants"]
+          : ["/feed", "Go to Discover"];
     return (
       <EmptyState
         title="No team yet"
         action={
-          <Link href="/feed" className={buttonClasses()}>
-            Go to Discover
+          <Link href={href} className={buttonClasses()}>
+            {label}
           </Link>
         }
       >
@@ -72,6 +85,11 @@ export function MyTeamView() {
               <p className="font-semibold">{member.display_name || "Unnamed member"}</p>
               <p className="text-sm text-muted">{member.role}</p>
             </div>
+            {member.is_me && (
+              <span className="ml-auto">
+                <Chip>You</Chip>
+              </span>
+            )}
           </li>
         ))}
       </ul>

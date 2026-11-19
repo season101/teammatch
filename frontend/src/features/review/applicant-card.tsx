@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { Chip } from "@/components/ui/chip";
 import { buttonClasses } from "@/components/ui/button";
+import { MatchBadge } from "@/components/ui/match-badge";
 import { Avatar } from "@/features/profiles/avatar";
 import { ProfileLinks } from "@/features/profiles/profile-links";
 import type { Applicant } from "./queries";
@@ -11,6 +12,7 @@ export function ApplicantCard({
   application,
   roleTitle,
   requiredSkillIds,
+  missingSkills = [],
   onLike,
   onPass,
 }: {
@@ -18,6 +20,8 @@ export function ApplicantCard({
   roleTitle: string;
   // The skills the role asks for. The ones the applicant has are shown first, in lime.
   requiredSkillIds: number[];
+  // Names of the required skills the applicant doesn't list.
+  missingSkills?: string[];
   onLike: () => void;
   onPass: () => void;
 }) {
@@ -54,9 +58,16 @@ export function ApplicantCard({
 
       <div className="flex flex-col gap-4 p-5">
         {requiredSkillIds.length > 0 && (
-          <p className="text-sm text-muted">
+          <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
+            <MatchBadge percent={(matched.length / requiredSkillIds.length) * 100} />
             Has {matched.length} of {requiredSkillIds.length} required{" "}
             {requiredSkillIds.length === 1 ? "skill" : "skills"}
+          </p>
+        )}
+
+        {missingSkills.length > 0 && (
+          <p className="text-sm text-muted">
+            Doesn&apos;t list: <span className="text-text">{missingSkills.join(", ")}</span>
           </p>
         )}
 

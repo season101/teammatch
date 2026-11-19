@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import { useShortcutsEnabled } from "./preferences";
 
@@ -20,11 +20,27 @@ export const REVIEW_KEYS: LegendKey[] = [
   ["→", "Like"],
 ];
 
+// True while something on screen takes the keys: the deck with a card on top, or a review
+// queue with someone waiting. Both mark themselves with aria-keyshortcuts.
+function watchKeys(onChange: () => void) {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.body, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ["aria-keyshortcuts", "hidden"],
+  });
+  return () => observer.disconnect();
+}
+const keysWork = () =>
+  [...document.querySelectorAll("[aria-keyshortcuts]")].some((el) => !el.closest("[hidden]"));
+
 // Pinned to the bottom of the stage on desktop. Hide lasts until the next visit to the screen.
 export function KeyboardLegend({ keys }: { keys: LegendKey[] }) {
   const enabled = useShortcutsEnabled();
   const [hidden, setHidden] = useState(false);
-  if (!enabled || hidden) return null;
+  const active = useSyncExternalStore(watchKeys, keysWork, () => false);
+  if (!enabled || hidden || !active) return null;
 
   return (
     <aside

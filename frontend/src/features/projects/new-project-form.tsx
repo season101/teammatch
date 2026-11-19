@@ -138,14 +138,14 @@ export function NewProjectForm() {
             setClientErrors((prev) => ({ ...prev, title: undefined }));
           }}
         />
-        <p className={helperClass}>
-          {title.length}/{TITLE_MAX} characters
-        </p>
         {errors.title && (
           <p id="project-title-error" role="alert" className={errorClass}>
             {errors.title}
           </p>
         )}
+        <p className={helperClass}>
+          {title.length}/{TITLE_MAX} characters
+        </p>
       </div>
 
       <div>
@@ -167,14 +167,14 @@ export function NewProjectForm() {
             setClientErrors((prev) => ({ ...prev, pitch: undefined }));
           }}
         />
-        <p className={helperClass}>
-          {pitch.length}/{PITCH_MAX} characters
-        </p>
         {errors.pitch && (
           <p id="project-pitch-error" role="alert" className={errorClass}>
             {errors.pitch}
           </p>
         )}
+        <p className={helperClass}>
+          {pitch.length}/{PITCH_MAX} characters
+        </p>
       </div>
 
       <RepoDetailsFields

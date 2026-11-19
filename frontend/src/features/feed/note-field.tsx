@@ -9,10 +9,13 @@ export function NoteField({
   roleId,
   note,
   onNoteChange,
+  autoFocus,
 }: {
   roleId: number;
   note: string;
   onNoteChange: (note: string) => void;
+  // For a field that opens on a tap, so typing can start at once.
+  autoFocus?: boolean;
 }) {
   const noteId = `note-${roleId}`;
 
@@ -26,6 +29,7 @@ export function NoteField({
         rows={2}
         value={note}
         maxLength={NOTE_MAX}
+        autoFocus={autoFocus}
         className="w-full rounded-input border border-border bg-surface-2 px-3 py-2 text-base text-text placeholder:text-muted hover:border-muted"
         onChange={(event) => onNoteChange(event.target.value)}
       />

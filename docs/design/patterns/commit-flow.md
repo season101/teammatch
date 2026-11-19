@@ -34,7 +34,7 @@ Screens are numbered 26 to 34 in [screens/README.md](../screens/README.md#commit
 | # | Screen | Where | What changes | Code |
 |---|---|---|---|---|
 | 26 | Discover with offers | `/feed` | Banner above the deck when there's at least one offer, linking to `/applications`. Offer count on the Discover tab. | `frontend/src/features/feed/feed.tsx` (banner), `frontend/src/features/shell/app-shell.tsx` (count) |
-| 27 | Offers list | `/applications` | Tabs become Offers, Pending, Committed, Closed. Offers comes first and opens by default when there are offers. One card per offer with Decline and Commit. Three columns on desktop so offers can be compared. The sidebar shows an Offer chip. | `frontend/src/features/applications/my-applications.tsx` |
+| 27 | Offers list | `/applications` | Tabs become Offers, Pending, Committed, Closed. Offers comes first and opens by default when there are offers. One card per offer with Decline and Commit. Three columns on desktop so offers can be compared. On desktop the tab row is hidden: the list column groups applications under Offers, Pending, Committed and Closed, and a row there opens its group on the stage. Each row shows its status chip. | `frontend/src/features/applications/my-applications.tsx` |
 | 28 | Final confirm | Dialog | Opens from Commit. Says which seat you take and what closes. | `my-applications.tsx`, `frontend/src/components/ui/modal.tsx` |
 | 29 | Decline offer | Dialog | Standard confirmation: the safe choice is the primary button. | `my-applications.tsx` |
 | 30 | Commit blocked | Dialog | Shown on a 409 `owns_open_project`, with a link to that project. | `my-applications.tsx` |

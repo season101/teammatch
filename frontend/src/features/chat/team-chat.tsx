@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { buttonClasses } from "@/components/ui/button";
 import { inputClass, noticeClass } from "@/components/ui/form-classes";
 import { SkeletonRows } from "@/components/ui/skeleton";
@@ -10,6 +10,12 @@ import { BackIcon, SendIcon } from "@/features/shell/icons";
 import { useModeratedProjects, useMyTeam, type MyTeam } from "@/features/teams/queries";
 import { useTeamMessages, type ChatMessage } from "./queries";
 import { useTeamSocket } from "./use-team-socket";
+
+// In the reader's own time zone: "Thu, Nov 19" and "5:02 PM".
+const dayOf = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+const timeOf = (iso: string) =>
+  new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
 export function TeamChat({ teamId, userId }: { teamId: number; userId: number }) {
   const team = useMyTeam();
@@ -117,7 +123,8 @@ function ChatRoom({ team, userId }: { team: Room; userId: number }) {
         <Link
           href="/teams"
           aria-label="Back to Teams"
-          className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-surface-2"
+          // A phone pattern: from tablet up the Teams tab is on screen.
+          className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-surface-2 sm:hidden"
         >
           <BackIcon />
         </Link>
@@ -126,7 +133,7 @@ function ChatRoom({ team, userId }: { team: Room; userId: number }) {
           <p className="text-xs text-muted">{team.members.length} members</p>
         </div>
         {/* same width as the back link, so the title sits in the middle */}
-        <span aria-hidden="true" className="size-11 shrink-0" />
+        <span aria-hidden="true" className="size-11 shrink-0 sm:hidden" />
       </header>
 
       {socket.status.state === "reconnecting" && (
@@ -149,7 +156,7 @@ function ChatRoom({ team, userId }: { team: Room; userId: number }) {
         className="flex flex-1 flex-col gap-3 overflow-y-auto p-4"
       >
         <p className="mt-auto text-center text-xs text-muted">
-          Team formed {formed}. Say hi!
+          Team formed {formed}. Say hi.
         </p>
         {history.isError && (
           <p role="alert" className="text-center text-sm text-pass">
@@ -157,26 +164,48 @@ function ChatRoom({ team, userId }: { team: Room; userId: number }) {
           </p>
         )}
         <ol className="flex flex-col gap-3">
-          {messages.map((message) =>
-            message.sender.id === userId ? (
-              <li
-                key={message.id}
-                className="max-w-[80%] self-end rounded-row bg-cta px-3 py-2 text-sm whitespace-pre-wrap wrap-break-word text-on-cta"
-              >
-                <span className="sr-only">You: </span>
-                {message.body}
-              </li>
-            ) : (
-              <li key={message.id} className="flex max-w-[80%] flex-col items-start gap-1 self-start">
-                <span className="text-xs text-muted">
-                  {message.sender.display_name || "Unnamed member"}
-                </span>
-                <p className="rounded-row bg-surface-2 px-3 py-2 text-sm whitespace-pre-wrap wrap-break-word">
-                  {message.body}
-                </p>
-              </li>
-            ),
-          )}
+          {messages.map((message, index) => {
+            const before = messages[index - 1];
+            const newDay = !before || dayOf(before.created_at) !== dayOf(message.created_at);
+            // A time at the start of each run: a new day, another sender, or a 5-minute gap.
+            const stamp =
+              newDay ||
+              before.sender.id !== message.sender.id ||
+              Date.parse(message.created_at) - Date.parse(before.created_at) > 5 * 60_000;
+            const time = stamp && (
+              <time dateTime={message.created_at} className="text-xs text-muted">
+                {timeOf(message.created_at)}
+              </time>
+            );
+            return (
+              <Fragment key={message.id}>
+                {newDay && (
+                  <li role="presentation" className="self-center py-1 text-xs font-medium text-muted">
+                    {dayOf(message.created_at)}
+                  </li>
+                )}
+                {message.sender.id === userId ? (
+                  <li className="flex max-w-[80%] flex-col items-end gap-1 self-end">
+                    {time}
+                    <p className="rounded-row bg-cta px-3 py-2 text-sm whitespace-pre-wrap wrap-break-word text-on-cta">
+                      <span className="sr-only">You: </span>
+                      {message.body}
+                    </p>
+                  </li>
+                ) : (
+                  <li className="flex max-w-[80%] flex-col items-start gap-1 self-start">
+                    <span className="flex items-baseline gap-2 text-xs text-muted">
+                      {message.sender.display_name || "Unnamed member"}
+                      {time}
+                    </span>
+                    <p className="rounded-row bg-surface-2 px-3 py-2 text-sm whitespace-pre-wrap wrap-break-word">
+                      {message.body}
+                    </p>
+                  </li>
+                )}
+              </Fragment>
+            );
+          })}
           {/* Mine, not echoed yet: in the log on the same frame as the send, a little faded. */}
           {socket.sending.map((out) => (
             <li
@@ -254,7 +283,8 @@ function ChatRoom({ team, userId }: { team: Room; userId: number }) {
           type="submit"
           aria-label="Send"
           disabled={!open}
-          className="grid size-11 shrink-0 place-items-center rounded-full bg-cta text-on-cta transition duration-fast hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          // Quiet until there's something to send.
+          className={`grid size-11 shrink-0 place-items-center rounded-full bg-cta text-on-cta transition duration-fast hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 ${draft.trim() ? "" : "opacity-50"}`}
         >
           <SendIcon />
         </button>

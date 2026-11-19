@@ -1,7 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
-import { ProjectsList } from "./projects-list";
+import { ProjectsList, SignedInProjects } from "./projects-list";
+
+// RequireSignIn reads the router.
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/projects",
+  useRouter: () => ({ replace: vi.fn() }),
+}));
 
 function renderList() {
   const client = new QueryClient({
@@ -39,6 +45,7 @@ const project = (id: number, title: string) => ({
   owner: 1,
   owner_name: "Owner Name",
   open_role_count: 2,
+  role_count: 3,
   created_at: "2026-10-16T00:00:00Z",
 });
 
@@ -55,6 +62,8 @@ test("shows each project with its owner, role count and pitch preview", async ()
   expect(await screen.findByText("TeamMatch")).toBeInTheDocument();
   expect(screen.getByText(/Owner Name/)).toBeInTheDocument();
   expect(screen.getByText(/2 open roles/)).toBeInTheDocument();
+  // and how full the team is
+  expect(screen.getByText(/1 of 3 filled/)).toBeInTheDocument();
   expect(screen.getByText("Pitch for TeamMatch")).toBeInTheDocument();
 });
 
@@ -172,4 +181,28 @@ test("says nothing matches and clears the search", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
   expect(await screen.findByText("Bulldog Bites")).toBeInTheDocument();
   expect(screen.getByRole("searchbox", { name: /search projects/i })).toHaveValue("");
+});
+
+test("a benched student is told why they can't apply", async () => {
+  mockFetch([{ next: null, previous: null, results: [] }, 200]);
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+  });
+  client.setQueryData(["session"], { id: 1, email: "sam@latech.edu" });
+  client.setQueryData(["my-projects"], []);
+  client.setQueryData(["my-team"], {
+    id: 3,
+    project: { id: 4, title: "Bulldog Bites" },
+    term: { name: "Fall 2026", end_date: "2026-12-12" },
+  });
+  render(
+    <QueryClientProvider client={client}>
+      <SignedInProjects />
+    </QueryClientProvider>,
+  );
+  expect(
+    await screen.findByText(
+      "You're on Bulldog Bites until Dec 12, so you can't apply to another role this term.",
+    ),
+  ).toBeInTheDocument();
 });

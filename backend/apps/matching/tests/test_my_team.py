@@ -78,8 +78,13 @@ def test_a_member_gets_their_team_with_seen_at_empty(team, fall, ava):
         "project": {"id": team.project_id, "title": "Bulldog Bites"},
         "term": {"name": "Fall 2026", "end_date": fall.end_date.isoformat()},
         "members": [
-            {"display_name": "Marco", "role": "Owner", "avatar_url": None},
-            {"display_name": "Ava", "role": "Backend developer", "avatar_url": None},
+            {"display_name": "Marco", "role": "Owner", "avatar_url": None, "is_me": False},
+            {
+                "display_name": "Ava",
+                "role": "Backend developer",
+                "avatar_url": None,
+                "is_me": True,
+            },
         ],
         "moderators": [],
         "formed_at": timezone.localtime(team.created_at).isoformat(),  # Central, with its offset
@@ -96,11 +101,20 @@ def test_seen_at_is_mine_not_someone_elses(team, marco, ava):
     assert my_team(marco)["seen_at"] is None
 
 
+def test_is_me_marks_only_the_reader(team, marco):
+    assert [member["is_me"] for member in my_team(marco)["members"]] == [True, False]
+
+
 def test_the_owner_gets_their_team(team, marco):
     body = my_team(marco)
 
     assert body["id"] == team.id
-    assert body["members"][0] == {"display_name": "Marco", "role": "Owner", "avatar_url": None}
+    assert body["members"][0] == {
+        "display_name": "Marco",
+        "role": "Owner",
+        "avatar_url": None,
+        "is_me": True,
+    }
 
 
 def test_members_carry_their_avatar_url(team, marco, ava):

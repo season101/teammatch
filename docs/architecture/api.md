@@ -144,7 +144,7 @@ Login, signup, logout, password and Google live under allauth (below).
 | POST | `/api/v1/applications/{id}/commit/` | applicant | take the seat an offer is for: fills the role, closes my other applications this term, may lock the team. `409` `offer_not_open`, `role_not_open`, `owns_open_project` or `applicant_committed`. An offer on your own role: `403`; anyone else's: `404` |
 | POST | `/api/v1/applications/{id}/decline/` | applicant | turn an offer down; the role stays open. Not an open offer: `409` |
 | POST | `/api/v1/applications/{id}/pass/` | owner | pass (`403`/`404` as for like) |
-| GET | `/api/v1/teams/mine/` | user | my team this term with my `seen_at`: `{"team": {id, project {id, title}, term {name, end_date}, members [{display_name, role}], formed_at, seen_at}}`. `role` is the role title, or `"Owner"`. `formed_at` is when the team locked. No team this term: `200` with `{"team": null}` |
+| GET | `/api/v1/teams/mine/` | user | my team this term with my `seen_at`: `{"team": {id, project {id, title}, term {name, end_date}, members [{display_name, role, avatar_url, is_me}], formed_at, seen_at}}`. `role` is the role title, or `"Owner"`. `is_me` marks the reader's own row. `formed_at` is when the team locked. No team this term: `200` with `{"team": null}` |
 | GET | `/api/v1/teams/{id}/` | member | team detail with members and roles **(planned)** |
 | POST | `/api/v1/teams/{id}/seen/` | member | mark the "It's a Team!" screen as seen, `204`. Sets my `seen_at` the first time; repeats keep it. Not my team: `404` |
 

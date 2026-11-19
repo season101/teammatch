@@ -19,12 +19,12 @@ def fill_signup(page: Page, email: str, password: str):
     page.get_by_label("School email").fill(email)
     page.get_by_role("button", name="Continue with email").click()
     page.get_by_label("Password").fill(password)
-    page.get_by_role("button", name="Create account").click()
+    page.get_by_role("button", name="Sign up").click()
 
 
 def test_signup_page_content(page: Page):
     page.goto("/signup")
-    expect(page.get_by_role("heading", name="Log in or sign up")).to_be_visible()
+    expect(page.get_by_role("heading", name="Sign in or sign up")).to_be_visible()
     expect(page.get_by_text("Use your @latech.edu or @email.latech.edu email.")).to_be_visible()
     page.get_by_label("School email").fill(f"acct-{tag()}@latech.edu")
     page.get_by_role("button", name="Continue with email").click()

@@ -2,8 +2,8 @@
 const styles = {
   filled: "bg-apply",
   open: "border border-white/55",
-  // The role on this card.
-  current: "bg-white motion-safe:animate-pulse",
+  // The role on this card. Outlined, not solid, so it never reads as a filled seat.
+  current: "border-2 border-white motion-safe:animate-pulse",
 };
 
 export type Segment = keyof typeof styles;

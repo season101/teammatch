@@ -56,6 +56,7 @@ function mockApi(myTeam: () => typeof team | null) {
       let body: unknown = {};
       if (path === "/api/v1/teams/mine/") body = { team: myTeam() };
       else if (path === "/api/v1/projects/4/") body = { roles: [] };
+      else if (path === "/api/v1/skills/") body = [];
       else if (path === "/api/v1/roles/2/applications/")
         body = { next: null, previous: null, results: [sam] };
       else if (path === "/api/v1/applications/9/like/")

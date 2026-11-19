@@ -258,5 +258,5 @@ def test_review_for_a_student_with_no_project(page: Page, candidate, sign_in):
     user, _client = candidate("Nobody")
     sign_in(page, user)
     page.goto("/applicants")
-    expect(page.get_by_text("You don't own any projects yet.")).to_be_visible()
-    expect(page.get_by_role("link", name="Create one")).to_be_visible()
+    expect(page.get_by_role("heading", name="No project to review")).to_be_visible()
+    expect(page.get_by_role("main").get_by_role("link", name="New project")).to_be_visible()

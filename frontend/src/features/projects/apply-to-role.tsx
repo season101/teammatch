@@ -12,6 +12,8 @@ import { useApply } from "@/features/feed/queries";
 // error messages as the swipe deck. An existing application, whatever its
 // status, blocks another one (BR-02), so it shows as a status instead, even
 // once the role is filled or the project closes. canApply: role and project open.
+// Each role starts as one small Apply; a tap opens the note and the button that
+// sends it, so a page of roles isn't a page of forms.
 export function ApplyToRole({
   roleId,
   roleTitle,
@@ -24,6 +26,7 @@ export function ApplyToRole({
   const applications = useMyApplications();
   const apply = useApply();
   const [note, setNote] = useState("");
+  const [open, setOpen] = useState(false);
 
   if (applications.isPending) return null;
 
@@ -50,6 +53,20 @@ export function ApplyToRole({
 
   if (!canApply) return null;
 
+  if (!open) {
+    return (
+      <Button
+        variant="secondary"
+        size="sm"
+        className="mt-4"
+        aria-label={`Apply to ${roleTitle}`}
+        onClick={() => setOpen(true)}
+      >
+        Apply
+      </Button>
+    );
+  }
+
   return (
     <form
       className="mt-4 flex flex-col gap-3"
@@ -66,7 +83,7 @@ export function ApplyToRole({
         );
       }}
     >
-      <NoteField roleId={roleId} note={note} onNoteChange={setNote} />
+      <NoteField roleId={roleId} note={note} onNoteChange={setNote} autoFocus />
       <Button
         type="submit"
         size="sm"

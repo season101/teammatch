@@ -45,7 +45,7 @@ test("a signed-in student goes back to Discover", async () => {
 test("the link waits for the session check, so it can't send a student to the landing page", async () => {
   let answer: (response: Response) => void = () => {};
   renderPage(() => new Promise((resolve) => (answer = resolve)));
-  expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "Back to TeamMatch" })).not.toBeInTheDocument();
 
   answer(signedIn());
   expect(await screen.findByRole("link", { name: "Back to TeamMatch" })).toHaveAttribute(

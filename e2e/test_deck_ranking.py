@@ -94,4 +94,4 @@ def test_no_skills_candidate_sees_newest_first_and_is_prompted(page, deck):
     open_deck(page, deck, cand, ids)
     expect(page.get_by_role("button", name=re.compile("^Apply to")).first).to_be_visible()
     # F3-04: prompted to add skills (Finish setup in the desktop nav).
-    expect(page.get_by_role("link", name="Add your skills")).to_be_visible()
+    expect(page.get_by_role("link", name="Add your skills", exact=True)).to_be_visible()

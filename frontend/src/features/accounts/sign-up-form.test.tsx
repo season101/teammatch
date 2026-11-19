@@ -23,7 +23,7 @@ function fillAndSubmit(email: string, password: string) {
   fireEvent.change(screen.getByLabelText("Password"), {
     target: { value: password },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+  fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
 }
 
 afterEach(() => vi.unstubAllGlobals());
@@ -86,4 +86,25 @@ test("shows allauth's message for other errors, like a weak password", async () 
   expect(
     await screen.findByText("This password is too common."),
   ).toBeInTheDocument();
+});
+
+test("checks the fields itself and doesn't call the server", () => {
+  const fetchMock = mockFetch({}, 200);
+  render(<SignUpForm />);
+  fillAndSubmit("sam", "short");
+
+  expect(screen.getByText("Enter your school email.")).toBeInTheDocument();
+  expect(screen.getByText("Use 8 or more characters.")).toBeInTheDocument();
+  expect(screen.getByLabelText("Password")).toBeInvalid();
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+
+test("Resend email signs in again, which makes allauth send the link again", async () => {
+  const fetchMock = mockFetch({ status: 401 }, 401);
+  render(<SignUpForm />);
+  fillAndSubmit("sam@latech.edu", "a-long-password");
+  fireEvent.click(await screen.findByRole("button", { name: "Resend email" }));
+
+  expect(await screen.findByRole("button", { name: "Email sent again" })).toBeDisabled();
+  expect(String(fetchMock.mock.calls.at(-1)?.[0])).toContain("/auth/login");
 });

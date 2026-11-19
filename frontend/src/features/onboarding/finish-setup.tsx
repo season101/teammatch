@@ -4,13 +4,18 @@ import Link from "next/link";
 import { useSession } from "@/features/accounts/require-sign-in";
 import { useMyApplications } from "@/features/applications/queries";
 import { useMyProfile } from "@/features/profiles/queries";
+import { useMyProjects } from "@/features/review/queries";
 
 // What's left after sign-up, in the desktop nav column. Gone once all three are done.
+// Students only.
 export function FinishSetup() {
   const { data: user } = useSession();
   const profile = useMyProfile(Boolean(user)).data;
   const applications = useMyApplications(Boolean(user)).data;
-  if (!user || !profile || !applications) return null;
+  const projects = useMyProjects(Boolean(user)).data;
+  // Moderators and admins have no deck, so nothing here fits them.
+  if (!user || !profile || !applications || !projects || (profile.role ?? "student") !== "student")
+    return null;
 
   const items = [
     {
@@ -26,7 +31,8 @@ export function FinishSetup() {
     {
       label: "Apply to your first role",
       href: "/feed",
-      done: applications.length > 0,
+      // Posting a project is the owner's way in, so it counts too.
+      done: applications.length > 0 || projects.length > 0,
     },
   ];
   const done = items.filter((item) => item.done).length;

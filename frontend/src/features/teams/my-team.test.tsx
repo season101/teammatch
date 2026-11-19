@@ -12,8 +12,8 @@ const team = {
   project: { id: 4, title: "Bulldog Bites" },
   term: { name: "Fall 2026", end_date: "2026-12-12" },
   members: [
-    { display_name: "Marco Rossi", role: "Owner" },
-    { display_name: "", role: "Backend developer" },
+    { display_name: "Marco Rossi", role: "Owner", is_me: false },
+    { display_name: "", role: "Backend developer", is_me: false },
   ],
   moderators: ["Dr. Lee"],
   formed_at: "2026-10-24T18:00:00Z",
@@ -110,4 +110,27 @@ test("a moderator on no project is told an admin assigns them", () => {
   expect(
     screen.getByText("Projects show up here once an admin puts you on them."),
   ).toBeInTheDocument();
+});
+
+test("without a team, the button points at the nearest step to one", () => {
+  renderPage(null, { "my-summary": { offers: 1, applicants_waiting: 2 } });
+  expect(screen.getByRole("link", { name: "See your offer" })).toHaveAttribute("href", "/applications");
+});
+
+test("an owner with applicants waiting is sent to Review", () => {
+  renderPage(null, { "my-summary": { offers: 0, applicants_waiting: 2 } });
+  expect(screen.getByRole("link", { name: "Review applicants" })).toHaveAttribute("href", "/applicants");
+});
+
+test("a committed student is sent to their commitment, not the closed deck", () => {
+  renderPage(null, { "my-summary": { offers: 0, applicants_waiting: 0, deck: "committed" } });
+  expect(screen.getByRole("link", { name: "See your commitment" })).toHaveAttribute("href", "/applications");
+});
+
+test("my own row on the lineup is tagged You", () => {
+  const [owner, me] = team.members;
+  renderPage({ ...team, members: [owner, { ...me, is_me: true }] });
+  const rows = screen.getAllByRole("listitem");
+  expect(rows[0]).not.toHaveTextContent("You");
+  expect(rows[1]).toHaveTextContent("You");
 });

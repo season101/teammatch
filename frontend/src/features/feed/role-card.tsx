@@ -2,7 +2,7 @@ import Link from "next/link";
 import { MatchBadge } from "@/components/ui/match-badge";
 import type { FeedRole } from "./queries";
 
-// The rest go behind "+N more" so the chips stay on one row.
+// The rest go behind "+N more" so the chips stay within two rows.
 const SKILLS_SHOWN = 3;
 
 // The role details page: the project page focused on one role (F3-13, DD-39).
@@ -26,6 +26,9 @@ export function RoleCard({ role, mySkillIds }: { role: FeedRole; mySkillIds: num
   const headingId = `role-${role.id}`;
   const more = role.required_skills.length - SKILLS_SHOWN;
 
+  const required = role.required_skills;
+  const have = required.filter((skill) => mySkillIds.includes(skill.id)).length;
+
   return (
     <article
       aria-labelledby={headingId}
@@ -34,35 +37,46 @@ export function RoleCard({ role, mySkillIds }: { role: FeedRole; mySkillIds: num
       // --deck-banner is the banner's height (offers or add skills) when the deck shows one.
       className={`flex flex-col gap-3 overflow-hidden rounded-card border border-border bg-surface p-5 ${deckCardHeight}`}
     >
-      <header>
-        <div className="flex items-center justify-between gap-3">
-          <h2 id={headingId} className="truncate text-lg font-semibold">
-            {role.title}
-          </h2>
-          {/* Null when the role asks for no skills, so there's nothing to match (DD-20). */}
-          {role.match_percent !== null && (
-            <span className="shrink-0">
-              <MatchBadge percent={role.match_percent} />
-            </span>
+      <header className="flex flex-col gap-1.5">
+        <div className="flex min-h-6 items-center justify-between gap-3 text-xs text-muted">
+          {/* Null when the role asks for no skills, so there's nothing to match (DD-20).
+              0% with no skills says nothing about the role, so prompt instead. */}
+          {role.match_percent === null ? (
+            <span />
+          ) : role.match_percent === 0 && mySkillIds.length === 0 ? (
+            <span>Add skills to see your match</span>
+          ) : (
+            <MatchBadge percent={role.match_percent} />
           )}
+          {/* The term (DD-21). */}
+          <span className="shrink-0">{role.term}</span>
         </div>
+        {/* Two lines, never cut mid-word by the badge. */}
+        <h2
+          id={headingId}
+          className="line-clamp-2 font-display text-[26px] leading-tight font-extrabold text-balance sm:text-[28px]"
+        >
+          {role.title}
+        </h2>
         <p className="truncate text-sm text-muted">
           {role.project.title} · by {role.project.owner_name || "a classmate"}
         </p>
       </header>
 
-      {role.required_skills.length > 0 && (
-        <ul aria-label="Required skills" className="flex gap-2">
-          {role.required_skills.map((skill, index) => {
+      {required.length > 0 && (
+        // Whole chips only: they wrap, and a third row is clipped rather than cut mid-word.
+        <ul aria-label="Required skills" className="flex max-h-[4.25rem] shrink-0 flex-wrap gap-2 overflow-hidden">
+          {required.map((skill, index) => {
             const mine = mySkillIds.includes(skill.id);
             // Screen readers still get every skill.
-            const shown = index < SKILLS_SHOWN ? "min-w-0 truncate" : "sr-only";
+            const shown = index < SKILLS_SHOWN ? "max-w-full truncate" : "sr-only";
             return (
               <li
                 key={skill.id}
                 className={`${shown} ${
                   mine
-                    ? "rounded-pill border border-success bg-surface-2 px-3 py-1 text-sm font-medium text-text"
+                    ? // Lime, like the matched Chip on the role's details page (chip.md).
+                      "rounded-pill border border-apply bg-apply px-3 py-1 text-sm font-medium text-on-apply"
                     : "rounded-pill border border-border px-3 py-1 text-sm text-text"
                 }`}
               >
@@ -75,7 +89,7 @@ export function RoleCard({ role, mySkillIds }: { role: FeedRole; mySkillIds: num
           {more > 0 && (
             <li
               aria-hidden="true"
-              className="shrink-0 rounded-pill border border-border px-3 py-1 text-sm text-muted"
+              className="rounded-pill border border-border px-3 py-1 text-sm text-muted"
             >
               +{more} more
             </li>
@@ -83,21 +97,38 @@ export function RoleCard({ role, mySkillIds }: { role: FeedRole; mySkillIds: num
         </ul>
       )}
 
-      <p className="line-clamp-5 text-text">{role.project.pitch}</p>
+      {/* Gives way first on a short screen, so the team and View details always show. */}
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <p className="line-clamp-4 text-text">{role.project.pitch}</p>
+      </div>
 
-      {/* How close the team is to locking (principle 2), and the term (DD-21). */}
-      <div className="mt-auto flex flex-col gap-1.5">
+      {/* The body is never half empty (DD-08). Dropped on short screens. */}
+      {required.length > 0 && mySkillIds.length > 0 && (
+        <p className="hidden flex-col gap-0.5 rounded-row bg-surface-2 p-3 text-sm [@media(min-height:44rem)]:flex">
+          <span className="font-semibold">Why you fit</span>
+          <span className="text-muted">
+            You have {have} of the {required.length} {required.length === 1 ? "skill" : "skills"} this
+            role needs.
+          </span>
+        </p>
+      )}
+
+      {/* How close the team is to locking (principle 2). */}
+      <div className="flex flex-col gap-2">
+        <p className="flex items-baseline justify-between gap-3 text-sm">
+          <span className="font-semibold">Team so far</span>
+          <span className="text-xs text-muted">
+            {role.roles_filled} of {role.roles_total} roles filled
+          </span>
+        </p>
         <div aria-hidden="true" className="flex gap-1">
           {Array.from({ length: role.roles_total }, (_, i) => (
             <span
               key={i}
-              className={`h-1.5 flex-1 rounded-pill ${i < role.roles_filled ? "bg-apply-text" : "bg-surface-2"}`}
+              className={`h-1.5 flex-1 rounded-pill ${i < role.roles_filled ? "bg-apply-text" : "bg-border-control/60"}`}
             />
           ))}
         </div>
-        <p className="text-xs text-muted">
-          {role.roles_filled} of {role.roles_total} roles filled · {role.term}
-        </p>
       </div>
 
       <Link

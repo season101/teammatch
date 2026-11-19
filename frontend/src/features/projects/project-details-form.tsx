@@ -5,6 +5,7 @@ import { useUpdateProject } from "./queries";
 import { buttonClasses } from "@/components/ui/button";
 import {
   errorClass,
+  helperClass,
   inputClass,
   noticeClass,
 } from "@/components/ui/form-classes";
@@ -68,6 +69,7 @@ export function ProjectDetailsForm({
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+      <h1 className="font-display text-3xl font-extrabold">Edit project</h1>
       {otherFailure && (
         <p role="alert" className={noticeClass}>
           {otherFailure}
@@ -94,6 +96,9 @@ export function ProjectDetailsForm({
             {titleError}
           </p>
         )}
+        <p className={helperClass}>
+          {title.length}/{TITLE_MAX} characters
+        </p>
       </div>
       <div>
         <label htmlFor="edit-pitch" className="font-medium">
@@ -117,6 +122,9 @@ export function ProjectDetailsForm({
             {pitchError}
           </p>
         )}
+        <p className={helperClass}>
+          {pitch.length}/{PITCH_MAX} characters
+        </p>
       </div>
       <RepoDetailsFields
         idPrefix="edit"

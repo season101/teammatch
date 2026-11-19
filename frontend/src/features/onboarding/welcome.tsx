@@ -103,6 +103,7 @@ function StepForm({
   title,
   line,
   cta,
+  hint,
   disabled = false,
   pending,
   failed,
@@ -113,6 +114,8 @@ function StepForm({
   title: string;
   line: string;
   cta: string;
+  // Why the button is off, shown above it while it is.
+  hint?: string;
   disabled?: boolean;
   pending: boolean;
   failed: boolean;
@@ -140,6 +143,7 @@ function StepForm({
             Couldn&apos;t save that. Check your connection and try again.
           </p>
         )}
+        {disabled && hint && <p className="text-sm text-muted">{hint}</p>}
         <Button type="submit" disabled={disabled || pending} className="w-full">
           <PendingLabel pending={pending} label="Saving">{cta}</PendingLabel>
         </Button>
@@ -199,9 +203,15 @@ function Info({ profile }: { profile: MyProfile }) {
   return (
     <StepForm
       step={2}
-      title="Confirm your info"
-      line="Fix anything that's off."
+      // Nothing to confirm on a blank profile.
+      title={profile.display_name || profile.major ? "Confirm your info" : "Tell owners who you are"}
+      line={
+        profile.display_name || profile.major
+          ? "Fix anything that's off."
+          : "Your name and major go on the card owners see."
+      }
       cta="Continue"
+      hint="Add your name and major to continue."
       disabled={!displayName.trim() || !major.trim()}
       pending={save.isPending}
       failed={save.isError && Object.keys(errors).length === 0}

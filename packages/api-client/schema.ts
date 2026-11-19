@@ -1071,6 +1071,7 @@ export interface components {
             owner: number;
             readonly owner_name: string;
             readonly open_role_count: number;
+            readonly role_count: number;
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -1157,6 +1158,7 @@ export interface components {
             readonly display_name: string;
             readonly role: string;
             readonly avatar_url: string | null;
+            readonly is_me: boolean;
         };
         TeamProject: {
             readonly id: number;

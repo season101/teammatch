@@ -120,9 +120,11 @@ export function SwipeCard({
       ref={ref}
       aria-hidden={!active}
       inert={!active}
-      className={`relative col-start-1 row-start-1 touch-pan-y select-none rounded-card shadow-card ${
-        isPresent ? (isTop ? "z-10" : "") : isTop ? "z-20" : ""
-      }`}
+      // translate-y: the next card peeks out under the top one (swipe-deck.md). It's the
+      // CSS translate property, so it doesn't fight the drag's transform.
+      className={`relative col-start-1 row-start-1 touch-pan-y select-none rounded-card shadow-card transition-[translate] duration-200 ${
+        isTop ? "" : "translate-y-5"
+      } ${isPresent ? (isTop ? "z-10" : "") : isTop ? "z-20" : ""}`}
       // willChange: the card gets its own GPU layer, so a drag doesn't repaint the page (PL-17).
       style={{ x, y, rotate: reduce ? 0 : rotate, willChange: "transform" }}
       animate={{ scale: isTop || reduce ? 1 : 0.96, opacity: isTop ? 1 : 0.7 }}

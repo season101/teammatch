@@ -177,6 +177,10 @@ function ProfileFields({
         }}
       />
 
+      {/* What's above is on your card; the rest only adds to it. */}
+      <p className="border-t border-border pt-4 text-xs font-semibold tracking-wider text-muted uppercase">
+        Optional
+      </p>
       <LinkField
         id="github"
         label="GitHub"
@@ -217,13 +221,12 @@ function ProfileFields({
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={save.isPending}
-        className={`${buttonClasses("cta")} self-start`}
-      >
-        <PendingLabel pending={save.isPending} label="Saving">Save profile</PendingLabel>
-      </button>
+      {/* The form is long, so Save stays in reach: above the phone tab bar, else at the bottom. */}
+      <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] -mx-4 flex border-t border-border bg-bg px-4 py-3 sm:bottom-0">
+        <button type="submit" disabled={save.isPending} className={buttonClasses("cta")}>
+          <PendingLabel pending={save.isPending} label="Saving">Save profile</PendingLabel>
+        </button>
+      </div>
     </form>
   );
 }

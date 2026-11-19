@@ -7,6 +7,7 @@ import { buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { Avatar, initials } from "@/features/profiles/avatar";
+import { useSkills } from "@/features/profiles/queries";
 import { useProject } from "@/features/projects/queries";
 import { useShortcutsEnabled } from "@/features/shell/preferences";
 import { ApplicantCard } from "./applicant-card";
@@ -175,6 +176,8 @@ function OpenRoleQueue({ role, projectId }: QueueProps) {
   const requiredSkillIds =
     project.data?.roles.find((other) => other.id === role.id)
       ?.required_skills ?? [];
+  // Cached for the session; empty until it loads, and then nothing shows as missing.
+  const skillNames = useSkills().data ?? [];
   const rootRef = useRef<HTMLDivElement>(null);
   const decidedAt = useRef(0);
   const reduce = useReducedMotion();
@@ -228,7 +231,11 @@ function OpenRoleQueue({ role, projectId }: QueueProps) {
   }
 
   return (
-    <div ref={rootRef} className="flex flex-col gap-4 pt-4">
+    <div
+      ref={rootRef}
+      aria-keyshortcuts={shortcuts && current ? "ArrowLeft ArrowRight" : undefined}
+      className="flex flex-col gap-4 pt-4"
+    >
       {decide.variables && !decide.isError && (
         <p role="status" className="text-sm text-success">
           {decide.variables.like
@@ -271,6 +278,13 @@ function OpenRoleQueue({ role, projectId }: QueueProps) {
                   application={current}
                   roleTitle={role.title}
                   requiredSkillIds={requiredSkillIds}
+                  missingSkills={skillNames
+                    .filter(
+                      (skill) =>
+                        requiredSkillIds.includes(skill.id) &&
+                        !current.applicant.skills.some((have) => have.id === skill.id),
+                    )
+                    .map((skill) => skill.name)}
                   onLike={() => decideOn(true)}
                   onPass={() => decideOn(false)}
                 />

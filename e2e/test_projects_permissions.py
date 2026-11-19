@@ -46,7 +46,7 @@ def test_another_users_draft_page_says_not_found(browser, world):
     context = browser.new_context(base_url=BASE, storage_state=signed_in_state(world["other"]))
     page = context.new_page()
     page.goto(f"/projects/{world['draft']['id']}")
-    expect(page.get_by_text("We couldn't find that project.")).to_be_visible()
+    expect(page.get_by_text("We couldn't find that project")).to_be_visible()
     expect(page.get_by_text(world["draft"]["title"])).to_have_count(0)
     context.close()
 
@@ -136,7 +136,7 @@ def test_unknown_and_malformed_project_ids(browser, world):
     context = browser.new_context(base_url=BASE, storage_state=signed_in_state(world["other"]))
     page = context.new_page()
     page.goto("/projects/999999999")
-    expect(page.get_by_text("We couldn't find that project.")).to_be_visible()
+    expect(page.get_by_text("We couldn't find that project")).to_be_visible()
     page.goto("/projects/abc")
     expect(page.get_by_text("That project address isn't valid.")).to_be_visible()
     assert world["other"].send("GET", "/api/v1/projects/999999999/").status == 404

@@ -48,7 +48,7 @@ def test_create_draft_happy_path(owner_page):
     owner_page.get_by_role("link", name="Add roles").click()
     expect(owner_page).to_have_url(re.compile(r"/projects/\d+$"))
     expect(owner_page.get_by_role("heading", name=title, level=1)).to_be_visible()
-    expect(owner_page.get_by_text("draft · by")).to_be_visible()
+    expect(owner_page.get_by_role("main").get_by_text("Draft", exact=True)).to_be_visible()
     expect(owner_page.get_by_text("Build a thing for the class demo.")).to_be_visible()
     expect(owner_page.get_by_text("No roles yet.")).to_be_visible()
 

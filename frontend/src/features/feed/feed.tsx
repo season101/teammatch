@@ -13,10 +13,12 @@ import {
 } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { useBump } from "@/components/ui/bump";
-import { buttonClasses } from "@/components/ui/button";
+import { Button, buttonClasses } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { useMyApplications } from "@/features/applications/queries";
 import { useMyProfile } from "@/features/profiles/queries";
+import { useProject } from "@/features/projects/queries";
 import { useShortcutsEnabled } from "@/features/shell/preferences";
 import { useMySummary } from "@/features/shell/queries";
 import { termEnd } from "@/features/teams/my-team";
@@ -33,6 +35,29 @@ import {
 import { PassToast } from "./pass-toast";
 import { deckCardHeight, deckHandoff, markOpenedFromDeck, RoleCard, roleHref } from "./role-card";
 import { SwipeCard, type Direction } from "./swipe-card";
+
+// The screen's title. The deck is closed for a committed or benched student, so it
+// isn't "Open roles" for them.
+export function FeedTitle() {
+  const team = useMyTeam().data;
+  const committed = useMySummary().data?.deck === "committed";
+  return (
+    <h1 className="font-display text-3xl font-extrabold">
+      {team ? "Your team" : committed ? "Your commitment" : "Open roles"}
+    </h1>
+  );
+}
+
+// How close the team I committed to is to locking (principle 2).
+function RolesFilled({ projectId }: { projectId: number }) {
+  const roles = useProject(projectId).data?.roles;
+  if (!roles?.length) return null;
+  return (
+    <p className="font-semibold">
+      {roles.filter((role) => role.status === "filled").length} of {roles.length} roles filled
+    </p>
+  );
+}
 
 export function Feed() {
   const router = useRouter();
@@ -110,6 +135,7 @@ export function Feed() {
         <h2 className="font-display text-3xl font-extrabold">
           You&apos;re committed to {seat?.role.project.title ?? "a project"}
         </h2>
+        {seat && <RolesFilled projectId={seat.role.project.id} />}
         <p className="text-muted">
           Your deck stays closed while you hold this seat. Team chat opens when the last role
           fills.
@@ -122,9 +148,12 @@ export function Feed() {
   }
   if (feed.isError) {
     return (
-      <p role="alert" className="text-pass">
-        Couldn&apos;t load roles. Refresh the page to try again.
-      </p>
+      <EmptyState
+        title="Couldn't load roles"
+        action={<Button onClick={() => feed.refetch()}>Try again</Button>}
+      >
+        Check your connection and try again.
+      </EmptyState>
     );
   }
 
@@ -310,7 +339,7 @@ export function Feed() {
         ref={stack}
         role="group"
         aria-label="Deck of open roles"
-        aria-keyshortcuts={shortcuts ? "ArrowLeft ArrowRight ArrowUp Z" : undefined}
+        aria-keyshortcuts={shortcuts && top ? "ArrowLeft ArrowRight ArrowUp Z" : undefined}
         tabIndex={top ? 0 : -1}
         className="isolate grid grid-cols-1 rounded-card"
       >

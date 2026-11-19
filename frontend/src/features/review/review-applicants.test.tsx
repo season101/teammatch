@@ -471,9 +471,9 @@ test("says so when I own no projects", async () => {
   renderPage();
 
   expect(
-    await screen.findByText(/You don.t own any projects yet/),
+    await screen.findByRole("heading", { name: "No project to review" }),
   ).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "Create one" })).toHaveAttribute(
+  expect(screen.getByRole("link", { name: "New project" })).toHaveAttribute(
     "href",
     "/projects/new",
   );

@@ -16,6 +16,7 @@ TeamMatch is dark first, and light is fully supported. Every colour is a semanti
 | `surface` | `#15131D` | `#FFFFFF` | `bg-surface` | Sidebar, panels, cards, modals |
 | `surface-2` | `#1F1C2A` | `#F1EFF6` | `bg-surface-2` | Inputs, list rows, unmatched chips, hover fills |
 | `border` | `#2C2839` | `#E3E0EB` | `border-border` | Hairlines and outlines |
+| `border-control` | `#2C2839` | `#8F8AA3` | `border-border-control` | The edge of a control: inputs, drop zones, unselected chips. 3.4:1 on white in light, so a field never fades into the page |
 | `text` | `#F6F4FB` | `#15131D` | `text-text` | Body and headings |
 | `text-muted` | `#A7A2B8` | `#5E5872` | `text-muted` | Labels, helper text, timestamps |
 | `primary` | `#7C5CFF` | `#6A47FF` | `text-primary`, `border-primary` | Focus ring, active tab underline, selection borders |

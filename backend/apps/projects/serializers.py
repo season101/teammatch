@@ -97,6 +97,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
     owner_name = serializers.CharField(source="owner.profile.display_name", read_only=True)
     pitch_preview = serializers.SerializerMethodField()
     open_role_count = serializers.IntegerField(read_only=True)
+    role_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Project
@@ -107,6 +108,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
             "owner",
             "owner_name",
             "open_role_count",
+            "role_count",
             "created_at",
         ]
 

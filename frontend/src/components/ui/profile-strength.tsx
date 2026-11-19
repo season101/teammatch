@@ -5,9 +5,12 @@ import { useState } from "react";
 export function ProfileStrength({
   value,
   label = "Profile strength",
+  hint,
 }: {
   value: number;
   label?: string;
+  // What would raise it, e.g. "Next: add a bio."
+  hint?: string;
 }) {
   const percent = Math.min(100, Math.max(0, Math.round(value)));
   // The number rolls up when it grows and down when it shrinks. Not on first paint.
@@ -41,6 +44,7 @@ export function ProfileStrength({
           style={{ transform: `scaleX(${percent / 100})` }}
         />
       </div>
+      {hint && <p className="text-xs text-muted">{hint}</p>}
     </div>
   );
 }

@@ -20,19 +20,19 @@ export default function Home() {
         <Logo className="text-xl" />
         <div className="flex gap-2">
           <Link href="/login" className={buttonClasses("secondary")}>
-            Log in
+            Sign in
           </Link>
           {/* The hero has the same button, so a phone's header keeps to one. */}
           <Link
             href="/login"
             className={`${buttonClasses("cta")} max-sm:hidden`}
           >
-            Get started
+            Sign up
           </Link>
         </div>
       </header>
 
-      <main className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-4 pt-6 pb-12 sm:px-6 lg:grid-cols-[1fr_auto] lg:gap-16 lg:py-12">
+      <main className="mx-auto grid w-full max-w-6xl flex-1 content-start items-center gap-12 px-4 pt-6 pb-12 sm:px-6 lg:grid-cols-[1fr_auto] lg:content-normal lg:gap-16 lg:py-12">
         <div className="flex flex-col items-start gap-6">
           <Chip pill>For LA Tech students</Chip>
           <h1 className="font-display text-hero font-black text-balance">
@@ -44,7 +44,7 @@ export default function Home() {
           </p>
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
             <Link href="/login" className={buttonClasses("cta", "lg")}>
-              Get started
+              Sign up
             </Link>
             <p className="text-sm text-muted">
               Use your @latech.edu or @email.latech.edu email.

@@ -154,10 +154,16 @@ class TeamMemberSerializer(serializers.ModelSerializer):
     display_name = serializers.CharField(source="user.profile.display_name", read_only=True)
     role = serializers.SerializerMethodField()
     avatar_url = serializers.SerializerMethodField()
+    # Members have no id here, so the lineup can't tell which row is the reader's.
+    is_me = serializers.SerializerMethodField()
 
     class Meta:
         model = Membership
-        fields = ["display_name", "role", "avatar_url"]
+        fields = ["display_name", "role", "avatar_url", "is_me"]
+
+    def get_is_me(self, membership) -> bool:
+        request = self.context.get("request")
+        return bool(request) and membership.user_id == request.user.id
 
     def get_avatar_url(self, membership) -> str | None:
         return ProfileSerializer().get_avatar_url(membership.user.profile)

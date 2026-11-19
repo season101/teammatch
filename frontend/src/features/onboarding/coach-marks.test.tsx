@@ -28,6 +28,10 @@ test("the first visit opens the sheet with focus on Got it", () => {
       "→Swipe right to apply",
       "←Swipe left to pass",
       "+Tap the card for details",
+      // The desktop list, shown in place of the swipes from 1024px.
+      "→Press → to apply",
+      "←Press ← to pass",
+      "↑Press ↑ or click the card for details",
     ],
   );
   expect(sheet).toHaveTextContent(

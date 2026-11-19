@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { inputClass, noticeClass } from "@/components/ui/form-classes";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { useMyRole } from "@/features/profiles/queries";
@@ -45,6 +46,10 @@ function Problem({ error }: { error: Error | null }) {
 
 // The admin's page: add a term, choose the moderators, put them on projects.
 // The API refuses everyone else (403), so this only decides what to draw.
+// "2026-08-24" → "Aug 24". Noon, so the date doesn't slip a day in any US time zone.
+const day = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
 export function Moderation() {
   const role = useMyRole();
   const admin = role === "admin";
@@ -79,7 +84,7 @@ export function Moderation() {
             <li key={term.id} className={rowClass}>
               <span className="font-semibold">{term.name}</span>
               <span className="text-sm text-muted">
-                {term.start_date} to {term.end_date}
+                {day(term.start_date)} – {day(term.end_date)}, {term.end_date.slice(0, 4)}
               </span>
             </li>
           ))}
@@ -249,8 +254,11 @@ function ProjectRow({
     <li className="flex flex-col gap-3 rounded-row border border-border bg-surface p-3">
       <div>
         <p className="font-semibold">{project.title}</p>
-        <p className="text-sm text-muted">
-          {project.term} · {project.status} · by {project.owner_name || "an unnamed owner"}
+        <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
+          <Chip variant={project.status === "open" ? "selected" : "default"}>
+            {(project.status ?? "").replace(/^./, (first) => first.toUpperCase())}
+          </Chip>
+          {project.term} · by {project.owner_name || "an unnamed owner"}
         </p>
       </div>
       {project.moderators.length > 0 && (
@@ -290,7 +298,7 @@ function ProjectRow({
         >
           <select
             aria-label={`Moderator for ${project.title}`}
-            className={`${inputClass} mt-0 min-h-11 flex-1 sm:min-h-9`}
+            className={`${inputClass} mt-0 min-h-11 flex-1 lg:min-h-9`}
             value={picked}
             onChange={(event) => setPicked(event.target.value)}
           >

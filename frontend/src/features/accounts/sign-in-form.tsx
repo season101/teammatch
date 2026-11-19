@@ -35,7 +35,7 @@ export function SignInForm({
   onSwitch,
 }: {
   next?: string;
-  // Log in or sign up passes the email from its first step, and swaps this
+  // Sign in or sign up passes the email from its first step, and swaps this
   // form for sign-up in place so the email isn't typed twice.
   initialEmail?: string;
   onSwitch?: (email: string) => void;
@@ -174,7 +174,7 @@ export function SignInForm({
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
+          className="min-h-11 rounded-input border border-border-control bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50"
         />
       </div>
 
@@ -197,8 +197,15 @@ export function SignInForm({
             setPassword(e.target.value);
             setRefused(false);
           }}
-          className="rounded-input border border-border bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass"
+          aria-describedby={refused ? "password-error" : undefined}
+          className="min-h-11 rounded-input border border-border-control bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass"
         />
+        {/* A refused password is about this field, so it says so here, with what to do. */}
+        {refused && error && (
+          <p id="password-error" role="alert" className="text-sm text-pass">
+            {error} <span>Try again or reset your password.</span>
+          </p>
+        )}
         <Link
           href="/reset-password"
           className="inline-flex min-h-11 items-center self-end text-sm font-medium text-primary underline"
@@ -226,7 +233,7 @@ export function SignInForm({
         </div>
       )}
 
-      {error && (
+      {error && !refused && (
         <p role="alert" className="text-sm text-pass">
           {error}
         </p>
@@ -242,13 +249,13 @@ export function SignInForm({
           <button
             type="button"
             onClick={() => onSwitch(email)}
-            className="font-medium text-primary underline"
+            className="inline-flex min-h-11 items-center font-medium text-primary underline"
           >
-            Create account
+            Sign up
           </button>
         ) : (
-          <Link href="/signup" className="font-medium text-primary underline">
-            Create account
+          <Link href="/signup" className="inline-flex min-h-11 items-center font-medium text-primary underline">
+            Sign up
           </Link>
         )}
       </p>

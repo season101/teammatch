@@ -2,6 +2,8 @@ import { AuthLayout } from "@/features/accounts/auth-layout";
 import { ResetPasswordForm } from "@/features/accounts/reset-password-form";
 
 // The link in the password reset email points here (HEADLESS_FRONTEND_URLS in Django settings).
+export const metadata = { title: "Set a new password · TeamMatch" };
+
 export default async function ResetPasswordPage({
   params,
 }: {

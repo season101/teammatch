@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, vi } from "vitest";
 import SettingsPage from "@/app/(app)/settings/page";
 import { AppShell } from "./app-shell";
+import { setProjectsTab, useProjectsTab } from "@/features/projects/projects-tab";
 import { applySavedTheme } from "./theme-script";
 
 const nav = vi.hoisted(() => ({ pathname: "/feed" }));
@@ -53,6 +54,7 @@ const sidebar = () =>
   screen.getAllByRole("navigation", { name: "Main" })[1].closest("aside")!;
 
 afterEach(() => {
+  setProjectsTab("browse");
   vi.unstubAllGlobals();
   localStorage.clear();
   delete document.documentElement.dataset.theme;
@@ -125,8 +127,11 @@ test("arrow keys move focus along the tabs and the side nav, wrapping at the end
   expect(within(sideNav).getByRole("link", { name: "Projects" })).toHaveFocus();
 });
 
+// What the deck and the review queue render while a card is up.
+const card = <div aria-keyshortcuts="ArrowLeft ArrowRight" />;
+
 test("the deck shows its keyboard legend, and Hide collapses it", () => {
-  renderShell("/feed");
+  renderShell("/feed", { children: card });
   const legend = screen.getByRole("complementary", { name: "Keyboard shortcuts" });
 
   // Only the keys feed.tsx handles.
@@ -141,7 +146,7 @@ test("the deck shows its keyboard legend, and Hide collapses it", () => {
 });
 
 test("the review queue has its own keys, only the ones that work", () => {
-  renderShell("/applicants");
+  renderShell("/applicants", { children: card });
   const legend = screen.getByRole("complementary", { name: "Keyboard shortcuts" });
   expect(within(legend).getAllByRole("listitem").map((key) => key.textContent)).toEqual([
     "←Pass",
@@ -150,12 +155,25 @@ test("the review queue has its own keys, only the ones that work", () => {
 });
 
 test("screens without keys show no legend", () => {
-  renderShell("/projects");
+  const go = renderShell("/projects", { children: card });
+  expect(screen.queryByRole("complementary", { name: "Keyboard shortcuts" })).toBeNull();
+  // Nor does a deck or queue with nothing to decide (closed, benched or empty).
+  go("/feed");
+  expect(screen.getByRole("complementary", { name: "Keyboard shortcuts" })).toBeInTheDocument();
+  cleanup();
+  renderShell("/feed");
   expect(screen.queryByRole("complementary", { name: "Keyboard shortcuts" })).toBeNull();
 });
 
 test("Settings → Keyboard shortcuts turns the legend off and on", () => {
-  renderShell("/feed", { children: <SettingsPage /> });
+  renderShell("/feed", {
+    children: (
+      <>
+        {card}
+        <SettingsPage />
+      </>
+    ),
+  });
   const toggle = screen.getByRole("switch", { name: /Keyboard shortcuts/ });
 
   expect(toggle).toBeChecked();
@@ -265,11 +283,12 @@ test("the sidebar's Teams tab links to my team once I have one", () => {
     "href",
     "/teams",
   );
-  expect(within(sidebar).queryByText(/once every role is filled/)).not.toBeInTheDocument();
+  expect(within(sidebar).queryByText("No team yet.")).not.toBeInTheDocument();
 });
 
 test("a closed project stays under Mine → Archived, without making me a reviewer", () => {
-  renderShell("/projects", {
+  // Beside a project: on /projects itself the stage lists them, not the sidebar.
+  renderShell("/projects/9", {
     projects: [{ ...project, id: 5, title: "Old idea", status: "archived" }],
   });
   fireEvent.click(within(sidebar()).getByRole("tab", { name: "Mine" }));
@@ -294,7 +313,7 @@ test("the sidebar opens each page's own tab, not the last page's", () => {
   // Review → Teams: a different set of tabs, and Teams is picked with its panel showing.
   go("/teams");
   expect(selected()).toEqual(["Teams"]);
-  expect(within(sidebar()).getByText(/once every role is filled/)).toBeVisible();
+  expect(within(sidebar()).getByText("No team yet.")).toBeVisible();
 
   go("/feed");
   expect(selected()).toEqual(["Applications"]);
@@ -311,7 +330,7 @@ test("the sidebar opens each page's own tab, not the last page's", () => {
 });
 
 test("the nav column lists what's left to set up, above the email", () => {
-  renderShell("/feed");
+  renderShell("/feed", { projects: [] });
   const card = screen.getByRole("region", { name: "Finish setup" });
 
   expect(card).toHaveTextContent("2 of 3");
@@ -366,4 +385,36 @@ test("on /profile the side pane's Preview | Edit tabs drive the page's panels", 
   expect(within(page).getByRole("tab", { name: "Edit" })).toHaveAttribute("aria-selected", "true");
   expect(sessionStorage.getItem("tm-tab:profile")).toBe("edit");
   expect(screen.queryByRole("heading", { name: "Settings" })).toBeNull();
+});
+
+test("the sidebar's Mine tab drives the Projects page, and its own New project button steps aside", () => {
+  const Stage = () => <p>Showing {useProjectsTab()}</p>;
+  const go = renderShell("/projects", { children: <Stage /> });
+  expect(screen.getByText("Showing browse")).toBeInTheDocument();
+
+  fireEvent.click(within(sidebar()).getByRole("tab", { name: "Mine" }));
+  expect(screen.getByText("Showing mine")).toBeInTheDocument();
+  // The page header has the button on /projects; elsewhere the sidebar keeps its own.
+  expect(within(sidebar()).queryByRole("link", { name: "New project" })).toBeNull();
+  go("/projects/4");
+  expect(within(sidebar()).getByRole("link", { name: "New project" })).toBeInTheDocument();
+
+  // Leaving Projects and coming back starts on Browse again.
+  go("/feed");
+  go("/projects");
+  expect(screen.getByText("Showing browse")).toBeInTheDocument();
+});
+
+test("no page while the Team rules redirect is on its way", () => {
+  renderShell("/feed", { profile: { rules_accepted_at: null, skills: [] } });
+  expect(screen.queryByText("Stage")).toBeNull();
+});
+
+test("a project opened for one role (?role=) keeps Discover as the current place", () => {
+  window.history.pushState(null, "", "/projects/4?role=7");
+  renderShell("/projects/4");
+  const nav = within(sidebar()).getAllByRole("navigation", { name: "Main" })[0];
+  expect(within(nav).getByRole("link", { name: /Discover/ })).toHaveAttribute("aria-current", "page");
+  expect(within(nav).getByRole("link", { name: "Projects" })).not.toHaveAttribute("aria-current");
+  window.history.pushState(null, "", "/");
 });

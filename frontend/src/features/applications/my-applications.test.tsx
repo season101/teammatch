@@ -7,7 +7,8 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, beforeAll, vi } from "vitest";
-import { MyApplications, StatusChip } from "./my-applications";
+import { setApplicationsTab } from "./applications-tab";
+import { ApplicationsPanel, MyApplications, StatusChip } from "./my-applications";
 
 // jsdom has no modal dialog behaviour, so stand in for what browsers do.
 beforeAll(() => {
@@ -166,6 +167,7 @@ async function confirmCommit() {
 }
 
 afterEach(() => {
+  setApplicationsTab(null);
   vi.unstubAllGlobals();
   document.cookie = "csrftoken=; max-age=0";
 });
@@ -527,4 +529,34 @@ test("with no applications, points to Discover", async () => {
     "href",
     "/feed",
   );
+});
+
+// Desktop: the tab row is hidden and the sidebar's list, grouped by status, picks the panel.
+test("the sidebar groups applications by status, and a row opens its group on the page", async () => {
+  mockApi();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  client.setQueryData(["session"], { id: 1, email: "sam@latech.edu" });
+  render(
+    <QueryClientProvider client={client}>
+      <ApplicationsPanel />
+      <MyApplications />
+    </QueryClientProvider>,
+  );
+
+  const closed = await screen.findByRole("region", { name: "Closed" });
+  expect(
+    screen.getAllByRole("region").map((region) => region.getAttribute("aria-label")),
+  ).toEqual(["Offers", "Pending", "Closed"]);
+  expect(within(screen.getByRole("region", { name: "Offers" })).getAllByRole("link")).toHaveLength(2);
+  expect(within(closed).getAllByRole("link")).toHaveLength(3);
+  // Offers first, as on a phone.
+  expect(within(panel()).getByRole("heading", { name: "Offers" })).toBeInTheDocument();
+
+  fireEvent.click(within(closed).getByRole("link", { name: /Tester/ }));
+  expect(within(panel()).getByRole("heading", { name: "Closed" })).toBeInTheDocument();
+  expect(within(panel()).getByText("You declined on Oct 21.")).toBeInTheDocument();
+
+  // Using the tabs (phone and tablet) takes the choice back.
+  fireEvent.click(screen.getByRole("tab", { name: "Pending" }));
+  expect(within(panel()).getByRole("heading", { name: "Pending" })).toBeInTheDocument();
 });

@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Modal } from "@/components/ui/modal";
 import { PendingLabel } from "@/components/ui/pending-label";
 import { Tabs } from "@/components/ui/tabs";
@@ -13,6 +14,7 @@ import { SkeletonRows } from "@/components/ui/skeleton";
 import { useSession } from "@/features/accounts/require-sign-in";
 import { useProject } from "@/features/projects/queries";
 import { useMyProjects } from "@/features/review/queries";
+import { setApplicationsTab, useApplicationsTab } from "./applications-tab";
 import {
   isBlocked,
   useCommit,
@@ -38,14 +40,20 @@ export function StatusChip({
 }: {
   status?: MyApplication["status"];
 }) {
-  if (status === "liked") return <Chip variant="selected">Offer</Chip>;
-  if (status === "committed") return <Chip variant="matched">Committed</Chip>;
-  if (status === "pending") return <Chip>Pending</Chip>;
-  return (
-    <span className="opacity-60">
+  // The wrapper keeps the chip whole next to a long role title; without it the
+  // label broke mid-word in the desktop list column.
+  const chip =
+    status === "liked" ? (
+      <Chip variant="selected">Offer</Chip>
+    ) : status === "committed" ? (
+      <Chip variant="matched">Committed</Chip>
+    ) : status === "pending" ? (
+      <Chip>Pending</Chip>
+    ) : (
       <Chip>Closed</Chip>
-    </span>
-  );
+    );
+  // No dimming: the muted chip is already the quietest that passes contrast.
+  return <span className="shrink-0 whitespace-nowrap">{chip}</span>;
 }
 
 // byCommit: withdrawn for me when I committed to another seat.
@@ -151,6 +159,7 @@ function Row({
         {onWithdraw && (
           <Button
             variant="danger"
+            className="shrink-0 whitespace-nowrap"
             aria-label={`Withdraw from ${application.role.title}`}
             onClick={onWithdraw}
           >
@@ -162,10 +171,34 @@ function Row({
   );
 }
 
-const NOTHING = <p className="text-sm text-muted">Nothing here.</p>;
+// An empty tab says what lands there, in the same layout as every other empty screen.
+const EMPTY = {
+  offers: ["No offers yet", "When an owner likes your application, their offer shows up here."],
+  pending: ["Nothing pending", "Roles you applied to wait here until the owner decides."],
+  committed: ["No commitment yet", "When you commit to an offer, your seat shows up here."],
+  closed: ["Nothing closed", "Applications you withdrew, declined or weren't picked for end up here."],
+};
+const nothing = (tab: keyof typeof EMPTY) => (
+  <EmptyState title={EMPTY[tab][0]}>{EMPTY[tab][1]}</EmptyState>
+);
+
+// The four groups, in the order of the tabs and of the desktop sidebar's list.
+const GROUPS = [
+  { id: "offers", heading: "Offers", statuses: ["liked"] },
+  { id: "pending", heading: "Pending", statuses: ["pending"] },
+  { id: "committed", heading: "Committed", statuses: ["committed"] },
+  { id: "closed", heading: "Closed", statuses: ["declined", "passed", "withdrawn"] },
+];
+
+// On desktop the tab row is hidden, so each panel names its group itself.
+const groupHeading = (text: string) => (
+  <h2 className="mb-4 hidden text-lg font-semibold lg:block">{text}</h2>
+);
 
 export function MyApplications() {
   const applications = useMyApplications();
+  // The group picked in the desktop sidebar, if any.
+  const picked = useApplicationsTab();
   // Only to name my open project when a commit is blocked (screen 30).
   const myOpenProject = useMyProjects().data?.find(
     (project) => project.status === "open",
@@ -179,7 +212,7 @@ export function MyApplications() {
   const [blocked, setBlocked] = useState<MyApplication | null>(null);
 
   if (applications.isPending)
-    return <SkeletonRows label="Loading your applications" />;
+    return <SkeletonRows label="Loading your applications" tabs={4} />;
   if (applications.isError) {
     return (
       <p role="alert" className="text-danger">
@@ -246,15 +279,21 @@ export function MyApplications() {
         key={first}
         defaultTab={first}
         label="Filter applications"
+        // On desktop the sidebar's grouped list picks the panel and the tab row is hidden.
+        // Using the tabs hands the choice back to them.
+        selected={picked ?? undefined}
+        onSelect={() => setApplicationsTab(null)}
+        listClassName="lg:hidden"
         tabs={[
           {
             id: "offers",
             label: offers.length > 0 ? `Offers ${offers.length}` : "Offers",
             panel:
               offers.length === 0 ? (
-                NOTHING
+                nothing("offers")
               ) : (
                 <div className="flex flex-col gap-4">
+                  {groupHeading("Offers")}
                   <p className="text-muted">
                     Commit to one. Your other offers close when you do.
                   </p>
@@ -312,17 +351,20 @@ export function MyApplications() {
             label: "Pending",
             panel:
               pending.length === 0 ? (
-                NOTHING
+                nothing("pending")
               ) : (
-                <ul className="flex flex-col gap-3">
-                  {pending.map((application) => (
-                    <Row
-                      key={application.id}
-                      application={application}
-                      onWithdraw={() => setWithdrawing(application)}
-                    />
-                  ))}
-                </ul>
+                <>
+                  {groupHeading("Pending")}
+                  <ul className="flex flex-col gap-3">
+                    {pending.map((application) => (
+                      <Row
+                        key={application.id}
+                        application={application}
+                        onWithdraw={() => setWithdrawing(application)}
+                      />
+                    ))}
+                  </ul>
+                </>
               ),
           },
           {
@@ -330,9 +372,10 @@ export function MyApplications() {
             label: "Committed",
             panel:
               committed.length === 0 ? (
-                NOTHING
+                nothing("committed")
               ) : (
                 <div className="flex flex-col gap-6">
+                  {groupHeading("Committed")}
                   {committed.map((application) => (
                     // Right after a commit the seat rises in once; on a later visit it's just there.
                     <div
@@ -390,17 +433,20 @@ export function MyApplications() {
             label: "Closed",
             panel:
               closed.length === 0 ? (
-                NOTHING
+                nothing("closed")
               ) : (
-                <ul className="flex flex-col gap-3">
-                  {closed.map((application) => (
-                    <Row
-                      key={application.id}
-                      application={application}
-                      byCommit={byCommit(application)}
-                    />
-                  ))}
-                </ul>
+                <>
+                  {groupHeading("Closed")}
+                  <ul className="flex flex-col gap-3">
+                    {closed.map((application) => (
+                      <Row
+                        key={application.id}
+                        application={application}
+                        byCommit={byCommit(application)}
+                      />
+                    ))}
+                  </ul>
+                </>
               ),
           },
         ]}
@@ -431,6 +477,8 @@ export function MyApplications() {
           setCommitting(null);
           if (!offer) return;
           commit.mutate(offer.id, {
+            // The seat lands on Committed, wherever the sidebar last pointed.
+            onSuccess: () => setApplicationsTab(null),
             onError: (error) => {
               if (isBlocked(error)) setBlocked(offer);
             },
@@ -451,7 +499,9 @@ export function MyApplications() {
         onCta={() => setDeclining(null)}
         escapeLabel="Decline"
         onEscape={() => {
-          if (declining) decline.mutate(declining.id);
+          // With no offers left the page moves on, as the tabs do.
+          if (declining)
+            decline.mutate(declining.id, { onSuccess: () => setApplicationsTab(null) });
           setDeclining(null);
         }}
       >
@@ -477,7 +527,8 @@ export function MyApplications() {
   );
 }
 
-// The desktop sidebar's Applications tab (Discover mode). Rows open the full list on the stage.
+// The desktop sidebar's Applications tab (Discover mode), grouped by status. A row opens
+// its group on the stage.
 export function ApplicationsPanel() {
   const { data: user } = useSession();
   const applications = useMyApplications(Boolean(user));
@@ -491,25 +542,39 @@ export function ApplicationsPanel() {
     );
   }
   return (
-    <ul className="flex flex-col gap-1">
-      {applications.data.map((application) => (
-        <li key={application.id}>
-          <Link
-            href="/applications"
-            className="flex min-h-11 items-center justify-between gap-2 rounded-row px-3 py-2 hover:bg-surface-2"
-          >
-            <span>
-              <span className="block font-semibold">
-                {application.role.title}
-              </span>
-              <span className="block text-xs text-muted">
-                {application.role.project.title}
-              </span>
-            </span>
-            <StatusChip status={application.status} />
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <div className="flex flex-col gap-4">
+      {GROUPS.map(({ id, heading, statuses }) => {
+        const items = applications.data.filter((a) => statuses.includes(a.status ?? "pending"));
+        if (items.length === 0) return null;
+        return (
+          <section key={id} aria-label={heading} className="flex flex-col gap-1">
+            <h3 className="px-3 text-xs font-semibold uppercase tracking-wide text-muted">
+              {heading}
+            </h3>
+            <ul className="flex flex-col gap-1">
+              {items.map((application) => (
+                <li key={application.id}>
+                  <Link
+                    href="/applications"
+                    onClick={() => setApplicationsTab(id)}
+                    className="flex min-h-11 items-center justify-between gap-2 rounded-row px-3 py-2 hover:bg-surface-2"
+                  >
+                    <span>
+                      <span className="block font-semibold">
+                        {application.role.title}
+                      </span>
+                      <span className="block text-xs text-muted">
+                        {application.role.project.title}
+                      </span>
+                    </span>
+                    <StatusChip status={application.status} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
   );
 }

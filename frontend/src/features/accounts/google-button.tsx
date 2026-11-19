@@ -5,14 +5,19 @@ import { useEffect, useState } from "react";
 import { buttonClasses } from "@/components/ui/button";
 import { continueWith, getProviders } from "./allauth";
 
-// "Continue with Google" above the email form (screens 2 and 3). Hidden when
-// the server has no Google keys, e.g. a laptop without GOOGLE_CLIENT_ID.
-export function GoogleButton({ next }: { next?: string }) {
-  const providers = useQuery({
+// The sign-in providers the server has keys for.
+export function useProviders() {
+  return useQuery({
     queryKey: ["auth-providers"],
     queryFn: getProviders,
     staleTime: Infinity,
   });
+}
+
+// "Continue with Google" above the email form (screens 2 and 3). Hidden when
+// the server has no Google keys, e.g. a laptop without GOOGLE_CLIENT_ID.
+export function GoogleButton({ next }: { next?: string }) {
+  const providers = useProviders();
   const [leaving, setLeaving] = useState(false);
 
   // Back from Google can restore this page from the browser's cache, button still disabled.

@@ -111,7 +111,7 @@ export function ResumeField({
         <button
           type="button"
           disabled={setResume.isPending}
-          className="flex min-h-11 flex-col items-center gap-1 rounded-card border border-dashed border-border bg-surface p-5 text-center hover:bg-surface-2 disabled:opacity-50"
+          className="flex min-h-11 flex-col items-center gap-1 rounded-card border border-dashed border-border-control bg-surface p-5 text-center hover:bg-surface-2 disabled:opacity-50"
           onClick={pick}
         >
           <span className="grid size-10 place-items-center rounded-row border border-border bg-surface-2">

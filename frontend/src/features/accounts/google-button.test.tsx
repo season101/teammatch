@@ -153,7 +153,17 @@ test.each([
   ],
   ["something_new", "Couldn't sign in with Google. Try again."],
 ])("the sign-in page explains ?error=%s", (code, message) => {
-  mockConfig([]);
+  mockConfig([{ id: "google" }]);
   renderWithClient(<AuthForm googleError={code} />);
   expect(screen.getByRole("alert")).toHaveTextContent(message);
+});
+
+test("with no Google button, the error points at the school email instead", async () => {
+  mockConfig([]);
+  renderWithClient(<AuthForm googleError="cancelled" />);
+  await waitFor(() =>
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Google sign-in didn't work. Continue with your school email.",
+    ),
+  );
 });

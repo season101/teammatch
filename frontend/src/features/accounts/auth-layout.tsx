@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Logo } from "@/features/landing/logo";
 
-// Log in or sign up, verify email and password reset: the logo, then one
+// Sign in or sign up, verify email and password reset: the logo, then one
 // narrow column in the middle. These pages sit outside the app's navigation.
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (

@@ -5,7 +5,7 @@ const kinds = {
   undo: {
     label: "Undo",
     big: false,
-    look: "border border-border bg-surface text-undo",
+    look: "border border-border-control bg-surface text-undo",
     path: "M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3",
   },
   pass: {

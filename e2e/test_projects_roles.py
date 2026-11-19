@@ -104,7 +104,7 @@ def test_sidebar_mine_list_updates_after_deleting_a_role(page: Page, draft, owne
     page.get_by_role("heading", name=re.compile("Drop")).locator("xpath=..").get_by_role(
         "button", name="Delete role"
     ).click()
-    page.get_by_role("dialog", name="Delete this role?").get_by_role("button", name="Delete role").click()
+    page.get_by_role("dialog", name=re.compile(r"^Delete .+\?$")).get_by_role("button", name="Delete role").click()
     expect(row).to_contain_text("1 role · not published")
 
 
@@ -148,7 +148,7 @@ def test_delete_role_asks_first_and_keep_cancels(page: Page, draft, owner):
     add_role(owner[1], draft["id"], "Maybe delete", ("Python",))
     page.goto(f"/projects/{draft['id']}")
     page.get_by_role("button", name="Delete role").click()
-    dialog = page.get_by_role("dialog", name="Delete this role?")
+    dialog = page.get_by_role("dialog", name=re.compile(r"^Delete .+\?$"))
     expect(dialog).to_be_visible()
     dialog.get_by_role("button", name="Keep role").click()
     expect(dialog).to_have_count(0)
@@ -159,7 +159,7 @@ def test_delete_role_removes_it(page: Page, draft, owner):
     add_role(owner[1], draft["id"], "Delete me", ("Python",))
     page.goto(f"/projects/{draft['id']}")
     page.get_by_role("button", name="Delete role").click()
-    page.get_by_role("dialog", name="Delete this role?").get_by_role("button", name="Delete role").click()
+    page.get_by_role("dialog", name=re.compile(r"^Delete .+\?$")).get_by_role("button", name="Delete role").click()
     expect(page.get_by_role("heading", name=re.compile("Delete me"))).to_have_count(0)
     expect(page.get_by_text("No roles yet.")).to_be_visible()
 
@@ -170,7 +170,7 @@ def test_cannot_delete_last_role_of_open_project(page: Page, make_api_user):
     page.context.add_cookies(client.request.storage_state()["cookies"])
     page.goto(f"/projects/{project['id']}")
     page.get_by_role("button", name="Delete role").click()
-    page.get_by_role("dialog", name="Delete this role?").get_by_role("button", name="Delete role").click()
+    page.get_by_role("dialog", name=re.compile(r"^Delete .+\?$")).get_by_role("button", name="Delete role").click()
     expect(page.get_by_role("alert").filter(has_text="needs at least one role")).to_be_visible()
     expect(page.get_by_role("heading", name=re.compile(roles[0]["title"]))).to_be_visible()
 
@@ -188,7 +188,7 @@ def test_can_add_and_delete_roles_on_an_open_project(page: Page, make_api_user):
     page.get_by_role("heading", name=re.compile(extra)).locator("xpath=..").get_by_role(
         "button", name="Delete role"
     ).click()
-    page.get_by_role("dialog", name="Delete this role?").get_by_role("button", name="Delete role").click()
+    page.get_by_role("dialog", name=re.compile(r"^Delete .+\?$")).get_by_role("button", name="Delete role").click()
     expect(page.get_by_role("heading", name=re.compile(extra))).to_have_count(0)
 
 

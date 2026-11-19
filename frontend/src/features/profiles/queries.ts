@@ -65,7 +65,7 @@ export function useMyProfile(enabled = true) {
 // admin, moderator or student, read from the profile the app shell already loads. It never
 // starts a request of its own, so it's undefined until that one lands.
 export function useMyRole() {
-  return useQuery<MyProfile>({ queryKey: ["my-profile"], enabled: false }).data?.role;
+  return useMyProfile(false).data?.role;
 }
 
 // The whole list (about 20 skills), searched in the browser. It only changes with a migration.

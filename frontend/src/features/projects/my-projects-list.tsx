@@ -33,13 +33,14 @@ export function projectSummary(project: MyProject): string {
 const rowClass =
   "flex min-h-11 flex-col gap-0.5 rounded-row border border-border bg-surface px-3 py-2 hover:bg-surface-2";
 
-// withOpenNote: the phone Mine tab shows the BR-14 note here. The desktop sidebar has its own.
+// onPage: the Projects page's Mine list, with the BR-14 note and each project's roles.
+// The desktop sidebar's list is the short one, and has its own note.
 export function MyProjectsList({
   projects,
-  withOpenNote = false,
+  onPage = false,
 }: {
   projects: MyProject[];
-  withOpenNote?: boolean;
+  onPage?: boolean;
 }) {
   if (projects.length === 0) {
     return (
@@ -56,7 +57,7 @@ export function MyProjectsList({
   return (
     <div className="flex flex-col gap-4">
       {/* BR-14 blocks publishing a second open project, not drafting one. */}
-      {withOpenNote &&
+      {onPage &&
         projects.some((project) => project.status === "open") && (
           <p className="px-3 text-sm text-muted">
             You have an open project, so a new one stays a draft until you close
@@ -89,6 +90,21 @@ export function MyProjectsList({
                       {projectSummary(project)}
                     </span>
                   </Link>
+                  {onPage && project.roles.length > 0 && (
+                    <ul
+                      aria-label={`Roles on ${project.title}`}
+                      className="flex flex-col px-3 pt-1 text-sm"
+                    >
+                      {project.roles.map((role) => (
+                        <li key={role.id} className="flex justify-between gap-2 py-1">
+                          <span>{role.title}</span>
+                          <span className="text-muted">
+                            {role.status === "filled" ? "Filled" : "Open"}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
               ))}
             </ul>

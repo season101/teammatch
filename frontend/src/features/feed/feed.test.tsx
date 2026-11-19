@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { MotionGlobalConfig } from "motion/react";
 import { afterEach, vi } from "vitest";
 import { setShortcutsEnabled } from "@/features/shell/preferences";
-import { Feed } from "./feed";
+import { Feed, FeedTitle } from "./feed";
 import { deckHandoff } from "./role-card";
 
 const push = vi.fn();
@@ -77,6 +77,8 @@ function mockApi({
       else if (path === "/api/v1/me/profile/") body = me;
       else if (path === "/api/v1/teams/mine/") body = { team: team() };
       else if (path === "/api/v1/me/summary/") body = summary();
+      else if (path === "/api/v1/projects/4/")
+        body = { roles: [{ status: "filled" }, { status: "filled" }, { status: "open" }] };
       else if (path === "/api/v1/applications/mine/")
         body = {
           next: null,
@@ -687,10 +689,26 @@ test("after a commit the deck is closed, which isn't benched or caught up", asyn
     "href",
     "/applications",
   );
+  // How full the team is, from the project.
+  expect(await screen.findByText("2 of 3 roles filled")).toBeInTheDocument();
   expect(screen.queryByRole("group", { name: "Deck of open roles" })).not.toBeInTheDocument();
   expect(screen.queryByRole("heading", { name: /You're on/ })).not.toBeInTheDocument();
   expect(screen.queryByRole("heading", { name: "You're all caught up" })).not.toBeInTheDocument();
   expect(screen.queryByRole("link", { name: "Open team chat" })).not.toBeInTheDocument();
+});
+
+test.each([
+  ["open", null, "Open roles"],
+  ["committed", null, "Your commitment"],
+  ["benched", myTeam, "Your team"],
+])("with a %s deck the screen is titled for it", async (deck, team, title) => {
+  mockApi({ team: () => team, summary: () => ({ offers: 0, applicants_waiting: 0, deck }) });
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <FeedTitle />
+    </QueryClientProvider>,
+  );
+  expect(await screen.findByRole("heading", { level: 1, name: title })).toBeInTheDocument();
 });
 
 test("an open deck with nothing left is caught up, not closed", async () => {

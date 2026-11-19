@@ -6,7 +6,8 @@ import { Toast } from "@/components/ui/toast";
 const STAYS_FOR = 4000;
 
 // "Passed on Backend developer" with Undo (toast.md): top centre on a phone, top right
-// on desktop. It goes after 4 seconds, and waits while it's hovered or focused.
+// on desktop. On phones and tablets it sits under the title row or top bar, not over them.
+// It goes after 4 seconds, and waits while it's hovered or focused.
 // The deck's own live region announces the pass, so this one stays quiet.
 // onDone must keep its identity between renders, or the clock restarts.
 export function PassToast({
@@ -29,7 +30,7 @@ export function PassToast({
   }, [held, onDone]);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+1rem)] z-40 flex justify-center px-4 lg:justify-end lg:px-6">
+    <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+4.25rem)] z-40 sm:top-[calc(env(safe-area-inset-top)+9.5rem)] flex justify-center px-4 lg:top-[calc(env(safe-area-inset-top)+1rem)] lg:justify-end lg:px-6">
       <div
         className="pointer-events-auto w-full max-w-sm"
         onMouseEnter={() => setHovered(true)}

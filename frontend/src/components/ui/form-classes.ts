@@ -1,7 +1,7 @@
 // Shared classes for form fields and notices. Tokens only, so every screen
 // follows the app's theme setting. See docs/design/components/form-fields.md.
 export const inputClass =
-  "mt-1 w-full rounded-input border border-border bg-surface-2 px-3 py-2 text-base text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass";
+  "mt-1 min-h-11 w-full rounded-input border border-border-control bg-surface-2 px-3 py-2 text-base text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass";
 export const errorClass = "mt-1 text-sm text-pass";
 export const helperClass = "mt-1 text-xs text-muted";
 export const noticeClass =

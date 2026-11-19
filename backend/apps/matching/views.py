@@ -231,7 +231,9 @@ class MyTeamView(APIView):
 
     def get(self, request):
         seat = services.my_team_seat(request.user)
-        return Response(MyTeamResponseSerializer({"team": seat}).data)
+        # The request tells the lineup which member is me (is_me).
+        serializer = MyTeamResponseSerializer({"team": seat}, context={"request": request})
+        return Response(serializer.data)
 
 
 @extend_schema(tags=["teams"])

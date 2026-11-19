@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { FinishSetup } from "./finish-setup";
 
 const AGREED = "2026-11-11T10:00:00Z";
@@ -9,14 +9,17 @@ function renderCard({
   rules = null as string | null,
   skills = [] as unknown[],
   applications = [] as unknown[],
+  projects = [] as unknown[],
+  role = "student",
   user = { id: 1, email: "sam@latech.edu" } as unknown,
 } = {}) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: Infinity } },
   });
   client.setQueryData(["session"], user);
-  client.setQueryData(["my-profile"], { rules_accepted_at: rules, skills });
+  client.setQueryData(["my-profile"], { rules_accepted_at: rules, skills, role });
   client.setQueryData(["my-applications"], applications);
+  client.setQueryData(["my-projects"], projects);
   render(
     <QueryClientProvider client={client}>
       <FinishSetup />
@@ -69,4 +72,12 @@ test("gone once all three are done", () => {
 test("nothing for a signed-out visitor", () => {
   renderCard({ user: null });
   expect(screen.queryByText("Finish setup")).not.toBeInTheDocument();
+});
+
+test("posting a project counts as the last step, and staff get no card", () => {
+  renderCard({ rules: AGREED, projects: [{ id: 4 }] });
+  expect(screen.getByText("2 of 3")).toBeInTheDocument();
+  cleanup();
+  renderCard({ role: "admin" });
+  expect(screen.queryByText("Finish setup")).toBeNull();
 });

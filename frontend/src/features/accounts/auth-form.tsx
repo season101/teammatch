@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { GoogleButton, googleErrorText } from "./google-button";
+import { GoogleButton, googleErrorText, useProviders } from "./google-button";
 import { SignInForm } from "./sign-in-form";
 import { SignUpForm } from "./sign-up-form";
 import { buttonClasses } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { helperClass, inputClass } from "@/components/ui/form-classes";
 
 type Step = "email" | "signin" | "signup";
 
-// Log in or sign up: one screen for both. Google, or the school email first and
+// Sign in or sign up: one screen for both. Google, or the school email first and
 // the password next. The server never says whether an email has an account
 // (F1-02), so the password step opens on `start` and offers the other in place.
 export function AuthForm({
@@ -24,6 +24,10 @@ export function AuthForm({
 }) {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<Step>("email");
+  // No Google button on this server: "try again" would point at nothing.
+  const providers = useProviders();
+  const googleHidden =
+    !providers.isPending && !providers.data?.includes("google");
   const go = (to: Step) => (current: string) => {
     setEmail(current);
     setStep(to);
@@ -42,27 +46,32 @@ export function AuthForm({
   }
 
   return (
-    <div className="flex flex-col gap-6 text-center">
+    <div className="flex flex-col gap-6">
       {googleError && (
         <p
           role="alert"
-          className="rounded-card border border-pass bg-surface-2 p-3 text-left text-sm text-text"
+          className="rounded-card border border-pass bg-surface-2 p-3 text-sm text-text"
         >
-          {googleErrorText(googleError)}
+          {googleHidden
+            ? "Google sign-in didn't work. Continue with your school email."
+            : googleErrorText(googleError)}
         </p>
       )}
 
       <div className="flex flex-col gap-3">
         <h1 className="font-display text-3xl font-extrabold sm:text-4xl">
-          Log in or sign up
+          Sign in or sign up
         </h1>
         <p className="text-muted">
-          One step for both. Start with your school email.
+          {/* Sent here from a page that needs an account: say so. */}
+          {next
+            ? "Sign in to pick up where you were. Start with your school email."
+            : "One step for both. Start with your school email."}
         </p>
       </div>
       <GoogleButton next={next} />
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3 text-left">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div>
           <label htmlFor="email" className="text-sm font-medium">
             School email

@@ -64,7 +64,9 @@ export function Avatar({
             src={url}
             alt={label}
             loading="lazy"
-            className="max-h-[70dvh] max-w-full rounded-card object-contain"
+            // A lightbox, so it may pass the 400px limit modal.md sets for decision
+            // dialogs, but never the stage: 640px at most.
+            className="max-h-[70dvh] max-w-[min(100%,40rem)] rounded-card object-contain"
           />
           <button
             type="button"

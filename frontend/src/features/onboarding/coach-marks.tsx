@@ -10,6 +10,12 @@ const MARKS = [
   ["←", "Swipe left to pass"],
   ["+", "Tap the card for details"],
 ];
+// Desktop has a keyboard and no swipe, so it teaches the keys the legend shows.
+const KEYS = [
+  ["→", "Press → to apply"],
+  ["←", "Press ← to pass"],
+  ["↑", "Press ↑ or click the card for details"],
+];
 
 // Step 4 of onboarding: a bottom sheet over the deck, shown once per browser.
 // Not the Modal component: that one is a gate with two choices. Same native
@@ -46,7 +52,9 @@ export function CoachMarks() {
       ref={dialogRef}
       aria-labelledby={titleId}
       onClose={close}
-      className="sheet mx-auto mt-auto w-full max-w-md rounded-t-sheet border border-border bg-surface p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-text shadow-modal backdrop:bg-scrim open:flex open:flex-col open:gap-4"
+      // A bottom sheet on phones. From tablet up it's centred, clear of Pass and Apply, and on
+      // desktop over the stage rather than the window (the two side columns are 33rem).
+      className="sheet mx-auto mt-auto w-full max-w-md rounded-t-sheet sm:mb-auto sm:rounded-card lg:mr-0 lg:ml-[calc(50vw+2.5rem)] border border-border bg-surface p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-text shadow-modal backdrop:bg-scrim open:flex open:flex-col open:gap-4"
     >
       <StepProgress step={4} />
       <h2 id={titleId} className="font-display text-2xl font-extrabold">
@@ -56,7 +64,7 @@ export function CoachMarks() {
       <div
         aria-hidden="true"
         onPointerDown={() => setTouched(true)}
-        className={`grid place-items-center py-1 motion-reduce:hidden ${touched ? "[&_*]:[animation-play-state:paused]" : ""}`}
+        className={`grid place-items-center py-1 motion-reduce:hidden lg:hidden ${touched ? "[&_*]:[animation-play-state:paused]" : ""}`}
       >
         <div className="relative h-20 w-28 rounded-row border border-border bg-surface-2 animate-coach-swipe">
           <span className="absolute top-2 left-2 -rotate-12 rounded-chip border-2 border-current px-1 text-[10px] font-extrabold tracking-wider text-apply-text opacity-0 animate-coach-apply">
@@ -67,19 +75,21 @@ export function CoachMarks() {
           </span>
         </div>
       </div>
-      <ul className="flex flex-col gap-2">
-        {MARKS.map(([icon, label]) => (
-          <li
-            key={label}
-            className="flex min-h-11 items-center gap-3 rounded-row bg-surface-2 px-4"
-          >
-            <span aria-hidden="true" className="w-5 text-center text-muted">
-              {icon}
-            </span>
-            {label}
-          </li>
-        ))}
-      </ul>
+      {[MARKS, KEYS].map((marks, desktop) => (
+        <ul key={desktop} className={`flex-col gap-2 ${desktop ? "hidden lg:flex" : "flex lg:hidden"}`}>
+          {marks.map(([icon, label]) => (
+            <li
+              key={label}
+              className="flex min-h-11 items-center gap-3 rounded-row bg-surface-2 px-4"
+            >
+              <span aria-hidden="true" className="w-5 text-center text-muted">
+                {icon}
+              </span>
+              {label}
+            </li>
+          ))}
+        </ul>
+      ))}
       <p className="text-sm text-muted">
         You can bring back roles you passed once the deck is empty.
       </p>

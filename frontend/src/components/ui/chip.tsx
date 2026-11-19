@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 const variants = {
-  default: "border-border bg-surface-2 text-muted",
+  default: "border-border-control bg-surface-2 text-muted",
   // Lime means "yes": a skill you have that the role wants.
   matched: "border-apply bg-apply text-on-apply",
   // Pickers, and the Offer status chip (commit-flow.md).

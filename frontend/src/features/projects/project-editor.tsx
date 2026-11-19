@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useQueries } from "@tanstack/react-query";
 import { useState } from "react";
 import { useMyRole, useSkills } from "@/features/profiles/queries";
 import {
@@ -12,6 +13,7 @@ import {
   useUpdateRole,
   type ProjectDetail,
 } from "./queries";
+import { applicantsQuery } from "@/features/review/queries";
 import { ApplyToRole } from "./apply-to-role";
 import { RoleForm } from "./role-form";
 import { Modal } from "@/components/ui/modal";
@@ -19,7 +21,8 @@ import { ProjectDetailsForm } from "./project-details-form";
 import { Chip } from "@/components/ui/chip";
 import { GitHubIcon, LinkCard } from "@/components/ui/link-card";
 import { TeamStrip, type Segment } from "@/components/ui/team-strip";
-import { buttonClasses } from "@/components/ui/button";
+import { Button, buttonClasses } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { noticeClass, successClass } from "@/components/ui/form-classes";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { PendingLabel } from "@/components/ui/pending-label";
@@ -47,6 +50,16 @@ export function ProjectEditor({
   const closeProject = useCloseProject(projectId);
   const [closing, setClosing] = useState(false);
   const [editingDetails, setEditingDetails] = useState(false);
+  // For the owner of an open project: who is waiting on each open role. Review loads
+  // the same lists, so they share its cache.
+  const loaded = project.data;
+  const openRoles =
+    loaded?.owner === userId && loaded.status === "open"
+      ? loaded.roles.filter((each) => each.status === "open")
+      : [];
+  const waiting = useQueries({ queries: openRoles.map((each) => applicantsQuery(each.id)) });
+  const waitingOn = (roleId: number) =>
+    waiting[openRoles.findIndex((each) => each.id === roleId)]?.data?.length ?? 0;
 
   if (project.isPending || skills.isPending) {
     return <SkeletonRows label="Loading project" />;
@@ -54,11 +67,23 @@ export function ProjectEditor({
   if (project.isError || skills.isError) {
     const notFound = project.error?.status === 404;
     return (
-      <p role="alert" className={noticeClass}>
+      <EmptyState
+        heading="h1"
+        title={notFound ? "We couldn't find that project" : "Couldn't load this project"}
+        action={
+          notFound ? (
+            <Link href="/projects" className={buttonClasses()}>
+              Back to projects
+            </Link>
+          ) : (
+            <Button onClick={() => { project.refetch(); skills.refetch(); }}>Try again</Button>
+          )
+        }
+      >
         {notFound
-          ? "We couldn't find that project."
-          : "Could not load the project. Refresh the page to try again."}
-      </p>
+          ? "It may have been closed, or the link may be old."
+          : "Check your connection and try again."}
+      </EmptyState>
     );
   }
 
@@ -105,12 +130,22 @@ export function ProjectEditor({
           <>
             <div className="flex flex-col gap-6 rounded-card bg-linear-to-br from-cover-indigo to-[color-mix(in_oklab,var(--color-cover-indigo)_62%,black)] p-6 text-white">
               {segments.length > 0 && <TeamStrip segments={segments} />}
-              <h1 className="text-3xl font-bold tracking-tight">
+              <h1 className="font-display text-3xl font-extrabold">
                 {data.title}
               </h1>
             </div>
-            <p className="text-sm text-muted">
-              {data.status} · by {data.owner_name || "an unnamed owner"}
+            {/* Status as a chip, and how full the team is in words (principle 2). */}
+            <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
+              <Chip variant={data.status === "open" ? "selected" : "default"}>
+                {(data.status ?? "").replace(/^./, (first) => first.toUpperCase())}
+              </Chip>
+              {data.roles.length > 0 && (
+                <span>
+                  {data.roles.filter((role) => role.status === "filled").length} of{" "}
+                  {data.roles.length} roles filled ·
+                </span>
+              )}
+              <span>by {data.owner_name || "an unnamed owner"}</span>
             </p>
             {data.moderators.length > 0 && (
               <p className="text-sm text-muted">
@@ -128,9 +163,10 @@ export function ProjectEditor({
                 >
                   Edit details
                 </button>
+                {/* Destructive, so red text and set apart from Edit (README rule 3). */}
                 <button
                   type="button"
-                  className={buttonClass}
+                  className={`${buttonClasses("danger", "sm")} ml-auto`}
                   onClick={() => {
                     closeProject.reset();
                     setClosing(true);
@@ -192,6 +228,14 @@ export function ProjectEditor({
                       {role.filled_by_name ? ` · ${role.filled_by_name}` : ""}
                     </span>
                   </h3>
+                  {waitingOn(role.id) > 0 && (
+                    <Link
+                      href="/applicants"
+                      className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-primary underline"
+                    >
+                      {waitingOn(role.id)} waiting · Review
+                    </Link>
+                  )}
                   {role.description && (
                     <p className="mt-1 text-text">{role.description}</p>
                   )}
@@ -228,7 +272,7 @@ export function ProjectEditor({
                       </button>
                       <button
                         type="button"
-                        className={buttonClass}
+                        className={`${buttonClasses("danger", "sm")} ml-auto`}
                         onClick={() => {
                           deleteRole.reset();
                           setDeleting(role.id);
@@ -279,7 +323,8 @@ export function ProjectEditor({
       <Modal
         open={deleting !== null}
         onClose={() => setDeleting(null)}
-        title="Delete this role?"
+        // Names the role, so the right one is being deleted.
+        title={`Delete ${data.roles.find((role) => role.id === deleting)?.title ?? "this role"}?`}
         ctaLabel="Keep role"
         onCta={() => setDeleting(null)}
         escapeLabel="Delete role"
