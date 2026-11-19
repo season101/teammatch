@@ -32,6 +32,7 @@ PAGES = [
         ("docs/planning/team-roles.md", "Team-Roles"),
         ("docs/planning/sprint-1-report.md", "Sprint-1-Report"),
         ("docs/planning/sprint-2-report.md", "Sprint-2-Report"),
+        ("docs/planning/sprint-3-report.md", "Sprint-3-Report"),
     ]),
     ("Architecture", [
         ("docs/architecture/overview.md", "Architecture-Overview"),

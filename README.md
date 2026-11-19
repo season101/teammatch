@@ -8,9 +8,31 @@
 
 Swipe on roles, not people.
 
-Students post a project with open roles. Classmates swipe on the roles that fit their skills. Owners like or pass per role, and the team forms itself when every role is filled. Then team chat opens.
+TeamMatch helps Louisiana Tech students form project teams. A student posts a project with the roles it needs. Classmates swipe through a deck of those roles, ranked by how well their skills match, and apply to the ones they want. The owner likes or passes on applicants role by role, a liked applicant commits to one offer, and the team locks when every role is filled. A locked team gets a private chat.
 
-CSC 5323 (Advanced Software Engineering), Louisiana Tech, Fall 2026. Three developers (four until Oct 16), three sprints, 10 h per person per sprint.
+**Live:** https://teammatch.sijancodes.com (sign-in needs a `latech.edu` or `email.latech.edu` address, by email and password or Google). It installs to a phone's home screen: see [Install on your phone](#install-on-your-phone).
+
+Built for CSC 5323 (Advanced Software Engineering), Louisiana Tech, Fall 2026. Three developers (four until Oct 16), three sprints, 10 h per person per sprint.
+
+## Features
+
+On `main`. Production runs v3.1.1; the items marked * merged after that tag and ship with the next one.
+
+- **Accounts:** sign up and sign in with email and password or Google, an email-domain allowlist, forgotten-password reset, and Settings to add Google or a password to an account (F1-01 to F1-06, F1-10, F1-12, F1-14).
+- **Profile and skills:** a profile with major, bio and skills, and a guided setup on first sign-in that includes the team rules (F1-03, F1-04).
+- **Projects and roles:** create, edit, close and delete projects, add roles with required skills, browse and search by keyword (F2-01 to F2-07, F2-11).
+- **Swipe deck:** role cards ranked by skill overlap, apply with a note, pass, undo the last pass, and see passed roles again. Works with touch, buttons and the keyboard (F3-01 to F3-05, F3-09 to F3-11, UI-06).
+- **My applications:** track and withdraw applications, and apply from a project page (F3-06).
+- **Review and match:** an applicant queue per role, like or pass, commit to one offer, and the team locks when every role is filled. Locking withdraws the members' other applications and retires them for the term (F4-01 to F4-05, F4-07, F4-10, F4-11, F1-08).
+- **Team chat:** real-time chat for a locked team, with history and reconnect (F4-08, F4-09).
+- **Sign-in extras:** a password offer for Google-only accounts at sign-in* (F1-13).
+- **Profile extras:** avatar upload* (F1-07), GitHub and LinkedIn links* (F1-15), resume upload* (F1-16) and reading a resume in the app* (F1-17).
+- **Project and role details:** a repository link and more details on projects* (F2-12), and a role details page opened from a deck card* (F3-13).
+- **Admin moderation*** (PL-07).
+- **End-to-end tests*:** Playwright smoke and golden-path tests (PL-08), see [e2e/README.md](e2e/README.md).
+- **App shell:** responsive navigation, light and dark theme, installable on Android and iPhone (PL-16, F2-08).
+
+Status per story is in the [backlog](docs/product/backlog.md) and on the [project board](https://github.com/users/season101/projects/1).
 
 ## How it works
 
@@ -56,7 +78,16 @@ make up      # build and start web, api, postgres, redis, storage
 make ps      # everything should say healthy
 ```
 
+Then create the tables and, if you want sample data, load the demo projects:
+
+```bash
+make migrate   # run Django migrations in the api container
+make seed      # sample owners, students, projects and applications (make seed args=--remove takes them out)
+```
+
 Open http://localhost:3000. The `/status` page shows a live status card for the API, database, and Redis.
+
+To sign in, sign up with an address on the allowlist (`ALLOWED_EMAIL_DOMAINS`, default `latech.edu,email.latech.edu`). Set `SEED_OWNER_EMAIL` and `SEED_CANDIDATE_EMAIL` in `.env`, sign up with those addresses, and run `make seed` again to give them a sample project with applicants and sample applications. The sample students use `example.com` addresses and can't sign in.
 
 Local services:
 
@@ -85,6 +116,16 @@ Ports can be changed in `.env` (`WEB_PORT`, `API_PORT`, `POSTGRES_PORT`, `REDIS_
 You can also run either side on the host while the rest stays in Docker: `cd backend && uv run uvicorn config.asgi:application --reload` reads the repo `.env` and talks to the compose ports, and `cd frontend && pnpm dev` proxies to `localhost:8000`. Stop the matching container first (`docker compose -f compose.local.yml stop api`).
 
 Health checks: `/healthz` (process is up, no dependencies), `/readyz` (db + redis, 503 if either is down), and `/api/v1/health/` (same report as `/readyz`, always 200, shown on the `/status` page).
+
+## Tests
+
+```bash
+make up      # the checks need Postgres and Redis running
+make check   # backend: ruff, pytest. frontend: lint, typecheck, Vitest, build. Same as CI
+make e2e     # Playwright end-to-end tests against the running stack (make e2e args=-x to stop at the first failure)
+```
+
+There are three layers: backend pytest, frontend Vitest and Playwright end-to-end tests in [e2e/](e2e/README.md) (setup and how to add a test are in its README). CI runs the checks and the schema and client drift check on every pull request, plus a secret scan. The e2e job runs on pull requests that touch `e2e/` (smoke, golden path and the test files the PR touches), and the full e2e suite runs on `main` and nightly.
 
 ## Install on your phone
 
@@ -145,13 +186,15 @@ Each sprint is 8 h of stories + 1 h of code review + 1 h of a rotating chore. De
 
 ### Sprints
 
-| Sprint | Dates (2026) | Goal |
-|---|---|---|
-| 0 | 9/27 - 10/6 | Planning, deliverables, repo scaffold |
-| 1 | 10/6 - 10/20 | Walking skeleton, deployed |
-| 2 | 10/22 - 11/3 | Swipe, match, team lock |
-| 3 | 11/5 - 11/17 | Chat, avatars, PWA, polish |
-| Final | 11/19 | Final build and demo |
+| Sprint | Dates (2026) | Goal | Report |
+|---|---|---|---|
+| 0 | 9/27 - 10/6 | Planning, deliverables, repo scaffold | |
+| 1 | 10/6 - 10/20 | Walking skeleton, deployed | [report](docs/planning/sprint-1-report.md) |
+| 2 | 10/22 - 11/3 | Swipe, match, team lock | [report](docs/planning/sprint-2-report.md) |
+| 3 | 11/5 - 11/17 | Chat, avatars, PWA, polish | [report](docs/planning/sprint-3-report.md) |
+| Final | 11/19 | Final build and demo | |
+
+The team: Weibo Zhang (`WeiboZhang-01`), Shree Krishna Shrestha (`shreekrishna21`) and Sijan Malla (`season101`). Pavan Kumar Yadav Kolusu was on the team until Oct 16.
 
 ## Docs
 
@@ -162,20 +205,24 @@ Each sprint is 8 h of stories + 1 h of code review + 1 h of a rotating chore. De
 | [backlog.md](docs/product/backlog.md) | stories with acceptance criteria (F1-xx..F4-xx, PL-xx) |
 | [use-cases.md](docs/product/use-cases.md) | use cases mapped to epics and stories |
 | [sprint-plan.md](docs/planning/sprint-plan.md) | capacity and what goes in each sprint |
+| [team-roles.md](docs/planning/team-roles.md) | who owns which epic, and who reviews whom |
+| [sprint reports](docs/planning/sprint-3-report.md) | done and not done, burn-down and retro per sprint (also [1](docs/planning/sprint-1-report.md), [2](docs/planning/sprint-2-report.md)) |
 | [overview.md](docs/architecture/overview.md) | C4 diagrams, quality attributes |
 | [data-model.md](docs/architecture/data-model.md) | ERD, state machines, constraints |
 | [api.md](docs/architecture/api.md) | REST, auth, and WebSocket contract |
 | [flows.md](docs/architecture/flows.md) | sequence diagrams for the main flows |
+| [google-sign-in.md](docs/architecture/google-sign-in.md) | how Google sign-in and the allowlist work |
 | [cicd.md](docs/architecture/cicd.md) / [deployment.md](docs/architecture/deployment.md) | CI, releases, production setup |
 | [adr/](docs/architecture/adr/) | architecture decisions |
 | [design/](docs/design/README.md) | design system: principles, tokens, components, patterns, wireframes. Read before any UI work |
+| [deliverables/](docs/deliverables/rundown-outline.md) | course deliverables: rundown outline, mind map, product backlog |
 | [github-setup.md](docs/github-setup.md) | one-time repo setup for the owner |
 
 The [wiki](https://github.com/season101/teammatch/wiki) mirrors these docs and updates on every merge to `main`. Edit the files here, not the wiki pages: the next sync overwrites wiki edits. A new doc under `docs/` also needs a line in `PAGES` in [build_wiki.py](.github/scripts/build_wiki.py).
 
 ## Deploy
 
-Production runs at `teammatch.sijancodes.com` from the compose file in [deploy/](deploy/). A release tag builds the images to GHCR, and once someone approves the `production` environment, the Release workflow deploys them over SSH. The pipeline is in [cicd.md](docs/architecture/cicd.md) and the server setup in [deployment.md](docs/architecture/deployment.md).
+Production runs at https://teammatch.sijancodes.com from the compose file in [deploy/](deploy/). Server setup, `deploy/.env` and the steps are in [deploy/README.md](deploy/README.md). A release tag builds the images to GHCR, and once someone approves the `production` environment, the Release workflow deploys them over SSH. The pipeline is in [cicd.md](docs/architecture/cicd.md) and the server setup in [deployment.md](docs/architecture/deployment.md).
 
 ## License
 
