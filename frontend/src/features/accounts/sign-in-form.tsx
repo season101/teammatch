@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordInput } from "@/components/ui/password-input";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -185,9 +186,8 @@ export function SignInForm({
         <label htmlFor="password" className="text-sm font-medium">
           Password
         </label>
-        <input
+        <PasswordInput
           id="password"
-          type="password"
           required
           autoComplete="current-password"
           ref={passwordRef}
@@ -198,7 +198,6 @@ export function SignInForm({
             setRefused(false);
           }}
           aria-describedby={refused ? "password-error" : undefined}
-          className="min-h-11 rounded-input border border-border-control bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass"
         />
         {/* A refused password is about this field, so it says so here, with what to do. */}
         {refused && error && (

@@ -2,7 +2,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, vi } from "vitest";
-import { useAddRole, useDeleteRole, useUpdateRole } from "./queries";
+import {
+  useAddRole,
+  useCloseProject,
+  useDeleteRole,
+  usePublishProject,
+  useUpdateRole,
+} from "./queries";
 
 // Runs a mutation hook against a stubbed API and returns the query keys it invalidated.
 async function invalidatedBy<T extends { mutateAsync: (input: never) => Promise<unknown> }>(
@@ -52,4 +58,11 @@ test("deleting a role refetches my team, since deleting the last open one locks 
   expect(keys).toEqual(
     expect.arrayContaining([["project", 4], ["my-projects"], ["my-summary"], ["my-team"]]),
   );
+});
+
+test("publishing, closing, adding a role and deleting one refresh the browse list", async () => {
+  expect(await invalidatedBy(() => usePublishProject(4), undefined)).toContainEqual(["projects"]);
+  expect(await invalidatedBy(() => useCloseProject(4), undefined)).toContainEqual(["projects"]);
+  expect(await invalidatedBy(() => useAddRole(4), role)).toContainEqual(["projects"]);
+  expect(await invalidatedBy(() => useDeleteRole(4), 7, 204)).toContainEqual(["projects"]);
 });

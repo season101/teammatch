@@ -83,3 +83,31 @@ test("Cancel keeps you signed in", () => {
   expect(fetchMock).not.toHaveBeenCalled();
   expect(replace).not.toHaveBeenCalled();
 });
+
+test("says so and lets me try again when the server can't be reached", async () => {
+  const { fetchMock } = renderButton();
+  fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
+
+  fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+  fireEvent.click(
+    within(screen.getByRole("dialog")).getByRole("button", { name: "Sign out" }),
+  );
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't sign out.");
+  expect(screen.getByRole("button", { name: "Sign out" })).toBeEnabled();
+  expect(replace).not.toHaveBeenCalled();
+});
+
+test("a server error keeps me signed in and lets me try again", async () => {
+  const { fetchMock, client } = renderButton();
+  fetchMock.mockResolvedValue(new Response("{}", { status: 503 }));
+
+  fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+  fireEvent.click(
+    within(screen.getByRole("dialog")).getByRole("button", { name: "Sign out" }),
+  );
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't sign out.");
+  expect(client.getQueryData(["session"])).toBeDefined();
+  expect(replace).not.toHaveBeenCalled();
+});

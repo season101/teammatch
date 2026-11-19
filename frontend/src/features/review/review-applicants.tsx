@@ -40,6 +40,20 @@ export function ReviewApplicants() {
 
   // Drafts have no applicants and archived projects are done, so only open projects show.
   const open = projects.data.filter((project) => project.status === "open");
+  if (open.length === 0 && projects.data.some((project) => project.status === "locked")) {
+    return (
+      <EmptyState
+        title="Your team is formed"
+        action={
+          <Link href="/teams" className={buttonClasses()}>
+            Go to your team
+          </Link>
+        }
+      >
+        Every role is filled, so there&apos;s no one left to review.
+      </EmptyState>
+    );
+  }
   if (open.length === 0) {
     return (
       <EmptyState

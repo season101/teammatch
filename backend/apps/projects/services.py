@@ -135,6 +135,10 @@ def publish_project(project):
     them a role between the check and the publish.
     """
     get_user_model().objects.select_for_update().get(pk=project.owner_id)
+    # Read again under a lock: a close or an edit may have landed since the view loaded it.
+    project = (
+        Project.objects.select_related("term").select_for_update(of=("self",)).get(pk=project.pk)
+    )
     if project.status != ProjectStatus.DRAFT:
         raise ProjectNotDraft()
     ensure_term_not_over(project.term)
@@ -155,7 +159,7 @@ def publish_project(project):
     if has_a_spot.exists():
         raise OwnerHasASpot()
     project.status = ProjectStatus.OPEN
-    project.save()
+    project.save(update_fields=["status", "updated_at"])
     return project
 
 

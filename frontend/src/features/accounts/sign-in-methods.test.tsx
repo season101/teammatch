@@ -266,3 +266,53 @@ test("with no Google keys on the server, there's no Google row to connect", asyn
     screen.queryByRole("button", { name: "Connect" }),
   ).not.toBeInTheDocument();
 });
+
+test("an account with a password changes it by giving the current one", async () => {
+  const posts = mockAllauth({
+    email: "sam@email.latech.edu",
+    password: true,
+    google: false,
+  });
+  renderSection();
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Change password" }),
+  );
+  fireEvent.change(screen.getByLabelText("Current password"), {
+    target: { value: "the-old-password-1" },
+  });
+  fireEvent.change(screen.getByLabelText("New password"), {
+    target: { value: "a-new-long-password-7" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save password" }));
+
+  expect(await screen.findByRole("status")).toHaveTextContent(
+    "Password saved. You can sign in with sam@email.latech.edu and it.",
+  );
+  expect(posts).toEqual([
+    {
+      url: "/_allauth/browser/v1/account/password/change",
+      body: {
+        new_password: "a-new-long-password-7",
+        current_password: "the-old-password-1",
+      },
+    },
+  ]);
+});
+
+test("Cancel closes the change form without saving", async () => {
+  const posts = mockAllauth({
+    email: "sam@email.latech.edu",
+    password: true,
+    google: false,
+  });
+  renderSection();
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Change password" }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(screen.queryByLabelText("Current password")).not.toBeInTheDocument();
+  expect(posts).toEqual([]);
+});

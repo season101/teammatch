@@ -13,8 +13,10 @@ from django.test import Client
 
 from apps.chat.models import ChatMessage
 from apps.chat.services import post_message
+from apps.matching.models import Membership
 from apps.matching.tests.test_fill_and_lock import committed
 from apps.matching.tests.test_my_team import locked_team, user
+from apps.projects.models import ProjectModerator
 from config.asgi import application
 from config.routing import websocket_urlpatterns
 
@@ -127,6 +129,41 @@ async def test_a_refused_socket_cannot_post(team, outsider):
     await socket.disconnect()
 
     assert await count_messages() == 0
+
+
+@run_async
+async def test_a_socket_opened_before_losing_the_seat_cannot_post(team, ava):
+    socket = await joined(team.id, ava)
+    await database_sync_to_async(Membership.objects.filter(user=ava).delete)()
+
+    await socket.send_json_to({"type": "chat.send", "data": {"body": "still here"}})
+    frame = await socket.receive_output()
+
+    assert (frame["type"], frame["code"]) == ("websocket.close", 4404)
+    assert await count_messages() == 0
+    await socket.disconnect()
+
+
+@run_async
+async def test_a_moderator_demoted_with_the_socket_open_cannot_post(team, outsider):
+    def assign():
+        type(outsider).objects.filter(id=outsider.id).update(is_moderator=True)
+        outsider.is_moderator = True
+        ProjectModerator.objects.create(project_id=team.project_id, user=outsider)
+
+    def demote():  # the link stays behind, only the flag goes
+        type(outsider).objects.filter(id=outsider.id).update(is_moderator=False)
+
+    await database_sync_to_async(assign)()
+    socket = await joined(team.id, outsider)
+    await database_sync_to_async(demote)()
+
+    await socket.send_json_to({"type": "chat.send", "data": {"body": "still here"}})
+    frame = await socket.receive_output()
+
+    assert (frame["type"], frame["code"]) == ("websocket.close", 4404)
+    assert await count_messages() == 0
+    await socket.disconnect()
 
 
 @run_async

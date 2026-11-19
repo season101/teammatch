@@ -103,7 +103,9 @@ export function useDismiss() {
 export function useUndoPass() {
   const queryClient = useQueryClient();
   return useMutation<void, ApiError, FeedRole>({
-    onMutate: (role) => {
+    onMutate: async (role) => {
+      // A feed refetch still on its way was answered before the undo and would drop the role.
+      await queryClient.cancelQueries({ queryKey: ["feed"] });
       queryClient.setQueryData<FeedRole[]>(["feed"], (roles) => [
         role,
         ...(roles ?? []).filter((other) => other.id !== role.id),

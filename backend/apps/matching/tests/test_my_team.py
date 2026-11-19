@@ -134,11 +134,20 @@ def test_no_team_is_200_with_team_null(fall, marco):
     assert response.json() == {"team": None}
 
 
-def test_a_team_from_another_term_is_ignored(marco, ava):
+def test_a_team_from_another_term_is_ignored(fall, marco, ava):
     locked_team(marco, term("Spring 2026", -200), "Old project", [("Backend developer", ava)])
 
     assert my_team(ava) is None
     assert my_team(marco) is None
+
+
+def test_between_terms_the_last_team_stays(marco, ava):
+    # No term covers today: the team page and its chat link must not vanish (Nov 21).
+    team = locked_team(
+        marco, term("Spring 2026", -200), "Old project", [("Backend developer", ava)]
+    )
+
+    assert my_team(ava)["id"] == team.id
 
 
 def test_does_not_leak_other_teams_or_emails(team, fall, ava):

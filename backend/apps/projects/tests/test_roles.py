@@ -12,6 +12,7 @@ from apps.matching.models import Application, Membership, Team
 from apps.matching.services import commit
 from apps.matching.tests.test_fill_and_lock import committed, needs_postgres, offer, race
 from apps.profiles.models import Skill
+from apps.projects import services
 from apps.projects.models import Project, ProjectStatus, Role, RoleStatus
 from apps.projects.services import RoleNotOpen, delete_role
 
@@ -495,3 +496,14 @@ def test_add_fails_if_a_commit_just_locked_the_project(owner, other, project, ro
     project.refresh_from_db()
     assert project.status == ProjectStatus.LOCKED
     assert list(project.roles.all()) == [role]
+
+
+def test_publish_sees_a_close_that_landed_first(owner, project, role):
+    stale = Project.objects.get(pk=project.pk)
+    Project.objects.filter(pk=project.pk).update(status=ProjectStatus.ARCHIVED)
+
+    with pytest.raises(services.ProjectNotDraft):
+        services.publish_project(stale)
+
+    project.refresh_from_db()
+    assert project.status == ProjectStatus.ARCHIVED

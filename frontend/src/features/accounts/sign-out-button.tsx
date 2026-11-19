@@ -14,11 +14,20 @@ export function SignOutButton() {
   const queryClient = useQueryClient();
   const [asking, setAsking] = useState(false);
   const [sending, setSending] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   async function logOut() {
     setAsking(false);
     setSending(true);
-    await signOut();
+    setFailed(false);
+    try {
+      await signOut();
+    } catch {
+      // Couldn't reach the server: let them try again.
+      setSending(false);
+      setFailed(true);
+      return;
+    }
     // Drop everything cached for this user, so the next person on this browser
     // doesn't see their profile or projects, and pages ask the server again.
     queryClient.clear();
@@ -35,6 +44,11 @@ export function SignOutButton() {
       >
         <PendingLabel pending={sending} label="Signing out">Sign out</PendingLabel>
       </button>
+      {failed && (
+        <p role="alert" className="mt-2 text-sm text-pass">
+          Couldn&apos;t sign out. Check your connection and try again.
+        </p>
+      )}
       <Modal
         open={asking}
         onClose={() => setAsking(false)}

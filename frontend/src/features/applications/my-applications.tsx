@@ -311,7 +311,8 @@ export function MyApplications() {
                                     ` · ${roles.filter((r) => !r.open).length} of ${roles.length} roles filled`}
                                 </p>
                                 <p>{offer.role.project.pitch}</p>
-                                <div className="mt-auto flex items-center gap-3">
+                                {/* Wraps in a narrow card, so "Commit" never breaks mid-word. */}
+                                <div className="mt-auto flex flex-wrap items-center gap-3">
                                   <Button
                                     variant="danger"
                                     disabled={busy}
@@ -324,7 +325,7 @@ export function MyApplications() {
                                   <Button
                                     variant="secondary"
                                     disabled={busy}
-                                    className="flex-1"
+                                    className="flex-1 whitespace-nowrap"
                                     aria-label={`Commit to ${role} on ${project}`}
                                     onClick={() => setCommitting(offer)}
                                   >

@@ -60,11 +60,15 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 // Ends the session. allauth answers 401 ("no longer signed in") when it worked.
 export async function signOut(): Promise<void> {
   await ensureCsrfToken();
-  await fetch(`${BASE}/auth/session`, {
+  const response = await fetch(`${BASE}/auth/session`, {
     method: "DELETE",
     credentials: "same-origin",
     headers: { "X-CSRFToken": getCsrfToken() },
   });
+  // allauth answers a finished sign-out with 401 ("not signed in"). Anything else
+  // that isn't ok (a 503, say) left the session alive, so the caller can retry.
+  if (!response.ok && response.status !== 401)
+    throw new Error(`Sign out failed: ${response.status}`);
 }
 
 // Which sign-in providers (like Google) the server has keys for. Empty when none.
@@ -110,9 +114,13 @@ export async function getSignInMethods(): Promise<{
   };
 }
 
-// Signed in with no password yet: save one directly, no current password or link.
-export function setPassword(newPassword: string) {
-  return allauthPost("/account/password/change", { new_password: newPassword });
+// Signed in: save a new password. With no password yet (a Google account) there is
+// no current one to give; otherwise the server asks for it.
+export function setPassword(newPassword: string, currentPassword?: string) {
+  return allauthPost("/account/password/change", {
+    new_password: newPassword,
+    ...(currentPassword ? { current_password: currentPassword } : {}),
+  });
 }
 
 // Sends the browser to Google. A real form POST, not fetch, so allauth can
