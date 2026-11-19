@@ -542,15 +542,20 @@ function applyApi(applications: unknown[] = []) {
   });
 }
 
-test("offers Apply on an open role of someone else's project", async () => {
+test("offers one small Apply on an open role, which opens the note", async () => {
   applyApi();
   renderEditor(1);
+  const apply = await screen.findByRole("button", { name: "Apply to Backend dev" });
   expect(
-    await screen.findByRole("button", { name: "Apply to Backend dev" }),
-  ).toBeInTheDocument();
-  expect(
-    screen.getByLabelText("Note to the owner (optional)"),
-  ).toBeInTheDocument();
+    screen.queryByLabelText("Note to the owner (optional)"),
+  ).not.toBeInTheDocument();
+
+  fireEvent.click(apply);
+  expect(screen.getByLabelText("Note to the owner (optional)")).toHaveFocus();
+  expect(screen.getByRole("button", { name: "Apply to Backend dev" })).toHaveAttribute(
+    "type",
+    "submit",
+  );
 });
 
 test("the owner doesn't get Apply on their own project", async () => {
@@ -597,10 +602,12 @@ test("applies with the note, then shows Applied instead of the form", async () =
     return [project({ status: "open", owner: 2, roles: [ROLE] }), 200];
   });
   renderEditor(1);
-  fireEvent.change(
-    await screen.findByLabelText("Note to the owner (optional)"),
-    { target: { value: " Hi " } },
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Apply to Backend dev" }),
   );
+  fireEvent.change(screen.getByLabelText("Note to the owner (optional)"), {
+    target: { value: " Hi " },
+  });
   fireEvent.click(screen.getByRole("button", { name: "Apply to Backend dev" }));
   expect(await screen.findByText("Applied")).toBeInTheDocument();
   expect(calls.find((call) => call.method === "POST")?.body).toEqual({
@@ -668,6 +675,7 @@ test("a 409 that turns out I'd already applied keeps the server's message", asyn
   fireEvent.click(
     await screen.findByRole("button", { name: "Apply to Backend dev" }),
   );
+  fireEvent.click(screen.getByRole("button", { name: "Apply to Backend dev" }));
   expect(await screen.findByText("Applied")).toBeInTheDocument();
   expect(screen.getByRole("alert")).toHaveTextContent(
     "You already applied to this role.",
@@ -686,6 +694,7 @@ test("shows the server's message when applying fails", async () => {
   fireEvent.click(
     await screen.findByRole("button", { name: "Apply to Backend dev" }),
   );
+  fireEvent.click(screen.getByRole("button", { name: "Apply to Backend dev" }));
   expect(
     await screen.findByText("This role was just filled."),
   ).toBeInTheDocument();

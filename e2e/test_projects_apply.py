@@ -45,6 +45,12 @@ def page_for(browser, client):
     return context, context.new_page()
 
 
+def open_apply(page, role_title):
+    """The small Apply on a role opens its note; Apply there sends it."""
+    page.get_by_role("button", name=f"Apply to {role_title}").click()
+    expect(page.get_by_label("Note to the owner (optional)")).to_be_focused()
+
+
 def role_card(page, role):
     return page.get_by_role("listitem").filter(has=page.get_by_role("heading", name=re.compile(re.escape(role["title"]))))
 
@@ -74,6 +80,7 @@ def test_apply_from_project_page_shows_applied_state_and_persists(browser, world
     role = world["roles"][0]
     context, page = page_for(browser, cand)
     page.goto(f"/projects/{world['project']['id']}")
+    open_apply(page, role["title"])
     page.get_by_role("button", name=f"Apply to {role['title']}").click()
     card = role_card(page, role)
     expect(card.get_by_text("Applied")).to_be_visible()
@@ -91,6 +98,7 @@ def test_apply_with_a_note_sends_the_note(browser, world, cand):
     role = world["roles"][1]
     context, page = page_for(browser, cand)
     page.goto(f"/projects/{world['project']['id']}")
+    open_apply(page, role["title"])
     role_card(page, role).get_by_label("Note to the owner (optional)").fill("I love testing")
     expect(page.get_by_text("14/300 characters")).to_be_visible()
     page.get_by_role("button", name=f"Apply to {role['title']}").click()
@@ -104,6 +112,7 @@ def test_apply_with_a_note_sends_the_note(browser, world, cand):
 def test_note_is_limited_to_300_characters(browser, world, cand):
     context, page = page_for(browser, cand)
     page.goto(f"/projects/{world['project']['id']}")
+    open_apply(page, world["roles"][0]["title"])
     note = page.get_by_label("Note to the owner (optional)").first
     note.fill("n" * 400)
     expect(note).to_have_value("n" * 300)
@@ -133,6 +142,7 @@ def test_apply_error_is_shown_when_the_role_is_gone(browser, make_api_user):
     page.goto(f"/projects/{project['id']}")
     expect(page.get_by_role("button", name=f"Apply to {roles[0]['title']}")).to_be_visible()
     assert owner.send("POST", f"/api/v1/projects/{project['id']}/close/").status == 200
+    open_apply(page, roles[0]["title"])
     page.get_by_role("button", name=f"Apply to {roles[0]['title']}").click()
     expect(page.get_by_role("alert")).to_be_visible()
     expect(page.get_by_text("Applied", exact=True)).to_have_count(0)
