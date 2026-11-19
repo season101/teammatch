@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { buttonClasses } from "@/components/ui/button";
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
-import { Feed } from "@/features/feed/feed";
+import { Feed, FeedTitle } from "@/features/feed/feed";
 import { CoachMarks } from "@/features/onboarding/coach-marks";
 
 export default function FeedPage() {
@@ -18,7 +18,7 @@ export default function FeedPage() {
           {() => (
             <>
               <div className="flex items-center justify-between gap-4">
-                <h1 className="font-display text-3xl font-extrabold">Open roles</h1>
+                <FeedTitle />
                 {/* Phone and tablet; the desktop sidebar lists applications instead. */}
                 <Link
                   href="/applications"

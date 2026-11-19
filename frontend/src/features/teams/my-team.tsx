@@ -35,12 +35,15 @@ export function MyTeamView() {
     );
   }
   if (!team.data) {
-    // The nearest step to a team: an offer to answer, applicants to review, else the deck.
-    const [href, label] = summary?.offers
-      ? ["/applications", summary.offers === 1 ? "See your offer" : "See your offers"]
-      : summary?.applicants_waiting
-        ? ["/applicants", "Review applicants"]
-        : ["/feed", "Go to Discover"];
+    // The nearest step to a team: my commitment (the deck is closed then), an offer to
+    // answer, applicants to review, else the deck.
+    const [href, label] = summary?.deck === "committed"
+      ? ["/applications", "See your commitment"]
+      : summary?.offers
+        ? ["/applications", summary.offers === 1 ? "See your offer" : "See your offers"]
+        : summary?.applicants_waiting
+          ? ["/applicants", "Review applicants"]
+          : ["/feed", "Go to Discover"];
     return (
       <EmptyState
         title="No team yet"

@@ -10,6 +10,8 @@ import { Tabs } from "@/components/ui/tabs";
 import { PendingLabel } from "@/components/ui/pending-label";
 import { RequireSignIn } from "@/features/accounts/require-sign-in";
 import { useMyProjects } from "@/features/review/queries";
+import { termEnd } from "@/features/teams/my-team";
+import { useMyTeam } from "@/features/teams/queries";
 import { MyProjectsList } from "./my-projects-list";
 import { useProjectsTab } from "./projects-tab";
 import { useOpenProjects } from "./queries";
@@ -162,9 +164,17 @@ export function ProjectsList() {
 function ProjectsView() {
   const mine = useMyProjects();
   const tab = useProjectsTab();
+  // Benched (BR-09): the list still opens, so say why nothing here can be applied to.
+  const team = useMyTeam().data;
 
   return (
     <>
+      {team && (
+        <p className="mb-4 rounded-row border border-border bg-surface-2 px-4 py-3 text-sm">
+          You&apos;re on {team.project.title} until {termEnd(team)}, so you can&apos;t apply to
+          another role this term.
+        </p>
+      )}
       <div className="lg:hidden">
         <Tabs
           label="Projects"

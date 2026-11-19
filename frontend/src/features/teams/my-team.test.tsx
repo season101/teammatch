@@ -121,3 +121,8 @@ test("an owner with applicants waiting is sent to Review", () => {
   renderPage(null, { "my-summary": { offers: 0, applicants_waiting: 2 } });
   expect(screen.getByRole("link", { name: "Review applicants" })).toHaveAttribute("href", "/applicants");
 });
+
+test("a committed student is sent to their commitment, not the closed deck", () => {
+  renderPage(null, { "my-summary": { offers: 0, applicants_waiting: 0, deck: "committed" } });
+  expect(screen.getByRole("link", { name: "See your commitment" })).toHaveAttribute("href", "/applications");
+});
