@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useQueries } from "@tanstack/react-query";
 import { useState } from "react";
 import { useMyRole, useSkills } from "@/features/profiles/queries";
 import {
@@ -12,6 +13,7 @@ import {
   useUpdateRole,
   type ProjectDetail,
 } from "./queries";
+import { applicantsQuery } from "@/features/review/queries";
 import { ApplyToRole } from "./apply-to-role";
 import { RoleForm } from "./role-form";
 import { Modal } from "@/components/ui/modal";
@@ -48,6 +50,16 @@ export function ProjectEditor({
   const closeProject = useCloseProject(projectId);
   const [closing, setClosing] = useState(false);
   const [editingDetails, setEditingDetails] = useState(false);
+  // For the owner of an open project: who is waiting on each open role. Review loads
+  // the same lists, so they share its cache.
+  const loaded = project.data;
+  const openRoles =
+    loaded?.owner === userId && loaded.status === "open"
+      ? loaded.roles.filter((each) => each.status === "open")
+      : [];
+  const waiting = useQueries({ queries: openRoles.map((each) => applicantsQuery(each.id)) });
+  const waitingOn = (roleId: number) =>
+    waiting[openRoles.findIndex((each) => each.id === roleId)]?.data?.length ?? 0;
 
   if (project.isPending || skills.isPending) {
     return <SkeletonRows label="Loading project" />;
@@ -216,6 +228,14 @@ export function ProjectEditor({
                       {role.filled_by_name ? ` · ${role.filled_by_name}` : ""}
                     </span>
                   </h3>
+                  {waitingOn(role.id) > 0 && (
+                    <Link
+                      href="/applicants"
+                      className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-primary underline"
+                    >
+                      {waitingOn(role.id)} waiting · Review
+                    </Link>
+                  )}
                   {role.description && (
                     <p className="mt-1 text-text">{role.description}</p>
                   )}

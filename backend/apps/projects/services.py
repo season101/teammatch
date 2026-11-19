@@ -175,7 +175,11 @@ def open_projects(today=None, q=""):
             owner__is_active=True,
         )
         .select_related("owner__profile")
-        .annotate(open_role_count=Count("roles", filter=Q(roles__status=RoleStatus.OPEN)))
+        .annotate(
+            open_role_count=Count("roles", filter=Q(roles__status=RoleStatus.OPEN)),
+            # With open_role_count, the list can say "2 of 5 roles filled".
+            role_count=Count("roles"),
+        )
     )
     q = q.strip()
     if q:

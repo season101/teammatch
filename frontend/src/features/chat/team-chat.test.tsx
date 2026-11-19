@@ -116,7 +116,13 @@ function renderChat(mine: unknown = team, moderated?: unknown) {
   );
 }
 
-const bubbles = () => screen.getAllByRole("listitem").map((item) => item.textContent);
+// What each bubble says, without its time (that depends on the time zone).
+const bubbles = () =>
+  screen.getAllByRole("listitem").map((item) => {
+    const copy = item.cloneNode(true) as HTMLElement;
+    copy.querySelectorAll("time").forEach((time) => time.remove());
+    return copy.textContent;
+  });
 const box = () => screen.getByRole("textbox", { name: "Message Bulldog Bites" });
 
 test("connects to the team's socket on open and closes it on leave", () => {

@@ -2109,6 +2109,9 @@ components:
         open_role_count:
           type: integer
           readOnly: true
+        role_count:
+          type: integer
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -2120,6 +2123,7 @@ components:
       - owner
       - owner_name
       - pitch_preview
+      - role_count
       - title
     ProjectRequest:
       type: object

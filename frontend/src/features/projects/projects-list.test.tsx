@@ -39,6 +39,7 @@ const project = (id: number, title: string) => ({
   owner: 1,
   owner_name: "Owner Name",
   open_role_count: 2,
+  role_count: 3,
   created_at: "2026-10-16T00:00:00Z",
 });
 
@@ -55,6 +56,8 @@ test("shows each project with its owner, role count and pitch preview", async ()
   expect(await screen.findByText("TeamMatch")).toBeInTheDocument();
   expect(screen.getByText(/Owner Name/)).toBeInTheDocument();
   expect(screen.getByText(/2 open roles/)).toBeInTheDocument();
+  // and how full the team is
+  expect(screen.getByText(/1 of 3 filled/)).toBeInTheDocument();
   expect(screen.getByText("Pitch for TeamMatch")).toBeInTheDocument();
 });
 

@@ -12,6 +12,7 @@ export function ApplicantCard({
   application,
   roleTitle,
   requiredSkillIds,
+  missingSkills = [],
   onLike,
   onPass,
 }: {
@@ -19,6 +20,8 @@ export function ApplicantCard({
   roleTitle: string;
   // The skills the role asks for. The ones the applicant has are shown first, in lime.
   requiredSkillIds: number[];
+  // Names of the required skills the applicant doesn't list.
+  missingSkills?: string[];
   onLike: () => void;
   onPass: () => void;
 }) {
@@ -59,6 +62,12 @@ export function ApplicantCard({
             <MatchBadge percent={(matched.length / requiredSkillIds.length) * 100} />
             Has {matched.length} of {requiredSkillIds.length} required{" "}
             {requiredSkillIds.length === 1 ? "skill" : "skills"}
+          </p>
+        )}
+
+        {missingSkills.length > 0 && (
+          <p className="text-sm text-muted">
+            Doesn&apos;t list: <span className="text-text">{missingSkills.join(", ")}</span>
           </p>
         )}
 

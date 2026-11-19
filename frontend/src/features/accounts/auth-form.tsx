@@ -57,7 +57,10 @@ export function AuthForm({
           Sign in or sign up
         </h1>
         <p className="text-muted">
-          One step for both. Start with your school email.
+          {/* Sent here from a page that needs an account: say so. */}
+          {next
+            ? "Sign in to pick up where you were. Start with your school email."
+            : "One step for both. Start with your school email."}
         </p>
       </div>
       <GoogleButton next={next} />

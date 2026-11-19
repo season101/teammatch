@@ -56,3 +56,17 @@ test("no link cards when the applicant added none", () => {
   renderCard({ ...APPLICATION, applicant: { ...APPLICATION.applicant, github_url: "" } });
   expect(screen.queryByRole("list", { name: "Links" })).not.toBeInTheDocument();
 });
+
+test("names the required skills the applicant doesn't list", () => {
+  render(
+    <ApplicantCard
+      application={APPLICATION}
+      roleTitle="Frontend dev"
+      requiredSkillIds={[]}
+      missingSkills={["Git", "Docker"]}
+      onLike={() => {}}
+      onPass={() => {}}
+    />,
+  );
+  expect(screen.getByText("Git, Docker")).toBeInTheDocument();
+});

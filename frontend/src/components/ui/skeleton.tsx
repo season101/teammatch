@@ -25,9 +25,34 @@ function StillLoading() {
 }
 
 // A list of rows loading: the usual case for applications, projects and teams.
-export function SkeletonRows({ label, rows = 3 }: { label: string; rows?: number }) {
+// tabs: the screen opens with a row of that many tabs, so the rows don't jump down
+// when they arrive. meter: the profile's strength bar sits above them.
+export function SkeletonRows({
+  label,
+  rows = 3,
+  tabs = 0,
+  meter = false,
+}: {
+  label: string;
+  rows?: number;
+  tabs?: number;
+  meter?: boolean;
+}) {
   return (
     <div role="status" aria-label={label} className="flex flex-col gap-3">
+      {meter && (
+        <div className="flex flex-col gap-2 pb-3">
+          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-1.5 w-full rounded-pill" />
+        </div>
+      )}
+      {tabs > 0 && (
+        <div className="flex gap-4 pb-1">
+          {Array.from({ length: tabs }, (_, i) => (
+            <Skeleton key={i} className="h-11 flex-1" />
+          ))}
+        </div>
+      )}
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="flex flex-col gap-2 rounded-row bg-surface p-4">
           <Skeleton className="h-4 w-2/3" />

@@ -43,7 +43,7 @@ export function ProfileTabs() {
   const tab = useProfileTab();
 
   if (profile.isPending) {
-    return <SkeletonRows label="Loading your profile" />;
+    return <SkeletonRows label="Loading your profile" tabs={2} meter />;
   }
   if (profile.isError) {
     return (

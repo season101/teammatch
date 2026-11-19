@@ -2,7 +2,8 @@ import type { ComponentProps } from "react";
 
 const variants = {
   // White pill on dark, ink pill on light. Violet is never a button fill.
-  cta: "bg-cta text-on-cta hover:opacity-90",
+  // Disabled is a quiet surface in both themes; fading the pill left white text on grey in light.
+  cta: "bg-cta text-on-cta hover:opacity-90 disabled:border disabled:border-border disabled:bg-surface-2 disabled:text-muted disabled:opacity-100",
   secondary: "border border-border bg-surface-2 text-text hover:bg-surface",
   ghost: "text-text underline-offset-4 hover:underline",
   // Text only: destructive actions sit behind a gate whose CTA is the safe choice.

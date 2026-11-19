@@ -283,7 +283,7 @@ test("the sidebar's Teams tab links to my team once I have one", () => {
     "href",
     "/teams",
   );
-  expect(within(sidebar).queryByText(/once every role is filled/)).not.toBeInTheDocument();
+  expect(within(sidebar).queryByText("No team yet.")).not.toBeInTheDocument();
 });
 
 test("a closed project stays under Mine → Archived, without making me a reviewer", () => {
@@ -313,7 +313,7 @@ test("the sidebar opens each page's own tab, not the last page's", () => {
   // Review → Teams: a different set of tabs, and Teams is picked with its panel showing.
   go("/teams");
   expect(selected()).toEqual(["Teams"]);
-  expect(within(sidebar()).getByText(/once every role is filled/)).toBeVisible();
+  expect(within(sidebar()).getByText("No team yet.")).toBeVisible();
 
   go("/feed");
   expect(selected()).toEqual(["Applications"]);
@@ -408,4 +408,13 @@ test("the sidebar's Mine tab drives the Projects page, and its own New project b
 test("no page while the Team rules redirect is on its way", () => {
   renderShell("/feed", { profile: { rules_accepted_at: null, skills: [] } });
   expect(screen.queryByText("Stage")).toBeNull();
+});
+
+test("a project opened for one role (?role=) keeps Discover as the current place", () => {
+  window.history.pushState(null, "", "/projects/4?role=7");
+  renderShell("/projects/4");
+  const nav = within(sidebar()).getAllByRole("navigation", { name: "Main" })[0];
+  expect(within(nav).getByRole("link", { name: /Discover/ })).toHaveAttribute("aria-current", "page");
+  expect(within(nav).getByRole("link", { name: "Projects" })).not.toHaveAttribute("aria-current");
+  window.history.pushState(null, "", "/");
 });

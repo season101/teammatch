@@ -1071,6 +1071,7 @@ export interface components {
             owner: number;
             readonly owner_name: string;
             readonly open_role_count: number;
+            readonly role_count: number;
             /** Format: date-time */
             readonly created_at: string;
         };

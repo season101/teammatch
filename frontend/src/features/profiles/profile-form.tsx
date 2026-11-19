@@ -177,6 +177,10 @@ function ProfileFields({
         }}
       />
 
+      {/* What's above is on your card; the rest only adds to it. */}
+      <p className="border-t border-border pt-4 text-xs font-semibold tracking-wider text-muted uppercase">
+        Optional
+      </p>
       <LinkField
         id="github"
         label="GitHub"

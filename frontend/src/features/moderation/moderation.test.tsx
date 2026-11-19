@@ -70,7 +70,7 @@ test("an admin sees the terms, the moderators and each project's moderators", as
   expect(screen.getByRole("list", { name: "Moderators on Bulldog Bites" })).toHaveTextContent(
     "Dr. Lee",
   );
-  expect(screen.getByText("Fall 2026 · open · by Marco")).toBeInTheDocument();
+  expect(screen.getByText(/Fall 2026 · by Marco/)).toHaveTextContent("OpenFall 2026 · by Marco");
 });
 
 test.each(["student", "moderator"])("a %s is told it's admin only, and nothing loads", (role) => {

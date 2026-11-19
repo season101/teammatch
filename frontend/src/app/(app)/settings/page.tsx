@@ -97,12 +97,12 @@ export default function SettingsPage() {
               <InstallApp className={card} />
             </section>
 
-            {/* Desktop has Profile and Sign out in the sidebar; phones and tablets have no sidebar. */}
-            <section aria-labelledby="account-heading" className="flex flex-col gap-2 lg:hidden">
+            {/* Sign out is here at every width. Desktop has Profile in the nav column. */}
+            <section id="account" aria-labelledby="account-heading" className="flex flex-col gap-2">
               <h2 id="account-heading" className={sectionHeading}>
                 Account
               </h2>
-              <Link href="/profile" className={`${card} flex items-center justify-between font-semibold`}>
+              <Link href="/profile" className={`${card} flex items-center justify-between font-semibold lg:hidden`}>
                 Profile
                 <span aria-hidden="true">›</span>
               </Link>

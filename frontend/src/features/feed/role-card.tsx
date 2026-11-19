@@ -125,7 +125,7 @@ export function RoleCard({ role, mySkillIds }: { role: FeedRole; mySkillIds: num
           {Array.from({ length: role.roles_total }, (_, i) => (
             <span
               key={i}
-              className={`h-1.5 flex-1 rounded-pill ${i < role.roles_filled ? "bg-apply-text" : "bg-surface-2"}`}
+              className={`h-1.5 flex-1 rounded-pill ${i < role.roles_filled ? "bg-apply-text" : "bg-border-control/60"}`}
             />
           ))}
         </div>

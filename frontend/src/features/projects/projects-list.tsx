@@ -93,6 +93,9 @@ export function ProjectsList() {
               by {project.owner_name || "an unnamed owner"} ·{" "}
               {project.open_role_count} open{" "}
               {project.open_role_count === 1 ? "role" : "roles"}
+              {/* How close the team is to locking (principle 2). */}
+              {project.role_count > 0 &&
+                ` · ${project.role_count - project.open_role_count} of ${project.role_count} filled`}
             </p>
             <p className="mt-3 text-text">{project.pitch_preview}</p>
           </li>
@@ -103,14 +106,35 @@ export function ProjectsList() {
 
   return (
     <div className="flex flex-col gap-4">
-      <input
-        type="search"
-        aria-label="Search projects"
-        placeholder="Search by project, role or skill"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        className={inputClass}
-      />
+      <div className="relative">
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          className="pointer-events-none absolute top-1/2 left-3 mt-0.5 size-4 -translate-y-1/2 text-muted"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+        <input
+          type="search"
+          aria-label="Search projects"
+          placeholder="Search by project, role or skill"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          className={`${inputClass} pl-9`}
+        />
+      </div>
+      {/* Says the search ran and what it found. "or more" while further pages wait. */}
+      {search && !loading && items.length > 0 && (
+        <p role="status" className="-my-1 text-sm text-muted">
+          {items.length}
+          {projects.hasNextPage ? " or more" : ""} {items.length === 1 ? "project matches" : "projects match"}
+        </p>
+      )}
 
       {content}
 

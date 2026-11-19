@@ -110,7 +110,7 @@ export function ResumeViewer({ profileId }: { profileId: number }) {
       )}
       {load.state === "denied" && (
         <EmptyState icon={<FileIcon />} title="You can't open this resume">
-          Only owners of projects {first} applied to can read it.
+          Only the owner of a project {first} applied to can open it.
         </EmptyState>
       )}
       {load.state === "broken" && (

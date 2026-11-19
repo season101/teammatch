@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
 
 import { buttonClasses } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
 import { useBump } from "@/components/ui/bump";
 import { useSession } from "@/features/accounts/require-sign-in";
-import { SignOutButton } from "@/features/accounts/sign-out-button";
 import { ApplicationsPanel } from "@/features/applications/my-applications";
 import { MyProjectsList } from "@/features/projects/my-projects-list";
 import { setProjectsTab, useProjectsTab } from "@/features/projects/projects-tab";
@@ -122,6 +121,8 @@ function isIn(pathname: string, paths: string[]) {
   );
 }
 
+const noSubscription = () => () => {};
+
 // A count on a nav item. Nothing when it's zero or not loaded yet.
 function Badge({ item, counts }: { item: NavItem; counts?: Counts }) {
   const count = item.badge ? counts?.[item.badge.count] : undefined;
@@ -175,6 +176,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   const counts = useMySummary(Boolean(user)).data;
   const team = useMyTeam(Boolean(user)).data;
   const legend = LEGENDS[pathname];
+  // A project page focused on one role (?role=) is the deck's details page (F3-13), so
+  // Discover stays the current place. Read on each render; the server can't know it.
+  const roleFocus = useSyncExternalStore(
+    noSubscription,
+    () => window.location.search.includes("role="),
+    () => false,
+  );
+  const onRole = role === "student" && roleFocus && pathname.startsWith("/projects/");
+  const isCurrent = (item: NavItem) =>
+    onRole ? item.paths.includes("/feed") : isIn(pathname, item.paths);
 
   const navRow = (item: NavItem) => {
     const Icon = item.icon;
@@ -182,7 +193,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Link
         key={item.href}
         href={item.href}
-        aria-current={isIn(pathname, item.paths) ? "page" : undefined}
+        aria-current={isCurrent(item) ? "page" : undefined}
         className="group flex min-h-11 items-center gap-3 rounded-row px-3 text-sm font-medium text-muted transition-colors duration-fast hover:bg-surface-2 hover:text-text aria-[current=page]:bg-surface-2 aria-[current=page]:font-semibold aria-[current=page]:text-text"
       >
         <span className="group-aria-[current=page]:text-primary">
@@ -205,7 +216,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link
               key={tab.href}
               href={tab.href}
-              aria-current={isIn(pathname, tab.paths) ? "page" : undefined}
+              aria-current={isCurrent(tab) ? "page" : undefined}
               className="group relative flex min-h-14 items-center gap-2 px-3 text-sm font-semibold text-muted transition-colors duration-fast after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:scale-x-0 after:rounded-pill after:bg-primary hover:text-text aria-[current=page]:text-text aria-[current=page]:after:scale-x-100"
             >
               {/* The same icons as the phone tab bar and the desktop nav, once five fit (768px). */}
@@ -275,7 +286,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link
               key={tab.href}
               href={tab.href}
-              aria-current={isIn(pathname, tab.paths) ? "page" : undefined}
+              aria-current={isCurrent(tab) ? "page" : undefined}
               className="group relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-xs text-muted aria-[current=page]:font-semibold aria-[current=page]:text-text"
             >
               <span className="group-aria-[current=page]:text-primary">
@@ -312,6 +323,8 @@ function SidebarMode({
   team?: MyTeam | null;
 }) {
   const profileTab = useProfileTab();
+  // The Settings row picked last, so the column shows where the page jumped to.
+  const [section, setSection] = useState("");
   const projectsTab = useProjectsTab();
   const inProjects = isIn(pathname, ["/projects", "/applicants"]);
   // Coming back to Projects from elsewhere starts on Browse again.
@@ -359,14 +372,18 @@ function SidebarMode({
           ["appearance", "Appearance"],
           ["keyboard", "Keyboard shortcuts"],
           ["install", "App"],
+          ["account", "Account"],
         ].map(([id, label]) => (
-          <Link key={id} href={`/settings#${id}`} className={`${rowLink} font-semibold`}>
+          <Link
+            key={id}
+            href={`/settings#${id}`}
+            aria-current={section === id ? "true" : undefined}
+            onClick={() => setSection(id)}
+            className={`${rowLink} font-semibold aria-[current=true]:bg-surface-2`}
+          >
             {label}
           </Link>
         ))}
-        <div className="px-3 pt-2">
-          <SignOutButton />
-        </div>
       </div>
     );
   }
@@ -409,11 +426,15 @@ function SidebarMode({
             {
               id: "browse",
               label: "Browse",
-              panel: (
-                <Link href="/projects" className={rowLink}>
-                  Open projects this term
-                </Link>
-              ),
+              // On the Projects page the stage is that list, so a link to it would go nowhere.
+              panel:
+                pathname === "/projects" ? (
+                  <p className="px-3 text-sm text-muted">Every open project this term.</p>
+                ) : (
+                  <Link href="/projects" className={rowLink}>
+                    Open projects this term
+                  </Link>
+                ),
             },
             {
               id: "mine",
@@ -478,9 +499,7 @@ function SidebarMode({
                 {team.project.title}
               </Link>
             ) : (
-              <p className="px-3 text-sm text-muted">
-                Your team shows up here once every role is filled.
-              </p>
+              <p className="px-3 text-sm text-muted">No team yet.</p>
             ),
           },
         ]}

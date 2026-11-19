@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { inputClass, noticeClass } from "@/components/ui/form-classes";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { useMyRole } from "@/features/profiles/queries";
@@ -253,8 +254,11 @@ function ProjectRow({
     <li className="flex flex-col gap-3 rounded-row border border-border bg-surface p-3">
       <div>
         <p className="font-semibold">{project.title}</p>
-        <p className="text-sm text-muted">
-          {project.term} · {project.status} · by {project.owner_name || "an unnamed owner"}
+        <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
+          <Chip variant={project.status === "open" ? "selected" : "default"}>
+            {(project.status ?? "").replace(/^./, (first) => first.toUpperCase())}
+          </Chip>
+          {project.term} · by {project.owner_name || "an unnamed owner"}
         </p>
       </div>
       {project.moderators.length > 0 && (

@@ -30,7 +30,7 @@ export function PassToast({
   }, [held, onDone]);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+4.25rem)] z-40 flex justify-center px-4 lg:top-[calc(env(safe-area-inset-top)+1rem)] lg:justify-end lg:px-6">
+    <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+4.25rem)] z-40 sm:top-[calc(env(safe-area-inset-top)+9.5rem)] flex justify-center px-4 lg:top-[calc(env(safe-area-inset-top)+1rem)] lg:justify-end lg:px-6">
       <div
         className="pointer-events-auto w-full max-w-sm"
         onMouseEnter={() => setHovered(true)}

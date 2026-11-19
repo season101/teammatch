@@ -84,6 +84,7 @@ def test_shows_owner_name_and_open_role_count(client, owner, term):
     item = client.get(URL).data["results"][0]
     assert item["owner_name"] == "Owner Name"
     assert item["open_role_count"] == 2
+    assert item["role_count"] == 3
 
 
 def test_pitch_is_shortened_and_owner_email_is_not_exposed(client, owner, term):
@@ -144,6 +145,7 @@ def test_search_keeps_the_open_role_count(client, owner, searchable):
     )
     item = client.get(URL, {"q": "map"}).data["results"][0]
     assert item["open_role_count"] == 2
+    assert item["role_count"] == 3
 
 
 def test_search_skips_filled_roles_and_projects_that_are_not_open(client, owner, term, searchable):

@@ -196,7 +196,7 @@ export function MyApplications() {
   const [blocked, setBlocked] = useState<MyApplication | null>(null);
 
   if (applications.isPending)
-    return <SkeletonRows label="Loading your applications" />;
+    return <SkeletonRows label="Loading your applications" tabs={4} />;
   if (applications.isError) {
     return (
       <p role="alert" className="text-danger">
