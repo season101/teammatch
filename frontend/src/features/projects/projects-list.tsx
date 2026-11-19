@@ -193,7 +193,7 @@ function ProjectsView() {
               label: "Mine",
               panel: (
                 <div className="pt-4">
-                  <MyProjectsList projects={mine.data ?? []} withOpenNote />
+                  <MyProjectsList projects={mine.data ?? []} onPage />
                 </div>
               ),
             },
@@ -202,7 +202,7 @@ function ProjectsView() {
       </div>
       <div className="hidden lg:block">
         {tab === "mine" ? (
-          <MyProjectsList projects={mine.data ?? []} withOpenNote />
+          <MyProjectsList projects={mine.data ?? []} onPage />
         ) : (
           <ProjectsList />
         )}

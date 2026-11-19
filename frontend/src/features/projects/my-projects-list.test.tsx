@@ -67,14 +67,14 @@ describe("the open-project note (BR-14)", () => {
 
   it("shows when asked and an open project exists", () => {
     render(
-      <MyProjectsList projects={[project({ status: "open" })]} withOpenNote />,
+      <MyProjectsList projects={[project({ status: "open" })]} onPage />,
     );
     expect(screen.getByText(note)).toBeInTheDocument();
   });
 
   it("stays hidden when there is no open project", () => {
     render(
-      <MyProjectsList projects={[project({ status: "draft" })]} withOpenNote />,
+      <MyProjectsList projects={[project({ status: "draft" })]} onPage />,
     );
     expect(screen.queryByText(note)).not.toBeInTheDocument();
   });
@@ -82,5 +82,19 @@ describe("the open-project note (BR-14)", () => {
   it("stays hidden unless asked", () => {
     render(<MyProjectsList projects={[project({ status: "open" })]} />);
     expect(screen.queryByText(note)).not.toBeInTheDocument();
+  });
+});
+
+describe("roles under each project", () => {
+  it("lists them with their status on the page", () => {
+    render(<MyProjectsList projects={[project({})]} onPage />);
+    const roles = screen.getByRole("list", { name: "Roles on Bulldog Bites" });
+    expect(roles).toHaveTextContent("Mobile developerOpen");
+    expect(roles).toHaveTextContent("Backend developerFilled");
+  });
+
+  it("leaves them out of the sidebar's short list", () => {
+    render(<MyProjectsList projects={[project({})]} />);
+    expect(screen.queryByText("Mobile developer")).not.toBeInTheDocument();
   });
 });
