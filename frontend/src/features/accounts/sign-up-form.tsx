@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordInput } from "@/components/ui/password-input";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { allauthPost, type AllauthError } from "./allauth";
@@ -168,9 +169,8 @@ export function SignUpForm({
         <label htmlFor="password" className="text-sm font-medium">
           Password
         </label>
-        <input
+        <PasswordInput
           id="password"
-          type="password"
           required
           minLength={8}
           autoComplete="new-password"
@@ -180,7 +180,6 @@ export function SignUpForm({
           onChange={(e) => setPassword(e.target.value)}
           aria-invalid={passwordErrors.length > 0}
           aria-describedby="password-hint password-error"
-          className="min-h-11 rounded-input border border-border-control bg-surface-2 px-3 py-2 text-text placeholder:text-muted hover:border-muted disabled:opacity-50 aria-invalid:border-pass"
         />
         <FieldErrors id="password-error" errors={passwordErrors} />
         <p id="password-hint" className="text-xs text-muted">
